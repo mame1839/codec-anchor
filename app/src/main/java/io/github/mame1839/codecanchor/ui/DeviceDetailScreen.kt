@@ -296,7 +296,10 @@ private fun TargetCard(
     val codecOptions = buildList {
         add(CodecKeys.KEEP_INT to keep)
         if (selectable.isNotEmpty()) {
-            addAll(selectable.map { it.codecType to it.codecName }.distinctBy { it.first })
+            addAll(
+                selectable.map { it.codecType to it.codecName.ifBlank { codecLabel(it.codecType, vm.codecNames) } }
+                    .distinctBy { it.first },
+            )
         } else {
             addAll(vm.codecNames.entries.sortedBy { it.key }.map { it.key to it.value })
         }

@@ -5,29 +5,28 @@ import android.content.Intent
 import android.content.SharedPreferences
 import io.github.mame1839.codecanchor.core.AppConfig
 import io.github.mame1839.codecanchor.core.Bridge
+import io.github.mame1839.codecanchor.xposed.XLog
 
 class SettingsStore(private val context: Context) {
 
     private val prefs: SharedPreferences = openPrefs(context)
 
     // 保存された JSON が壊れているときは null。既定値で代用すると、次の保存で設定を消してしまう。
-    fun load(): AppConfig? = AppConfig.decode(prefs.getString(KEY, null))
+    fun load(): AppConfig? = AppConfig.decode(prefs.getString(Bridge.PREFS_KEY, null))
 
     fun save(config: AppConfig) {
-        prefs.edit().putString(KEY, config.encode()).apply()
+        prefs.edit().putString(Bridge.PREFS_KEY, config.encode()).apply()
     }
 
     companion object {
-        const val NAME = "config"
-        const val KEY = "json"
-
         // MODE_WORLD_READABLE は Xposed 環境でのみ通る。ブロードキャストを取り逃したときの保険。
         private fun openPrefs(context: Context): SharedPreferences =
             try {
                 @Suppress("DEPRECATION")
-                context.getSharedPreferences(NAME, Context.MODE_WORLD_READABLE)
+                context.getSharedPreferences(Bridge.PREFS_NAME, Context.MODE_WORLD_READABLE)
             } catch (t: Throwable) {
-                context.getSharedPreferences(NAME, Context.MODE_PRIVATE)
+                XLog.i("設定ファイルを共有できないのでフックからは読めない: ${t.message}")
+                context.getSharedPreferences(Bridge.PREFS_NAME, Context.MODE_PRIVATE)
             }
     }
 }
