@@ -32,7 +32,7 @@
     <string name="section_general">Ustawienia ogólne</string>
     <string name="toggle_auto_apply">Stosuj ustawienia automatycznie</string>
     <string name="toggle_auto_apply_desc">Gdy wyłączone, na żadnym urządzeniu nic się nie zmienia</string>
-    <string name="toggle_enforce">Cofaj zmiany innych aplikacji</string>
+    <string name="toggle_enforce">Cofaj zmiany systemu i innych aplikacji</string>
     <string name="toggle_enforce_desc">Jeśli system lub inna aplikacja zmieni kodek, przywraca przypiętą wartość</string>
     <string name="toggle_notify">Powiadamiaj o zmianie kodeka</string>
     <string name="toggle_notify_desc">Pokazuje krótki komunikat przy przełączeniu kodeka</string>
@@ -58,7 +58,7 @@
     <string name="module_inactive">Moduł nie działa</string>
     <string name="module_inactive_body">Proces Bluetooth nie odpowiada. Sprawdź poniższe punkty.</string>
     <string name="module_step_1">1. Włącz Codec Anchor w aplikacji Vector</string>
-    <string name="module_step_2">2. Dodaj Bluetooth do jego zakresu</string>
+    <string name="module_step_2">2. Dodaj Bluetooth do zakresu modułu</string>
     <string name="module_step_3">3. Wyłącz Bluetooth i włącz go ponownie</string>
     <string name="module_inactive_hint">Ustawienia nadal można edytować i zapisywać. Zaczną działać, gdy moduł się uruchomi.</string>
     <string name="msg_config_pushed">Ustawienia wysłane ponownie</string>
@@ -90,6 +90,9 @@
     <string name="detail_auto_apply_desc">Przy każdym połączeniu przełącza na ustawienia poniżej</string>
     <string name="detail_current_codec">Obecny kodek: %1$s</string>
     <string name="detail_note">Ostatni wynik: %1$s</string>
+    <string name="outcome_applied">przełączono na %1$s</string>
+    <string name="outcome_failed">nie udało się przełączyć, nadal %1$s</string>
+    <string name="outcome_undecided">nie udało się ustalić wartości</string>
     <string name="detail_updated_at">Stan na %1$s</string>
 
     <string name="section_target">Wartości do przypięcia</string>
@@ -122,6 +125,6 @@
     <string name="delete_confirm_title">Usunąć ustawienia?</string>
     <string name="delete_confirm_body">Ustawienia dla %1$s zostaną usunięte i nic nie będzie na nim zmieniane.</string>
     <string name="msg_apply_requested">Wysłano do modułu żądanie zastosowania ustawień</string>
-    <string name="msg_apply_module_inactive">Moduł nie działa, więc żądanie nie dotrze</string>
+    <string name="msg_apply_module_inactive">Moduł nie działa, więc żądania nie można dostarczyć</string>
     <string name="msg_apply_not_connected">Urządzenie nie jest połączone, więc nie można teraz nic zastosować</string>
 </resources>

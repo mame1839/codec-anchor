@@ -32,7 +32,7 @@
     <string name="section_general">Общие настройки</string>
     <string name="toggle_auto_apply">Применять настройки автоматически</string>
     <string name="toggle_auto_apply_desc">Пока выключено, ни на одном устройстве ничего не меняется</string>
-    <string name="toggle_enforce">Отменять изменения других приложений</string>
+    <string name="toggle_enforce">Отменять изменения системы и других приложений</string>
     <string name="toggle_enforce_desc">Если система или другое приложение меняет кодек, возвращает закреплённое значение</string>
     <string name="toggle_notify">Сообщать о смене кодека</string>
     <string name="toggle_notify_desc">Показывает короткое сообщение при переключении кодека</string>
@@ -58,7 +58,7 @@
     <string name="module_inactive">Модуль не работает</string>
     <string name="module_inactive_body">Процесс Bluetooth не отвечает. Проверьте следующее.</string>
     <string name="module_step_1">1. Включите Codec Anchor в Vector</string>
-    <string name="module_step_2">2. Добавьте Bluetooth в область действия</string>
+    <string name="module_step_2">2. Добавьте Bluetooth в область действия модуля</string>
     <string name="module_step_3">3. Выключите Bluetooth и включите снова</string>
     <string name="module_inactive_hint">Настройки всё равно можно изменять и сохранять. Они вступят в силу, когда модуль начнёт работать.</string>
     <string name="msg_config_pushed">Настройки отправлены снова</string>
@@ -90,6 +90,9 @@
     <string name="detail_auto_apply_desc">При подключении переключает на настройки ниже</string>
     <string name="detail_current_codec">Текущий кодек: %1$s</string>
     <string name="detail_note">Последний результат: %1$s</string>
+    <string name="outcome_applied">переключено на %1$s</string>
+    <string name="outcome_failed">не удалось переключить, сейчас %1$s</string>
+    <string name="outcome_undecided">не удалось определить значения</string>
     <string name="detail_updated_at">Обновлено в %1$s</string>
 
     <string name="section_target">Закрепляемые значения</string>
@@ -122,6 +125,6 @@
     <string name="delete_confirm_title">Удалить настройки?</string>
     <string name="delete_confirm_body">Настройки для %1$s будут удалены, и на этом устройстве ничего не будет меняться.</string>
     <string name="msg_apply_requested">Модулю отправлен запрос на применение</string>
-    <string name="msg_apply_module_inactive">Модуль не работает, поэтому запрос не дойдёт</string>
+    <string name="msg_apply_module_inactive">Модуль не работает, поэтому запрос доставить нельзя</string>
     <string name="msg_apply_not_connected">Устройство не подключено, поэтому применить сейчас нельзя</string>
 </resources>

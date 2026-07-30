@@ -30,7 +30,7 @@
     <string name="section_general">Genel ayarlar</string>
     <string name="toggle_auto_apply">Ayarları otomatik uygula</string>
     <string name="toggle_auto_apply_desc">Kapalıyken hiçbir cihazda bir şey değiştirilmez</string>
-    <string name="toggle_enforce">Diğer uygulamaların değişikliklerini geri al</string>
+    <string name="toggle_enforce">Sistemin veya diğer uygulamaların değişikliklerini geri al</string>
     <string name="toggle_enforce_desc">Sistem veya başka bir uygulama kodeği değiştirirse, sabitlediğiniz değere döndürür</string>
     <string name="toggle_notify">Kodek değişimini bildir</string>
     <string name="toggle_notify_desc">Kodek değiştiğinde kısa bir mesaj gösterir</string>
@@ -56,7 +56,7 @@
     <string name="module_inactive">Modül çalışmıyor</string>
     <string name="module_inactive_body">Bluetooth süreci yanıt vermiyor. Aşağıdakileri kontrol edin.</string>
     <string name="module_step_1">1. Vector\'de Codec Anchor\'ı etkinleştirin</string>
-    <string name="module_step_2">2. Bluetooth\'u kapsamına ekleyin</string>
+    <string name="module_step_2">2. Bluetooth\'u modülün kapsamına ekleyin</string>
     <string name="module_step_3">3. Bluetooth\'u kapatıp yeniden açın</string>
     <string name="module_inactive_hint">Ayarları yine de düzenleyip kaydedebilirsiniz. Modül çalışmaya başladığında geçerli olurlar.</string>
     <string name="msg_config_pushed">Ayarlar yeniden gönderildi</string>
@@ -88,6 +88,9 @@
     <string name="detail_auto_apply_desc">Her bağlandığında aşağıdaki ayarlara geçer</string>
     <string name="detail_current_codec">Mevcut kodek: %1$s</string>
     <string name="detail_note">Son sonuç: %1$s</string>
+    <string name="outcome_applied">%1$s olarak değiştirildi</string>
+    <string name="outcome_failed">değiştirilemedi, hâlâ %1$s</string>
+    <string name="outcome_undecided">değerler belirlenemedi</string>
     <string name="detail_updated_at">%1$s itibarıyla</string>
 
     <string name="section_target">Sabitlenecek değerler</string>
@@ -120,6 +123,6 @@
     <string name="delete_confirm_title">Ayarlar silinsin mi?</string>
     <string name="delete_confirm_body">%1$s için ayarlar kaldırılır ve bu cihazda hiçbir şey değiştirilmez.</string>
     <string name="msg_apply_requested">Modülden ayarları uygulaması istendi</string>
-    <string name="msg_apply_module_inactive">Modül çalışmadığı için istek ulaşmıyor</string>
+    <string name="msg_apply_module_inactive">Modül çalışmadığı için istek iletilemiyor</string>
     <string name="msg_apply_not_connected">Cihaz bağlı olmadığı için şimdi uygulanamaz</string>
 </resources>
