@@ -1,5 +1,6 @@
 package io.github.mame1839.codecanchor.xposed
 
+import android.bluetooth.BluetoothAdapter
 import android.os.ParcelFileDescriptor
 import android.os.SystemClock
 import de.robv.android.xposed.XposedHelpers
@@ -28,6 +29,15 @@ internal object LdacStats {
     // AdapterService は引数が空だと本体を書かずに戻る。ネイティブ層は引数を見ない。
     private val PRINT_ARGS = arrayOf("--print")
     private val NO_ARGS = emptyArray<String>()
+
+    // AdapterService.dump がネイティブ層を呼ばない状態と同じもの。14 / 16 は BLE の切り替え中
+    // (非公開定数)。
+    private val NO_NATIVE_DUMP = setOf(
+        BluetoothAdapter.STATE_OFF,
+        BluetoothAdapter.STATE_TURNING_OFF,
+        14,
+        16,
+    )
 
     private class Entry(val reading: Reading, val readAt: Long)
 
@@ -58,7 +68,11 @@ internal object LdacStats {
             .getOrNull() ?: return null
         // 欲しい 2 行はネイティブ層しか書かないので、そこだけ吐かせる経路を優先する。出力が短く、
         // Java 側のダンプに付くメーカー独自の副作用 (スヌープログのコピー等) も通らない。
-        val native = runCatching { XposedHelpers.getObjectField(adapter, "mNativeInterface") }.getOrNull()
+        val native = if (nativeDumpSafe(adapter)) {
+            runCatching { XposedHelpers.getObjectField(adapter, "mNativeInterface") }.getOrNull()
+        } else {
+            null
+        }
         var mode = ""
         var kbps = 0
         val complete = scan(adapter, native) { line ->
@@ -69,6 +83,14 @@ internal object LdacStats {
         }
         if (!complete) return null
         return if (kbps > 0 || mode.isNotEmpty()) Reading(mode, kbps) else null
+    }
+
+    // ネイティブ層を直接呼ぶと AdapterService が持っている状態の門を通らない。スタックが立って
+    // いないときの JNI 呼び出しはプロセスごと落ちるので捕まえられない。状態が読めなければ、
+    // 門を持っている AdapterService.dump に任せる。
+    private fun nativeDumpSafe(adapter: Any): Boolean {
+        val state = runCatching { XposedHelpers.callMethod(adapter, "getState") as? Int }.getOrNull()
+        return state != null && state !in NO_NATIVE_DUMP
     }
 
     private fun valueOf(line: String): String? =
