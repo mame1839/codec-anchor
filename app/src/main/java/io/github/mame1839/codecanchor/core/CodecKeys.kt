@@ -51,11 +51,13 @@ object CodecKeys {
     val BIT_DEPTH_BITS: Int = orOf(BIT_DEPTHS)
     val CHANNEL_MODE_BITS: Int = orOf(CHANNEL_MODES)
 
+    const val LDAC_ABR = 1003L
+
     val LDAC_QUALITIES: List<Pair<Long, String>> = listOf(
         1000L to "990/909 kbps",
         1001L to "660/606 kbps",
         1002L to "330/303 kbps",
-        1003L to "ABR",
+        LDAC_ABR to "ABR",
     )
 
     val FALLBACK_CODEC_NAMES: Map<Int, String> = mapOf(

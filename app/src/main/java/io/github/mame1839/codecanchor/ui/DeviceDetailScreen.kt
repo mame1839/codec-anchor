@@ -54,6 +54,9 @@ private val DELAY_STEPS = listOf(0, 500, 1000, 1500, 2000, 3000, 5000, 8000)
 private val RETRY_STEPS = listOf(1, 2, 3, 4, 5, 8, 10)
 private val RETRY_DELAY_STEPS = listOf(500, 1000, 1500, 2000, 3000, 5000)
 
+// ネイティブのダンプが書く品質モードの表記。
+private const val ABR_MODE = "ABR"
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeviceDetailScreen(
@@ -261,7 +264,14 @@ private fun DeviceHeader(name: String, mac: String, status: DeviceStatus?, offlo
                 text = stringResource(R.string.detail_current_codec, status?.current?.summary() ?: unknown),
                 style = MaterialTheme.typography.bodyMedium,
             )
-            if (status != null && CodecKeys.isLdac(status.current?.displayName())) {
+            // 固定のビットレートは上のコーデック行と同じ値になるので、動く ABR のときだけ出す。
+            // オフロードで読めなかったときはモードも分からないので、設定した音質で判断する。
+            val abr = status != null && CodecKeys.isLdac(status.current?.displayName()) &&
+                (
+                    status.ldacQualityMode.equals(ABR_MODE, ignoreCase = true) ||
+                        status.current?.codecSpecific1 == CodecKeys.LDAC_ABR
+                    )
+            if (status != null && abr) {
                 if (status.ldacBitrateKbps > 0) {
                     Text(
                         text = stringResource(
