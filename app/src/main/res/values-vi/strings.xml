@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="xposed_description">Cố định codec Bluetooth và chất lượng âm thanh cho từng tai nghe</string>
+    <string name="permission_bridge_label">Gửi cài đặt Codec Anchor</string>
+
+    <string name="hook_codec_changed">%1$s: đã chuyển sang %2$s</string>
+    <string name="hook_codec_failed">%1$s: không chuyển được sang %2$s</string>
+    <string name="hook_codec_failed_with_current">%1$s: không chuyển được sang %2$s (hiện là %3$s)</string>
+
+    <string name="action_close">Đóng</string>
+    <string name="action_cancel">Huỷ</string>
+    <string name="action_delete">Xoá</string>
+    <string name="action_resend">Gửi lại</string>
+    <string name="action_recheck">Kiểm tra lại</string>
+    <string name="action_grant">Cấp quyền</string>
+
+    <string name="value_keep">Giữ nguyên</string>
+    <string name="value_unknown">Không rõ</string>
+    <string name="device_unnamed">Thiết bị không tên</string>
+    <string name="value_immediately">Ngay lập tức</string>
+    <string name="value_seconds">%1$s giây</string>
+    <plurals name="retry_count">
+        <item quantity="other">%1$d lần</item>
+    </plurals>
+
+    <string name="cd_refresh_status">Kiểm tra lại trạng thái</string>
+    <string name="cd_back">Quay lại</string>
+
+    <string name="section_general">Cài đặt chung</string>
+    <string name="toggle_auto_apply">Tự động áp dụng cài đặt</string>
+    <string name="toggle_auto_apply_desc">Khi tắt, không thiết bị nào bị thay đổi</string>
+    <string name="toggle_enforce">Hoàn tác thay đổi của hệ thống hoặc ứng dụng khác</string>
+    <string name="toggle_enforce_desc">Nếu hệ thống hoặc ứng dụng khác đổi codec, chuyển lại như đã cố định</string>
+    <string name="toggle_notify">Thông báo khi codec thay đổi</string>
+    <string name="toggle_notify_desc">Hiện một thông báo ngắn khi codec được chuyển</string>
+    <string name="toggle_verbose">Ghi nhật ký chi tiết</string>
+    <string name="toggle_verbose_desc">Dùng để tìm hiểu các thiết bị không chuyển được</string>
+
+    <string name="permission_title">Cần quyền Bluetooth</string>
+    <string name="permission_body">Cấp quyền để ứng dụng đọc được các thiết bị đã ghép nối và tên của chúng.</string>
+    <string name="bluetooth_off">Bluetooth đang tắt. Hãy bật để xem các thiết bị đã ghép nối.</string>
+
+    <string name="section_audio_devices">Thiết bị âm thanh</string>
+    <string name="devices_empty">Không tìm thấy thiết bị âm thanh nào đã ghép nối.</string>
+    <string name="devices_no_permission">Không thể đọc thiết bị khi chưa có quyền.</string>
+    <string name="section_other_devices">Thiết bị khác (%1$d)</string>
+    <string name="section_orphan_profiles">Cài đặt không còn thiết bị đã ghép nối</string>
+
+    <string name="module_checking">Đang kiểm tra mô-đun</string>
+    <string name="module_active">Mô-đun đang chạy</string>
+    <string name="module_meta">Phiên bản %1$s · chèn vào %2$s</string>
+    <string name="module_config_pending">Mô-đun chưa nạp cài đặt</string>
+    <string name="module_config_synced">Cài đặt đã đồng bộ</string>
+    <string name="module_config_stale">Thay đổi của bạn chưa đến được mô-đun</string>
+    <string name="module_inactive">Mô-đun không chạy</string>
+    <string name="module_inactive_body">Tiến trình Bluetooth không phản hồi. Hãy kiểm tra những mục sau.</string>
+    <string name="module_step_1">1. Bật Codec Anchor trong Vector</string>
+    <string name="module_step_2">2. Thêm Bluetooth vào phạm vi của mô-đun</string>
+    <string name="module_step_3">3. Tắt Bluetooth rồi bật lại</string>
+    <string name="module_inactive_hint">Bạn vẫn sửa và lưu được cài đặt. Cài đặt có hiệu lực khi mô-đun bắt đầu chạy.</string>
+    <string name="msg_config_pushed">Đã gửi lại cài đặt</string>
+
+    <string name="tag_connected">Đã kết nối</string>
+    <string name="tag_disconnected">Chưa kết nối</string>
+    <string name="tag_active">Đang phát</string>
+    <string name="tag_no_profile">Chưa có cài đặt</string>
+    <string name="tag_profile_off">Tắt tự động áp dụng</string>
+    <string name="tag_not_found">Không thấy</string>
+    <string name="device_target">Cố định: %1$s</string>
+    <string name="device_current">Hiện tại: %1$s</string>
+    <string name="profile_no_target">Chưa cố định giá trị nào</string>
+
+    <string name="section_backup">Sao lưu</string>
+    <string name="backup_body">Lưu toàn bộ cài đặt vào một tệp JSON.</string>
+    <string name="backup_export">Xuất</string>
+    <string name="backup_import">Nhập</string>
+    <string name="backup_confirm_title">Nhập bản sao lưu?</string>
+    <string name="backup_confirm_body">Mọi cài đặt hiện tại sẽ được thay bằng nội dung của tệp bạn chọn.</string>
+    <string name="backup_confirm_action">Chọn tệp</string>
+    <string name="msg_backup_exported">Đã xuất cài đặt</string>
+    <string name="msg_backup_export_failed">Không ghi được tệp</string>
+    <string name="msg_backup_imported">Đã phục hồi cài đặt</string>
+    <string name="msg_backup_invalid">Tệp đó không phải bản sao lưu của Codec Anchor</string>
+    <string name="msg_backup_failed">Không đọc được tệp</string>
+
+    <string name="detail_auto_apply">Áp dụng cho tai nghe này</string>
+    <string name="detail_auto_apply_desc">Chuyển sang các cài đặt bên dưới mỗi lần tai nghe kết nối</string>
+    <string name="detail_current_codec">Codec hiện tại: %1$s</string>
+    <string name="detail_note">Kết quả gần nhất: %1$s</string>
+    <string name="outcome_applied">đã chuyển sang %1$s</string>
+    <string name="outcome_failed">không chuyển được, vẫn là %1$s</string>
+    <string name="outcome_undecided">không xác định được các giá trị</string>
+    <string name="detail_updated_at">Tính đến %1$s</string>
+
+    <string name="section_target">Giá trị cần cố định</string>
+    <string name="target_no_capability">Không đọc được các tổ hợp mà thiết bị này hỗ trợ, nên mọi lựa chọn đều được liệt kê.</string>
+    <string name="label_codec">Codec</string>
+    <string name="label_sample_rate">Tần số lấy mẫu</string>
+    <string name="label_bit_depth">Độ sâu bit</string>
+    <string name="label_channel">Kênh</string>
+    <string name="label_ldac_quality">Chất lượng LDAC</string>
+    <string name="channel_mono">Mono</string>
+    <string name="channel_stereo">Stereo</string>
+    <string name="ldac_hint_quality">ưu tiên chất lượng</string>
+    <string name="ldac_hint_connection">ưu tiên kết nối</string>
+    <string name="ldac_hint_adaptive">tự điều chỉnh</string>
+
+    <string name="section_advanced">Cài đặt nâng cao</string>
+    <string name="adv_force">Buộc chuyển đổi</string>
+    <string name="adv_force_desc">Thử cả những tổ hợp mà thiết bị không khai báo</string>
+    <string name="adv_via_sbc">Chuyển qua SBC</string>
+    <string name="adv_via_sbc_desc">Hạ về SBC trước, rồi mới sang codec bạn chọn</string>
+    <string name="adv_auto_hd">Tự động bật âm thanh HD</string>
+    <string name="adv_auto_hd_desc">Bật âm thanh HD khi hệ thống đang tắt nó</string>
+    <string name="adv_delay">Chờ trước khi áp dụng</string>
+    <string name="adv_delay_desc">Một số thiết bị không nhận chuyển đổi ngay sau khi kết nối</string>
+    <string name="adv_retries">Số lần thử</string>
+    <string name="adv_retry_delay">Khoảng cách giữa các lần thử</string>
+
+    <string name="action_apply_now">Áp dụng ngay</string>
+    <string name="action_delete_profile">Xoá cài đặt này</string>
+    <string name="delete_confirm_title">Xoá cài đặt?</string>
+    <string name="delete_confirm_body">Xoá cài đặt của %1$s và không thay đổi gì trên thiết bị đó nữa.</string>
+    <string name="msg_apply_requested">Đã yêu cầu mô-đun áp dụng cài đặt</string>
+    <string name="msg_apply_module_inactive">Mô-đun không chạy nên không gửi được yêu cầu</string>
+    <string name="msg_apply_not_connected">Thiết bị chưa kết nối nên bây giờ không áp dụng được</string>
+</resources>
