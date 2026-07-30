@@ -478,30 +478,49 @@ internal object A2dpHook {
         sendReport(mac)
         if (applyingMacs.contains(mac)) return
         val summary = Bt.codecInfo(Bt.currentConfig(codecStatus))?.summary() ?: return
-        if (announced.put(mac, summary) != summary) announce(device, "$summary に変更しました")
+        if (announced.put(mac, summary) != summary) announceChanged(device, summary)
     }
 
     private fun endCycle(device: BluetoothDevice, mac: String, summary: String?, failedTarget: String?) {
         applyingMacs.remove(mac)
         if (failedTarget != null) {
-            val current = summary?.let { " (現在 $it)" } ?: ""
-            announce(device, "$failedTarget に変更できませんでした$current")
+            summary?.let { announced[mac] = it }
+            announceFailed(device, failedTarget, summary)
             return
         }
         if (summary == null) return
-        if (announced.put(mac, summary) != summary) announce(device, "$summary に変更しました")
+        if (announced.put(mac, summary) != summary) announceChanged(device, summary)
     }
 
-    private fun announce(device: BluetoothDevice, text: String) {
+    private fun announceChanged(device: BluetoothDevice, summary: String) {
+        val ctx = context ?: return
+        toast(HookStrings.format(ctx, "hook_codec_changed", "%1\$s: switched to %2\$s", label(device), summary))
+    }
+
+    private fun announceFailed(device: BluetoothDevice, target: String, current: String?) {
+        val ctx = context ?: return
+        val text = if (current == null) {
+            HookStrings.format(ctx, "hook_codec_failed", "%1\$s: could not switch to %2\$s", label(device), target)
+        } else {
+            HookStrings.format(
+                ctx, "hook_codec_failed_with_current",
+                "%1\$s: could not switch to %2\$s (now %3\$s)", label(device), target, current,
+            )
+        }
+        toast(text)
+    }
+
+    private fun toast(text: String) {
         if (!config.notifyChanges) return
         val ctx = context ?: return
-        val label = runCatching { device.name }.getOrNull()?.takeIf { it.isNotBlank() }
-            ?: macOf(device).orEmpty()
         mainHandler.post {
-            runCatching { Toast.makeText(ctx, "$label: $text", Toast.LENGTH_SHORT).show() }
+            runCatching { Toast.makeText(ctx, text, Toast.LENGTH_SHORT).show() }
                 .onFailure { XLog.d("トーストを出せない: ${it.message}") }
         }
     }
+
+    private fun label(device: BluetoothDevice): String =
+        runCatching { device.name }.getOrNull()?.takeIf { it.isNotBlank() } ?: macOf(device).orEmpty()
 
     private fun sendReport(mac: String?) {
         val ctx = context ?: return

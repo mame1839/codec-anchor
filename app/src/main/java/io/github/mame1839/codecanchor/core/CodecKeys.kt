@@ -41,16 +41,17 @@ object CodecKeys {
         BITS_PER_SAMPLE_32 to "32 bit",
     )
 
+    // ラベルは言語に依存しない表記に留める。説明文の翻訳は UI 側のリソースで行う。
     val CHANNEL_MODES: List<Pair<Int, String>> = listOf(
-        CHANNEL_MODE_MONO to "モノラル",
-        CHANNEL_MODE_STEREO to "ステレオ",
+        CHANNEL_MODE_MONO to "Mono",
+        CHANNEL_MODE_STEREO to "Stereo",
     )
 
     val LDAC_QUALITIES: List<Pair<Long, String>> = listOf(
-        1000L to "990/909 kbps (音質優先)",
+        1000L to "990/909 kbps",
         1001L to "660/606 kbps",
-        1002L to "330/303 kbps (接続優先)",
-        1003L to "ABR (自動調整)",
+        1002L to "330/303 kbps",
+        1003L to "ABR",
     )
 
     val FALLBACK_CODEC_NAMES: Map<Int, String> = mapOf(
@@ -78,7 +79,7 @@ object CodecKeys {
     }
 
     fun label(table: List<Pair<Int, String>>, mask: Int): String =
-        table.firstOrNull { it.first == mask }?.second ?: if (mask == KEEP_MASK) "自動" else "0x${mask.toString(16)}"
+        table.firstOrNull { it.first == mask }?.second ?: "0x${mask.toString(16)}"
 
     fun options(table: List<Pair<Int, String>>, capability: Int): List<Pair<Int, String>> =
         if (capability == 0) table else table.filter { it.first and capability != 0 }
@@ -87,8 +88,7 @@ object CodecKeys {
         table.filter { it.first and mask != 0 }.joinToString(" / ") { it.second }.ifEmpty { "-" }
 
     fun ldacQualityLabel(value: Long): String =
-        LDAC_QUALITIES.firstOrNull { it.first == value }?.second
-            ?: if (value == KEEP_LONG) "変更しない" else value.toString()
+        LDAC_QUALITIES.firstOrNull { it.first == value }?.second ?: value.toString()
 
     fun isLdac(codecName: String?): Boolean = codecName?.contains("LDAC", ignoreCase = true) == true
 }
