@@ -13,7 +13,8 @@ when those earphones connect.
 ## Requirements
 
 - Android 12 or later
-- An Xposed framework such as [Vector](https://github.com/JingMatrix/Vector)
+- An Xposed framework that can inject into the Bluetooth process, which needs root
+  ([Vector](https://github.com/JingMatrix/Vector) and the like; root-less ones such as LSPatch cannot)
 
 ## Getting started
 

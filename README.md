@@ -13,7 +13,8 @@
 ## 実行環境
 
 - Android 12 以降
-- Xposed フレームワーク ([Vector](https://github.com/JingMatrix/Vector) など)
+- Bluetooth プロセスに注入できる Xposed フレームワーク。root が必要です
+  ([Vector](https://github.com/JingMatrix/Vector) など。LSPatch のような root なしのものでは動きません)
 
 ## 使い方
 
