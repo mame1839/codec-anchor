@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="xposed_description">イヤホンごとに Bluetooth のコーデックと音質を固定します</string>
+    <string name="permission_bridge_label">Codec Anchor の設定を送る</string>
+
+    <string name="hook_codec_changed">%1$s: %2$s に変更しました</string>
+    <string name="hook_codec_failed">%1$s: %2$s に変更できませんでした</string>
+    <string name="hook_codec_failed_with_current">%1$s: %2$s に変更できませんでした (現在 %3$s)</string>
+
+    <string name="action_close">閉じる</string>
+    <string name="action_cancel">やめる</string>
+    <string name="action_delete">削除</string>
+    <string name="action_resend">送り直す</string>
+    <string name="action_recheck">もう一度確認する</string>
+    <string name="action_grant">権限を許可する</string>
+
+    <string name="value_keep">変更しない</string>
+    <string name="value_unknown">不明</string>
+    <string name="device_unnamed">名前のわからない機器</string>
+    <string name="value_immediately">すぐに</string>
+    <string name="value_seconds">%1$s 秒</string>
+    <plurals name="retry_count">
+        <item quantity="other">%1$d 回</item>
+    </plurals>
+
+    <string name="cd_refresh_status">状態を再確認</string>
+    <string name="cd_back">戻る</string>
+
+    <string name="section_general">全体設定</string>
+    <string name="toggle_auto_apply">自動適用を有効にする</string>
+    <string name="toggle_auto_apply_desc">オフにすると、すべての機器で何もしません</string>
+    <string name="toggle_enforce">システムや他アプリによる変更を上書きする</string>
+    <string name="toggle_enforce_desc">システムや他アプリがコーデックを変えたら、設定した内容に戻します</string>
+    <string name="toggle_notify">コーデックが変わったら知らせる</string>
+    <string name="toggle_notify_desc">切り替わったときに短いメッセージを出します</string>
+    <string name="toggle_verbose">詳細ログを出す</string>
+    <string name="toggle_verbose_desc">うまく切り替わらないときの調査用</string>
+
+    <string name="permission_title">Bluetooth の権限が必要です</string>
+    <string name="permission_body">許可すると、ペアリング済みの機器と名前を読み取れます。</string>
+    <string name="bluetooth_off">Bluetooth がオフです。オンにするとペアリング済みの機器が表示されます。</string>
+
+    <string name="section_audio_devices">オーディオ機器</string>
+    <string name="devices_empty">ペアリング済みのオーディオ機器が見つかりません。</string>
+    <string name="devices_no_permission">権限がないため機器を読み取れません。</string>
+    <string name="section_other_devices">その他の機器 (%1$d)</string>
+    <string name="section_orphan_profiles">ペアリング一覧に無い設定</string>
+
+    <string name="module_checking">モジュールの状態を確認しています</string>
+    <string name="module_active">モジュールは動作中</string>
+    <string name="module_meta">バージョン %1$s · 注入先 %2$s</string>
+    <string name="module_config_pending">モジュールはまだ設定を読み込んでいません</string>
+    <string name="module_config_synced">設定は同期済み</string>
+    <string name="module_config_stale">編集した内容がモジュールに届いていません</string>
+    <string name="module_inactive">モジュールが動いていません</string>
+    <string name="module_inactive_body">Bluetooth プロセスから応答がありません。次を確認してください。</string>
+    <string name="module_step_1">1. Vector で Codec Anchor を有効にする</string>
+    <string name="module_step_2">2. モジュールのスコープに Bluetooth を追加する</string>
+    <string name="module_step_3">3. Bluetooth をオフにして、もう一度オンにする</string>
+    <string name="module_inactive_hint">この状態でも設定の編集と保存はできます。モジュールが動き出したときに反映されます。</string>
+    <string name="msg_config_pushed">設定を送り直しました</string>
+
+    <string name="tag_connected">接続中</string>
+    <string name="tag_disconnected">未接続</string>
+    <string name="tag_active">再生中</string>
+    <string name="tag_no_profile">設定なし</string>
+    <string name="tag_profile_off">自動適用オフ</string>
+    <string name="tag_not_found">未検出</string>
+    <string name="device_target">固定: %1$s</string>
+    <string name="device_current">現在: %1$s</string>
+    <string name="profile_no_target">固定する項目はまだありません</string>
+
+    <string name="section_backup">バックアップ</string>
+    <string name="backup_body">すべての設定を JSON ファイルに書き出します。</string>
+    <string name="backup_export">書き出す</string>
+    <string name="backup_import">読み込む</string>
+    <string name="backup_confirm_title">バックアップを読み込みますか</string>
+    <string name="backup_confirm_body">いまの設定は、選んだファイルの内容にすべて置き換わります。</string>
+    <string name="backup_confirm_action">ファイルを選ぶ</string>
+    <string name="msg_backup_exported">設定を書き出しました</string>
+    <string name="msg_backup_export_failed">ファイルに書き込めませんでした</string>
+    <string name="msg_backup_imported">設定を復元しました</string>
+    <string name="msg_backup_invalid">Codec Anchor のバックアップではありません</string>
+    <string name="msg_backup_failed">ファイルを読み込めませんでした</string>
+
+    <string name="detail_auto_apply">このイヤホンに自動適用する</string>
+    <string name="detail_auto_apply_desc">接続したときに、下の設定へ切り替えます</string>
+    <string name="detail_current_codec">現在のコーデック: %1$s</string>
+    <string name="detail_note">直近の結果: %1$s</string>
+    <string name="outcome_applied">%1$s に切り替えました</string>
+    <string name="outcome_failed">切り替えられず、いまは %1$s です</string>
+    <string name="outcome_undecided">指定する値を決められませんでした</string>
+    <string name="detail_updated_at">%1$s 時点</string>
+
+    <string name="section_target">固定する内容</string>
+    <string name="target_no_capability">機器が対応する組み合わせを取得できていないため、すべての候補を表示しています。</string>
+    <string name="label_codec">コーデック</string>
+    <string name="label_sample_rate">サンプルレート</string>
+    <string name="label_bit_depth">ビット深度</string>
+    <string name="label_channel">チャンネル</string>
+    <string name="label_ldac_quality">LDAC 音質</string>
+    <string name="channel_mono">モノラル</string>
+    <string name="channel_stereo">ステレオ</string>
+    <string name="ldac_hint_quality">音質優先</string>
+    <string name="ldac_hint_connection">接続優先</string>
+    <string name="ldac_hint_adaptive">自動調整</string>
+
+    <string name="section_advanced">詳細設定</string>
+    <string name="adv_force">強制適用</string>
+    <string name="adv_force_desc">機器が対応を申告していない組み合わせも試します</string>
+    <string name="adv_via_sbc">SBC を経由して切り替える</string>
+    <string name="adv_via_sbc_desc">いったん SBC に落としてから、選んだコーデックにします</string>
+    <string name="adv_auto_hd">HD オーディオを自動で有効化</string>
+    <string name="adv_auto_hd_desc">システム側で HD オーディオがオフのときにオンにします</string>
+    <string name="adv_delay">適用までの待ち時間</string>
+    <string name="adv_delay_desc">接続直後は切り替えを受け付けない機器があります</string>
+    <string name="adv_retries">リトライ回数</string>
+    <string name="adv_retry_delay">リトライ間隔</string>
+
+    <string name="action_apply_now">今すぐ適用</string>
+    <string name="action_delete_profile">この機器の設定を削除</string>
+    <string name="delete_confirm_title">設定を削除しますか</string>
+    <string name="delete_confirm_body">%1$s の設定を削除します。この機器には何もしなくなります。</string>
+    <string name="msg_apply_requested">適用を要求しました</string>
+    <string name="msg_apply_module_inactive">モジュールが動いていないため届きません</string>
+    <string name="msg_apply_not_connected">機器が接続されていないため、いまは適用できません</string>
+</resources>

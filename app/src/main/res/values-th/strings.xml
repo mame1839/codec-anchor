@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="xposed_description">ตรึงโคเดก Bluetooth และคุณภาพเสียงของหูฟังแต่ละคู่</string>
+    <string name="permission_bridge_label">ส่งการตั้งค่าของ Codec Anchor</string>
+
+    <string name="hook_codec_changed">%1$s: เปลี่ยนเป็น %2$s แล้ว</string>
+    <string name="hook_codec_failed">%1$s: เปลี่ยนเป็น %2$s ไม่ได้</string>
+    <string name="hook_codec_failed_with_current">%1$s: เปลี่ยนเป็น %2$s ไม่ได้ (ตอนนี้เป็น %3$s)</string>
+
+    <string name="action_close">ปิด</string>
+    <string name="action_cancel">ยกเลิก</string>
+    <string name="action_delete">ลบ</string>
+    <string name="action_resend">ส่งอีกครั้ง</string>
+    <string name="action_recheck">ตรวจสอบอีกครั้ง</string>
+    <string name="action_grant">ให้สิทธิ์</string>
+
+    <string name="value_keep">ไม่เปลี่ยน</string>
+    <string name="value_unknown">ไม่ทราบ</string>
+    <string name="device_unnamed">อุปกรณ์ไม่มีชื่อ</string>
+    <string name="value_immediately">ทันที</string>
+    <string name="value_seconds">%1$s วินาที</string>
+    <plurals name="retry_count">
+        <item quantity="other">%1$d ครั้ง</item>
+    </plurals>
+
+    <string name="cd_refresh_status">ตรวจสอบสถานะอีกครั้ง</string>
+    <string name="cd_back">ย้อนกลับ</string>
+
+    <string name="section_general">การตั้งค่าทั่วไป</string>
+    <string name="toggle_auto_apply">ใช้การตั้งค่าโดยอัตโนมัติ</string>
+    <string name="toggle_auto_apply_desc">เมื่อปิด จะไม่มีการเปลี่ยนแปลงกับอุปกรณ์ใด</string>
+    <string name="toggle_enforce">ย้อนการเปลี่ยนแปลงจากระบบหรือแอปอื่น</string>
+    <string name="toggle_enforce_desc">ถ้าระบบหรือแอปอื่นเปลี่ยนโคเดก จะเปลี่ยนกลับเป็นค่าที่ตรึงไว้</string>
+    <string name="toggle_notify">แจ้งเมื่อโคเดกเปลี่ยน</string>
+    <string name="toggle_notify_desc">แสดงข้อความสั้น ๆ เมื่อโคเดกถูกเปลี่ยน</string>
+    <string name="toggle_verbose">บันทึกล็อกแบบละเอียด</string>
+    <string name="toggle_verbose_desc">สำหรับตรวจหาสาเหตุที่อุปกรณ์ไม่ยอมเปลี่ยน</string>
+
+    <string name="permission_title">ต้องมีสิทธิ์ Bluetooth</string>
+    <string name="permission_body">เมื่อให้สิทธิ์ แอปจะอ่านอุปกรณ์ที่จับคู่ไว้และชื่อของอุปกรณ์ได้</string>
+    <string name="bluetooth_off">Bluetooth ปิดอยู่ เปิดเพื่อดูอุปกรณ์ที่จับคู่ไว้</string>
+
+    <string name="section_audio_devices">อุปกรณ์เสียง</string>
+    <string name="devices_empty">ไม่พบอุปกรณ์เสียงที่จับคู่ไว้</string>
+    <string name="devices_no_permission">อ่านอุปกรณ์ไม่ได้เพราะไม่มีสิทธิ์</string>
+    <string name="section_other_devices">อุปกรณ์อื่น (%1$d)</string>
+    <string name="section_orphan_profiles">การตั้งค่าที่ไม่มีอุปกรณ์จับคู่</string>
+
+    <string name="module_checking">กำลังตรวจสอบโมดูล</string>
+    <string name="module_active">โมดูลทำงานอยู่</string>
+    <string name="module_meta">เวอร์ชัน %1$s · แทรกเข้าใน %2$s</string>
+    <string name="module_config_pending">โมดูลยังไม่ได้โหลดการตั้งค่า</string>
+    <string name="module_config_synced">การตั้งค่าตรงกันแล้ว</string>
+    <string name="module_config_stale">การแก้ไขของคุณยังไม่ถึงโมดูล</string>
+    <string name="module_inactive">โมดูลไม่ทำงาน</string>
+    <string name="module_inactive_body">โปรเซส Bluetooth ไม่ตอบสนอง โปรดตรวจสอบรายการต่อไปนี้</string>
+    <string name="module_step_1">1. เปิดใช้ Codec Anchor ใน Vector</string>
+    <string name="module_step_2">2. เพิ่ม Bluetooth ในขอบเขตของโมดูล</string>
+    <string name="module_step_3">3. ปิด Bluetooth แล้วเปิดอีกครั้ง</string>
+    <string name="module_inactive_hint">คุณยังแก้ไขและบันทึกการตั้งค่าได้ ค่าจะมีผลเมื่อโมดูลเริ่มทำงาน</string>
+    <string name="msg_config_pushed">ส่งการตั้งค่าอีกครั้งแล้ว</string>
+
+    <string name="tag_connected">เชื่อมต่อแล้ว</string>
+    <string name="tag_disconnected">ไม่ได้เชื่อมต่อ</string>
+    <string name="tag_active">กำลังเล่น</string>
+    <string name="tag_no_profile">ไม่มีการตั้งค่า</string>
+    <string name="tag_profile_off">ปิดการใช้ค่าอัตโนมัติ</string>
+    <string name="tag_not_found">ไม่พบ</string>
+    <string name="device_target">ตรึงไว้: %1$s</string>
+    <string name="device_current">ตอนนี้: %1$s</string>
+    <string name="profile_no_target">ยังไม่ได้ตรึงค่าใด</string>
+
+    <string name="section_backup">การสำรองข้อมูล</string>
+    <string name="backup_body">บันทึกการตั้งค่าทั้งหมดเป็นไฟล์ JSON</string>
+    <string name="backup_export">ส่งออก</string>
+    <string name="backup_import">นำเข้า</string>
+    <string name="backup_confirm_title">นำเข้าข้อมูลสำรองไหม</string>
+    <string name="backup_confirm_body">การตั้งค่าปัจจุบันทั้งหมดจะถูกแทนที่ด้วยเนื้อหาของไฟล์ที่คุณเลือก</string>
+    <string name="backup_confirm_action">เลือกไฟล์</string>
+    <string name="msg_backup_exported">ส่งออกการตั้งค่าแล้ว</string>
+    <string name="msg_backup_export_failed">เขียนไฟล์ไม่ได้</string>
+    <string name="msg_backup_imported">คืนค่าการตั้งค่าแล้ว</string>
+    <string name="msg_backup_invalid">ไฟล์นั้นไม่ใช่ข้อมูลสำรองของ Codec Anchor</string>
+    <string name="msg_backup_failed">อ่านไฟล์ไม่ได้</string>
+
+    <string name="detail_auto_apply">ใช้กับหูฟังนี้</string>
+    <string name="detail_auto_apply_desc">เปลี่ยนไปใช้การตั้งค่าด้านล่างทุกครั้งที่หูฟังเชื่อมต่อ</string>
+    <string name="detail_current_codec">โคเดกปัจจุบัน: %1$s</string>
+    <string name="detail_note">ผลล่าสุด: %1$s</string>
+    <string name="outcome_applied">เปลี่ยนเป็น %1$s แล้ว</string>
+    <string name="outcome_failed">เปลี่ยนไม่ได้ ยังเป็น %1$s</string>
+    <string name="outcome_undecided">ระบุค่าไม่ได้</string>
+    <string name="detail_updated_at">ณ %1$s</string>
+
+    <string name="section_target">ค่าที่จะตรึง</string>
+    <string name="target_no_capability">อ่านชุดค่าที่อุปกรณ์นี้รองรับไม่ได้ จึงแสดงตัวเลือกทั้งหมด</string>
+    <string name="label_codec">โคเดก</string>
+    <string name="label_sample_rate">อัตราสุ่มตัวอย่าง</string>
+    <string name="label_bit_depth">ความลึกบิต</string>
+    <string name="label_channel">ช่องสัญญาณ</string>
+    <string name="label_ldac_quality">คุณภาพ LDAC</string>
+    <string name="channel_mono">โมโน</string>
+    <string name="channel_stereo">สเตอริโอ</string>
+    <string name="ldac_hint_quality">เน้นคุณภาพ</string>
+    <string name="ldac_hint_connection">เน้นการเชื่อมต่อ</string>
+    <string name="ldac_hint_adaptive">ปรับอัตโนมัติ</string>
+
+    <string name="section_advanced">การตั้งค่าขั้นสูง</string>
+    <string name="adv_force">บังคับให้เปลี่ยน</string>
+    <string name="adv_force_desc">ลองชุดค่าที่อุปกรณ์ไม่ได้ประกาศว่ารองรับด้วย</string>
+    <string name="adv_via_sbc">เปลี่ยนผ่าน SBC</string>
+    <string name="adv_via_sbc_desc">ลดไปที่ SBC ก่อน แล้วจึงเปลี่ยนเป็นโคเดกที่เลือก</string>
+    <string name="adv_auto_hd">เปิดเสียง HD อัตโนมัติ</string>
+    <string name="adv_auto_hd_desc">เปิดเสียง HD เมื่อระบบปิดไว้</string>
+    <string name="adv_delay">รอก่อนใช้ค่า</string>
+    <string name="adv_delay_desc">อุปกรณ์บางรุ่นไม่ยอมเปลี่ยนทันทีหลังเชื่อมต่อ</string>
+    <string name="adv_retries">จำนวนครั้งที่ลอง</string>
+    <string name="adv_retry_delay">ระยะเวลาระหว่างการลอง</string>
+
+    <string name="action_apply_now">ใช้ค่าทันที</string>
+    <string name="action_delete_profile">ลบการตั้งค่านี้</string>
+    <string name="delete_confirm_title">ลบการตั้งค่าไหม</string>
+    <string name="delete_confirm_body">ลบการตั้งค่าของ %1$s และเลิกเปลี่ยนแปลงสิ่งใดกับอุปกรณ์นี้</string>
+    <string name="msg_apply_requested">ขอให้โมดูลใช้การตั้งค่าแล้ว</string>
+    <string name="msg_apply_module_inactive">โมดูลไม่ทำงาน จึงส่งคำขอไม่ได้</string>
+    <string name="msg_apply_not_connected">อุปกรณ์ไม่ได้เชื่อมต่อ จึงยังใช้ค่าไม่ได้</string>
+</resources>

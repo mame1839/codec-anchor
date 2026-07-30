@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="xposed_description">Przypina kodek Bluetooth i jakość dźwięku dla każdej pary słuchawek</string>
+    <string name="permission_bridge_label">Wysyłanie ustawień Codec Anchor</string>
+
+    <string name="hook_codec_changed">%1$s: przełączono na %2$s</string>
+    <string name="hook_codec_failed">%1$s: nie udało się przełączyć na %2$s</string>
+    <string name="hook_codec_failed_with_current">%1$s: nie udało się przełączyć na %2$s (teraz %3$s)</string>
+
+    <string name="action_close">Zamknij</string>
+    <string name="action_cancel">Anuluj</string>
+    <string name="action_delete">Usuń</string>
+    <string name="action_resend">Wyślij ponownie</string>
+    <string name="action_recheck">Sprawdź ponownie</string>
+    <string name="action_grant">Przyznaj uprawnienie</string>
+
+    <string name="value_keep">Bez zmian</string>
+    <string name="value_unknown">Nieznane</string>
+    <string name="device_unnamed">Urządzenie bez nazwy</string>
+    <string name="value_immediately">Natychmiast</string>
+    <string name="value_seconds">%1$s s</string>
+    <plurals name="retry_count">
+        <item quantity="one">%1$d próba</item>
+        <item quantity="few">%1$d próby</item>
+        <item quantity="many">%1$d prób</item>
+        <item quantity="other">%1$d próby</item>
+    </plurals>
+
+    <string name="cd_refresh_status">Sprawdź stan ponownie</string>
+    <string name="cd_back">Wstecz</string>
+
+    <string name="section_general">Ustawienia ogólne</string>
+    <string name="toggle_auto_apply">Stosuj ustawienia automatycznie</string>
+    <string name="toggle_auto_apply_desc">Gdy wyłączone, na żadnym urządzeniu nic się nie zmienia</string>
+    <string name="toggle_enforce">Cofaj zmiany systemu i innych aplikacji</string>
+    <string name="toggle_enforce_desc">Jeśli system lub inna aplikacja zmieni kodek, przywraca przypiętą wartość</string>
+    <string name="toggle_notify">Powiadamiaj o zmianie kodeka</string>
+    <string name="toggle_notify_desc">Pokazuje krótki komunikat przy przełączeniu kodeka</string>
+    <string name="toggle_verbose">Zapisuj szczegółowe logi</string>
+    <string name="toggle_verbose_desc">Do badania urządzeń, które się nie przełączają</string>
+
+    <string name="permission_title">Potrzebne uprawnienie Bluetooth</string>
+    <string name="permission_body">Po przyznaniu aplikacja może odczytać sparowane urządzenia i ich nazwy.</string>
+    <string name="bluetooth_off">Bluetooth jest wyłączony. Włącz go, aby zobaczyć sparowane urządzenia.</string>
+
+    <string name="section_audio_devices">Urządzenia audio</string>
+    <string name="devices_empty">Nie znaleziono sparowanego urządzenia audio.</string>
+    <string name="devices_no_permission">Bez uprawnienia nie można odczytać urządzeń.</string>
+    <string name="section_other_devices">Inne urządzenia (%1$d)</string>
+    <string name="section_orphan_profiles">Ustawienia bez sparowanego urządzenia</string>
+
+    <string name="module_checking">Sprawdzanie modułu</string>
+    <string name="module_active">Moduł działa</string>
+    <string name="module_meta">Wersja %1$s · wstrzyknięty do %2$s</string>
+    <string name="module_config_pending">Moduł jeszcze nie wczytał ustawień</string>
+    <string name="module_config_synced">Ustawienia są zsynchronizowane</string>
+    <string name="module_config_stale">Twoje zmiany nie dotarły do modułu</string>
+    <string name="module_inactive">Moduł nie działa</string>
+    <string name="module_inactive_body">Proces Bluetooth nie odpowiada. Sprawdź poniższe punkty.</string>
+    <string name="module_step_1">1. Włącz Codec Anchor w aplikacji Vector</string>
+    <string name="module_step_2">2. Dodaj Bluetooth do zakresu modułu</string>
+    <string name="module_step_3">3. Wyłącz Bluetooth i włącz go ponownie</string>
+    <string name="module_inactive_hint">Ustawienia nadal można edytować i zapisywać. Zaczną działać, gdy moduł się uruchomi.</string>
+    <string name="msg_config_pushed">Ustawienia wysłane ponownie</string>
+
+    <string name="tag_connected">Połączone</string>
+    <string name="tag_disconnected">Brak połączenia</string>
+    <string name="tag_active">Odtwarzanie</string>
+    <string name="tag_no_profile">Brak ustawień</string>
+    <string name="tag_profile_off">Automatyczne stosowanie wyłączone</string>
+    <string name="tag_not_found">Nie znaleziono</string>
+    <string name="device_target">Przypięte: %1$s</string>
+    <string name="device_current">Teraz: %1$s</string>
+    <string name="profile_no_target">Nic nie jest jeszcze przypięte</string>
+
+    <string name="section_backup">Kopia zapasowa</string>
+    <string name="backup_body">Zapisuje wszystkie ustawienia w pliku JSON.</string>
+    <string name="backup_export">Eksportuj</string>
+    <string name="backup_import">Importuj</string>
+    <string name="backup_confirm_title">Zaimportować kopię zapasową?</string>
+    <string name="backup_confirm_body">Wszystkie obecne ustawienia zostaną zastąpione zawartością wybranego pliku.</string>
+    <string name="backup_confirm_action">Wybierz plik</string>
+    <string name="msg_backup_exported">Ustawienia wyeksportowane</string>
+    <string name="msg_backup_export_failed">Nie udało się zapisać pliku</string>
+    <string name="msg_backup_imported">Ustawienia przywrócone</string>
+    <string name="msg_backup_invalid">Ten plik nie jest kopią zapasową Codec Anchor</string>
+    <string name="msg_backup_failed">Nie udało się odczytać pliku</string>
+
+    <string name="detail_auto_apply">Stosuj do tych słuchawek</string>
+    <string name="detail_auto_apply_desc">Przy każdym połączeniu przełącza na ustawienia poniżej</string>
+    <string name="detail_current_codec">Obecny kodek: %1$s</string>
+    <string name="detail_note">Ostatni wynik: %1$s</string>
+    <string name="outcome_applied">przełączono na %1$s</string>
+    <string name="outcome_failed">nie udało się przełączyć, nadal %1$s</string>
+    <string name="outcome_undecided">nie udało się ustalić wartości</string>
+    <string name="detail_updated_at">Stan na %1$s</string>
+
+    <string name="section_target">Wartości do przypięcia</string>
+    <string name="target_no_capability">Nie udało się odczytać kombinacji obsługiwanych przez to urządzenie, więc pokazane są wszystkie możliwości.</string>
+    <string name="label_codec">Kodek</string>
+    <string name="label_sample_rate">Częstotliwość próbkowania</string>
+    <string name="label_bit_depth">Głębia bitowa</string>
+    <string name="label_channel">Kanały</string>
+    <string name="label_ldac_quality">Jakość LDAC</string>
+    <string name="channel_mono">Mono</string>
+    <string name="channel_stereo">Stereo</string>
+    <string name="ldac_hint_quality">priorytet jakości</string>
+    <string name="ldac_hint_connection">priorytet połączenia</string>
+    <string name="ldac_hint_adaptive">adaptacyjnie</string>
+
+    <string name="section_advanced">Ustawienia zaawansowane</string>
+    <string name="adv_force">Wymuś przełączenie</string>
+    <string name="adv_force_desc">Próbuje też kombinacji, których urządzenie nie zgłasza</string>
+    <string name="adv_via_sbc">Przełączaj przez SBC</string>
+    <string name="adv_via_sbc_desc">Najpierw schodzi do SBC, potem przechodzi na wybrany kodek</string>
+    <string name="adv_auto_hd">Włączaj dźwięk HD automatycznie</string>
+    <string name="adv_auto_hd_desc">Włącza dźwięk HD, gdy system ma go wyłączonego</string>
+    <string name="adv_delay">Opóźnienie przed zastosowaniem</string>
+    <string name="adv_delay_desc">Niektóre urządzenia nie przełączają się od razu po połączeniu</string>
+    <string name="adv_retries">Liczba prób</string>
+    <string name="adv_retry_delay">Czas między próbami</string>
+
+    <string name="action_apply_now">Zastosuj teraz</string>
+    <string name="action_delete_profile">Usuń te ustawienia</string>
+    <string name="delete_confirm_title">Usunąć ustawienia?</string>
+    <string name="delete_confirm_body">Ustawienia dla %1$s zostaną usunięte i nic nie będzie na nim zmieniane.</string>
+    <string name="msg_apply_requested">Wysłano do modułu żądanie zastosowania ustawień</string>
+    <string name="msg_apply_module_inactive">Moduł nie działa, więc żądania nie można dostarczyć</string>
+    <string name="msg_apply_not_connected">Urządzenie nie jest połączone, więc nie można teraz nic zastosować</string>
+</resources>

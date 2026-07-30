@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="xposed_description">Mengunci codec Bluetooth dan kualitas audio untuk setiap earphone</string>
+    <string name="permission_bridge_label">Mengirim setelan Codec Anchor</string>
+
+    <string name="hook_codec_changed">%1$s: beralih ke %2$s</string>
+    <string name="hook_codec_failed">%1$s: tidak dapat beralih ke %2$s</string>
+    <string name="hook_codec_failed_with_current">%1$s: tidak dapat beralih ke %2$s (kini %3$s)</string>
+
+    <string name="action_close">Tutup</string>
+    <string name="action_cancel">Batal</string>
+    <string name="action_delete">Hapus</string>
+    <string name="action_resend">Kirim lagi</string>
+    <string name="action_recheck">Periksa lagi</string>
+    <string name="action_grant">Beri izin</string>
+
+    <string name="value_keep">Jangan ubah</string>
+    <string name="value_unknown">Tidak diketahui</string>
+    <string name="device_unnamed">Perangkat tanpa nama</string>
+    <string name="value_immediately">Segera</string>
+    <string name="value_seconds">%1$s detik</string>
+    <plurals name="retry_count">
+        <item quantity="other">%1$d kali</item>
+    </plurals>
+
+    <string name="cd_refresh_status">Periksa status lagi</string>
+    <string name="cd_back">Kembali</string>
+
+    <string name="section_general">Setelan umum</string>
+    <string name="toggle_auto_apply">Terapkan setelan otomatis</string>
+    <string name="toggle_auto_apply_desc">Saat nonaktif, tidak ada perangkat yang diubah</string>
+    <string name="toggle_enforce">Batalkan perubahan dari sistem atau aplikasi lain</string>
+    <string name="toggle_enforce_desc">Jika sistem atau aplikasi lain mengubah codec, kembalikan seperti yang dikunci</string>
+    <string name="toggle_notify">Beri tahu saat codec berubah</string>
+    <string name="toggle_notify_desc">Menampilkan pesan singkat saat codec beralih</string>
+    <string name="toggle_verbose">Tulis log terperinci</string>
+    <string name="toggle_verbose_desc">Untuk menelusuri perangkat yang tidak mau beralih</string>
+
+    <string name="permission_title">Perlu izin Bluetooth</string>
+    <string name="permission_body">Dengan izin ini, aplikasi dapat membaca perangkat yang disandingkan beserta namanya.</string>
+    <string name="bluetooth_off">Bluetooth nonaktif. Aktifkan untuk melihat perangkat yang disandingkan.</string>
+
+    <string name="section_audio_devices">Perangkat audio</string>
+    <string name="devices_empty">Tidak ada perangkat audio yang disandingkan.</string>
+    <string name="devices_no_permission">Perangkat tidak dapat dibaca tanpa izin.</string>
+    <string name="section_other_devices">Perangkat lain (%1$d)</string>
+    <string name="section_orphan_profiles">Setelan tanpa perangkat yang disandingkan</string>
+
+    <string name="module_checking">Memeriksa modul</string>
+    <string name="module_active">Modul berjalan</string>
+    <string name="module_meta">Versi %1$s · disuntikkan ke %2$s</string>
+    <string name="module_config_pending">Modul belum memuat setelan</string>
+    <string name="module_config_synced">Setelan sudah sinkron</string>
+    <string name="module_config_stale">Perubahan Anda belum sampai ke modul</string>
+    <string name="module_inactive">Modul tidak berjalan</string>
+    <string name="module_inactive_body">Proses Bluetooth tidak menjawab. Periksa hal berikut.</string>
+    <string name="module_step_1">1. Aktifkan Codec Anchor di Vector</string>
+    <string name="module_step_2">2. Tambahkan Bluetooth ke cakupan modul</string>
+    <string name="module_step_3">3. Matikan Bluetooth, lalu nyalakan lagi</string>
+    <string name="module_inactive_hint">Setelan tetap dapat diubah dan disimpan. Setelan berlaku begitu modul mulai berjalan.</string>
+    <string name="msg_config_pushed">Setelan dikirim lagi</string>
+
+    <string name="tag_connected">Tersambung</string>
+    <string name="tag_disconnected">Tidak tersambung</string>
+    <string name="tag_active">Memutar</string>
+    <string name="tag_no_profile">Tanpa setelan</string>
+    <string name="tag_profile_off">Terapkan otomatis nonaktif</string>
+    <string name="tag_not_found">Tidak ditemukan</string>
+    <string name="device_target">Dikunci: %1$s</string>
+    <string name="device_current">Kini: %1$s</string>
+    <string name="profile_no_target">Belum ada yang dikunci</string>
+
+    <string name="section_backup">Pencadangan</string>
+    <string name="backup_body">Menyimpan seluruh setelan sebagai berkas JSON.</string>
+    <string name="backup_export">Ekspor</string>
+    <string name="backup_import">Impor</string>
+    <string name="backup_confirm_title">Impor cadangan?</string>
+    <string name="backup_confirm_body">Semua setelan saat ini diganti dengan isi berkas yang Anda pilih.</string>
+    <string name="backup_confirm_action">Pilih berkas</string>
+    <string name="msg_backup_exported">Setelan diekspor</string>
+    <string name="msg_backup_export_failed">Berkas tidak dapat ditulis</string>
+    <string name="msg_backup_imported">Setelan dipulihkan</string>
+    <string name="msg_backup_invalid">Berkas itu bukan cadangan Codec Anchor</string>
+    <string name="msg_backup_failed">Berkas tidak dapat dibaca</string>
+
+    <string name="detail_auto_apply">Terapkan ke earphone ini</string>
+    <string name="detail_auto_apply_desc">Beralih ke setelan di bawah setiap kali earphone tersambung</string>
+    <string name="detail_current_codec">Codec saat ini: %1$s</string>
+    <string name="detail_note">Hasil terakhir: %1$s</string>
+    <string name="outcome_applied">beralih ke %1$s</string>
+    <string name="outcome_failed">tidak dapat beralih, masih %1$s</string>
+    <string name="outcome_undecided">nilainya tidak dapat ditentukan</string>
+    <string name="detail_updated_at">Per %1$s</string>
+
+    <string name="section_target">Nilai yang dikunci</string>
+    <string name="target_no_capability">Kombinasi yang didukung perangkat ini tidak dapat dibaca, jadi semua pilihan ditampilkan.</string>
+    <string name="label_codec">Codec</string>
+    <string name="label_sample_rate">Laju sampel</string>
+    <string name="label_bit_depth">Kedalaman bit</string>
+    <string name="label_channel">Kanal</string>
+    <string name="label_ldac_quality">Kualitas LDAC</string>
+    <string name="channel_mono">Mono</string>
+    <string name="channel_stereo">Stereo</string>
+    <string name="ldac_hint_quality">utamakan kualitas</string>
+    <string name="ldac_hint_connection">utamakan koneksi</string>
+    <string name="ldac_hint_adaptive">adaptif</string>
+
+    <string name="section_advanced">Setelan lanjutan</string>
+    <string name="adv_force">Paksa peralihan</string>
+    <string name="adv_force_desc">Coba juga kombinasi yang tidak diumumkan perangkat</string>
+    <string name="adv_via_sbc">Beralih melalui SBC</string>
+    <string name="adv_via_sbc_desc">Turun ke SBC dulu, lalu pindah ke codec yang Anda pilih</string>
+    <string name="adv_auto_hd">Aktifkan audio HD otomatis</string>
+    <string name="adv_auto_hd_desc">Mengaktifkan audio HD saat sistem mematikannya</string>
+    <string name="adv_delay">Tunggu sebelum menerapkan</string>
+    <string name="adv_delay_desc">Sebagian perangkat menolak beralih tepat setelah tersambung</string>
+    <string name="adv_retries">Jumlah percobaan</string>
+    <string name="adv_retry_delay">Jeda antar percobaan</string>
+
+    <string name="action_apply_now">Terapkan sekarang</string>
+    <string name="action_delete_profile">Hapus setelan ini</string>
+    <string name="delete_confirm_title">Hapus setelan?</string>
+    <string name="delete_confirm_body">Menghapus setelan untuk %1$s dan tidak lagi mengubah apa pun pada perangkat itu.</string>
+    <string name="msg_apply_requested">Modul diminta menerapkan setelan</string>
+    <string name="msg_apply_module_inactive">Modul tidak berjalan, jadi permintaan tidak dapat dikirim</string>
+    <string name="msg_apply_not_connected">Perangkat tidak tersambung, jadi tidak ada yang bisa diterapkan sekarang</string>
+</resources>

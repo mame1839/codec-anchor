@@ -2,7 +2,6 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
 
@@ -19,7 +18,7 @@ fun secret(name: String, default: String = ""): String =
 
 android {
     namespace = "io.github.mame1839.codecanchor"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "io.github.mame1839.codecanchor"
@@ -42,9 +41,10 @@ android {
 
     buildTypes {
         release {
-            // フックのエントリクラスと Xposed API 呼び出しを壊さないため難読化はしない
-            isMinifyEnabled = false
-            isShrinkResources = false
+            // 未使用コードの削除だけ行う。クラス名は proguard-rules.pro の -dontobfuscate で保つ
+            // (Xposed はエントリクラスを名前で読み込む)
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             if (keystoreFile.exists()) signingConfig = signingConfigs.getByName("release")
         }
@@ -65,12 +65,6 @@ android {
 
     packaging {
         resources.excludes += setOf("/META-INF/{AL2.0,LGPL2.1}", "META-INF/*.version")
-    }
-}
-
-kotlin {
-    compilerOptions {
-        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
     }
 }
 

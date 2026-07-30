@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="xposed_description">为每副耳机锁定蓝牙编解码器和音质</string>
+    <string name="permission_bridge_label">发送 Codec Anchor 的设置</string>
+
+    <string name="hook_codec_changed">%1$s：已切换为 %2$s</string>
+    <string name="hook_codec_failed">%1$s：无法切换为 %2$s</string>
+    <string name="hook_codec_failed_with_current">%1$s：无法切换为 %2$s（当前为 %3$s）</string>
+
+    <string name="action_close">关闭</string>
+    <string name="action_cancel">取消</string>
+    <string name="action_delete">删除</string>
+    <string name="action_resend">重新发送</string>
+    <string name="action_recheck">重新检查</string>
+    <string name="action_grant">授予权限</string>
+
+    <string name="value_keep">保持不变</string>
+    <string name="value_unknown">未知</string>
+    <string name="device_unnamed">未知名称的设备</string>
+    <string name="value_immediately">立即</string>
+    <string name="value_seconds">%1$s 秒</string>
+    <plurals name="retry_count">
+        <item quantity="other">%1$d 次</item>
+    </plurals>
+
+    <string name="cd_refresh_status">重新检查状态</string>
+    <string name="cd_back">返回</string>
+
+    <string name="section_general">通用设置</string>
+    <string name="toggle_auto_apply">自动应用设置</string>
+    <string name="toggle_auto_apply_desc">关闭后，任何设备都不会被修改</string>
+    <string name="toggle_enforce">覆盖其他应用的修改</string>
+    <string name="toggle_enforce_desc">系统或其他应用改变编解码器时，切换回你设定的内容</string>
+    <string name="toggle_notify">编解码器变化时提示</string>
+    <string name="toggle_notify_desc">切换完成后显示一条简短提示</string>
+    <string name="toggle_verbose">输出详细日志</string>
+    <string name="toggle_verbose_desc">用于排查无法切换的设备</string>
+
+    <string name="permission_title">需要蓝牙权限</string>
+    <string name="permission_body">授予后即可读取已配对的设备及其名称。</string>
+    <string name="bluetooth_off">蓝牙已关闭。开启后即可看到已配对的设备。</string>
+
+    <string name="section_audio_devices">音频设备</string>
+    <string name="devices_empty">未找到已配对的音频设备。</string>
+    <string name="devices_no_permission">没有权限，无法读取设备。</string>
+    <string name="section_other_devices">其他设备 (%1$d)</string>
+    <string name="section_orphan_profiles">没有对应设备的设置</string>
+
+    <string name="module_checking">正在检查模块状态</string>
+    <string name="module_active">模块正在运行</string>
+    <string name="module_meta">版本 %1$s · 注入到 %2$s</string>
+    <string name="module_config_pending">模块还没有读取到设置</string>
+    <string name="module_config_synced">设置已同步</string>
+    <string name="module_config_stale">你的修改还没有送达模块</string>
+    <string name="module_inactive">模块没有运行</string>
+    <string name="module_inactive_body">蓝牙进程没有响应，请依次确认以下几项。</string>
+    <string name="module_step_1">1. 在 Vector 中启用 Codec Anchor</string>
+    <string name="module_step_2">2. 把蓝牙加入作用域</string>
+    <string name="module_step_3">3. 关闭蓝牙后再重新开启</string>
+    <string name="module_inactive_hint">此时仍可编辑并保存设置，模块开始运行后会生效。</string>
+    <string name="msg_config_pushed">已重新发送设置</string>
+
+    <string name="tag_connected">已连接</string>
+    <string name="tag_disconnected">未连接</string>
+    <string name="tag_active">正在播放</string>
+    <string name="tag_no_profile">尚无设置</string>
+    <string name="tag_profile_off">已关闭自动应用</string>
+    <string name="tag_not_found">未检测到</string>
+    <string name="device_target">锁定：%1$s</string>
+    <string name="device_current">当前：%1$s</string>
+    <string name="profile_no_target">还没有锁定任何项目</string>
+
+    <string name="section_backup">备份</string>
+    <string name="backup_body">把所有设置导出为 JSON 文件。</string>
+    <string name="backup_export">导出</string>
+    <string name="backup_import">导入</string>
+    <string name="backup_confirm_title">要导入备份吗</string>
+    <string name="backup_confirm_body">当前的所有设置都会被所选文件的内容替换。</string>
+    <string name="backup_confirm_action">选择文件</string>
+    <string name="msg_backup_exported">已导出设置</string>
+    <string name="msg_backup_export_failed">无法写入文件</string>
+    <string name="msg_backup_imported">已恢复设置</string>
+    <string name="msg_backup_invalid">这不是 Codec Anchor 的备份文件</string>
+    <string name="msg_backup_failed">无法读取文件</string>
+
+    <string name="detail_auto_apply">对这副耳机自动应用</string>
+    <string name="detail_auto_apply_desc">连接时切换为下面的设置</string>
+    <string name="detail_current_codec">当前编解码器：%1$s</string>
+    <string name="detail_note">最近的结果：%1$s</string>
+    <string name="outcome_applied">已切换为 %1$s</string>
+    <string name="outcome_failed">未能切换，当前为 %1$s</string>
+    <string name="outcome_undecided">无法确定要应用的值</string>
+    <string name="detail_updated_at">截至 %1$s</string>
+
+    <string name="section_target">要锁定的内容</string>
+    <string name="target_no_capability">无法读取该设备支持的组合，因此列出了所有候选项。</string>
+    <string name="label_codec">编解码器</string>
+    <string name="label_sample_rate">采样率</string>
+    <string name="label_bit_depth">位深度</string>
+    <string name="label_channel">声道</string>
+    <string name="label_ldac_quality">LDAC 音质</string>
+    <string name="channel_mono">单声道</string>
+    <string name="channel_stereo">立体声</string>
+    <string name="ldac_hint_quality">音质优先</string>
+    <string name="ldac_hint_connection">连接优先</string>
+    <string name="ldac_hint_adaptive">自动调整</string>
+
+    <string name="section_advanced">高级设置</string>
+    <string name="adv_force">强制应用</string>
+    <string name="adv_force_desc">也尝试设备没有声明支持的组合</string>
+    <string name="adv_via_sbc">经由 SBC 切换</string>
+    <string name="adv_via_sbc_desc">先降到 SBC，再切换到你选择的编解码器</string>
+    <string name="adv_auto_hd">自动开启高清音频</string>
+    <string name="adv_auto_hd_desc">系统关闭了高清音频时自动开启</string>
+    <string name="adv_delay">应用前的等待时间</string>
+    <string name="adv_delay_desc">有些设备刚连接时不接受切换</string>
+    <string name="adv_retries">重试次数</string>
+    <string name="adv_retry_delay">重试间隔</string>
+
+    <string name="action_apply_now">立即应用</string>
+    <string name="action_delete_profile">删除该设备的设置</string>
+    <string name="delete_confirm_title">要删除设置吗</string>
+    <string name="delete_confirm_body">将删除 %1$s 的设置，之后不会再修改该设备。</string>
+    <string name="msg_apply_requested">已请求应用设置</string>
+    <string name="msg_apply_module_inactive">模块没有运行，请求无法送达</string>
+    <string name="msg_apply_not_connected">设备未连接，现在无法应用</string>
+</resources>

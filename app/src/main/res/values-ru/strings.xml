@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="xposed_description">Закрепляет кодек Bluetooth и качество звука для каждой пары наушников</string>
+    <string name="permission_bridge_label">Отправка настроек Codec Anchor</string>
+
+    <string name="hook_codec_changed">%1$s: переключено на %2$s</string>
+    <string name="hook_codec_failed">%1$s: не удалось переключить на %2$s</string>
+    <string name="hook_codec_failed_with_current">%1$s: не удалось переключить на %2$s (сейчас %3$s)</string>
+
+    <string name="action_close">Закрыть</string>
+    <string name="action_cancel">Отмена</string>
+    <string name="action_delete">Удалить</string>
+    <string name="action_resend">Отправить снова</string>
+    <string name="action_recheck">Проверить снова</string>
+    <string name="action_grant">Выдать разрешение</string>
+
+    <string name="value_keep">Не менять</string>
+    <string name="value_unknown">Неизвестно</string>
+    <string name="device_unnamed">Устройство без имени</string>
+    <string name="value_immediately">Сразу</string>
+    <string name="value_seconds">%1$s с</string>
+    <plurals name="retry_count">
+        <item quantity="one">%1$d попытка</item>
+        <item quantity="few">%1$d попытки</item>
+        <item quantity="many">%1$d попыток</item>
+        <item quantity="other">%1$d попытки</item>
+    </plurals>
+
+    <string name="cd_refresh_status">Проверить состояние снова</string>
+    <string name="cd_back">Назад</string>
+
+    <string name="section_general">Общие настройки</string>
+    <string name="toggle_auto_apply">Применять настройки автоматически</string>
+    <string name="toggle_auto_apply_desc">Пока выключено, ни на одном устройстве ничего не меняется</string>
+    <string name="toggle_enforce">Отменять изменения системы и других приложений</string>
+    <string name="toggle_enforce_desc">Если система или другое приложение меняет кодек, возвращает закреплённое значение</string>
+    <string name="toggle_notify">Сообщать о смене кодека</string>
+    <string name="toggle_notify_desc">Показывает короткое сообщение при переключении кодека</string>
+    <string name="toggle_verbose">Вести подробный журнал</string>
+    <string name="toggle_verbose_desc">Для разбора устройств, которые не переключаются</string>
+
+    <string name="permission_title">Нужно разрешение на Bluetooth</string>
+    <string name="permission_body">С ним приложение сможет читать сопряжённые устройства и их имена.</string>
+    <string name="bluetooth_off">Bluetooth выключен. Включите его, чтобы увидеть сопряжённые устройства.</string>
+
+    <string name="section_audio_devices">Аудиоустройства</string>
+    <string name="devices_empty">Сопряжённых аудиоустройств не найдено.</string>
+    <string name="devices_no_permission">Без разрешения устройства не читаются.</string>
+    <string name="section_other_devices">Другие устройства (%1$d)</string>
+    <string name="section_orphan_profiles">Настройки без сопряжённого устройства</string>
+
+    <string name="module_checking">Проверка модуля</string>
+    <string name="module_active">Модуль работает</string>
+    <string name="module_meta">Версия %1$s · внедрён в %2$s</string>
+    <string name="module_config_pending">Модуль ещё не загрузил настройки</string>
+    <string name="module_config_synced">Настройки синхронизированы</string>
+    <string name="module_config_stale">Изменения не дошли до модуля</string>
+    <string name="module_inactive">Модуль не работает</string>
+    <string name="module_inactive_body">Процесс Bluetooth не отвечает. Проверьте следующее.</string>
+    <string name="module_step_1">1. Включите Codec Anchor в Vector</string>
+    <string name="module_step_2">2. Добавьте Bluetooth в область действия модуля</string>
+    <string name="module_step_3">3. Выключите Bluetooth и включите снова</string>
+    <string name="module_inactive_hint">Настройки всё равно можно изменять и сохранять. Они вступят в силу, когда модуль начнёт работать.</string>
+    <string name="msg_config_pushed">Настройки отправлены снова</string>
+
+    <string name="tag_connected">Подключено</string>
+    <string name="tag_disconnected">Не подключено</string>
+    <string name="tag_active">Воспроизведение</string>
+    <string name="tag_no_profile">Нет настроек</string>
+    <string name="tag_profile_off">Автоприменение выключено</string>
+    <string name="tag_not_found">Не найдено</string>
+    <string name="device_target">Закреплено: %1$s</string>
+    <string name="device_current">Сейчас: %1$s</string>
+    <string name="profile_no_target">Пока ничего не закреплено</string>
+
+    <string name="section_backup">Резервная копия</string>
+    <string name="backup_body">Сохраняет все настройки в файл JSON.</string>
+    <string name="backup_export">Экспорт</string>
+    <string name="backup_import">Импорт</string>
+    <string name="backup_confirm_title">Импортировать резервную копию?</string>
+    <string name="backup_confirm_body">Все текущие настройки заменяются содержимым выбранного файла.</string>
+    <string name="backup_confirm_action">Выбрать файл</string>
+    <string name="msg_backup_exported">Настройки экспортированы</string>
+    <string name="msg_backup_export_failed">Не удалось записать файл</string>
+    <string name="msg_backup_imported">Настройки восстановлены</string>
+    <string name="msg_backup_invalid">Это не резервная копия Codec Anchor</string>
+    <string name="msg_backup_failed">Не удалось прочитать файл</string>
+
+    <string name="detail_auto_apply">Применять к этим наушникам</string>
+    <string name="detail_auto_apply_desc">При подключении переключает на настройки ниже</string>
+    <string name="detail_current_codec">Текущий кодек: %1$s</string>
+    <string name="detail_note">Последний результат: %1$s</string>
+    <string name="outcome_applied">переключено на %1$s</string>
+    <string name="outcome_failed">не удалось переключить, сейчас %1$s</string>
+    <string name="outcome_undecided">не удалось определить значения</string>
+    <string name="detail_updated_at">Обновлено в %1$s</string>
+
+    <string name="section_target">Закрепляемые значения</string>
+    <string name="target_no_capability">Не удалось прочитать поддерживаемые устройством комбинации, поэтому показаны все варианты.</string>
+    <string name="label_codec">Кодек</string>
+    <string name="label_sample_rate">Частота дискретизации</string>
+    <string name="label_bit_depth">Разрядность</string>
+    <string name="label_channel">Каналы</string>
+    <string name="label_ldac_quality">Качество LDAC</string>
+    <string name="channel_mono">Моно</string>
+    <string name="channel_stereo">Стерео</string>
+    <string name="ldac_hint_quality">приоритет качества</string>
+    <string name="ldac_hint_connection">приоритет соединения</string>
+    <string name="ldac_hint_adaptive">адаптивно</string>
+
+    <string name="section_advanced">Дополнительно</string>
+    <string name="adv_force">Принудительное переключение</string>
+    <string name="adv_force_desc">Пробует и комбинации, которые устройство не объявляет</string>
+    <string name="adv_via_sbc">Переключать через SBC</string>
+    <string name="adv_via_sbc_desc">Сначала опускает до SBC, затем переходит на выбранный кодек</string>
+    <string name="adv_auto_hd">Включать HD-звук автоматически</string>
+    <string name="adv_auto_hd_desc">Включает HD-звук, если в системе он выключен</string>
+    <string name="adv_delay">Задержка перед применением</string>
+    <string name="adv_delay_desc">Некоторые устройства не переключаются сразу после подключения</string>
+    <string name="adv_retries">Число попыток</string>
+    <string name="adv_retry_delay">Интервал между попытками</string>
+
+    <string name="action_apply_now">Применить сейчас</string>
+    <string name="action_delete_profile">Удалить эти настройки</string>
+    <string name="delete_confirm_title">Удалить настройки?</string>
+    <string name="delete_confirm_body">Настройки для %1$s будут удалены, и на этом устройстве ничего не будет меняться.</string>
+    <string name="msg_apply_requested">Модулю отправлен запрос на применение</string>
+    <string name="msg_apply_module_inactive">Модуль не работает, поэтому запрос доставить нельзя</string>
+    <string name="msg_apply_not_connected">Устройство не подключено, поэтому применить сейчас нельзя</string>
+</resources>

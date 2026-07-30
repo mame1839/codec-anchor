@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="xposed_description">Fixa o codec Bluetooth e a qualidade de áudio de cada par de fones de ouvido</string>
+    <string name="permission_bridge_label">Enviar as configurações do Codec Anchor</string>
+
+    <string name="hook_codec_changed">%1$s: alterado para %2$s</string>
+    <string name="hook_codec_failed">%1$s: não foi possível alterar para %2$s</string>
+    <string name="hook_codec_failed_with_current">%1$s: não foi possível alterar para %2$s (agora %3$s)</string>
+
+    <string name="action_close">Fechar</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="action_delete">Excluir</string>
+    <string name="action_resend">Enviar de novo</string>
+    <string name="action_recheck">Verificar de novo</string>
+    <string name="action_grant">Conceder a permissão</string>
+
+    <string name="value_keep">Não alterar</string>
+    <string name="value_unknown">Desconhecido</string>
+    <string name="device_unnamed">Dispositivo sem nome</string>
+    <string name="value_immediately">Imediatamente</string>
+    <string name="value_seconds">%1$s s</string>
+    <plurals name="retry_count">
+        <item quantity="one">%1$d tentativa</item>
+        <item quantity="many">%1$d tentativas</item>
+        <item quantity="other">%1$d tentativas</item>
+    </plurals>
+
+    <string name="cd_refresh_status">Verificar o status novamente</string>
+    <string name="cd_back">Voltar</string>
+
+    <string name="section_general">Configurações gerais</string>
+    <string name="toggle_auto_apply">Aplicar as configurações automaticamente</string>
+    <string name="toggle_auto_apply_desc">Enquanto estiver desativado, nada é alterado em nenhum dispositivo</string>
+    <string name="toggle_enforce">Desfazer alterações do sistema ou de outros apps</string>
+    <string name="toggle_enforce_desc">Se o sistema ou outro app alterar o codec, volta ao valor fixado</string>
+    <string name="toggle_notify">Avisar quando o codec mudar</string>
+    <string name="toggle_notify_desc">Mostra uma mensagem curta quando o codec muda</string>
+    <string name="toggle_verbose">Gravar logs detalhados</string>
+    <string name="toggle_verbose_desc">Para investigar os dispositivos que não mudam</string>
+
+    <string name="permission_title">É necessária a permissão de Bluetooth</string>
+    <string name="permission_body">Ao conceder, o app pode ler seus dispositivos pareados e os nomes deles.</string>
+    <string name="bluetooth_off">O Bluetooth está desativado. Ative-o para ver seus dispositivos pareados.</string>
+
+    <string name="section_audio_devices">Dispositivos de áudio</string>
+    <string name="devices_empty">Nenhum dispositivo de áudio pareado foi encontrado.</string>
+    <string name="devices_no_permission">Sem a permissão não é possível ler os dispositivos.</string>
+    <string name="section_other_devices">Outros dispositivos (%1$d)</string>
+    <string name="section_orphan_profiles">Configurações sem dispositivo pareado</string>
+
+    <string name="module_checking">Verificando o módulo</string>
+    <string name="module_active">O módulo está em execução</string>
+    <string name="module_meta">Versão %1$s · injetado em %2$s</string>
+    <string name="module_config_pending">O módulo ainda não carregou as configurações</string>
+    <string name="module_config_synced">As configurações estão sincronizadas</string>
+    <string name="module_config_stale">Suas alterações não chegaram ao módulo</string>
+    <string name="module_inactive">O módulo não está em execução</string>
+    <string name="module_inactive_body">O processo do Bluetooth não responde. Verifique o seguinte.</string>
+    <string name="module_step_1">1. Ative o Codec Anchor no Vector</string>
+    <string name="module_step_2">2. Adicione o Bluetooth ao escopo do módulo</string>
+    <string name="module_step_3">3. Desative o Bluetooth e ative de novo</string>
+    <string name="module_inactive_hint">Você ainda pode editar e salvar as configurações. Elas passam a valer quando o módulo entrar em execução.</string>
+    <string name="msg_config_pushed">Configurações enviadas de novo</string>
+
+    <string name="tag_connected">Conectado</string>
+    <string name="tag_disconnected">Sem conexão</string>
+    <string name="tag_active">Tocando</string>
+    <string name="tag_no_profile">Sem configurações</string>
+    <string name="tag_profile_off">Aplicação automática desativada</string>
+    <string name="tag_not_found">Não encontrado</string>
+    <string name="device_target">Fixado: %1$s</string>
+    <string name="device_current">Agora: %1$s</string>
+    <string name="profile_no_target">Nada foi fixado ainda</string>
+
+    <string name="section_backup">Backup</string>
+    <string name="backup_body">Salva todas as configurações em um arquivo JSON.</string>
+    <string name="backup_export">Exportar</string>
+    <string name="backup_import">Importar</string>
+    <string name="backup_confirm_title">Importar um backup?</string>
+    <string name="backup_confirm_body">Todas as configurações atuais são substituídas pelo conteúdo do arquivo que você escolher.</string>
+    <string name="backup_confirm_action">Escolher um arquivo</string>
+    <string name="msg_backup_exported">Configurações exportadas</string>
+    <string name="msg_backup_export_failed">Não foi possível gravar o arquivo</string>
+    <string name="msg_backup_imported">Configurações restauradas</string>
+    <string name="msg_backup_invalid">Esse arquivo não é um backup do Codec Anchor</string>
+    <string name="msg_backup_failed">Não foi possível ler o arquivo</string>
+
+    <string name="detail_auto_apply">Aplicar nestes fones</string>
+    <string name="detail_auto_apply_desc">Muda para as configurações abaixo sempre que eles se conectarem</string>
+    <string name="detail_current_codec">Codec atual: %1$s</string>
+    <string name="detail_note">Último resultado: %1$s</string>
+    <string name="outcome_applied">alterado para %1$s</string>
+    <string name="outcome_failed">não foi possível alterar, continua em %1$s</string>
+    <string name="outcome_undecided">não foi possível determinar os valores</string>
+    <string name="detail_updated_at">Às %1$s</string>
+
+    <string name="section_target">Valores a fixar</string>
+    <string name="target_no_capability">Não foi possível ler as combinações que este dispositivo aceita, então todas as opções são listadas.</string>
+    <string name="label_codec">Codec</string>
+    <string name="label_sample_rate">Taxa de amostragem</string>
+    <string name="label_bit_depth">Profundidade de bits</string>
+    <string name="label_channel">Canais</string>
+    <string name="label_ldac_quality">Qualidade do LDAC</string>
+    <string name="channel_mono">Mono</string>
+    <string name="channel_stereo">Estéreo</string>
+    <string name="ldac_hint_quality">prioriza a qualidade</string>
+    <string name="ldac_hint_connection">prioriza a conexão</string>
+    <string name="ldac_hint_adaptive">adaptativo</string>
+
+    <string name="section_advanced">Configurações avançadas</string>
+    <string name="adv_force">Forçar a mudança</string>
+    <string name="adv_force_desc">Tenta também combinações que o dispositivo não declara</string>
+    <string name="adv_via_sbc">Mudar passando pelo SBC</string>
+    <string name="adv_via_sbc_desc">Cai para SBC primeiro e depois passa para o codec escolhido</string>
+    <string name="adv_auto_hd">Ativar o áudio HD automaticamente</string>
+    <string name="adv_auto_hd_desc">Ativa o áudio HD quando o sistema está com ele desligado</string>
+    <string name="adv_delay">Espera antes de aplicar</string>
+    <string name="adv_delay_desc">Alguns dispositivos não aceitam a mudança logo depois de conectar</string>
+    <string name="adv_retries">Número de tentativas</string>
+    <string name="adv_retry_delay">Tempo entre tentativas</string>
+
+    <string name="action_apply_now">Aplicar agora</string>
+    <string name="action_delete_profile">Excluir estas configurações</string>
+    <string name="delete_confirm_title">Excluir as configurações?</string>
+    <string name="delete_confirm_body">As configurações de %1$s são removidas e nada mais será alterado nele.</string>
+    <string name="msg_apply_requested">Pedido de aplicação enviado ao módulo</string>
+    <string name="msg_apply_module_inactive">O módulo não está em execução, então o pedido não pode ser entregue</string>
+    <string name="msg_apply_not_connected">O dispositivo não está conectado, então nada pode ser aplicado agora</string>
+</resources>
