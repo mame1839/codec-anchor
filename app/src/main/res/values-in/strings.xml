@@ -25,6 +25,8 @@
 
     <string name="cd_refresh_status">Periksa status lagi</string>
     <string name="cd_back">Kembali</string>
+    <string name="state_expanded">Diperluas</string>
+    <string name="state_collapsed">Diciutkan</string>
 
     <string name="section_general">Setelan umum</string>
     <string name="toggle_auto_apply">Terapkan setelan otomatis</string>
@@ -38,11 +40,14 @@
 
     <string name="permission_title">Perlu izin Bluetooth</string>
     <string name="permission_body">Dengan izin ini, aplikasi dapat membaca perangkat yang disandingkan beserta namanya.</string>
+    <string name="permission_denied">Izin diblokir. Berikan izin dari setelan sistem.</string>
     <string name="bluetooth_off">Bluetooth nonaktif. Aktifkan untuk melihat perangkat yang disandingkan.</string>
+    <string name="config_broken">Setelan yang tersimpan tidak dapat dibaca, jadi tidak ada yang bisa diubah. Impor cadangan untuk memulai dari awal.</string>
 
     <string name="section_audio_devices">Perangkat audio</string>
     <string name="devices_empty">Tidak ada perangkat audio yang disandingkan.</string>
     <string name="devices_no_permission">Perangkat tidak dapat dibaca tanpa izin.</string>
+    <string name="devices_bluetooth_off">Perangkat tidak dapat dibaca saat Bluetooth nonaktif.</string>
     <string name="section_other_devices">Perangkat lain (%1$d)</string>
     <string name="section_orphan_profiles">Setelan tanpa perangkat yang disandingkan</string>
 
@@ -94,6 +99,7 @@
 
     <string name="section_target">Nilai yang dikunci</string>
     <string name="target_no_capability">Kombinasi yang didukung perangkat ini tidak dapat dibaca, jadi semua pilihan ditampilkan.</string>
+    <string name="target_not_connected">Kombinasi yang didukung perangkat ini hanya dapat dibaca saat tersambung, jadi semua pilihan ditampilkan.</string>
     <string name="label_codec">Codec</string>
     <string name="label_sample_rate">Laju sampel</string>
     <string name="label_bit_depth">Kedalaman bit</string>

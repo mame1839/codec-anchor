@@ -25,6 +25,8 @@
 
     <string name="cd_refresh_status">ตรวจสอบสถานะอีกครั้ง</string>
     <string name="cd_back">ย้อนกลับ</string>
+    <string name="state_expanded">ขยายอยู่</string>
+    <string name="state_collapsed">ยุบอยู่</string>
 
     <string name="section_general">การตั้งค่าทั่วไป</string>
     <string name="toggle_auto_apply">ใช้การตั้งค่าโดยอัตโนมัติ</string>
@@ -38,11 +40,14 @@
 
     <string name="permission_title">ต้องมีสิทธิ์ Bluetooth</string>
     <string name="permission_body">เมื่อให้สิทธิ์ แอปจะอ่านอุปกรณ์ที่จับคู่ไว้และชื่อของอุปกรณ์ได้</string>
+    <string name="permission_denied">สิทธิ์ถูกบล็อกอยู่ โปรดให้สิทธิ์จากการตั้งค่าของระบบ</string>
     <string name="bluetooth_off">Bluetooth ปิดอยู่ เปิดเพื่อดูอุปกรณ์ที่จับคู่ไว้</string>
+    <string name="config_broken">อ่านการตั้งค่าที่บันทึกไว้ไม่ได้ จึงแก้ไขอะไรไม่ได้ นำเข้าข้อมูลสำรองเพื่อเริ่มต้นใหม่</string>
 
     <string name="section_audio_devices">อุปกรณ์เสียง</string>
     <string name="devices_empty">ไม่พบอุปกรณ์เสียงที่จับคู่ไว้</string>
     <string name="devices_no_permission">อ่านอุปกรณ์ไม่ได้เพราะไม่มีสิทธิ์</string>
+    <string name="devices_bluetooth_off">อ่านอุปกรณ์ไม่ได้เพราะ Bluetooth ปิดอยู่</string>
     <string name="section_other_devices">อุปกรณ์อื่น (%1$d)</string>
     <string name="section_orphan_profiles">การตั้งค่าที่ไม่มีอุปกรณ์จับคู่</string>
 
@@ -94,6 +99,7 @@
 
     <string name="section_target">ค่าที่จะตรึง</string>
     <string name="target_no_capability">อ่านชุดค่าที่อุปกรณ์นี้รองรับไม่ได้ จึงแสดงตัวเลือกทั้งหมด</string>
+    <string name="target_not_connected">อ่านชุดค่าที่อุปกรณ์นี้รองรับได้เฉพาะขณะเชื่อมต่อ จึงแสดงตัวเลือกทั้งหมด</string>
     <string name="label_codec">โคเดก</string>
     <string name="label_sample_rate">อัตราสุ่มตัวอย่าง</string>
     <string name="label_bit_depth">ความลึกบิต</string>

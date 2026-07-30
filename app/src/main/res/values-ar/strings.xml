@@ -30,6 +30,8 @@
 
     <string name="cd_refresh_status">التحقّق من الحالة مرة أخرى</string>
     <string name="cd_back">رجوع</string>
+    <string name="state_expanded">موسّع</string>
+    <string name="state_collapsed">مطوي</string>
 
     <string name="section_general">إعدادات عامة</string>
     <string name="toggle_auto_apply">تطبيق الإعدادات تلقائيًا</string>
@@ -43,11 +45,14 @@
 
     <string name="permission_title">إذن Bluetooth مطلوب</string>
     <string name="permission_body">منح الإذن يتيح للتطبيق قراءة أجهزتك المقترنة وأسمائها.</string>
+    <string name="permission_denied">تم حظر الإذن. يُرجى منحه من إعدادات النظام.</string>
     <string name="bluetooth_off">تم إيقاف Bluetooth. شغّله لعرض أجهزتك المقترنة.</string>
+    <string name="config_broken">تعذّرت قراءة الإعدادات المحفوظة، لذا لا يمكن تعديل أي شيء. استورد نسخة احتياطية للبدء من جديد.</string>
 
     <string name="section_audio_devices">أجهزة الصوت</string>
     <string name="devices_empty">لم يُعثر على أي جهاز صوت مقترن.</string>
     <string name="devices_no_permission">لا يمكن قراءة الأجهزة بدون الإذن.</string>
+    <string name="devices_bluetooth_off">لا يمكن قراءة الأجهزة عندما يكون Bluetooth متوقفًا.</string>
     <string name="section_other_devices">أجهزة أخرى (%1$d)</string>
     <string name="section_orphan_profiles">إعدادات بدون جهاز مقترن</string>
 
@@ -99,6 +104,7 @@
 
     <string name="section_target">القيم المراد تثبيتها</string>
     <string name="target_no_capability">تعذّرت قراءة التركيبات التي يدعمها هذا الجهاز، لذا تُعرض كل الخيارات.</string>
+    <string name="target_not_connected">لا يمكن قراءة التركيبات التي يدعمها هذا الجهاز إلا أثناء اتصاله، لذا تُعرض كل الخيارات.</string>
     <string name="label_codec">الكوديك</string>
     <string name="label_sample_rate">معدّل العينات</string>
     <string name="label_bit_depth">عمق البت</string>
