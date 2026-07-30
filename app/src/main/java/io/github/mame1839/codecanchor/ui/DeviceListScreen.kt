@@ -363,7 +363,6 @@ private fun ModuleCard(vm: MainViewModel, onPush: () -> Unit) {
                         text = stringResource(
                             R.string.module_meta,
                             report?.moduleVersion.orEmpty().ifBlank { unknown },
-                            report?.hostPackage.orEmpty().ifBlank { unknown },
                         ),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -520,6 +519,7 @@ private fun DeviceCard(
                     )
                 }
                 status?.current?.let { current ->
+                    Spacer(Modifier.height(4.dp))
                     Text(
                         text = stringResource(R.string.device_current, current.summary()),
                         style = MaterialTheme.typography.bodyMedium,

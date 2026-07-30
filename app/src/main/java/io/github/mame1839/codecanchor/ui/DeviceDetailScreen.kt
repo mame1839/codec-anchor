@@ -57,6 +57,12 @@ private val RETRY_DELAY_STEPS = listOf(500, 1000, 1500, 2000, 3000, 5000)
 // ネイティブのダンプが書く品質モードの表記。
 private const val ABR_MODE = "ABR"
 
+// 実効ビットレートは ABR のときだけ動く。固定の音質では上のコーデック行と同じ値になるので出さないし、
+// 取り直す意味もない。オフロードで読めなかったときはモードが分からないため、設定した音質で判断する。
+private fun DeviceStatus.isLdacAbr(): Boolean =
+    CodecKeys.isLdac(current?.displayName()) &&
+        (ldacQualityMode.equals(ABR_MODE, ignoreCase = true) || current?.codecSpecific1 == CodecKeys.LDAC_ABR)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeviceDetailScreen(
@@ -78,8 +84,10 @@ fun DeviceDetailScreen(
     var confirmDelete by rememberSaveable { mutableStateOf(false) }
     var advancedExpanded by rememberSaveable { mutableStateOf(false) }
 
-    LifecycleResumeEffect(Unit) {
-        vm.startWatching()
+    // 取り直しが要るのは動く値があるときだけ。固定の音質では開いていても問い合わせない。
+    val watchBitrate = status?.connected == true && status.isLdacAbr()
+    LifecycleResumeEffect(watchBitrate) {
+        if (watchBitrate) vm.startWatching()
         onPauseOrDispose { vm.stopWatching() }
     }
 
@@ -264,14 +272,7 @@ private fun DeviceHeader(name: String, mac: String, status: DeviceStatus?, offlo
                 text = stringResource(R.string.detail_current_codec, status?.current?.summary() ?: unknown),
                 style = MaterialTheme.typography.bodyMedium,
             )
-            // 固定のビットレートは上のコーデック行と同じ値になるので、動く ABR のときだけ出す。
-            // オフロードで読めなかったときはモードも分からないので、設定した音質で判断する。
-            val abr = status != null && CodecKeys.isLdac(status.current?.displayName()) &&
-                (
-                    status.ldacQualityMode.equals(ABR_MODE, ignoreCase = true) ||
-                        status.current?.codecSpecific1 == CodecKeys.LDAC_ABR
-                    )
-            if (status != null && abr) {
+            if (status != null && status.isLdacAbr()) {
                 if (status.ldacBitrateKbps > 0) {
                     Text(
                         text = stringResource(
@@ -300,6 +301,7 @@ private fun DeviceHeader(name: String, mac: String, status: DeviceStatus?, offlo
                 else -> null
             }
             if (outcomeText != null) {
+                Spacer(Modifier.height(6.dp))
                 Text(
                     text = stringResource(R.string.detail_note, outcomeText),
                     style = MaterialTheme.typography.bodyMedium,

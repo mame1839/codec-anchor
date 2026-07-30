@@ -56,7 +56,7 @@
 
     <string name="module_checking">Checking the module</string>
     <string name="module_active">The module is running</string>
-    <string name="module_meta">Version %1$s · injected into %2$s</string>
+    <string name="module_meta">Version %1$s</string>
     <string name="module_config_pending">The module has not loaded the settings yet</string>
     <string name="module_config_stale">Your changes have not reached the module</string>
     <string name="module_inactive">The module is not running</string>

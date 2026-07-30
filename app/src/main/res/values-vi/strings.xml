@@ -53,7 +53,7 @@
 
     <string name="module_checking">Đang kiểm tra mô-đun</string>
     <string name="module_active">Mô-đun đang chạy</string>
-    <string name="module_meta">Phiên bản %1$s · chèn vào %2$s</string>
+    <string name="module_meta">Phiên bản %1$s</string>
     <string name="module_config_pending">Mô-đun chưa nạp cài đặt</string>
     <string name="module_config_stale">Thay đổi của bạn chưa đến được mô-đun</string>
     <string name="module_inactive">Mô-đun không chạy</string>

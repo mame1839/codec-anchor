@@ -55,7 +55,7 @@
 
     <string name="module_checking">Vérification du module</string>
     <string name="module_active">Le module fonctionne</string>
-    <string name="module_meta">Version %1$s · injecté dans %2$s</string>
+    <string name="module_meta">Version %1$s</string>
     <string name="module_config_pending">Le module n\'a pas encore chargé les réglages</string>
     <string name="module_config_stale">Vos modifications ne sont pas encore parvenues au module</string>
     <string name="module_inactive">Le module ne fonctionne pas</string>

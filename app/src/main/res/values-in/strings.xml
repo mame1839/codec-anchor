@@ -53,7 +53,7 @@
 
     <string name="module_checking">Memeriksa modul</string>
     <string name="module_active">Modul berjalan</string>
-    <string name="module_meta">Versi %1$s · disuntikkan ke %2$s</string>
+    <string name="module_meta">Versi %1$s</string>
     <string name="module_config_pending">Modul belum memuat setelan</string>
     <string name="module_config_stale">Perubahan Anda belum sampai ke modul</string>
     <string name="module_inactive">Modul tidak berjalan</string>

@@ -54,7 +54,7 @@
 
     <string name="module_checking">मॉड्यूल की जाँच हो रही है</string>
     <string name="module_active">मॉड्यूल चल रहा है</string>
-    <string name="module_meta">वर्शन %1$s · %2$s में चल रहा है</string>
+    <string name="module_meta">वर्शन %1$s</string>
     <string name="module_config_pending">मॉड्यूल ने अभी सेटिंग नहीं पढ़ी</string>
     <string name="module_config_stale">आपके बदलाव मॉड्यूल तक नहीं पहुँचे</string>
     <string name="module_inactive">मॉड्यूल नहीं चल रहा</string>

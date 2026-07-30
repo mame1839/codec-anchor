@@ -58,7 +58,7 @@
 
     <string name="module_checking">جارٍ التحقّق من الوحدة</string>
     <string name="module_active">الوحدة تعمل</string>
-    <string name="module_meta">الإصدار %1$s · تعمل داخل %2$s</string>
+    <string name="module_meta">الإصدار %1$s</string>
     <string name="module_config_pending">لم تحمّل الوحدة الإعدادات بعد</string>
     <string name="module_config_stale">تغييراتك لم تصل إلى الوحدة</string>
     <string name="module_inactive">الوحدة لا تعمل</string>

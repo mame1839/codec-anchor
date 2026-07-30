@@ -53,7 +53,7 @@
 
     <string name="module_checking">กำลังตรวจสอบโมดูล</string>
     <string name="module_active">โมดูลทำงานอยู่</string>
-    <string name="module_meta">เวอร์ชัน %1$s · แทรกเข้าใน %2$s</string>
+    <string name="module_meta">เวอร์ชัน %1$s</string>
     <string name="module_config_pending">โมดูลยังไม่ได้โหลดการตั้งค่า</string>
     <string name="module_config_stale">การแก้ไขของคุณยังไม่ถึงโมดูล</string>
     <string name="module_inactive">โมดูลไม่ทำงาน</string>

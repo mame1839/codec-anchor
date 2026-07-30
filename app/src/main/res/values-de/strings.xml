@@ -54,7 +54,7 @@
 
     <string name="module_checking">Modul wird geprüft</string>
     <string name="module_active">Das Modul läuft</string>
-    <string name="module_meta">Version %1$s · in %2$s injiziert</string>
+    <string name="module_meta">Version %1$s</string>
     <string name="module_config_pending">Das Modul hat die Einstellungen noch nicht geladen</string>
     <string name="module_config_stale">Deine Änderungen sind noch nicht beim Modul angekommen</string>
     <string name="module_inactive">Das Modul läuft nicht</string>
