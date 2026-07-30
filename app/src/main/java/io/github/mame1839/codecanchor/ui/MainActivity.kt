@@ -92,9 +92,10 @@ private fun CodecAnchorApp(vm: MainViewModel = viewModel()) {
 
     // ViewModel は画面より長生きするので、書き出し / 復元の結果はここで受け取って消費済みにする。
     val pendingMessage = vm.pendingMessage
-    LaunchedEffect(pendingMessage) {
-        if (pendingMessage != null) {
-            notify(context.getString(pendingMessage))
+    val pendingText = pendingMessage?.let { stringResource(it) }
+    LaunchedEffect(pendingText) {
+        if (pendingText != null) {
+            notify(pendingText)
             vm.consumeMessage()
         }
     }

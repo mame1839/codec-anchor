@@ -32,6 +32,8 @@ import io.github.mame1839.codecanchor.core.StatusReport
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
+// Bluetooth プロセスの Context を持ち続けるのは設計どおり (フックはプロセスと同じ寿命)。
+@SuppressLint("StaticFieldLeak")
 internal object A2dpHook {
     private const val CLASS_A2DP_SERVICE = "com.android.bluetooth.a2dp.A2dpService"
     private const val CLASS_A2DP_CODEC_CONFIG = "com.android.bluetooth.a2dp.A2dpCodecConfig"
