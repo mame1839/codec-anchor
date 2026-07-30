@@ -17,6 +17,7 @@ import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
 import io.github.mame1839.codecanchor.BuildConfig
 import io.github.mame1839.codecanchor.core.AppConfig
+import io.github.mame1839.codecanchor.core.ApplyOutcome
 import io.github.mame1839.codecanchor.core.Bridge
 import io.github.mame1839.codecanchor.core.CodecInfo
 import io.github.mame1839.codecanchor.core.CodecKeys
@@ -250,7 +251,7 @@ internal object A2dpHook {
         val current = Bt.codecInfo(Bt.currentConfig(status))
 
         if (current != null && matches(current, profile)) {
-            refreshStatus(device, status, "適用済み: ${current.summary()}")
+            refreshStatus(device, status, ApplyOutcome.APPLIED, current.summary())
             sendReport(mac)
             endCycle(device, mac, current.summary(), null)
             return
@@ -258,7 +259,7 @@ internal object A2dpHook {
 
         val target = buildTarget(profile, status)
         if (target == null) {
-            refreshStatus(device, status, "設定を組み立てられなかった")
+            refreshStatus(device, status, ApplyOutcome.UNDECIDED)
             sendReport(mac)
             applyingMacs.remove(mac)
             return
@@ -289,16 +290,16 @@ internal object A2dpHook {
             when {
                 now != null && matches(now, profile) -> {
                     XLog.i("反映を確認: $mac ${now.summary()}")
-                    refreshStatus(device, after, "適用済み: ${now.summary()}")
+                    refreshStatus(device, after, ApplyOutcome.APPLIED, now.summary())
                     sendReport(mac)
                     endCycle(device, mac, now.summary(), null)
                 }
                 !lastAttempt -> applyWithRetry(device, profile, attempt + 1, reason)
                 else -> {
                     XLog.i("反映されなかった: $mac 現在=${now?.summary()} 目標=${info?.summary()}")
-                    refreshStatus(device, after, "適用できなかった (現在 ${now?.summary() ?: "不明"})")
+                    refreshStatus(device, after, ApplyOutcome.FAILED, now?.summary().orEmpty())
                     sendReport(mac)
-                    endCycle(device, mac, now?.summary(), info?.summary() ?: "指定した設定")
+                    endCycle(device, mac, now?.summary(), info?.summary() ?: return@postDelayed)
                 }
             }
         }, mac.intern(), profile.retryDelayMs.toLong().coerceIn(300L, 30_000L))
@@ -440,7 +441,12 @@ internal object A2dpHook {
         connectedDevices().forEach { refreshStatus(it, codecStatusOf(it)) }
     }
 
-    private fun refreshStatus(device: BluetoothDevice, codecStatus: Any?, note: String? = null): DeviceStatus? {
+    private fun refreshStatus(
+        device: BluetoothDevice,
+        codecStatus: Any?,
+        outcome: ApplyOutcome? = null,
+        outcomeValue: String = "",
+    ): DeviceStatus? {
         val mac = macOf(device) ?: return null
         val svc = service ?: return null
         val connected = runCatching {
@@ -457,7 +463,8 @@ internal object A2dpHook {
             current = Bt.codecInfo(Bt.currentConfig(codecStatus)),
             selectable = Bt.selectableCapabilities(codecStatus).mapNotNull { Bt.codecInfo(it) },
             local = Bt.localCapabilities(codecStatus).mapNotNull { Bt.codecInfo(it) },
-            note = note ?: statuses[mac]?.note.orEmpty(),
+            outcome = outcome ?: statuses[mac]?.outcome ?: ApplyOutcome.NONE,
+            outcomeValue = if (outcome == null) statuses[mac]?.outcomeValue.orEmpty() else outcomeValue,
             updatedAt = System.currentTimeMillis(),
         )
         statuses[mac] = status

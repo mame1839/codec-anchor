@@ -32,7 +32,7 @@
     <string name="section_general">General</string>
     <string name="toggle_auto_apply">Apply settings automatically</string>
     <string name="toggle_auto_apply_desc">While off, nothing is changed on any device</string>
-    <string name="toggle_enforce">Undo changes made by other apps</string>
+    <string name="toggle_enforce">Undo changes by the system or other apps</string>
     <string name="toggle_enforce_desc">If the system or another app changes the codec, switch it back</string>
     <string name="toggle_notify">Announce codec changes</string>
     <string name="toggle_notify_desc">Shows a short message when the codec switches</string>
@@ -58,7 +58,7 @@
     <string name="module_inactive">The module is not running</string>
     <string name="module_inactive_body">The Bluetooth process is not answering. Please check the following.</string>
     <string name="module_step_1">1. Enable Codec Anchor in Vector</string>
-    <string name="module_step_2">2. Add Bluetooth to its scope</string>
+    <string name="module_step_2">2. Add Bluetooth to the scope of the module</string>
     <string name="module_step_3">3. Turn Bluetooth off, then on again</string>
     <string name="module_inactive_hint">You can still edit and save settings. They take effect once the module starts running.</string>
     <string name="msg_config_pushed">Sent the settings again</string>
@@ -91,6 +91,9 @@
     <string name="detail_auto_apply_desc">Switches to the settings below whenever they connect</string>
     <string name="detail_current_codec">Current codec: %1$s</string>
     <string name="detail_note">Last result: %1$s</string>
+    <string name="outcome_applied">switched to %1$s</string>
+    <string name="outcome_failed">could not switch, still %1$s</string>
+    <string name="outcome_undecided">the values could not be determined</string>
     <string name="detail_updated_at">As of %1$s</string>
 
     <string name="section_target">Values to pin</string>
@@ -124,6 +127,6 @@
     <string name="delete_confirm_title">Delete the settings?</string>
     <string name="delete_confirm_body">The settings for %1$s are removed, and nothing will be changed on it.</string>
     <string name="msg_apply_requested">Asked the module to apply the settings</string>
-    <string name="msg_apply_module_inactive">The module is not running, so the request does not arrive</string>
+    <string name="msg_apply_module_inactive">The module is not running, so the request cannot be delivered</string>
     <string name="msg_apply_not_connected">The device is not connected, so nothing can be applied now</string>
 </resources>

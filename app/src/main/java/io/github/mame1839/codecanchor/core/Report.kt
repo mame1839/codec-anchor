@@ -44,6 +44,15 @@ data class CodecInfo(
     }
 }
 
+// 直近の適用結果。文言はアプリ側で組み立てるので、フックは種別と値だけを送る。
+enum class ApplyOutcome {
+    NONE, APPLIED, FAILED, UNDECIDED;
+
+    companion object {
+        fun from(name: String?): ApplyOutcome = entries.firstOrNull { it.name == name } ?: NONE
+    }
+}
+
 data class DeviceStatus(
     val mac: String,
     val name: String = "",
@@ -52,7 +61,8 @@ data class DeviceStatus(
     val current: CodecInfo? = null,
     val selectable: List<CodecInfo> = emptyList(),
     val local: List<CodecInfo> = emptyList(),
-    val note: String = "",
+    val outcome: ApplyOutcome = ApplyOutcome.NONE,
+    val outcomeValue: String = "",
     val updatedAt: Long = 0,
 ) {
     fun toJson(): JSONObject = JSONObject().apply {
@@ -63,7 +73,8 @@ data class DeviceStatus(
         current?.let { put("current", it.toJson()) }
         put("selectable", JSONArray().also { a -> selectable.forEach { a.put(it.toJson()) } })
         put("local", JSONArray().also { a -> local.forEach { a.put(it.toJson()) } })
-        put("note", note)
+        put("outcome", outcome.name)
+        put("outcomeValue", outcomeValue)
         put("updatedAt", updatedAt)
     }
 
@@ -78,7 +89,8 @@ data class DeviceStatus(
             current = o.optJSONObject("current")?.let { CodecInfo.fromJson(it) },
             selectable = o.optJSONArray("selectable").toCodecList(),
             local = o.optJSONArray("local").toCodecList(),
-            note = o.optString("note", ""),
+            outcome = ApplyOutcome.from(o.optString("outcome")),
+            outcomeValue = o.optString("outcomeValue", ""),
             updatedAt = o.optLong("updatedAt", 0),
         )
 

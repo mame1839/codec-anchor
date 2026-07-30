@@ -1,10 +1,11 @@
 package io.github.mame1839.codecanchor.ui
 
+import android.content.Context
 import android.content.res.Resources
+import android.text.format.DateFormat
 import io.github.mame1839.codecanchor.R
 import io.github.mame1839.codecanchor.core.CodecKeys
 import io.github.mame1839.codecanchor.core.DeviceProfile
-import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
@@ -59,5 +60,5 @@ fun millisLabel(res: Resources, ms: Int): String = when {
 fun retryLabel(res: Resources, count: Int): String =
     res.getQuantityString(R.plurals.retry_count, count, count)
 
-fun clockLabel(timestamp: Long): String =
-    if (timestamp <= 0) "-" else SimpleDateFormat("HH:mm:ss", Locale.US).format(Date(timestamp))
+fun clockLabel(context: Context, timestamp: Long): String =
+    if (timestamp <= 0) "-" else DateFormat.getTimeFormat(context).format(Date(timestamp))

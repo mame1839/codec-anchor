@@ -87,6 +87,9 @@
     <string name="detail_auto_apply_desc">连接时切换为下面的设置</string>
     <string name="detail_current_codec">当前编解码器：%1$s</string>
     <string name="detail_note">最近的结果：%1$s</string>
+    <string name="outcome_applied">已切换为 %1$s</string>
+    <string name="outcome_failed">未能切换，当前为 %1$s</string>
+    <string name="outcome_undecided">无法确定要应用的值</string>
     <string name="detail_updated_at">截至 %1$s</string>
 
     <string name="section_target">要锁定的内容</string>
