@@ -1,6 +1,129 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Codec Anchor</string>
-    <string name="xposed_description">イヤホンごとに Bluetooth のコーデックと音質を固定します</string>
-    <string name="permission_bridge_label">Codec Anchor の設定を送る</string>
+    <string name="app_name" translatable="false">Codec Anchor</string>
+    <string name="xposed_description">Pins the Bluetooth codec and audio quality for each pair of earphones</string>
+    <string name="permission_bridge_label">Send Codec Anchor settings</string>
+
+    <!-- Read by name from the Bluetooth process. Keep these keys in every locale. -->
+    <string name="hook_codec_changed">%1$s: switched to %2$s</string>
+    <string name="hook_codec_failed">%1$s: could not switch to %2$s</string>
+    <string name="hook_codec_failed_with_current">%1$s: could not switch to %2$s (now %3$s)</string>
+
+    <string name="action_close">Close</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_resend">Send again</string>
+    <string name="action_recheck">Check again</string>
+    <string name="action_grant">Grant the permission</string>
+
+    <string name="value_keep">Leave unchanged</string>
+    <string name="value_unknown">Unknown</string>
+    <string name="value_immediately">Immediately</string>
+    <string name="value_seconds">%1$s s</string>
+    <plurals name="retry_count">
+        <item quantity="one">%1$d try</item>
+        <item quantity="other">%1$d tries</item>
+    </plurals>
+
+    <string name="cd_refresh_status">Check the status again</string>
+    <string name="cd_back">Back</string>
+
+    <string name="section_general">General</string>
+    <string name="toggle_auto_apply">Apply settings automatically</string>
+    <string name="toggle_auto_apply_desc">While off, nothing is changed on any device</string>
+    <string name="toggle_enforce">Undo changes made by other apps</string>
+    <string name="toggle_enforce_desc">If the system or another app changes the codec, switch it back</string>
+    <string name="toggle_notify">Announce codec changes</string>
+    <string name="toggle_notify_desc">Shows a short message when the codec switches</string>
+    <string name="toggle_verbose">Write verbose logs</string>
+    <string name="toggle_verbose_desc">For looking into devices that will not switch</string>
+
+    <string name="permission_title">Bluetooth permission needed</string>
+    <string name="permission_body">Granting it lets the app read your paired devices and their names.</string>
+    <string name="bluetooth_off">Bluetooth is off. Turn it on to see your paired devices.</string>
+
+    <string name="section_audio_devices">Audio devices</string>
+    <string name="devices_empty">No paired audio device was found.</string>
+    <string name="devices_no_permission">Devices cannot be read without the permission.</string>
+    <string name="section_other_devices">Other devices (%1$d)</string>
+    <string name="section_orphan_profiles">Settings without a paired device</string>
+
+    <string name="module_checking">Checking the module</string>
+    <string name="module_active">The module is running</string>
+    <string name="module_meta">Version %1$s · injected into %2$s</string>
+    <string name="module_last_report">Last report %1$s</string>
+    <string name="module_config_pending">The module has not loaded the settings yet</string>
+    <string name="module_config_synced">Settings are in sync</string>
+    <string name="module_config_stale">Your changes have not reached the module</string>
+    <string name="module_inactive">The module is not running</string>
+    <string name="module_inactive_body">The Bluetooth process is not answering. Please check the following.</string>
+    <string name="module_step_1">1. Enable Codec Anchor in Vector</string>
+    <string name="module_step_2">2. Add Bluetooth to its scope</string>
+    <string name="module_step_3">3. Turn Bluetooth off, then on again</string>
+    <string name="module_inactive_hint">You can still edit and save settings. They take effect once the module starts running.</string>
+    <string name="msg_config_pushed">Sent the settings again</string>
+
+    <string name="tag_connected">Connected</string>
+    <string name="tag_disconnected">Not connected</string>
+    <string name="tag_active">Playing</string>
+    <string name="tag_no_profile">No settings</string>
+    <string name="tag_profile_off">Auto apply off</string>
+    <string name="tag_not_found">Not found</string>
+    <string name="device_target">Pinned: %1$s</string>
+    <string name="device_current">Now: %1$s</string>
+    <string name="profile_no_target">Nothing is pinned yet</string>
+
+    <string name="section_backup">Backup</string>
+    <string name="backup_body">Saves every setting as a JSON file.</string>
+    <string name="backup_export">Export</string>
+    <string name="backup_import">Import</string>
+    <string name="backup_filename" translatable="false">codec-anchor-%1$s.json</string>
+    <string name="backup_confirm_title">Import a backup?</string>
+    <string name="backup_confirm_body">Every current setting is replaced by the contents of the file you pick.</string>
+    <string name="backup_confirm_action">Pick a file</string>
+    <string name="msg_backup_exported">Exported the settings</string>
+    <string name="msg_backup_export_failed">Could not write the file</string>
+    <string name="msg_backup_imported">Restored the settings</string>
+    <string name="msg_backup_invalid">That file is not a Codec Anchor backup</string>
+    <string name="msg_backup_failed">Could not read the file</string>
+
+    <string name="detail_auto_apply">Apply to these earphones</string>
+    <string name="detail_auto_apply_desc">Switches to the settings below whenever they connect</string>
+    <string name="detail_current_codec">Current codec: %1$s</string>
+    <string name="detail_note">Last result: %1$s</string>
+    <string name="detail_updated_at">As of %1$s</string>
+
+    <string name="section_target">Values to pin</string>
+    <string name="target_no_capability">The combinations this device supports could not be read, so every candidate is listed.</string>
+    <string name="label_codec">Codec</string>
+    <string name="label_sample_rate">Sample rate</string>
+    <string name="label_bit_depth">Bit depth</string>
+    <string name="label_channel">Channels</string>
+    <string name="label_ldac_quality">LDAC quality</string>
+    <string name="channel_mono">Mono</string>
+    <string name="channel_stereo">Stereo</string>
+    <string name="ldac_option_annotated">%1$s (%2$s)</string>
+    <string name="ldac_hint_quality">quality first</string>
+    <string name="ldac_hint_connection">connection first</string>
+    <string name="ldac_hint_adaptive">adaptive</string>
+
+    <string name="section_advanced">Advanced</string>
+    <string name="adv_force">Force</string>
+    <string name="adv_force_desc">Also try combinations the device does not advertise</string>
+    <string name="adv_via_sbc">Switch by way of SBC</string>
+    <string name="adv_via_sbc_desc">Drops to SBC first, then moves to the codec you picked</string>
+    <string name="adv_auto_hd">Turn on HD audio automatically</string>
+    <string name="adv_auto_hd_desc">Enables HD audio when the system has it switched off</string>
+    <string name="adv_delay">Wait before applying</string>
+    <string name="adv_delay_desc">Some devices refuse to switch right after connecting</string>
+    <string name="adv_retries">Number of tries</string>
+    <string name="adv_retry_delay">Time between tries</string>
+
+    <string name="action_apply_now">Apply now</string>
+    <string name="action_delete_profile">Delete these settings</string>
+    <string name="delete_confirm_title">Delete the settings?</string>
+    <string name="delete_confirm_body">The settings for %1$s are removed, and nothing will be changed on it.</string>
+    <string name="msg_apply_requested">Asked the module to apply the settings</string>
+    <string name="msg_apply_module_inactive">The module is not running, so the request does not arrive</string>
+    <string name="msg_apply_not_connected">The device is not connected, so nothing can be applied now</string>
 </resources>
