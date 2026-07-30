@@ -39,6 +39,7 @@
     <string name="permission_title">Bluetooth の権限が必要です</string>
     <string name="permission_body">許可すると、ペアリング済みの機器と名前を読み取れます。</string>
     <string name="bluetooth_off">Bluetooth がオフです。オンにするとペアリング済みの機器が表示されます。</string>
+    <string name="config_broken">保存された設定を読めませんでした。このままでは編集できません。バックアップを読み込むとやり直せます。</string>
 
     <string name="section_audio_devices">オーディオ機器</string>
     <string name="devices_empty">ペアリング済みのオーディオ機器が見つかりません。</string>

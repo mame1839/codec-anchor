@@ -45,8 +45,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val context: Context = application.applicationContext
     private val store = SettingsStore(context)
+    private val stored = store.load()
 
-    var config by mutableStateOf(store.load())
+    var config by mutableStateOf(stored ?: AppConfig())
+        private set
+
+    // 保存された設定が読めないときは、編集で上書きしてしまわないよう保存とプッシュを止める。
+    var configBroken by mutableStateOf(stored == null)
         private set
     var report by mutableStateOf<StatusReport?>(null)
         private set
@@ -134,11 +139,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         refreshDevices()
     }
 
-    fun pushConfig() = BridgeClient.pushConfig(context, config)
+    fun pushConfig() {
+        if (configBroken) return
+        BridgeClient.pushConfig(context, config)
+    }
 
     fun applyNow(mac: String?) = BridgeClient.applyNow(context, mac)
 
     fun update(transform: (AppConfig) -> AppConfig) {
+        if (configBroken) return
         val next = transform(config)
         if (next == config) return
         config = next
@@ -172,7 +181,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // AppConfig.decode() は壊れた JSON でも既定値を返すので、ここは fromJson を使って中身を検査する。
+    // 読めなかった (FAILED) と Codec Anchor のバックアップではない (INVALID) を分けるため、
+    // JSON の形を自分で見てから fromJson に渡す。
     fun importConfig(uri: Uri, onDone: (BackupResult) -> Unit) {
         viewModelScope.launch {
             val text = withContext(Dispatchers.IO) {
@@ -191,6 +201,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
             val restored = AppConfig.fromJson(parsed)
             config = restored
+            configBroken = false
             store.save(restored)
             BridgeClient.pushConfig(context, restored)
             refreshDevices()

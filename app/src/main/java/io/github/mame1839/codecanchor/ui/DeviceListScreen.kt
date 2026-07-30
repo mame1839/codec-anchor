@@ -106,6 +106,18 @@ fun DeviceListScreen(
                 )
             }
 
+            if (vm.configBroken) {
+                item {
+                    SettingsCard(container = MaterialTheme.colorScheme.errorContainer) {
+                        NoticeRow(
+                            icon = R.drawable.ic_warning,
+                            text = stringResource(R.string.config_broken),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
+                        )
+                    }
+                }
+            }
+
             item {
                 SettingsCard(title = stringResource(R.string.section_general)) {
                     SwitchRow(

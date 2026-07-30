@@ -250,6 +250,10 @@ internal object A2dpHook {
                     return
                 }
                 val received = AppConfig.decode(json)
+                if (received == null) {
+                    XLog.e("受け取った設定を読めないので今の設定を保つ")
+                    return
+                }
                 val changed = received != config
                 config = received
                 configLoaded = true
@@ -287,7 +291,7 @@ internal object A2dpHook {
         if (!config.enabled) return
         val profile = config.profileFor(mac) ?: return
         if (!profile.enabled || !profile.hasAnyTarget()) return
-        val delay = if (immediate) 0L else profile.delayMs.toLong().coerceAtLeast(0L)
+        val delay = if (immediate) 0L else profile.delayMs.coerceIn(DeviceProfile.DELAY_MS_RANGE).toLong()
         val token = mac.intern()
         applyingMacs.add(mac)
         worker.removeCallbacksAndMessages(token)
@@ -330,7 +334,7 @@ internal object A2dpHook {
             return
         }
 
-        val maxAttempts = profile.retries.coerceIn(1, 10)
+        val maxAttempts = profile.retries.coerceIn(DeviceProfile.RETRIES_RANGE)
         val lastAttempt = attempt >= maxAttempts
 
         if (profile.autoEnableHd) ensureOptionalCodecs(svc, device, target)
@@ -351,7 +355,7 @@ internal object A2dpHook {
 
         worker.postDelayed({
             safely("反映の確認") { verifyApply(device, profile, attempt, lastAttempt, reason, info) }
-        }, mac.intern(), profile.retryDelayMs.toLong().coerceIn(300L, 30_000L))
+        }, mac.intern(), profile.retryDelayMs.coerceIn(DeviceProfile.RETRY_DELAY_MS_RANGE).toLong())
     }
 
     private fun verifyApply(
@@ -656,7 +660,12 @@ internal object A2dpHook {
             val prefs = XSharedPreferences(Bridge.PKG, "config")
             if (!prefs.file.canRead()) return
             val json = prefs.getString("json", null) ?: return
-            config = AppConfig.decode(json)
+            val loaded = AppConfig.decode(json)
+            if (loaded == null) {
+                XLog.e("ファイルの設定を読めなかった")
+                return
+            }
+            config = loaded
             configLoaded = true
             XLog.verbose = config.verbose
             XLog.i("設定をファイルから読み込んだ (${config.profiles.size} 台)")
