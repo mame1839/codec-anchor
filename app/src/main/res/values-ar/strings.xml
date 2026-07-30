@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="xposed_description">يثبّت كوديك Bluetooth وجودة الصوت لكل سماعة أذن</string>
+    <string name="permission_bridge_label">إرسال إعدادات Codec Anchor</string>
+
+    <string name="hook_codec_changed">%1$s: تم التحويل إلى %2$s</string>
+    <string name="hook_codec_failed">%1$s: تعذّر التحويل إلى %2$s</string>
+    <string name="hook_codec_failed_with_current">%1$s: تعذّر التحويل إلى %2$s (الآن %3$s)</string>
+
+    <string name="action_close">إغلاق</string>
+    <string name="action_cancel">إلغاء</string>
+    <string name="action_delete">حذف</string>
+    <string name="action_resend">إرسال مرة أخرى</string>
+    <string name="action_recheck">تحقّق مرة أخرى</string>
+    <string name="action_grant">منح الإذن</string>
+
+    <string name="value_keep">دون تغيير</string>
+    <string name="value_unknown">غير معروف</string>
+    <string name="device_unnamed">جهاز بلا اسم</string>
+    <string name="value_immediately">فورًا</string>
+    <string name="value_seconds">%1$s ثانية</string>
+    <plurals name="retry_count">
+        <item quantity="zero">%1$d محاولة</item>
+        <item quantity="one">%1$d محاولة</item>
+        <item quantity="two">%1$d محاولتان</item>
+        <item quantity="few">%1$d محاولات</item>
+        <item quantity="many">%1$d محاولة</item>
+        <item quantity="other">%1$d محاولة</item>
+    </plurals>
+
+    <string name="cd_refresh_status">التحقّق من الحالة مرة أخرى</string>
+    <string name="cd_back">رجوع</string>
+
+    <string name="section_general">إعدادات عامة</string>
+    <string name="toggle_auto_apply">تطبيق الإعدادات تلقائيًا</string>
+    <string name="toggle_auto_apply_desc">عند إيقافه لا يُغيَّر أي شيء على أي جهاز</string>
+    <string name="toggle_enforce">التراجع عن تغييرات التطبيقات الأخرى</string>
+    <string name="toggle_enforce_desc">إذا غيّر النظام أو تطبيق آخر الكوديك، يُعاد إلى ما ثبّتته</string>
+    <string name="toggle_notify">الإشعار عند تغيّر الكوديك</string>
+    <string name="toggle_notify_desc">يعرض رسالة قصيرة عند تحويل الكوديك</string>
+    <string name="toggle_verbose">كتابة سجلات مفصّلة</string>
+    <string name="toggle_verbose_desc">لفحص الأجهزة التي لا تقبل التحويل</string>
+
+    <string name="permission_title">إذن Bluetooth مطلوب</string>
+    <string name="permission_body">منح الإذن يتيح للتطبيق قراءة أجهزتك المقترنة وأسمائها.</string>
+    <string name="bluetooth_off">تم إيقاف Bluetooth. شغّله لعرض أجهزتك المقترنة.</string>
+
+    <string name="section_audio_devices">أجهزة الصوت</string>
+    <string name="devices_empty">لم يُعثر على أي جهاز صوت مقترن.</string>
+    <string name="devices_no_permission">لا يمكن قراءة الأجهزة بدون الإذن.</string>
+    <string name="section_other_devices">أجهزة أخرى (%1$d)</string>
+    <string name="section_orphan_profiles">إعدادات بدون جهاز مقترن</string>
+
+    <string name="module_checking">جارٍ التحقّق من الوحدة</string>
+    <string name="module_active">الوحدة تعمل</string>
+    <string name="module_meta">الإصدار %1$s · تعمل داخل %2$s</string>
+    <string name="module_config_pending">لم تحمّل الوحدة الإعدادات بعد</string>
+    <string name="module_config_synced">الإعدادات متزامنة</string>
+    <string name="module_config_stale">تغييراتك لم تصل إلى الوحدة</string>
+    <string name="module_inactive">الوحدة لا تعمل</string>
+    <string name="module_inactive_body">عملية Bluetooth لا تستجيب. تحقّق من الآتي.</string>
+    <string name="module_step_1">1. فعّل Codec Anchor في Vector</string>
+    <string name="module_step_2">2. أضف Bluetooth إلى نطاق الوحدة</string>
+    <string name="module_step_3">3. أوقف Bluetooth ثم شغّله مرة أخرى</string>
+    <string name="module_inactive_hint">لا يزال بإمكانك تعديل الإعدادات وحفظها. تصبح سارية عندما تبدأ الوحدة بالعمل.</string>
+    <string name="msg_config_pushed">تم إرسال الإعدادات مرة أخرى</string>
+
+    <string name="tag_connected">متصل</string>
+    <string name="tag_disconnected">غير متصل</string>
+    <string name="tag_active">قيد التشغيل</string>
+    <string name="tag_no_profile">بلا إعدادات</string>
+    <string name="tag_profile_off">التطبيق التلقائي مُعطَّل</string>
+    <string name="tag_not_found">غير موجود</string>
+    <string name="device_target">مثبَّت: %1$s</string>
+    <string name="device_current">الآن: %1$s</string>
+    <string name="profile_no_target">لم يُثبَّت أي شيء بعد</string>
+
+    <string name="section_backup">النسخ الاحتياطي</string>
+    <string name="backup_body">يحفظ كل الإعدادات في ملف JSON.</string>
+    <string name="backup_export">تصدير</string>
+    <string name="backup_import">استيراد</string>
+    <string name="backup_confirm_title">استيراد نسخة احتياطية؟</string>
+    <string name="backup_confirm_body">تُستبدل كل الإعدادات الحالية بمحتوى الملف الذي تختاره.</string>
+    <string name="backup_confirm_action">اختيار ملف</string>
+    <string name="msg_backup_exported">تم تصدير الإعدادات</string>
+    <string name="msg_backup_export_failed">تعذّرت الكتابة في الملف</string>
+    <string name="msg_backup_imported">تمت استعادة الإعدادات</string>
+    <string name="msg_backup_invalid">هذا الملف ليس نسخة احتياطية من Codec Anchor</string>
+    <string name="msg_backup_failed">تعذّرت قراءة الملف</string>
+
+    <string name="detail_auto_apply">التطبيق على هذه السماعة</string>
+    <string name="detail_auto_apply_desc">يحوّل إلى الإعدادات أدناه في كل مرة تتصل فيها السماعة</string>
+    <string name="detail_current_codec">الكوديك الحالي: %1$s</string>
+    <string name="detail_note">النتيجة الأخيرة: %1$s</string>
+    <string name="detail_updated_at">حتى %1$s</string>
+
+    <string name="section_target">القيم المراد تثبيتها</string>
+    <string name="target_no_capability">تعذّرت قراءة التركيبات التي يدعمها هذا الجهاز، لذا تُعرض كل الخيارات.</string>
+    <string name="label_codec">الكوديك</string>
+    <string name="label_sample_rate">معدّل العينات</string>
+    <string name="label_bit_depth">عمق البت</string>
+    <string name="label_channel">القنوات</string>
+    <string name="label_ldac_quality">جودة LDAC</string>
+    <string name="channel_mono">أحادي</string>
+    <string name="channel_stereo">ستيريو</string>
+    <string name="ldac_hint_quality">الجودة أولًا</string>
+    <string name="ldac_hint_connection">الاتصال أولًا</string>
+    <string name="ldac_hint_adaptive">تكيّفي</string>
+
+    <string name="section_advanced">إعدادات متقدّمة</string>
+    <string name="adv_force">الإجبار</string>
+    <string name="adv_force_desc">يجرّب أيضًا تركيبات لا يعلن الجهاز عن دعمها</string>
+    <string name="adv_via_sbc">التحويل عبر SBC</string>
+    <string name="adv_via_sbc_desc">ينزل إلى SBC أولًا، ثم ينتقل إلى الكوديك الذي اخترته</string>
+    <string name="adv_auto_hd">تشغيل صوت HD تلقائيًا</string>
+    <string name="adv_auto_hd_desc">يشغّل صوت HD عندما يكون النظام قد أوقفه</string>
+    <string name="adv_delay">الانتظار قبل التطبيق</string>
+    <string name="adv_delay_desc">بعض الأجهزة ترفض التحويل بعد الاتصال مباشرة</string>
+    <string name="adv_retries">عدد المحاولات</string>
+    <string name="adv_retry_delay">المدة بين المحاولات</string>
+
+    <string name="action_apply_now">تطبيق الآن</string>
+    <string name="action_delete_profile">حذف هذه الإعدادات</string>
+    <string name="delete_confirm_title">حذف الإعدادات؟</string>
+    <string name="delete_confirm_body">تُحذف إعدادات %1$s، ولن يُغيَّر أي شيء على هذا الجهاز.</string>
+    <string name="msg_apply_requested">تم الطلب من الوحدة تطبيق الإعدادات</string>
+    <string name="msg_apply_module_inactive">الوحدة لا تعمل، لذا لا يصل الطلب</string>
+    <string name="msg_apply_not_connected">الجهاز غير متصل، لذا لا يمكن تطبيق أي شيء الآن</string>
+</resources>

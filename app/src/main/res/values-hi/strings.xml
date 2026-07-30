@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="xposed_description">हर ईयरफ़ोन के लिए Bluetooth कोडेक और ऑडियो गुणवत्ता तय रखता है</string>
+    <string name="permission_bridge_label">Codec Anchor की सेटिंग भेजना</string>
+
+    <string name="hook_codec_changed">%1$s: %2$s पर बदल दिया</string>
+    <string name="hook_codec_failed">%1$s: %2$s पर नहीं बदल सका</string>
+    <string name="hook_codec_failed_with_current">%1$s: %2$s पर नहीं बदल सका (अभी %3$s)</string>
+
+    <string name="action_close">बंद करें</string>
+    <string name="action_cancel">रद्द करें</string>
+    <string name="action_delete">मिटाएँ</string>
+    <string name="action_resend">फिर भेजें</string>
+    <string name="action_recheck">फिर जाँचें</string>
+    <string name="action_grant">अनुमति दें</string>
+
+    <string name="value_keep">न बदलें</string>
+    <string name="value_unknown">अज्ञात</string>
+    <string name="device_unnamed">बिना नाम का डिवाइस</string>
+    <string name="value_immediately">तुरंत</string>
+    <string name="value_seconds">%1$s सेकंड</string>
+    <plurals name="retry_count">
+        <item quantity="one">%1$d कोशिश</item>
+        <item quantity="other">%1$d कोशिशें</item>
+    </plurals>
+
+    <string name="cd_refresh_status">स्थिति फिर जाँचें</string>
+    <string name="cd_back">पीछे</string>
+
+    <string name="section_general">सामान्य सेटिंग</string>
+    <string name="toggle_auto_apply">सेटिंग अपने आप लागू करें</string>
+    <string name="toggle_auto_apply_desc">बंद रहने पर किसी भी डिवाइस पर कुछ नहीं बदला जाता</string>
+    <string name="toggle_enforce">दूसरे ऐप के बदलाव पलट दें</string>
+    <string name="toggle_enforce_desc">सिस्टम या कोई दूसरा ऐप कोडेक बदले, तो उसे तय किए मान पर लौटा दिया जाता है</string>
+    <string name="toggle_notify">कोडेक बदलने पर बताएँ</string>
+    <string name="toggle_notify_desc">कोडेक बदलते समय छोटा संदेश दिखाता है</string>
+    <string name="toggle_verbose">विस्तृत लॉग लिखें</string>
+    <string name="toggle_verbose_desc">जो डिवाइस नहीं बदलते, उनकी जाँच के लिए</string>
+
+    <string name="permission_title">Bluetooth की अनुमति चाहिए</string>
+    <string name="permission_body">अनुमति देने पर ऐप आपके जोड़े गए डिवाइस और उनके नाम पढ़ सकता है।</string>
+    <string name="bluetooth_off">Bluetooth बंद है। जोड़े गए डिवाइस देखने के लिए इसे चालू करें।</string>
+
+    <string name="section_audio_devices">ऑडियो डिवाइस</string>
+    <string name="devices_empty">जोड़ा गया कोई ऑडियो डिवाइस नहीं मिला।</string>
+    <string name="devices_no_permission">अनुमति के बिना डिवाइस नहीं पढ़े जा सकते।</string>
+    <string name="section_other_devices">अन्य डिवाइस (%1$d)</string>
+    <string name="section_orphan_profiles">जोड़े गए डिवाइस के बिना सेटिंग</string>
+
+    <string name="module_checking">मॉड्यूल की जाँच हो रही है</string>
+    <string name="module_active">मॉड्यूल चल रहा है</string>
+    <string name="module_meta">वर्शन %1$s · %2$s में चल रहा है</string>
+    <string name="module_config_pending">मॉड्यूल ने अभी सेटिंग नहीं पढ़ी</string>
+    <string name="module_config_synced">सेटिंग सिंक में है</string>
+    <string name="module_config_stale">आपके बदलाव मॉड्यूल तक नहीं पहुँचे</string>
+    <string name="module_inactive">मॉड्यूल नहीं चल रहा</string>
+    <string name="module_inactive_body">Bluetooth प्रोसेस जवाब नहीं दे रही। नीचे दिए गए बिंदु जाँचें।</string>
+    <string name="module_step_1">1. Vector में Codec Anchor चालू करें</string>
+    <string name="module_step_2">2. मॉड्यूल के स्कोप में Bluetooth जोड़ें</string>
+    <string name="module_step_3">3. Bluetooth बंद करके फिर चालू करें</string>
+    <string name="module_inactive_hint">इस हालत में भी सेटिंग बदली और सहेजी जा सकती है। मॉड्यूल चलने पर वह लागू हो जाएगी।</string>
+    <string name="msg_config_pushed">सेटिंग फिर भेज दी</string>
+
+    <string name="tag_connected">कनेक्ट है</string>
+    <string name="tag_disconnected">कनेक्ट नहीं है</string>
+    <string name="tag_active">चल रहा है</string>
+    <string name="tag_no_profile">कोई सेटिंग नहीं</string>
+    <string name="tag_profile_off">अपने आप लागू करना बंद</string>
+    <string name="tag_not_found">नहीं मिला</string>
+    <string name="device_target">तय: %1$s</string>
+    <string name="device_current">अभी: %1$s</string>
+    <string name="profile_no_target">अभी कुछ तय नहीं किया गया</string>
+
+    <string name="section_backup">बैकअप</string>
+    <string name="backup_body">सारी सेटिंग एक JSON फ़ाइल में सहेजता है।</string>
+    <string name="backup_export">एक्सपोर्ट</string>
+    <string name="backup_import">इंपोर्ट</string>
+    <string name="backup_confirm_title">बैकअप इंपोर्ट करें?</string>
+    <string name="backup_confirm_body">मौजूदा सारी सेटिंग आपकी चुनी फ़ाइल की सामग्री से बदल जाएगी।</string>
+    <string name="backup_confirm_action">फ़ाइल चुनें</string>
+    <string name="msg_backup_exported">सेटिंग एक्सपोर्ट हो गई</string>
+    <string name="msg_backup_export_failed">फ़ाइल में लिखा नहीं जा सका</string>
+    <string name="msg_backup_imported">सेटिंग बहाल हो गई</string>
+    <string name="msg_backup_invalid">यह फ़ाइल Codec Anchor का बैकअप नहीं है</string>
+    <string name="msg_backup_failed">फ़ाइल पढ़ी नहीं जा सकी</string>
+
+    <string name="detail_auto_apply">इस ईयरफ़ोन पर लागू करें</string>
+    <string name="detail_auto_apply_desc">जब भी यह कनेक्ट हो, नीचे दी गई सेटिंग पर बदल देता है</string>
+    <string name="detail_current_codec">मौजूदा कोडेक: %1$s</string>
+    <string name="detail_note">पिछला नतीजा: %1$s</string>
+    <string name="detail_updated_at">%1$s तक</string>
+
+    <string name="section_target">जो मान तय करने हैं</string>
+    <string name="target_no_capability">यह डिवाइस किन संयोजनों का समर्थन करता है, यह पढ़ा नहीं जा सका, इसलिए सभी विकल्प दिखाए गए हैं।</string>
+    <string name="label_codec">कोडेक</string>
+    <string name="label_sample_rate">सैंपल रेट</string>
+    <string name="label_bit_depth">बिट डेप्थ</string>
+    <string name="label_channel">चैनल</string>
+    <string name="label_ldac_quality">LDAC गुणवत्ता</string>
+    <string name="channel_mono">मोनो</string>
+    <string name="channel_stereo">स्टीरियो</string>
+    <string name="ldac_hint_quality">गुणवत्ता पहले</string>
+    <string name="ldac_hint_connection">कनेक्शन पहले</string>
+    <string name="ldac_hint_adaptive">अनुकूली</string>
+
+    <string name="section_advanced">उन्नत सेटिंग</string>
+    <string name="adv_force">ज़बरदस्ती</string>
+    <string name="adv_force_desc">जिन संयोजनों की घोषणा डिवाइस नहीं करता, वे भी आज़माता है</string>
+    <string name="adv_via_sbc">SBC के रास्ते बदलें</string>
+    <string name="adv_via_sbc_desc">पहले SBC पर उतरता है, फिर आपके चुने कोडेक पर जाता है</string>
+    <string name="adv_auto_hd">HD ऑडियो अपने आप चालू करें</string>
+    <string name="adv_auto_hd_desc">सिस्टम में HD ऑडियो बंद हो, तो उसे चालू कर देता है</string>
+    <string name="adv_delay">लागू करने से पहले रुकें</string>
+    <string name="adv_delay_desc">कुछ डिवाइस कनेक्ट होते ही बदलाव नहीं मानते</string>
+    <string name="adv_retries">कोशिशों की संख्या</string>
+    <string name="adv_retry_delay">दो कोशिशों के बीच का समय</string>
+
+    <string name="action_apply_now">अभी लागू करें</string>
+    <string name="action_delete_profile">यह सेटिंग मिटाएँ</string>
+    <string name="delete_confirm_title">सेटिंग मिटाएँ?</string>
+    <string name="delete_confirm_body">%1$s की सेटिंग हट जाएगी और उस पर कुछ नहीं बदला जाएगा।</string>
+    <string name="msg_apply_requested">मॉड्यूल से सेटिंग लागू करने को कहा</string>
+    <string name="msg_apply_module_inactive">मॉड्यूल नहीं चल रहा, इसलिए अनुरोध नहीं पहुँचता</string>
+    <string name="msg_apply_not_connected">डिवाइस कनेक्ट नहीं है, इसलिए अभी कुछ लागू नहीं हो सकता</string>
+</resources>
