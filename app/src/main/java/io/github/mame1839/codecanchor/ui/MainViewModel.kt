@@ -69,6 +69,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         private set
 
     private var statuses by mutableStateOf<Map<String, DeviceStatus>>(emptyMap())
+
+    // ペアリング済み一覧から得た実名。権限が切れたり Bluetooth を切っても消さない (詳細画面と
+    // プロファイルに保存する名前の出どころになる)。
+    private var bondedNames by mutableStateOf<Map<String, String>>(emptyMap())
     private var probe: Job? = null
 
     val codecNames: Map<Int, String>
@@ -101,6 +105,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private fun rawName(mac: String, bonded: String = ""): String {
         val key = mac.uppercase()
         return bonded.ifBlank { statuses[key]?.name.orEmpty() }
+            .ifBlank { bondedNames[key].orEmpty() }
             .ifBlank { config.profiles[key]?.name.orEmpty() }
     }
 
@@ -114,6 +119,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             PackageManager.PERMISSION_GRANTED
         val adapter = runCatching { context.getSystemService(BluetoothManager::class.java)?.adapter }.getOrNull()
         bluetoothOn = runCatching { adapter?.isEnabled != false }.getOrDefault(true)
+        val names = runCatching {
+            adapter?.bondedDevices.orEmpty().mapNotNull { device ->
+                val name = runCatching { device.name }.getOrNull()?.takeIf { it.isNotBlank() }
+                name?.let { device.address.uppercase() to it }
+            }.toMap()
+        }.getOrDefault(emptyMap())
+        if (names.isNotEmpty()) bondedNames = bondedNames + names
         bondedRows = runCatching {
             adapter?.bondedDevices.orEmpty().map { device ->
                 DeviceRow(
@@ -175,9 +187,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         current.withProfile(transform(base))
     }
 
+    // 名前が空のまま保存されたプロファイルは、実名が分かった時点で埋める (バックアップにも載る)。
     fun ensureProfile(mac: String) {
-        if (config.profileFor(mac) != null) return
-        update { it.withProfile(DeviceProfile(mac = mac.uppercase(), name = rawName(mac))) }
+        val key = mac.uppercase()
+        val existing = config.profileFor(key)
+        val name = rawName(key)
+        if (existing == null) {
+            update { it.withProfile(DeviceProfile(mac = key, name = name)) }
+        } else if (existing.name.isBlank() && name.isNotBlank()) {
+            update { it.withProfile(existing.copy(name = name)) }
+        }
     }
 
     fun removeProfile(mac: String) = update { it.withoutProfile(mac) }
