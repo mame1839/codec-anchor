@@ -1,6 +1,7 @@
 package io.github.mame1839.codecanchor.ui
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Application
 import android.bluetooth.BluetoothClass
 import android.bluetooth.BluetoothDevice
@@ -197,6 +198,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // 呼び出し元が connectGranted を確認しており、失敗しても runCatching で拾う
+    @SuppressLint("MissingPermission")
     private fun isAudio(device: BluetoothDevice): Boolean = runCatching {
         val cls: BluetoothClass = device.bluetoothClass ?: return@runCatching false
         cls.majorDeviceClass == BluetoothClass.Device.Major.AUDIO_VIDEO ||

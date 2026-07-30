@@ -68,7 +68,9 @@ SBC 以外のコーデックは、機器の HD オーディオ設定が無効だ
 
 ### 表示言語
 
-英語、日本語、简体中文、한국어、Español。端末の言語設定に従います。
+英語、日本語、简体中文、繁體中文、한국어、Español、Deutsch、Français、Italiano、
+Português (Brasil)、Русский、Polski、Türkçe、Tiếng Việt、Bahasa Indonesia、ไทย、العربية、हिन्दी
+の 18 言語です。端末の言語設定に従い、対応していない言語では英語になります。
 
 ## ビルド
 

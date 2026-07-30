@@ -21,6 +21,7 @@
     <string name="value_seconds">%1$s s</string>
     <plurals name="retry_count">
         <item quantity="one">%1$d tentative</item>
+        <item quantity="many">%1$d tentatives</item>
         <item quantity="other">%1$d tentatives</item>
     </plurals>
 

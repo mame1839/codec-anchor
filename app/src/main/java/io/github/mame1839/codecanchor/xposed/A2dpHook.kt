@@ -1,5 +1,6 @@
 package io.github.mame1839.codecanchor.xposed
 
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -441,6 +442,8 @@ internal object A2dpHook {
         connectedDevices().forEach { refreshStatus(it, codecStatusOf(it)) }
     }
 
+    // Bluetooth プロセスの中で動くので BLUETOOTH_CONNECT は常に許可されている
+    @SuppressLint("MissingPermission")
     private fun refreshStatus(
         device: BluetoothDevice,
         codecStatus: Any?,
@@ -532,6 +535,7 @@ internal object A2dpHook {
         }
     }
 
+    @SuppressLint("MissingPermission")
     private fun label(device: BluetoothDevice): String =
         runCatching { device.name }.getOrNull()?.takeIf { it.isNotBlank() } ?: macOf(device).orEmpty()
 

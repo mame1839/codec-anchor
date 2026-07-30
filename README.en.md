@@ -69,7 +69,9 @@ Settings can be written to a JSON file and read back.
 
 ### Languages
 
-English, Japanese, Simplified Chinese, Korean and Spanish, following the language set on the device.
+18 languages: English, Japanese, Simplified Chinese, Traditional Chinese, Korean, Spanish, German,
+French, Italian, Portuguese (Brazil), Russian, Polish, Turkish, Vietnamese, Indonesian, Thai, Arabic
+and Hindi. The device language is followed, and anything else falls back to English.
 
 ## Building
 
