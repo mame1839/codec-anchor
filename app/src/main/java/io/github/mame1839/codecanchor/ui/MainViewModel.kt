@@ -32,8 +32,6 @@ import org.json.JSONObject
 
 enum class ModuleState { CHECKING, ACTIVE, INACTIVE }
 
-enum class BackupResult { OK, INVALID, FAILED }
-
 data class DeviceRow(
     val mac: String,
     val name: String,
@@ -66,6 +64,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     var bluetoothOn by mutableStateOf(true)
         private set
 
+    // 画面が作り直されても消えないよう、書き出し / 復元の結果は未消費のメッセージとして持つ。
+    var pendingMessage by mutableStateOf<Int?>(null)
+        private set
+
     private var statuses by mutableStateOf<Map<String, DeviceStatus>>(emptyMap())
     private var probe: Job? = null
 
@@ -75,9 +77,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val configSynced: Boolean
         get() = report?.configHash == config.hash()
 
-    // ボンド済みに出てこない MAC (権限が無い / ペアリングを解除した) も設定を残しておく。
+    // ボンド済みに出てこない MAC (ペアリングを解除した) も設定を残しておく。
+    // 権限が無い / Bluetooth がオフのときは一覧そのものが読めないので、ボンド済みに無いことを根拠にできない。
     val orphanRows: List<DeviceRow>
         get() {
+            if (!connectGranted || !bluetoothOn) return emptyList()
             val known = bondedRows.map { it.mac }.toSet()
             return (config.profiles.keys + statuses.keys).filterNot { it in known }
                 .map { DeviceRow(it, nameOf(it), audio = true, bonded = false) }
@@ -86,11 +90,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun statusOf(mac: String): DeviceStatus? = statuses[mac.uppercase()]
 
-    fun nameOf(mac: String, bonded: String = ""): String {
+    fun nameOf(mac: String, bonded: String = ""): String =
+        rawName(mac, bonded).ifBlank { context.getString(R.string.device_unnamed) }
+
+    fun consumeMessage() {
+        pendingMessage = null
+    }
+
+    // 保存する名前に訳文を混ぜないため、実名が無ければ空のまま返す。
+    private fun rawName(mac: String, bonded: String = ""): String {
         val key = mac.uppercase()
         return bonded.ifBlank { statuses[key]?.name.orEmpty() }
             .ifBlank { config.profiles[key]?.name.orEmpty() }
-            .ifBlank { context.getString(R.string.device_unnamed) }
     }
 
     fun refresh() {
@@ -118,11 +129,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // 問い合わせ中に moduleState を戻すと、答えが返るまでの一瞬だけカードが差し替わって画面がちらつく。
     // 状態は据え置き、進行中は probing で示す。
     fun requestStatus() {
-        BridgeClient.requestStatus(context)
         probing = true
         probe?.cancel()
         probe = viewModelScope.launch {
-            delay(REPORT_TIMEOUT_MS)
+            // まだ 1 通も受けていないうちは判定を保留して送り直す。報告が届けば onReport が probe を取り消す。
+            val attempts = if (report == null) UNANSWERED_ATTEMPTS else 1
+            repeat(attempts) {
+                BridgeClient.requestStatus(context)
+                delay(REPORT_TIMEOUT_MS)
+            }
             probing = false
             val last = report?.timestamp ?: 0L
             if (System.currentTimeMillis() - last > STALE_REPORT_MS) moduleState = ModuleState.INACTIVE
@@ -130,13 +145,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // フックは単一機器だけの報告も送るので、機器ごとにマージする。
+    // 報告は適用サイクル中に数秒で何通も届くので、ここでボンド済みの再列挙 (binder 呼び出し) はしない。
     fun onReport(received: StatusReport) {
         probe?.cancel()
         probing = false
         report = received
         if (received.devices.isNotEmpty()) statuses = statuses + received.devices.associateBy { it.mac }
         moduleState = ModuleState.ACTIVE
-        refreshDevices()
     }
 
     fun pushConfig() {
@@ -156,18 +171,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun updateProfile(mac: String, transform: (DeviceProfile) -> DeviceProfile) = update { current ->
-        val base = current.profileFor(mac) ?: DeviceProfile(mac = mac.uppercase(), name = nameOf(mac))
+        val base = current.profileFor(mac) ?: DeviceProfile(mac = mac.uppercase(), name = rawName(mac))
         current.withProfile(transform(base))
     }
 
     fun ensureProfile(mac: String) {
         if (config.profileFor(mac) != null) return
-        update { it.withProfile(DeviceProfile(mac = mac.uppercase(), name = nameOf(mac))) }
+        update { it.withProfile(DeviceProfile(mac = mac.uppercase(), name = rawName(mac))) }
     }
 
     fun removeProfile(mac: String) = update { it.withoutProfile(mac) }
 
-    fun exportConfig(uri: Uri, onDone: (Boolean) -> Unit) {
+    fun exportConfig(uri: Uri) {
         val json = runCatching { JSONObject(config.encode()).toString(2) }.getOrDefault(config.encode())
         viewModelScope.launch {
             val ok = withContext(Dispatchers.IO) {
@@ -177,13 +192,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     stream.use { it.write(json.toByteArray()) }
                 }.isSuccess
             }
-            onDone(ok)
+            pendingMessage = if (ok) R.string.msg_backup_exported else R.string.msg_backup_export_failed
         }
     }
 
-    // 読めなかった (FAILED) と Codec Anchor のバックアップではない (INVALID) を分けるため、
-    // JSON の形を自分で見てから fromJson に渡す。
-    fun importConfig(uri: Uri, onDone: (BackupResult) -> Unit) {
+    // 読めなかったのと Codec Anchor のバックアップでないのを分けるため、JSON の形を見てから fromJson に渡す。
+    fun importConfig(uri: Uri) {
         viewModelScope.launch {
             val text = withContext(Dispatchers.IO) {
                 runCatching {
@@ -191,12 +205,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }.getOrNull()
             }
             if (text.isNullOrBlank()) {
-                onDone(BackupResult.FAILED)
+                pendingMessage = R.string.msg_backup_failed
                 return@launch
             }
             val parsed = runCatching { JSONObject(text) }.getOrNull()
-            if (parsed == null || !(parsed.has("profiles") || parsed.has("enabled"))) {
-                onDone(BackupResult.INVALID)
+            if (parsed == null || !isBackup(parsed)) {
+                pendingMessage = R.string.msg_backup_invalid
                 return@launch
             }
             val restored = AppConfig.fromJson(parsed)
@@ -205,9 +219,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             store.save(restored)
             BridgeClient.pushConfig(context, restored)
             refreshDevices()
-            onDone(BackupResult.OK)
+            pendingMessage = R.string.msg_backup_imported
         }
     }
+
+    // 既知の版で profiles を持つファイルだけを復元する。緩い判定だと無関係な JSON で全設定が消える。
+    private fun isBackup(o: JSONObject): Boolean =
+        o.optInt("v", 0) in 1..AppConfig.VERSION && o.optJSONObject("profiles") != null
 
     // 呼び出し元が connectGranted を確認しており、失敗しても runCatching で拾う
     @SuppressLint("MissingPermission")
@@ -219,7 +237,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }.getOrDefault(false)
 
     private companion object {
-        const val REPORT_TIMEOUT_MS = 2_000L
+        const val REPORT_TIMEOUT_MS = 5_000L
         const val STALE_REPORT_MS = 10_000L
+        const val UNANSWERED_ATTEMPTS = 2
     }
 }

@@ -25,6 +25,8 @@
 
     <string name="cd_refresh_status">状態を再確認</string>
     <string name="cd_back">戻る</string>
+    <string name="state_expanded">展開中</string>
+    <string name="state_collapsed">折りたたみ中</string>
 
     <string name="section_general">全体設定</string>
     <string name="toggle_auto_apply">自動適用を有効にする</string>
@@ -38,12 +40,14 @@
 
     <string name="permission_title">Bluetooth の権限が必要です</string>
     <string name="permission_body">許可すると、ペアリング済みの機器と名前を読み取れます。</string>
+    <string name="permission_denied">権限がブロックされています。システムの設定から許可してください。</string>
     <string name="bluetooth_off">Bluetooth がオフです。オンにするとペアリング済みの機器が表示されます。</string>
     <string name="config_broken">保存された設定を読めませんでした。このままでは編集できません。バックアップを読み込むとやり直せます。</string>
 
     <string name="section_audio_devices">オーディオ機器</string>
     <string name="devices_empty">ペアリング済みのオーディオ機器が見つかりません。</string>
     <string name="devices_no_permission">権限がないため機器を読み取れません。</string>
+    <string name="devices_bluetooth_off">Bluetooth がオフのため機器を読み取れません。</string>
     <string name="section_other_devices">その他の機器 (%1$d)</string>
     <string name="section_orphan_profiles">ペアリング一覧に無い設定</string>
 
@@ -95,6 +99,7 @@
 
     <string name="section_target">固定する内容</string>
     <string name="target_no_capability">機器が対応する組み合わせを取得できていないため、すべての候補を表示しています。</string>
+    <string name="target_not_connected">機器が対応する組み合わせは接続中にだけ読めるため、すべての候補を表示しています。</string>
     <string name="label_codec">コーデック</string>
     <string name="label_sample_rate">サンプルレート</string>
     <string name="label_bit_depth">ビット深度</string>
