@@ -21,6 +21,7 @@
     <string name="value_seconds">%1$s s</string>
     <plurals name="retry_count">
         <item quantity="one">%1$d intento</item>
+        <item quantity="many">%1$d intentos</item>
         <item quantity="other">%1$d intentos</item>
     </plurals>
 
@@ -88,6 +89,9 @@
     <string name="detail_auto_apply_desc">Cambia a los ajustes de abajo cada vez que se conecten</string>
     <string name="detail_current_codec">Códec actual: %1$s</string>
     <string name="detail_note">Último resultado: %1$s</string>
+    <string name="outcome_applied">se cambió a %1$s</string>
+    <string name="outcome_failed">no se pudo cambiar, sigue en %1$s</string>
+    <string name="outcome_undecided">no se pudieron determinar los valores</string>
     <string name="detail_updated_at">A las %1$s</string>
 
     <string name="section_target">Valores que fijar</string>

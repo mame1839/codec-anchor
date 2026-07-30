@@ -87,6 +87,9 @@
     <string name="detail_auto_apply_desc">연결될 때 아래 설정으로 전환합니다</string>
     <string name="detail_current_codec">현재 코덱: %1$s</string>
     <string name="detail_note">최근 결과: %1$s</string>
+    <string name="outcome_applied">%1$s(으)로 전환했습니다</string>
+    <string name="outcome_failed">전환하지 못했습니다. 현재 %1$s</string>
+    <string name="outcome_undecided">적용할 값을 결정할 수 없습니다</string>
     <string name="detail_updated_at">%1$s 기준</string>
 
     <string name="section_target">고정할 내용</string>
