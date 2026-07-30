@@ -49,7 +49,8 @@ android {
         applicationId = "io.github.mame1839.codecanchor"
         minSdk = 31
         targetSdk = 36
-        versionCode = versionCodeProp?.toInt() ?: versionCodeOf(latestTag)
+        // タグが取れない環境 (浅い clone、アーカイブ展開) では 0 になるが、0 は AGP が受け付けない
+        versionCode = versionCodeProp?.toInt() ?: versionCodeOf(latestTag).coerceAtLeast(1)
         versionName = versionNameProp ?: latestTag
     }
 
