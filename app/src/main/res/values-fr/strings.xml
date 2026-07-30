@@ -57,7 +57,6 @@
     <string name="module_active">Le module fonctionne</string>
     <string name="module_meta">Version %1$s · injecté dans %2$s</string>
     <string name="module_config_pending">Le module n\'a pas encore chargé les réglages</string>
-    <string name="module_config_synced">Les réglages sont synchronisés</string>
     <string name="module_config_stale">Vos modifications ne sont pas encore parvenues au module</string>
     <string name="module_inactive">Le module ne fonctionne pas</string>
     <string name="module_inactive_body">Le processus Bluetooth ne répond pas. Vérifiez les points suivants.</string>

@@ -55,7 +55,6 @@
     <string name="module_active">모듈이 동작 중입니다</string>
     <string name="module_meta">버전 %1$s · 주입 대상 %2$s</string>
     <string name="module_config_pending">모듈이 아직 설정을 읽지 못했습니다</string>
-    <string name="module_config_synced">설정이 동기화되었습니다</string>
     <string name="module_config_stale">변경한 내용이 모듈에 전달되지 않았습니다</string>
     <string name="module_inactive">모듈이 동작하지 않습니다</string>
     <string name="module_inactive_body">블루투스 프로세스가 응답하지 않습니다. 다음을 확인해 주세요.</string>

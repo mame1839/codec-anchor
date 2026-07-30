@@ -58,7 +58,6 @@
     <string name="module_active">Модуль работает</string>
     <string name="module_meta">Версия %1$s · внедрён в %2$s</string>
     <string name="module_config_pending">Модуль ещё не загрузил настройки</string>
-    <string name="module_config_synced">Настройки синхронизированы</string>
     <string name="module_config_stale">Изменения не дошли до модуля</string>
     <string name="module_inactive">Модуль не работает</string>
     <string name="module_inactive_body">Процесс Bluetooth не отвечает. Проверьте следующее.</string>

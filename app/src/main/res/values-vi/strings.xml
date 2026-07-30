@@ -55,7 +55,6 @@
     <string name="module_active">Mô-đun đang chạy</string>
     <string name="module_meta">Phiên bản %1$s · chèn vào %2$s</string>
     <string name="module_config_pending">Mô-đun chưa nạp cài đặt</string>
-    <string name="module_config_synced">Cài đặt đã đồng bộ</string>
     <string name="module_config_stale">Thay đổi của bạn chưa đến được mô-đun</string>
     <string name="module_inactive">Mô-đun không chạy</string>
     <string name="module_inactive_body">Tiến trình Bluetooth không phản hồi. Hãy kiểm tra những mục sau.</string>

@@ -56,7 +56,6 @@
     <string name="module_active">Modül çalışıyor</string>
     <string name="module_meta">Sürüm %1$s · %2$s içine enjekte edildi</string>
     <string name="module_config_pending">Modül ayarları henüz yüklemedi</string>
-    <string name="module_config_synced">Ayarlar eşitlendi</string>
     <string name="module_config_stale">Değişiklikleriniz modüle ulaşmadı</string>
     <string name="module_inactive">Modül çalışmıyor</string>
     <string name="module_inactive_body">Bluetooth süreci yanıt vermiyor. Aşağıdakileri kontrol edin.</string>

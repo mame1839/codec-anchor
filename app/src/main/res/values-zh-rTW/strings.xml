@@ -55,7 +55,6 @@
     <string name="module_active">模組正在運作</string>
     <string name="module_meta">版本 %1$s · 已注入 %2$s</string>
     <string name="module_config_pending">模組尚未讀取設定</string>
-    <string name="module_config_synced">設定已同步</string>
     <string name="module_config_stale">你的變更還沒有送達模組</string>
     <string name="module_inactive">模組沒有運作</string>
     <string name="module_inactive_body">藍牙處理程序沒有回應，請依序確認以下項目。</string>

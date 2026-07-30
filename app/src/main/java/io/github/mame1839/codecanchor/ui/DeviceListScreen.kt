@@ -368,18 +368,17 @@ private fun ModuleCard(vm: MainViewModel, onPush: () -> Unit) {
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    Spacer(Modifier.height(8.dp))
+                    // 届いているときは何も出さない。異常だけを知らせる。
                     when {
-                        report?.configLoaded != true ->
+                        report?.configLoaded != true -> {
+                            Spacer(Modifier.height(8.dp))
                             SyncLine(stringResource(R.string.module_config_pending), onPush)
+                        }
 
-                        vm.configSynced -> Text(
-                            text = stringResource(R.string.module_config_synced),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-
-                        else -> SyncLine(stringResource(R.string.module_config_stale), onPush)
+                        !vm.configSynced -> {
+                            Spacer(Modifier.height(8.dp))
+                            SyncLine(stringResource(R.string.module_config_stale), onPush)
+                        }
                     }
                 }
 
