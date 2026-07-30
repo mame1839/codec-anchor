@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Codec Anchor</string>
+    <string name="xposed_description">イヤホンごとに Bluetooth のコーデックと音質を固定します</string>
+    <string name="permission_bridge_label">Codec Anchor の設定を送る</string>
+</resources>
