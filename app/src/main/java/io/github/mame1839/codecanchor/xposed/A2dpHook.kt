@@ -7,7 +7,9 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Handler
 import android.os.HandlerThread
+import android.os.Looper
 import android.os.Parcelable
+import android.widget.Toast
 import android.app.AndroidAppHelper
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XSharedPreferences
@@ -49,9 +51,12 @@ internal object A2dpHook {
     private var receiversRegistered = false
 
     private val statuses = ConcurrentHashMap<String, DeviceStatus>()
+    private val announced = ConcurrentHashMap<String, String>()
+    private val applyingMacs = ConcurrentHashMap.newKeySet<String>()
     private val worker: Handler by lazy {
         Handler(HandlerThread("CodecAnchor").apply { start() }.looper)
     }
+    private val mainHandler: Handler by lazy { Handler(Looper.getMainLooper()) }
 
     fun install(classLoader: ClassLoader, packageName: String) {
         hostPackage = packageName
@@ -97,8 +102,7 @@ internal object A2dpHook {
             override fun afterHookedMethod(param: MethodHookParam) {
                 service = param.thisObject
                 val device = param.args.getOrNull(0) as? BluetoothDevice ?: return
-                refreshStatus(device, param.args.getOrNull(1))
-                sendReport(macOf(device))
+                onCodecObserved(device, param.args.getOrNull(1))
             }
         })
     }
@@ -186,10 +190,7 @@ internal object A2dpHook {
                     }
                 }
                 ACTION_ACTIVE_DEVICE_CHANGED -> scheduleApply(device, "アクティブ切替")
-                ACTION_CODEC_CONFIG_CHANGED -> {
-                    refreshStatus(device, intent.codecStatus())
-                    sendReport(macOf(device))
-                }
+                ACTION_CODEC_CONFIG_CHANGED -> onCodecObserved(device, intent.codecStatus())
             }
         }
     }
@@ -229,6 +230,7 @@ internal object A2dpHook {
         if (!profile.enabled || !profile.hasAnyTarget()) return
         val delay = if (immediate) 0L else profile.delayMs.toLong().coerceAtLeast(0L)
         val token = mac.intern()
+        applyingMacs.add(mac)
         worker.removeCallbacksAndMessages(token)
         worker.postDelayed({ applyWithRetry(device, profile, 1, reason) }, token, delay)
     }
@@ -238,14 +240,19 @@ internal object A2dpHook {
     }
 
     private fun applyWithRetry(device: BluetoothDevice, profile: DeviceProfile, attempt: Int, reason: String) {
-        val svc = service ?: return
         val mac = macOf(device) ?: return
+        val svc = service
+        if (svc == null) {
+            applyingMacs.remove(mac)
+            return
+        }
         val status = codecStatusOf(device)
         val current = Bt.codecInfo(Bt.currentConfig(status))
 
         if (current != null && matches(current, profile)) {
             refreshStatus(device, status, "適用済み: ${current.summary()}")
             sendReport(mac)
+            endCycle(device, mac, current.summary(), null)
             return
         }
 
@@ -253,6 +260,7 @@ internal object A2dpHook {
         if (target == null) {
             refreshStatus(device, status, "設定を組み立てられなかった")
             sendReport(mac)
+            applyingMacs.remove(mac)
             return
         }
 
@@ -283,12 +291,14 @@ internal object A2dpHook {
                     XLog.i("反映を確認: $mac ${now.summary()}")
                     refreshStatus(device, after, "適用済み: ${now.summary()}")
                     sendReport(mac)
+                    endCycle(device, mac, now.summary(), null)
                 }
                 !lastAttempt -> applyWithRetry(device, profile, attempt + 1, reason)
                 else -> {
                     XLog.i("反映されなかった: $mac 現在=${now?.summary()} 目標=${info?.summary()}")
                     refreshStatus(device, after, "適用できなかった (現在 ${now?.summary() ?: "不明"})")
                     sendReport(mac)
+                    endCycle(device, mac, now?.summary(), info?.summary() ?: "指定した設定")
                 }
             }
         }, mac.intern(), profile.retryDelayMs.toLong().coerceIn(300L, 30_000L))
@@ -457,7 +467,40 @@ internal object A2dpHook {
     private fun forget(device: BluetoothDevice) {
         val mac = macOf(device) ?: return
         worker.removeCallbacksAndMessages(mac.intern())
+        applyingMacs.remove(mac)
+        announced.remove(mac)
         statuses[mac]?.let { statuses[mac] = it.copy(connected = false, active = false, current = null) }
+    }
+
+    private fun onCodecObserved(device: BluetoothDevice, codecStatus: Any?) {
+        val mac = macOf(device) ?: return
+        refreshStatus(device, codecStatus)
+        sendReport(mac)
+        if (applyingMacs.contains(mac)) return
+        val summary = Bt.codecInfo(Bt.currentConfig(codecStatus))?.summary() ?: return
+        if (announced.put(mac, summary) != summary) announce(device, "$summary に変更しました")
+    }
+
+    private fun endCycle(device: BluetoothDevice, mac: String, summary: String?, failedTarget: String?) {
+        applyingMacs.remove(mac)
+        if (failedTarget != null) {
+            val current = summary?.let { " (現在 $it)" } ?: ""
+            announce(device, "$failedTarget に変更できませんでした$current")
+            return
+        }
+        if (summary == null) return
+        if (announced.put(mac, summary) != summary) announce(device, "$summary に変更しました")
+    }
+
+    private fun announce(device: BluetoothDevice, text: String) {
+        if (!config.notifyChanges) return
+        val ctx = context ?: return
+        val label = runCatching { device.name }.getOrNull()?.takeIf { it.isNotBlank() }
+            ?: macOf(device).orEmpty()
+        mainHandler.post {
+            runCatching { Toast.makeText(ctx, "$label: $text", Toast.LENGTH_SHORT).show() }
+                .onFailure { XLog.d("トーストを出せない: ${it.message}") }
+        }
     }
 
     private fun sendReport(mac: String?) {
