@@ -14,6 +14,7 @@ import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import io.github.mame1839.codecanchor.R
 import io.github.mame1839.codecanchor.bridge.BridgeClient
 import io.github.mame1839.codecanchor.bridge.SettingsStore
 import io.github.mame1839.codecanchor.core.AppConfig
@@ -81,7 +82,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val key = mac.uppercase()
         return bonded.ifBlank { statuses[key]?.name.orEmpty() }
             .ifBlank { config.profiles[key]?.name.orEmpty() }
-            .ifBlank { "名前不明の機器" }
+            .ifBlank { context.getString(R.string.device_unnamed) }
     }
 
     fun refresh() {

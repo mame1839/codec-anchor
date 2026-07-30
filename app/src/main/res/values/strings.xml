@@ -18,6 +18,7 @@
 
     <string name="value_keep">Leave unchanged</string>
     <string name="value_unknown">Unknown</string>
+    <string name="device_unnamed">Unnamed device</string>
     <string name="value_immediately">Immediately</string>
     <string name="value_seconds">%1$s s</string>
     <plurals name="retry_count">
@@ -102,7 +103,7 @@
     <string name="label_ldac_quality">LDAC quality</string>
     <string name="channel_mono">Mono</string>
     <string name="channel_stereo">Stereo</string>
-    <string name="ldac_option_annotated">%1$s (%2$s)</string>
+    <string name="ldac_option_annotated" translatable="false">%1$s (%2$s)</string>
     <string name="ldac_hint_quality">quality first</string>
     <string name="ldac_hint_connection">connection first</string>
     <string name="ldac_hint_adaptive">adaptive</string>

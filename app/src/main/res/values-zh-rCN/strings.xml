@@ -16,6 +16,7 @@
 
     <string name="value_keep">保持不变</string>
     <string name="value_unknown">未知</string>
+    <string name="device_unnamed">未知名称的设备</string>
     <string name="value_immediately">立即</string>
     <string name="value_seconds">%1$s 秒</string>
     <plurals name="retry_count">

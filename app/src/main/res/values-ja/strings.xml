@@ -16,6 +16,7 @@
 
     <string name="value_keep">変更しない</string>
     <string name="value_unknown">不明</string>
+    <string name="device_unnamed">名前のわからない機器</string>
     <string name="value_immediately">すぐに</string>
     <string name="value_seconds">%1$s 秒</string>
     <plurals name="retry_count">

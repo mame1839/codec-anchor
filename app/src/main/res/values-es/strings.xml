@@ -16,6 +16,7 @@
 
     <string name="value_keep">Sin cambios</string>
     <string name="value_unknown">Desconocido</string>
+    <string name="device_unnamed">Dispositivo sin nombre</string>
     <string name="value_immediately">De inmediato</string>
     <string name="value_seconds">%1$s s</string>
     <plurals name="retry_count">
