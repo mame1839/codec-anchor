@@ -180,48 +180,62 @@ internal object A2dpHook {
         }.onFailure { XLog.e("設定の受け口を作れない", it) }
     }
 
+    // フックのコールバックと違い、レシーバとハンドラで投げた例外は Bluetooth プロセスを落とす。
     private val btReceiver = object : BroadcastReceiver() {
         override fun onReceive(ctx: Context?, intent: Intent?) {
-            val action = intent?.action ?: return
-            val device = deviceOf(intent) ?: return
-            when (action) {
-                ACTION_CONNECTION_STATE_CHANGED -> {
-                    when (intent.getIntExtra(EXTRA_STATE, -1)) {
-                        STATE_CONNECTED -> scheduleApply(device, "接続")
-                        STATE_DISCONNECTED -> forget(device)
-                    }
-                }
-                ACTION_ACTIVE_DEVICE_CHANGED -> scheduleApply(device, "アクティブ切替")
-                ACTION_CODEC_CONFIG_CHANGED -> onCodecObserved(device, intent.codecStatus())
+            safely("A2DP イベント") { handleBtEvent(intent) }
+        }
+    }
+
+    private fun handleBtEvent(intent: Intent?) {
+        val action = intent?.action ?: return
+        val device = deviceOf(intent) ?: return
+        when (action) {
+            ACTION_CONNECTION_STATE_CHANGED -> when (intent.getIntExtra(EXTRA_STATE, -1)) {
+                STATE_CONNECTED -> scheduleApply(device, "接続")
+                STATE_DISCONNECTED -> forget(device)
             }
+
+            ACTION_ACTIVE_DEVICE_CHANGED -> scheduleApply(device, "アクティブ切替")
+            ACTION_CODEC_CONFIG_CHANGED -> onCodecObserved(device, intent.codecStatus())
         }
     }
 
     private val bridgeReceiver = object : BroadcastReceiver() {
         override fun onReceive(ctx: Context?, intent: Intent?) {
-            when (intent?.action) {
-                Bridge.ACTION_PUSH_CONFIG -> {
-                    val received = AppConfig.decode(intent.getStringExtra(Bridge.EXTRA_JSON))
-                    val changed = received != config
-                    config = received
-                    configLoaded = true
-                    XLog.verbose = received.verbose
-                    XLog.i("設定を受信 (${received.profiles.size} 台, 有効=${received.enabled})")
-                    if (changed) reapplyConnected("設定更新")
-                    refreshAllConnected()
-                    sendReport(null)
-                }
-                Bridge.ACTION_REQUEST_STATUS -> {
-                    refreshAllConnected()
-                    sendReport(null)
-                }
-                Bridge.ACTION_APPLY_NOW -> {
-                    val mac = intent.getStringExtra(Bridge.EXTRA_MAC)?.uppercase()
-                    connectedDevices().filter { mac == null || macOf(it) == mac }
-                        .forEach { scheduleApply(it, "手動適用", immediate = true) }
-                }
+            safely("設定の受信") { handleBridgeEvent(intent) }
+        }
+    }
+
+    private fun handleBridgeEvent(intent: Intent?) {
+        when (intent?.action) {
+            Bridge.ACTION_PUSH_CONFIG -> {
+                val received = AppConfig.decode(intent.getStringExtra(Bridge.EXTRA_JSON))
+                val changed = received != config
+                config = received
+                configLoaded = true
+                XLog.verbose = received.verbose
+                XLog.i("設定を受信 (${received.profiles.size} 台, 有効=${received.enabled})")
+                if (changed) reapplyConnected("設定更新")
+                refreshAllConnected()
+                sendReport(null)
+            }
+
+            Bridge.ACTION_REQUEST_STATUS -> {
+                refreshAllConnected()
+                sendReport(null)
+            }
+
+            Bridge.ACTION_APPLY_NOW -> {
+                val mac = intent.getStringExtra(Bridge.EXTRA_MAC)?.uppercase()
+                connectedDevices().filter { mac == null || macOf(it) == mac }
+                    .forEach { scheduleApply(it, "手動適用", immediate = true) }
             }
         }
+    }
+
+    private fun safely(what: String, block: () -> Unit) {
+        runCatching(block).onFailure { XLog.e("$what の処理で例外", it) }
     }
 
     private fun scheduleApply(device: BluetoothDevice, reason: String, immediate: Boolean = false) {
@@ -234,11 +248,18 @@ internal object A2dpHook {
         val token = mac.intern()
         applyingMacs.add(mac)
         worker.removeCallbacksAndMessages(token)
-        worker.postDelayed({ applyWithRetry(device, profile, 1, reason) }, token, delay)
+        worker.postDelayed({ runApply(device, profile, 1, reason) }, token, delay)
     }
 
     private fun reapplyConnected(reason: String) {
         connectedDevices().forEach { scheduleApply(it, reason) }
+    }
+
+    private fun runApply(device: BluetoothDevice, profile: DeviceProfile, attempt: Int, reason: String) {
+        runCatching { applyWithRetry(device, profile, attempt, reason) }.onFailure {
+            macOf(device)?.let { mac -> applyingMacs.remove(mac) }
+            XLog.e("適用の処理で例外", it)
+        }
     }
 
     private fun applyWithRetry(device: BluetoothDevice, profile: DeviceProfile, attempt: Int, reason: String) {
@@ -274,7 +295,7 @@ internal object A2dpHook {
         if (profile.viaSbc && attempt == 1 && current?.codecType != CodecKeys.CODEC_TYPE_SBC) {
             applySbc(svc, device, status)
             worker.postDelayed(
-                { applyWithRetry(device, profile.copy(viaSbc = false), attempt, reason) },
+                { runApply(device, profile.copy(viaSbc = false), attempt, reason) },
                 mac.intern(),
                 SBC_STEP_DELAY_MS,
             )
@@ -286,24 +307,39 @@ internal object A2dpHook {
         setCodec(svc, device, target, profile.force, useNative = profile.force && lastAttempt)
 
         worker.postDelayed({
-            val after = codecStatusOf(device)
-            val now = Bt.codecInfo(Bt.currentConfig(after))
-            when {
-                now != null && matches(now, profile) -> {
-                    XLog.i("反映を確認: $mac ${now.summary()}")
-                    refreshStatus(device, after, ApplyOutcome.APPLIED, now.summary())
-                    sendReport(mac)
-                    endCycle(device, mac, now.summary(), null)
-                }
-                !lastAttempt -> applyWithRetry(device, profile, attempt + 1, reason)
-                else -> {
-                    XLog.i("反映されなかった: $mac 現在=${now?.summary()} 目標=${info?.summary()}")
-                    refreshStatus(device, after, ApplyOutcome.FAILED, now?.summary().orEmpty())
-                    sendReport(mac)
-                    endCycle(device, mac, now?.summary(), info?.summary() ?: return@postDelayed)
-                }
-            }
+            safely("反映の確認") { verifyApply(device, profile, attempt, lastAttempt, reason, info) }
         }, mac.intern(), profile.retryDelayMs.toLong().coerceIn(300L, 30_000L))
+    }
+
+    private fun verifyApply(
+        device: BluetoothDevice,
+        profile: DeviceProfile,
+        attempt: Int,
+        lastAttempt: Boolean,
+        reason: String,
+        target: CodecInfo?,
+    ) {
+        val mac = macOf(device) ?: return
+        val after = codecStatusOf(device)
+        val now = Bt.codecInfo(Bt.currentConfig(after))
+        when {
+            now != null && matches(now, profile) -> {
+                XLog.i("反映を確認: $mac ${now.summary()}")
+                refreshStatus(device, after, ApplyOutcome.APPLIED, now.summary())
+                sendReport(mac)
+                endCycle(device, mac, now.summary(), null)
+            }
+
+            !lastAttempt -> runApply(device, profile, attempt + 1, reason)
+
+            else -> {
+                XLog.i("反映されなかった: $mac 現在=${now?.summary()} 目標=${target?.summary()}")
+                refreshStatus(device, after, ApplyOutcome.FAILED, now?.summary().orEmpty())
+                sendReport(mac)
+                val summary = target?.summary()
+                if (summary != null) endCycle(device, mac, now?.summary(), summary) else applyingMacs.remove(mac)
+            }
+        }
     }
 
     private fun matches(current: CodecInfo, profile: DeviceProfile): Boolean {
