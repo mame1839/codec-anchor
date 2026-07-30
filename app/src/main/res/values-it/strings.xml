@@ -27,6 +27,8 @@
 
     <string name="cd_refresh_status">Controlla di nuovo lo stato</string>
     <string name="cd_back">Indietro</string>
+    <string name="state_expanded">Espanso</string>
+    <string name="state_collapsed">Compresso</string>
 
     <string name="section_general">Generali</string>
     <string name="toggle_auto_apply">Applica le impostazioni automaticamente</string>
@@ -40,11 +42,14 @@
 
     <string name="permission_title">Serve l\'autorizzazione Bluetooth</string>
     <string name="permission_body">Una volta concessa, l\'app può leggere i dispositivi associati e i loro nomi.</string>
+    <string name="permission_denied">L\'autorizzazione è bloccata. Concedila dalle impostazioni di sistema.</string>
     <string name="bluetooth_off">Il Bluetooth è disattivato. Attivalo per vedere i dispositivi associati.</string>
+    <string name="config_broken">Non è stato possibile leggere le impostazioni salvate, quindi non è possibile modificare nulla. Importa un backup per ricominciare.</string>
 
     <string name="section_audio_devices">Dispositivi audio</string>
     <string name="devices_empty">Nessun dispositivo audio associato trovato.</string>
     <string name="devices_no_permission">Senza l\'autorizzazione non è possibile leggere i dispositivi.</string>
+    <string name="devices_bluetooth_off">Con il Bluetooth disattivato non è possibile leggere i dispositivi.</string>
     <string name="section_other_devices">Altri dispositivi (%1$d)</string>
     <string name="section_orphan_profiles">Impostazioni senza dispositivo associato</string>
 
@@ -96,6 +101,7 @@
 
     <string name="section_target">Valori da fissare</string>
     <string name="target_no_capability">Non è stato possibile leggere le combinazioni supportate da questo dispositivo, quindi sono elencate tutte le opzioni.</string>
+    <string name="target_not_connected">Le combinazioni supportate da questo dispositivo si possono leggere solo mentre è connesso, quindi sono elencate tutte le opzioni.</string>
     <string name="label_codec">Codec</string>
     <string name="label_sample_rate">Frequenza di campionamento</string>
     <string name="label_bit_depth">Profondità di bit</string>
