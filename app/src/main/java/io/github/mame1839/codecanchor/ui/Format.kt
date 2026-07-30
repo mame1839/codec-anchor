@@ -6,6 +6,7 @@ import android.text.format.DateFormat
 import io.github.mame1839.codecanchor.R
 import io.github.mame1839.codecanchor.core.CodecKeys
 import io.github.mame1839.codecanchor.core.DeviceProfile
+import java.text.NumberFormat
 import java.util.Date
 import java.util.Locale
 
@@ -51,11 +52,17 @@ fun profileSummary(res: Resources, profile: DeviceProfile, codecNames: Map<Int, 
     }.joinToString(" · ")
 }
 
+// 整数と小数で書式が変わると、固有数字のロケールで同じ画面に別表記が混ざる。
 fun millisLabel(res: Resources, ms: Int): String = when {
     ms <= 0 -> res.getString(R.string.value_immediately)
-    ms % 1000 == 0 -> res.getString(R.string.value_seconds, (ms / 1000).toString())
-    else -> res.getString(R.string.value_seconds, String.format(Locale.getDefault(), "%.1f", ms / 1000f))
+    else -> res.getString(R.string.value_seconds, secondsLabel(ms / 1000.0, if (ms % 1000 == 0) 0 else 1))
 }
+
+private fun secondsLabel(seconds: Double, digits: Int): String =
+    NumberFormat.getInstance(Locale.getDefault()).apply {
+        minimumFractionDigits = digits
+        maximumFractionDigits = digits
+    }.format(seconds)
 
 fun retryLabel(res: Resources, count: Int): String =
     res.getQuantityString(R.plurals.retry_count, count, count)

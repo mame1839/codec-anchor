@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -31,11 +33,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -68,8 +71,8 @@ fun DeviceDetailScreen(
     val resources = LocalContext.current.resources
     val status = vm.statusOf(mac)
     val name = vm.nameOf(mac)
-    var confirmDelete by remember { mutableStateOf(false) }
-    var advancedExpanded by remember { mutableStateOf(false) }
+    var confirmDelete by rememberSaveable { mutableStateOf(false) }
+    var advancedExpanded by rememberSaveable { mutableStateOf(false) }
 
     val applyMessage = when {
         vm.moduleState != ModuleState.ACTIVE -> stringResource(R.string.msg_apply_module_inactive)
@@ -93,10 +96,11 @@ fun DeviceDetailScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { inner ->
+        val layoutDirection = LocalLayoutDirection.current
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(
-                start = 16.dp,
-                end = 16.dp,
+                start = inner.calculateStartPadding(layoutDirection) + 16.dp,
+                end = inner.calculateEndPadding(layoutDirection) + 16.dp,
                 top = inner.calculateTopPadding() + 8.dp,
                 bottom = inner.calculateBottomPadding() + 24.dp,
             ),
@@ -292,6 +296,7 @@ private fun TargetCard(
     val resources = LocalContext.current.resources
     val keep = stringResource(R.string.value_keep)
     val selectable = status?.selectable.orEmpty()
+    val connected = status?.connected == true
 
     val codecOptions = buildList {
         add(CodecKeys.KEEP_INT to keep)
@@ -306,18 +311,22 @@ private fun TargetCard(
     }
 
     val capability = if (profile.codecType == CodecKeys.KEEP_INT) null else status?.capabilityOf(profile.codecType)
-    val codecName = if (profile.codecType == CodecKeys.KEEP_INT) {
-        status?.current?.codecName
-    } else {
-        codecOptions.firstOrNull { it.first == profile.codecType }?.second
-    }
-    val showLdac = CodecKeys.isLdac(codecName) || profile.codecSpecific1 != CodecKeys.KEEP_LONG
+    // 行の有無が報告の到着で変わると、開いているダイアログが閉じたり下のボタンが動いたりする。
+    // 判断材料は非同期に変わらない profile だけに限る。
+    val ldacEnabled = profile.codecType == CodecKeys.KEEP_INT ||
+        CodecKeys.isLdac(codecLabel(profile.codecType, vm.codecNames)) ||
+        profile.codecSpecific1 != CodecKeys.KEEP_LONG
 
     SettingsCard(title = stringResource(R.string.section_target)) {
+        // 未接続なら「読めなかった」ではなく「まだ読めない」ので、警告にはしない。
         if (selectable.isEmpty()) {
             NoticeRow(
-                icon = R.drawable.ic_warning,
-                text = stringResource(R.string.target_no_capability),
+                icon = if (connected) R.drawable.ic_warning else R.drawable.ic_bluetooth,
+                text = if (connected) {
+                    stringResource(R.string.target_no_capability)
+                } else {
+                    stringResource(R.string.target_not_connected)
+                },
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
             )
         }
@@ -345,14 +354,13 @@ private fun TargetCard(
             selected = profile.channelMode,
             onSelect = { value -> vm.updateProfile(mac) { it.copy(channelMode = value) } },
         )
-        if (showLdac) {
-            ChoiceRow(
-                title = stringResource(R.string.label_ldac_quality),
-                options = ldacOptions(resources, profile.codecSpecific1, keep),
-                selected = profile.codecSpecific1,
-                onSelect = { value -> vm.updateProfile(mac) { it.copy(codecSpecific1 = value) } },
-            )
-        }
+        ChoiceRow(
+            title = stringResource(R.string.label_ldac_quality),
+            options = ldacOptions(resources, profile.codecSpecific1, keep),
+            selected = profile.codecSpecific1,
+            onSelect = { value -> vm.updateProfile(mac) { it.copy(codecSpecific1 = value) } },
+            enabled = ldacEnabled,
+        )
     }
 }
 
