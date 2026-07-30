@@ -20,13 +20,17 @@ data class CodecInfo(
         put("cs1", codecSpecific1)
     }
 
+    // フックが名前を解決できなかったときは空で届く。
+    fun displayName(): String = codecName.ifBlank { CodecKeys.fallbackName(codecType) }
+
     fun summary(): String = buildString {
-        append(codecName)
+        val name = displayName()
+        append(name)
         val sr = CodecKeys.SAMPLE_RATES.firstOrNull { it.first == sampleRate }?.second
         val bps = CodecKeys.BIT_DEPTHS.firstOrNull { it.first == bitsPerSample }?.second
         if (sr != null) append(" · ").append(sr)
         if (bps != null) append(" / ").append(bps)
-        if (CodecKeys.isLdac(codecName) && codecSpecific1 > 0) {
+        if (CodecKeys.isLdac(name) && codecSpecific1 > 0) {
             val q = CodecKeys.LDAC_QUALITIES.firstOrNull { it.first == codecSpecific1 }?.second
             if (q != null) append(" · ").append(q.substringBefore(" ("))
         }
@@ -35,7 +39,7 @@ data class CodecInfo(
     companion object {
         fun fromJson(o: JSONObject) = CodecInfo(
             codecType = o.optInt("type", CodecKeys.KEEP_INT),
-            codecName = o.optString("name", "?"),
+            codecName = o.optString("name", ""),
             sampleRate = o.optInt("sr", 0),
             bitsPerSample = o.optInt("bps", 0),
             channelMode = o.optInt("cm", 0),

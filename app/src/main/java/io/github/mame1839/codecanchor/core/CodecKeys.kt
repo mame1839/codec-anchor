@@ -78,6 +78,9 @@ object CodecKeys {
         }
     }
 
+    // 端末から名前が取れなかったときの表示名。言語に依存しない表記に留める。
+    fun fallbackName(codecType: Int): String = FALLBACK_CODEC_NAMES[codecType] ?: "Codec $codecType"
+
     fun label(table: List<Pair<Int, String>>, mask: Int): String =
         table.firstOrNull { it.first == mask }?.second ?: "0x${mask.toString(16)}"
 

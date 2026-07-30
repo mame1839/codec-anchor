@@ -108,6 +108,7 @@ internal object Bt {
         }.getOrNull()
     }
 
+    // 名前が取れないときは空で返す。表示名の組み立ては翻訳を持っているアプリ側に任せる。
     fun codecName(config: Any?, codecType: Int): String {
         if (config != null) {
             runCatching {
@@ -127,7 +128,7 @@ internal object Bt {
                 return name
             }
         }
-        return "コーデック #$codecType"
+        return ""
     }
 
     fun currentConfig(codecStatus: Any?): Any? =

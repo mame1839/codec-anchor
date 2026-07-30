@@ -15,7 +15,7 @@ private const val LDAC_QUALITY_LOWEST = 1002L
 private const val LDAC_QUALITY_ABR = 1003L
 
 fun codecLabel(codecType: Int, codecNames: Map<Int, String>): String =
-    codecNames[codecType] ?: CodecKeys.FALLBACK_CODEC_NAMES[codecType] ?: "Codec $codecType"
+    codecNames[codecType] ?: CodecKeys.fallbackName(codecType)
 
 fun channelModes(res: Resources): List<Pair<Int, String>> = listOf(
     CodecKeys.CHANNEL_MODE_MONO to res.getString(R.string.channel_mono),
