@@ -28,6 +28,8 @@
 
     <string name="cd_refresh_status">Sprawdź stan ponownie</string>
     <string name="cd_back">Wstecz</string>
+    <string name="state_expanded">Rozwinięte</string>
+    <string name="state_collapsed">Zwinięte</string>
 
     <string name="section_general">Ustawienia ogólne</string>
     <string name="toggle_auto_apply">Stosuj ustawienia automatycznie</string>
@@ -41,11 +43,14 @@
 
     <string name="permission_title">Potrzebne uprawnienie Bluetooth</string>
     <string name="permission_body">Po przyznaniu aplikacja może odczytać sparowane urządzenia i ich nazwy.</string>
+    <string name="permission_denied">Uprawnienie jest zablokowane. Przyznaj je w ustawieniach systemu.</string>
     <string name="bluetooth_off">Bluetooth jest wyłączony. Włącz go, aby zobaczyć sparowane urządzenia.</string>
+    <string name="config_broken">Nie udało się odczytać zapisanych ustawień, więc nie można ich edytować. Zaimportuj kopię zapasową, aby zacząć od nowa.</string>
 
     <string name="section_audio_devices">Urządzenia audio</string>
     <string name="devices_empty">Nie znaleziono sparowanego urządzenia audio.</string>
     <string name="devices_no_permission">Bez uprawnienia nie można odczytać urządzeń.</string>
+    <string name="devices_bluetooth_off">Przy wyłączonym Bluetooth nie można odczytać urządzeń.</string>
     <string name="section_other_devices">Inne urządzenia (%1$d)</string>
     <string name="section_orphan_profiles">Ustawienia bez sparowanego urządzenia</string>
 
@@ -97,6 +102,7 @@
 
     <string name="section_target">Wartości do przypięcia</string>
     <string name="target_no_capability">Nie udało się odczytać kombinacji obsługiwanych przez to urządzenie, więc pokazane są wszystkie możliwości.</string>
+    <string name="target_not_connected">Kombinacje obsługiwane przez to urządzenie można odczytać tylko podczas połączenia, więc pokazane są wszystkie możliwości.</string>
     <string name="label_codec">Kodek</string>
     <string name="label_sample_rate">Częstotliwość próbkowania</string>
     <string name="label_bit_depth">Głębia bitowa</string>
