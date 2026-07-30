@@ -75,12 +75,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var bondedNames by mutableStateOf<Map<String, String>>(emptyMap())
     private var probe: Job? = null
     private var watch: Job? = null
+    private var syncWait: Job? = null
+
+    // 一覧のカードが recomposition ごとに読むので、設定を変えたときだけ計算する (hash は JSON を組み直す)。
+    private var configHash = config.hash()
+
+    // 送った設定に対するフックの返事を待っている間は true。
+    private var awaitingSync by mutableStateOf(false)
 
     val codecNames: Map<Int, String>
         get() = report?.codecNames?.takeIf { it.isNotEmpty() } ?: CodecKeys.FALLBACK_CODEC_NAMES
 
+    // 送ってからフックの返事が届くまでは、フックが持つ内容が古いのは当たり前。一致しないことを根拠に
+    // 「届いていません」を出すと、押した直後だけカードに行が増えて一覧全体が上下する。返事を待つ間は伏せる。
     val configSynced: Boolean
-        get() = report?.configHash == config.hash()
+        get() = awaitingSync || report?.configHash == configHash
 
     val a2dpOffloadEnabled: Boolean
         get() = report?.a2dpOffloadEnabled == true
@@ -183,6 +192,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun onReport(received: StatusReport) {
         probe?.cancel()
         probing = false
+        if (received.configHash == configHash) endSyncWait()
         report = received
         if (received.devices.isNotEmpty()) statuses = statuses + received.devices.associateBy { it.mac }
         moduleState = ModuleState.ACTIVE
@@ -190,6 +200,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun pushConfig() {
         if (configBroken) return
+        beginSyncWait()
         BridgeClient.pushConfig(context, config)
     }
 
@@ -199,9 +210,31 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (configBroken) return
         val next = transform(config)
         if (next == config) return
+        commit(next)
+    }
+
+    // 設定の差し替えは保存とフックへの送信まで一続き。configHash も config と同じ場所で更新する。
+    private fun commit(next: AppConfig) {
         config = next
+        configHash = next.hash()
         store.save(next)
+        beginSyncWait()
         BridgeClient.pushConfig(context, next)
+    }
+
+    private fun beginSyncWait() {
+        awaitingSync = true
+        syncWait?.cancel()
+        syncWait = viewModelScope.launch {
+            delay(SYNC_WAIT_MS)
+            awaitingSync = false
+        }
+    }
+
+    private fun endSyncWait() {
+        syncWait?.cancel()
+        syncWait = null
+        awaitingSync = false
     }
 
     fun updateProfile(mac: String, transform: (DeviceProfile) -> DeviceProfile) = update { current ->
@@ -255,10 +288,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 return@launch
             }
             val restored = AppConfig.fromJson(parsed)
-            config = restored
             configBroken = false
-            store.save(restored)
-            BridgeClient.pushConfig(context, restored)
+            commit(restored)
             refreshDevices()
             pendingMessage = R.string.msg_backup_imported
         }
@@ -281,6 +312,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         const val REPORT_TIMEOUT_MS = 5_000L
         const val STALE_REPORT_MS = 10_000L
         const val UNANSWERED_ATTEMPTS = 2
+
+        // フックは状態を組むときに LDAC のダンプを読む (最長 3 秒) ので、返事はそれより遅れることがある。
+        const val SYNC_WAIT_MS = 5_000L
 
         // フック側は同じ機器の読み取りを 2 秒キャッシュするので、それより長い間隔で回す。
         const val WATCH_INTERVAL_MS = 3_000L
