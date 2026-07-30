@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name" translatable="false">Codec Anchor</string>
     <string name="xposed_description">Pins the Bluetooth codec and audio quality for each pair of earphones</string>
     <string name="permission_bridge_label">Send Codec Anchor settings</string>
@@ -94,6 +94,8 @@
     <string name="detail_auto_apply">Apply to these earphones</string>
     <string name="detail_auto_apply_desc">Switches to the settings below whenever the earphones connect</string>
     <string name="detail_current_codec">Current codec: %1$s</string>
+    <string name="ldac_bitrate" translatable="false">%1$d kbps (%2$s)</string>
+    <string name="ldac_bitrate_offload" tools:ignore="MissingTranslation">The effective bitrate cannot be read because Bluetooth A2DP hardware offload is enabled.</string>
     <string name="detail_note">Last result: %1$s</string>
     <string name="outcome_applied">switched to %1$s</string>
     <string name="outcome_failed">could not switch, still %1$s</string>

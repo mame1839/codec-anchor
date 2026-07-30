@@ -122,6 +122,7 @@ internal object A2dpHook {
         statuses.clear()
         reported.clear()
         announced.clear()
+        LdacStats.clear()
         unregisterReceivers()
     }
 
@@ -310,12 +311,12 @@ internal object A2dpHook {
                 XLog.verbose = received.verbose
                 XLog.i("設定を受信 (${received.profiles.size} 台, 有効=${received.enabled})")
                 if (changed) reapplyConnected("設定更新")
-                refreshAllConnected()
+                refreshAllConnected(readLdac = true)
                 sendReport(null)
             }
 
             Bridge.ACTION_REQUEST_STATUS -> {
-                refreshAllConnected()
+                refreshAllConnected(readLdac = true)
                 sendReport(null)
             }
 
@@ -684,8 +685,31 @@ internal object A2dpHook {
         }.getOrDefault(emptyList())
     }
 
-    private fun refreshAllConnected() {
-        connectedDevices().forEach { refreshStatus(it, codecStatusOf(it)) }
+    private fun refreshAllConnected(readLdac: Boolean = false) {
+        connectedDevices().forEach { device ->
+            val codecStatus = codecStatusOf(device)
+            if (readLdac) refreshLdacStats(device, codecStatus)
+            refreshStatus(device, codecStatus)
+        }
+    }
+
+    // ダンプの A2DP 区画は今のストリーム 1 本分しかないので、複数台が LDAC で繋がっているときは
+    // アクティブな機器にだけ紐づける (他の機器に他人の値を出さない)。
+    private fun refreshLdacStats(device: BluetoothDevice, codecStatus: Any?) {
+        val mac = macOf(device) ?: return
+        val svc = service ?: return
+        val active = activeDevice()
+        val current = Bt.codecInfo(Bt.currentConfig(codecStatus))
+        if (!CodecKeys.isLdac(current?.displayName()) || (active != null && active != device)) {
+            LdacStats.forget(mac)
+            return
+        }
+        LdacStats.refresh(svc, mac)
+    }
+
+    private fun activeDevice(): Any? {
+        val svc = service ?: return null
+        return runCatching { XposedHelpers.callMethod(svc, "getActiveDevice") }.getOrNull()
     }
 
     // Bluetooth プロセスの中で動くので BLUETOOTH_CONNECT は常に許可されている
@@ -701,15 +725,18 @@ internal object A2dpHook {
         val connected = runCatching {
             XposedHelpers.callMethod(svc, "getConnectionState", device) as? Int == STATE_CONNECTED
         }.getOrDefault(false)
-        val active = runCatching {
-            device == XposedHelpers.callMethod(svc, "getActiveDevice")
-        }.getOrDefault(false)
+        val active = device == activeDevice()
+        val current = Bt.codecInfo(Bt.currentConfig(codecStatus))
+        // 読み取りは状態要求の経路だけで行う (適用サイクル中の報告にも直近の値を載せる)。
+        val ldac = if (CodecKeys.isLdac(current?.displayName())) LdacStats.cached(mac) else null
         val fresh = DeviceStatus(
             mac = mac,
             name = runCatching { device.name }.getOrNull().orEmpty(),
             connected = connected,
             active = active,
-            current = Bt.codecInfo(Bt.currentConfig(codecStatus)),
+            current = current,
+            ldacQualityMode = ldac?.mode.orEmpty(),
+            ldacBitrateKbps = ldac?.kbps ?: 0,
             selectable = Bt.selectableCapabilities(codecStatus).mapNotNull { Bt.codecInfo(it) },
             local = Bt.localCapabilities(codecStatus).mapNotNull { Bt.codecInfo(it) },
             outcome = outcome ?: ApplyOutcome.NONE,
@@ -734,7 +761,16 @@ internal object A2dpHook {
         announced.remove(mac)
         pendingToasts.remove(mac)
         reported.remove(mac)
-        statuses.computeIfPresent(mac) { _, prev -> prev.copy(connected = false, active = false, current = null) }
+        LdacStats.forget(mac)
+        statuses.computeIfPresent(mac) { _, prev ->
+            prev.copy(
+                connected = false,
+                active = false,
+                current = null,
+                ldacQualityMode = "",
+                ldacBitrateKbps = 0,
+            )
+        }
     }
 
     // 接続時はコーデック変更の通知が接続完了より先に届く。これから自分で変えるコーデックについて
@@ -850,6 +886,7 @@ internal object A2dpHook {
             hostPackage = hostPackage,
             configHash = config.hash(),
             configLoaded = configLoaded,
+            a2dpOffloadEnabled = a2dpOffloadEnabled(),
             devices = devices,
             codecNames = Bt.codecNames.toMap(),
             timestamp = System.currentTimeMillis(),
@@ -860,6 +897,18 @@ internal object A2dpHook {
             addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
         }
         ctx.sendBroadcast(intent)
+    }
+
+    // オフロードが有効な端末では、エンコードが DSP 内で行われて実効ビットレートが出てこないことがある。
+    // 出ないときの理由を画面に出せるよう、状態そのものを報告に載せる。
+    private fun a2dpOffloadEnabled(): Boolean {
+        val svc = service ?: return false
+        runCatching { XposedHelpers.getBooleanField(svc, "mA2dpOffloadEnabled") }
+            .getOrNull()?.let { return it }
+        return runCatching {
+            val adapter = XposedHelpers.getObjectField(svc, "mAdapterService")
+            XposedHelpers.callMethod(adapter, "isA2dpOffloadEnabled") as? Boolean
+        }.getOrNull() ?: false
     }
 
     private fun requestConfig(ctx: Context) {

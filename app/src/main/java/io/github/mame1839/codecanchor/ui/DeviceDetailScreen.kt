@@ -43,6 +43,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import io.github.mame1839.codecanchor.R
 import io.github.mame1839.codecanchor.core.ApplyOutcome
 import io.github.mame1839.codecanchor.core.CodecKeys
@@ -73,6 +74,11 @@ fun DeviceDetailScreen(
     val name = vm.nameOf(mac)
     var confirmDelete by rememberSaveable { mutableStateOf(false) }
     var advancedExpanded by rememberSaveable { mutableStateOf(false) }
+
+    LifecycleResumeEffect(Unit) {
+        vm.startWatching()
+        onPauseOrDispose { vm.stopWatching() }
+    }
 
     val applyMessage = when {
         vm.moduleState != ModuleState.ACTIVE -> stringResource(R.string.msg_apply_module_inactive)
@@ -106,7 +112,7 @@ fun DeviceDetailScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            DeviceHeader(name = name, mac = mac, status = status)
+            DeviceHeader(name = name, mac = mac, status = status, offloadEnabled = vm.a2dpOffloadEnabled)
 
             SettingsCard {
                 SwitchRow(
@@ -220,7 +226,7 @@ fun DeviceDetailScreen(
 }
 
 @Composable
-private fun DeviceHeader(name: String, mac: String, status: DeviceStatus?) {
+private fun DeviceHeader(name: String, mac: String, status: DeviceStatus?, offloadEnabled: Boolean) {
     SettingsCard {
         Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
             Text(name, style = MaterialTheme.typography.titleMedium)
@@ -250,14 +256,29 @@ private fun DeviceHeader(name: String, mac: String, status: DeviceStatus?) {
                 }
             }
             Spacer(Modifier.height(8.dp))
+            val unknown = stringResource(R.string.value_unknown)
             Text(
-                text = stringResource(
-                    R.string.detail_current_codec,
-                    status?.current?.summary() ?: stringResource(R.string.value_unknown),
-                ),
+                text = stringResource(R.string.detail_current_codec, status?.current?.summary() ?: unknown),
                 style = MaterialTheme.typography.bodyMedium,
             )
-            val unknown = stringResource(R.string.value_unknown)
+            if (status != null && CodecKeys.isLdac(status.current?.displayName())) {
+                if (status.ldacBitrateKbps > 0) {
+                    Text(
+                        text = stringResource(
+                            R.string.ldac_bitrate,
+                            status.ldacBitrateKbps,
+                            status.ldacQualityMode.ifBlank { unknown },
+                        ),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                } else if (offloadEnabled) {
+                    Text(
+                        text = stringResource(R.string.ldac_bitrate_offload),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
             val outcomeText = when (status?.outcome) {
                 ApplyOutcome.APPLIED ->
                     stringResource(R.string.outcome_applied, status.outcomeValue.ifBlank { unknown })

@@ -74,12 +74,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // プロファイルに保存する名前の出どころになる)。
     private var bondedNames by mutableStateOf<Map<String, String>>(emptyMap())
     private var probe: Job? = null
+    private var watch: Job? = null
 
     val codecNames: Map<Int, String>
         get() = report?.codecNames?.takeIf { it.isNotEmpty() } ?: CodecKeys.FALLBACK_CODEC_NAMES
 
     val configSynced: Boolean
         get() = report?.configHash == config.hash()
+
+    val a2dpOffloadEnabled: Boolean
+        get() = report?.a2dpOffloadEnabled == true
 
     // ボンド済みに出てこない MAC (ペアリングを解除した) も設定を残しておく。
     // 権限が無い / Bluetooth がオフのときは一覧そのものが読めないので、ボンド済みに無いことを根拠にできない。
@@ -154,6 +158,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val last = report?.timestamp ?: 0L
             if (System.currentTimeMillis() - last > STALE_REPORT_MS) moduleState = ModuleState.INACTIVE
         }
+    }
+
+    // LDAC の実効ビットレートは送信中に動くので、それを見ている画面が開いている間だけ取り直す。
+    // 判定 (probing / moduleState) は requestStatus に任せ、ここでは要求だけ投げる —
+    // 取り直しのたびに判定を動かすと、答えを待つ数秒のあいだ表示がちらつく。
+    fun startWatching() {
+        if (watch?.isActive == true) return
+        watch = viewModelScope.launch {
+            while (true) {
+                BridgeClient.requestStatus(context)
+                delay(WATCH_INTERVAL_MS)
+            }
+        }
+    }
+
+    fun stopWatching() {
+        watch?.cancel()
+        watch = null
     }
 
     // フックは単一機器だけの報告も送るので、機器ごとにマージする。
@@ -259,5 +281,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         const val REPORT_TIMEOUT_MS = 5_000L
         const val STALE_REPORT_MS = 10_000L
         const val UNANSWERED_ATTEMPTS = 2
+
+        // フック側は同じ機器の読み取りを 2 秒キャッシュするので、それより長い間隔で回す。
+        const val WATCH_INTERVAL_MS = 3_000L
     }
 }
