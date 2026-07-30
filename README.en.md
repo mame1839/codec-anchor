@@ -3,6 +3,9 @@
 An Xposed module that stores a Bluetooth codec and audio quality per pair of earphones and applies it
 when those earphones connect.
 
+**Nothing runs in the background.** The code that applies the settings runs inside the Bluetooth process, so
+no resident process or polling is needed to watch for connections.
+
 [日本語](README.md)
 
 ## What it does
@@ -63,6 +66,12 @@ For devices that refuse to switch. The codec is set to SBC first, then to the on
 
 A short message is shown when the codec changes. The brief states right after connecting are skipped;
 only the settled result is shown. If the switch did not take, the current value is shown with it.
+
+### Nothing resident
+
+The code that applies the settings runs inside the Bluetooth process, so no resident process or polling is
+needed to watch for connections. The app's own process runs only while the settings screen is open, when the
+hook asks it for the settings, and at boot. No wakelocks, no alarms.
 
 ### Backup
 
