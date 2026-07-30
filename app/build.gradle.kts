@@ -16,6 +16,17 @@ val keystoreProps = Properties().apply {
 fun secret(name: String, default: String = ""): String =
     keystoreProps.getProperty(name) ?: System.getenv(name) ?: default
 
+// 版は release.yml がタグから -PversionName / -PversionCode で渡す。既定値は debug とローカル用なので、
+// プロパティが渡されているのに読めないときは既定値に落とさず失敗させる。
+val versionNameProp = (findProperty("versionName") as String?)?.trim()
+val versionCodeProp = (findProperty("versionCode") as String?)?.trim()
+if (versionNameProp != null && versionNameProp.isEmpty()) {
+    error("versionName プロパティが空")
+}
+if (versionCodeProp != null && versionCodeProp.toIntOrNull() == null) {
+    error("versionCode プロパティが整数でない: \"$versionCodeProp\"")
+}
+
 android {
     namespace = "io.github.mame1839.codecanchor"
     compileSdk = 37
@@ -24,8 +35,8 @@ android {
         applicationId = "io.github.mame1839.codecanchor"
         minSdk = 31
         targetSdk = 36
-        versionCode = (findProperty("versionCode") as String?)?.toIntOrNull() ?: 1
-        versionName = (findProperty("versionName") as String?) ?: "0.1.0"
+        versionCode = versionCodeProp?.toInt() ?: 1
+        versionName = versionNameProp ?: "0.1.0"
     }
 
     signingConfigs {
@@ -35,6 +46,10 @@ android {
                 storePassword = secret("CA_STORE_PASSWORD")
                 keyAlias = secret("CA_KEY_ALIAS", "codecanchor")
                 keyPassword = secret("CA_KEY_PASSWORD")
+                // v3 が無いと将来の鍵ローテーションができない。片方だけ指定すると
+                // もう片方が既定値の false に落ちるので v2 も明示する。
+                enableV2Signing = true
+                enableV3Signing = true
             }
         }
     }
@@ -61,6 +76,12 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+
+    // 既存の指摘は lint-baseline.xml に記録済み。新しい指摘だけ落とす。
+    lint {
+        baseline = file("lint-baseline.xml")
+        warningsAsErrors = true
     }
 
     packaging {
