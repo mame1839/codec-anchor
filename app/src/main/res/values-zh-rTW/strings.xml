@@ -25,6 +25,8 @@
 
     <string name="cd_refresh_status">重新檢查狀態</string>
     <string name="cd_back">返回</string>
+    <string name="state_expanded">已展開</string>
+    <string name="state_collapsed">已收合</string>
 
     <string name="section_general">一般設定</string>
     <string name="toggle_auto_apply">自動套用設定</string>
@@ -38,11 +40,14 @@
 
     <string name="permission_title">需要藍牙權限</string>
     <string name="permission_body">授予後，應用程式就能讀取已配對的裝置及其名稱。</string>
+    <string name="permission_denied">權限已被封鎖，請在系統設定中授予。</string>
     <string name="bluetooth_off">藍牙已關閉。開啟後即可看到已配對的裝置。</string>
+    <string name="config_broken">無法讀取已儲存的設定，因此無法編輯任何內容。匯入備份即可重新開始。</string>
 
     <string name="section_audio_devices">音訊裝置</string>
     <string name="devices_empty">找不到已配對的音訊裝置。</string>
     <string name="devices_no_permission">沒有權限，無法讀取裝置。</string>
+    <string name="devices_bluetooth_off">藍牙已關閉，無法讀取裝置。</string>
     <string name="section_other_devices">其他裝置 (%1$d)</string>
     <string name="section_orphan_profiles">沒有對應裝置的設定</string>
 
@@ -94,6 +99,7 @@
 
     <string name="section_target">要鎖定的內容</string>
     <string name="target_no_capability">無法讀取這個裝置支援的組合，因此列出了所有候選項目。</string>
+    <string name="target_not_connected">這個裝置支援的組合只能在連線時讀取，因此列出了所有候選項目。</string>
     <string name="label_codec">編解碼器</string>
     <string name="label_sample_rate">取樣率</string>
     <string name="label_bit_depth">位元深度</string>
