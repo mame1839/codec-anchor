@@ -106,7 +106,7 @@
     <string name="ldac_hint_adaptive">自動調整</string>
 
     <string name="section_advanced">進階設定</string>
-    <string name="adv_force">強制套用</string>
+    <string name="adv_force">強制切換</string>
     <string name="adv_force_desc">也嘗試裝置沒有宣告支援的組合</string>
     <string name="adv_via_sbc">經由 SBC 切換</string>
     <string name="adv_via_sbc_desc">先降到 SBC，再切換到你選擇的編解碼器</string>
