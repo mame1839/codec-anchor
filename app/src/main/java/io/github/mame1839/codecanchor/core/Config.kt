@@ -79,6 +79,7 @@ data class AppConfig(
     val enabled: Boolean = true,
     val enforce: Boolean = true,
     val verbose: Boolean = false,
+    val notifyChanges: Boolean = true,
     val profiles: Map<String, DeviceProfile> = emptyMap(),
 ) {
     fun profileFor(mac: String?): DeviceProfile? = mac?.uppercase()?.let { profiles[it] }
@@ -94,6 +95,7 @@ data class AppConfig(
         put("enabled", enabled)
         put("enforce", enforce)
         put("verbose", verbose)
+        put("notify", notifyChanges)
         put("profiles", JSONObject().also { obj ->
             profiles.forEach { (mac, p) -> obj.put(mac, p.toJson()) }
         })
@@ -130,6 +132,7 @@ data class AppConfig(
                 enabled = o.optBoolean("enabled", true),
                 enforce = o.optBoolean("enforce", true),
                 verbose = o.optBoolean("verbose", false),
+                notifyChanges = o.optBoolean("notify", true),
                 profiles = profiles,
             )
         }
