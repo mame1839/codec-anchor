@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- hook_codec_* は Bluetooth プロセスから getIdentifier で名前引きするので R からの参照が無い。
+     残さないと release で削除され、トーストが英語のフォールバック固定になる。 -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@string/hook_codec_changed,@string/hook_codec_failed,@string/hook_codec_failed_with_current" />
