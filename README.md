@@ -78,3 +78,8 @@ Português (Brasil)、Русский、Polski、Türkçe、Tiếng Việt、Baha
 ```
 ./gradlew assembleDebug
 ```
+
+## ライセンス
+
+[Apache License 2.0](LICENSE)。同梱している XposedBridge の API (`app/libs/xposed-api-82.jar`) の出典と
+ライセンスは [NOTICE](NOTICE) に記載しています。

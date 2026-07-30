@@ -79,3 +79,8 @@ and Hindi. The device language is followed, and anything else falls back to Engl
 ```
 ./gradlew assembleDebug
 ```
+
+## License
+
+[Apache License 2.0](LICENSE). The bundled XposedBridge API (`app/libs/xposed-api-82.jar`) is attributed in
+[NOTICE](NOTICE).
