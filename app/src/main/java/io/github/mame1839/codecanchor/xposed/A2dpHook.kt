@@ -472,12 +472,18 @@ internal object A2dpHook {
         statuses[mac]?.let { statuses[mac] = it.copy(connected = false, active = false, current = null) }
     }
 
+    // 接続時はコーデック変更の通知が接続完了より先に届く。これから自分で変えるコーデックについて
+    // 「変更しました」と言わないよう、目標と一致するまでは黙っておく。
     private fun onCodecObserved(device: BluetoothDevice, codecStatus: Any?) {
         val mac = macOf(device) ?: return
         refreshStatus(device, codecStatus)
         sendReport(mac)
         if (applyingMacs.contains(mac)) return
-        val summary = Bt.codecInfo(Bt.currentConfig(codecStatus))?.summary() ?: return
+        val info = Bt.codecInfo(Bt.currentConfig(codecStatus)) ?: return
+        val profile = config.profileFor(mac)
+        val managed = config.enabled && profile != null && profile.enabled && profile.hasAnyTarget()
+        if (managed && !matches(info, profile!!)) return
+        val summary = info.summary()
         if (announced.put(mac, summary) != summary) announceChanged(device, summary)
     }
 

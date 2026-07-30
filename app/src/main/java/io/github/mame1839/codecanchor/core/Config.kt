@@ -18,7 +18,7 @@ data class DeviceProfile(
     val force: Boolean = false,
     val viaSbc: Boolean = false,
     val autoEnableHd: Boolean = true,
-    val delayMs: Int = 1500,
+    val delayMs: Int = 3000,
     val retries: Int = 3,
     val retryDelayMs: Int = 1500,
 ) {
