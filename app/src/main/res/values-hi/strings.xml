@@ -26,6 +26,8 @@
 
     <string name="cd_refresh_status">स्थिति फिर जाँचें</string>
     <string name="cd_back">पीछे</string>
+    <string name="state_expanded">फैला हुआ</string>
+    <string name="state_collapsed">समेटा हुआ</string>
 
     <string name="section_general">सामान्य सेटिंग</string>
     <string name="toggle_auto_apply">सेटिंग अपने आप लागू करें</string>
@@ -39,11 +41,14 @@
 
     <string name="permission_title">Bluetooth की अनुमति चाहिए</string>
     <string name="permission_body">अनुमति देने पर ऐप आपके जोड़े गए डिवाइस और उनके नाम पढ़ सकता है।</string>
+    <string name="permission_denied">अनुमति ब्लॉक है। सिस्टम की सेटिंग से अनुमति दें।</string>
     <string name="bluetooth_off">Bluetooth बंद है। जोड़े गए डिवाइस देखने के लिए इसे चालू करें।</string>
+    <string name="config_broken">सहेजी गई सेटिंग पढ़ी नहीं जा सकी, इसलिए कुछ भी बदला नहीं जा सकता। फिर से शुरू करने के लिए बैकअप इंपोर्ट करें।</string>
 
     <string name="section_audio_devices">ऑडियो डिवाइस</string>
     <string name="devices_empty">जोड़ा गया कोई ऑडियो डिवाइस नहीं मिला।</string>
     <string name="devices_no_permission">अनुमति के बिना डिवाइस नहीं पढ़े जा सकते।</string>
+    <string name="devices_bluetooth_off">Bluetooth बंद होने पर डिवाइस नहीं पढ़े जा सकते।</string>
     <string name="section_other_devices">अन्य डिवाइस (%1$d)</string>
     <string name="section_orphan_profiles">जोड़े गए डिवाइस के बिना सेटिंग</string>
 
@@ -95,6 +100,7 @@
 
     <string name="section_target">जो मान तय करने हैं</string>
     <string name="target_no_capability">यह डिवाइस किन संयोजनों का समर्थन करता है, यह पढ़ा नहीं जा सका, इसलिए सभी विकल्प दिखाए गए हैं।</string>
+    <string name="target_not_connected">यह डिवाइस किन संयोजनों का समर्थन करता है, यह कनेक्ट रहने पर ही पढ़ा जा सकता है, इसलिए सभी विकल्प दिखाए गए हैं।</string>
     <string name="label_codec">कोडेक</string>
     <string name="label_sample_rate">सैंपल रेट</string>
     <string name="label_bit_depth">बिट डेप्थ</string>
