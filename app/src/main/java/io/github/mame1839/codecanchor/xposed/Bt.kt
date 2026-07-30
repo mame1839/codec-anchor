@@ -39,7 +39,7 @@ internal object Bt {
         CodecKeys.FALLBACK_CODEC_NAMES.forEach { (value, label) ->
             if (!codecNames.containsKey(value)) codecNames[value] = label
         }
-        XLog.d("コーデック一覧: $codecNames")
+        XLog.i("この端末のコーデック: $codecNames")
     }
 
     fun buildCodecConfig(
