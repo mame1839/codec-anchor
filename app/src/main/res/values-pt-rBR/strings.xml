@@ -27,6 +27,8 @@
 
     <string name="cd_refresh_status">Verificar o status novamente</string>
     <string name="cd_back">Voltar</string>
+    <string name="state_expanded">Expandido</string>
+    <string name="state_collapsed">Recolhido</string>
 
     <string name="section_general">Configurações gerais</string>
     <string name="toggle_auto_apply">Aplicar as configurações automaticamente</string>
@@ -40,11 +42,14 @@
 
     <string name="permission_title">É necessária a permissão de Bluetooth</string>
     <string name="permission_body">Ao conceder, o app pode ler seus dispositivos pareados e os nomes deles.</string>
+    <string name="permission_denied">A permissão está bloqueada. Conceda-a nas configurações do sistema.</string>
     <string name="bluetooth_off">O Bluetooth está desativado. Ative-o para ver seus dispositivos pareados.</string>
+    <string name="config_broken">Não foi possível ler as configurações salvas, então não há como editar nada. Importe um backup para começar de novo.</string>
 
     <string name="section_audio_devices">Dispositivos de áudio</string>
     <string name="devices_empty">Nenhum dispositivo de áudio pareado foi encontrado.</string>
     <string name="devices_no_permission">Sem a permissão não é possível ler os dispositivos.</string>
+    <string name="devices_bluetooth_off">Com o Bluetooth desativado não é possível ler os dispositivos.</string>
     <string name="section_other_devices">Outros dispositivos (%1$d)</string>
     <string name="section_orphan_profiles">Configurações sem dispositivo pareado</string>
 
@@ -96,6 +101,7 @@
 
     <string name="section_target">Valores a fixar</string>
     <string name="target_no_capability">Não foi possível ler as combinações que este dispositivo aceita, então todas as opções são listadas.</string>
+    <string name="target_not_connected">As combinações que este dispositivo aceita só podem ser lidas enquanto ele está conectado, então todas as opções são listadas.</string>
     <string name="label_codec">Codec</string>
     <string name="label_sample_rate">Taxa de amostragem</string>
     <string name="label_bit_depth">Profundidade de bits</string>

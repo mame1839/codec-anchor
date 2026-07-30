@@ -27,6 +27,8 @@
 
     <string name="cd_refresh_status">Vérifier à nouveau l\'état</string>
     <string name="cd_back">Retour</string>
+    <string name="state_expanded">Développé</string>
+    <string name="state_collapsed">Réduit</string>
 
     <string name="section_general">Général</string>
     <string name="toggle_auto_apply">Appliquer les réglages automatiquement</string>
@@ -40,11 +42,14 @@
 
     <string name="permission_title">Autorisation Bluetooth requise</string>
     <string name="permission_body">Une fois accordée, l\'application peut lire vos appareils associés et leurs noms.</string>
+    <string name="permission_denied">L\'autorisation est bloquée. Accordez-la depuis les paramètres système.</string>
     <string name="bluetooth_off">Le Bluetooth est désactivé. Activez-le pour voir vos appareils associés.</string>
+    <string name="config_broken">Les réglages enregistrés n\'ont pas pu être lus, aucune modification n\'est donc possible. Importez une sauvegarde pour repartir de zéro.</string>
 
     <string name="section_audio_devices">Appareils audio</string>
     <string name="devices_empty">Aucun appareil audio associé n\'a été trouvé.</string>
     <string name="devices_no_permission">Sans l\'autorisation, les appareils ne peuvent pas être lus.</string>
+    <string name="devices_bluetooth_off">Le Bluetooth étant désactivé, les appareils ne peuvent pas être lus.</string>
     <string name="section_other_devices">Autres appareils (%1$d)</string>
     <string name="section_orphan_profiles">Réglages sans appareil associé</string>
 
@@ -96,6 +101,7 @@
 
     <string name="section_target">Valeurs à fixer</string>
     <string name="target_no_capability">Les combinaisons prises en charge par cet appareil n\'ont pas pu être lues, toutes les options sont donc listées.</string>
+    <string name="target_not_connected">Les combinaisons prises en charge par cet appareil ne peuvent être lues que lorsqu\'il est connecté, toutes les options sont donc listées.</string>
     <string name="label_codec">Codec</string>
     <string name="label_sample_rate">Fréquence d\'échantillonnage</string>
     <string name="label_bit_depth">Profondeur de bits</string>
