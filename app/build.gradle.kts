@@ -27,6 +27,20 @@ if (versionCodeProp != null && versionCodeProp.toIntOrNull() == null) {
     error("versionCode プロパティが整数でない: \"$versionCodeProp\"")
 }
 
+// プロパティが無いローカルビルドは直近のタグに合わせる。literal を書くとタグと二重管理になり、
+// 実機に入れたビルドの版が古いまま表示される。
+val latestTag: String = providers.exec {
+    commandLine("git", "describe", "--tags", "--abbrev=0")
+    isIgnoreExitValue = true
+}.standardOutput.asText.map { it.trim().removePrefix("v") }.orNull
+    ?.takeIf { Regex("^\\d+\\.\\d+\\.\\d+$").matches(it) } ?: "0.0.0"
+
+// release.yml と同じ式にする (major * 10000 + minor * 100 + patch)。
+fun versionCodeOf(name: String): Int {
+    val parts = name.split(".").map { it.toInt() }
+    return parts[0] * 10_000 + parts[1] * 100 + parts[2]
+}
+
 android {
     namespace = "io.github.mame1839.codecanchor"
     compileSdk = 37
@@ -35,8 +49,9 @@ android {
         applicationId = "io.github.mame1839.codecanchor"
         minSdk = 31
         targetSdk = 36
-        versionCode = versionCodeProp?.toInt() ?: 1
-        versionName = versionNameProp ?: "0.1.0"
+        // タグが取れない環境 (浅い clone、アーカイブ展開) では 0 になるが、0 は AGP が受け付けない
+        versionCode = versionCodeProp?.toInt() ?: versionCodeOf(latestTag).coerceAtLeast(1)
+        versionName = versionNameProp ?: latestTag
     }
 
     signingConfigs {
