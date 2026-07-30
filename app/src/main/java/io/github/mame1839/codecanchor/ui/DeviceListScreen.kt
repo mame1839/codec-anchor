@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -34,12 +36,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -63,22 +69,24 @@ fun DeviceListScreen(
     val audioRows = vm.bondedRows.filter { it.audio }
     val otherRows = vm.bondedRows.filterNot { it.audio }
     val orphanRows = vm.orphanRows
-    var othersExpanded by remember { mutableStateOf(false) }
+    var othersExpanded by rememberSaveable { mutableStateOf(false) }
     val pushedMessage = stringResource(R.string.msg_config_pushed)
+    val refreshLabel = stringResource(R.string.cd_refresh_status)
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.app_name)) },
                 actions = {
-                    IconButton(onClick = { vm.refresh() }, enabled = !vm.probing) {
+                    IconButton(
+                        onClick = { vm.refresh() },
+                        enabled = !vm.probing,
+                        modifier = Modifier.semantics { contentDescription = refreshLabel },
+                    ) {
                         if (vm.probing) {
                             CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                         } else {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_refresh),
-                                contentDescription = stringResource(R.string.cd_refresh_status),
-                            )
+                            Icon(painter = painterResource(R.drawable.ic_refresh), contentDescription = null)
                         }
                     }
                 },
@@ -86,11 +94,12 @@ fun DeviceListScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { inner ->
+        val layoutDirection = LocalLayoutDirection.current
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
-                start = 16.dp,
-                end = 16.dp,
+                start = inner.calculateStartPadding(layoutDirection) + 16.dp,
+                end = inner.calculateEndPadding(layoutDirection) + 16.dp,
                 top = inner.calculateTopPadding() + 8.dp,
                 bottom = inner.calculateBottomPadding() + 24.dp,
             ),
@@ -104,6 +113,18 @@ fun DeviceListScreen(
                         onNotify(pushedMessage)
                     },
                 )
+            }
+
+            if (vm.configBroken) {
+                item {
+                    SettingsCard(container = MaterialTheme.colorScheme.errorContainer) {
+                        NoticeRow(
+                            icon = R.drawable.ic_warning,
+                            text = stringResource(R.string.config_broken),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
+                        )
+                    }
+                }
             }
 
             item {
@@ -176,10 +197,10 @@ fun DeviceListScreen(
                 item {
                     SettingsCard {
                         Text(
-                            text = if (vm.connectGranted) {
-                                stringResource(R.string.devices_empty)
-                            } else {
-                                stringResource(R.string.devices_no_permission)
+                            text = when {
+                                !vm.connectGranted -> stringResource(R.string.devices_no_permission)
+                                !vm.bluetoothOn -> stringResource(R.string.devices_bluetooth_off)
+                                else -> stringResource(R.string.devices_empty)
                             },
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -235,42 +256,23 @@ fun DeviceListScreen(
                 }
             }
 
-            item { BackupCard(vm = vm, onNotify = onNotify) }
+            item { BackupCard(vm = vm) }
         }
     }
 }
 
 @Composable
-private fun BackupCard(vm: MainViewModel, onNotify: (String) -> Unit) {
-    val resources = LocalContext.current.resources
-    var confirmImport by remember { mutableStateOf(false) }
+private fun BackupCard(vm: MainViewModel) {
+    var confirmImport by rememberSaveable { mutableStateOf(false) }
 
     val exportLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json"),
     ) { uri ->
-        uri ?: return@rememberLauncherForActivityResult
-        vm.exportConfig(uri) { ok ->
-            onNotify(
-                resources.getString(
-                    if (ok) R.string.msg_backup_exported else R.string.msg_backup_export_failed,
-                ),
-            )
-        }
+        uri?.let(vm::exportConfig)
     }
 
     val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        uri ?: return@rememberLauncherForActivityResult
-        vm.importConfig(uri) { result ->
-            onNotify(
-                resources.getString(
-                    when (result) {
-                        BackupResult.OK -> R.string.msg_backup_imported
-                        BackupResult.INVALID -> R.string.msg_backup_invalid
-                        BackupResult.FAILED -> R.string.msg_backup_failed
-                    },
-                ),
-            )
-        }
+        uri?.let(vm::importConfig)
     }
 
     val stamp = remember { SimpleDateFormat("yyyyMMdd-HHmm", Locale.US).format(Date()) }

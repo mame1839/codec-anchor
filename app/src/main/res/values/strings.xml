@@ -28,6 +28,8 @@
 
     <string name="cd_refresh_status">Check the status again</string>
     <string name="cd_back">Back</string>
+    <string name="state_expanded">Expanded</string>
+    <string name="state_collapsed">Collapsed</string>
 
     <string name="section_general">General</string>
     <string name="toggle_auto_apply">Apply settings automatically</string>
@@ -41,11 +43,14 @@
 
     <string name="permission_title">Bluetooth permission needed</string>
     <string name="permission_body">Granting it lets the app read your paired devices and their names.</string>
+    <string name="permission_denied">The permission is blocked. Please grant it from the system settings.</string>
     <string name="bluetooth_off">Bluetooth is off. Turn it on to see your paired devices.</string>
+    <string name="config_broken">The saved settings could not be read, so nothing can be edited. Import a backup to start over.</string>
 
     <string name="section_audio_devices">Audio devices</string>
     <string name="devices_empty">No paired audio device was found.</string>
     <string name="devices_no_permission">Devices cannot be read without the permission.</string>
+    <string name="devices_bluetooth_off">Devices cannot be read while Bluetooth is off.</string>
     <string name="section_other_devices">Other devices (%1$d)</string>
     <string name="section_orphan_profiles">Settings without a paired device</string>
 
@@ -98,6 +103,7 @@
 
     <string name="section_target">Values to pin</string>
     <string name="target_no_capability">The combinations this device supports could not be read, so every candidate is listed.</string>
+    <string name="target_not_connected">The combinations this device supports can only be read while it is connected, so every candidate is listed.</string>
     <string name="label_codec">Codec</string>
     <string name="label_sample_rate">Sample rate</string>
     <string name="label_bit_depth">Bit depth</string>

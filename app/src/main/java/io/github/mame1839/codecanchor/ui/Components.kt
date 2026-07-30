@@ -31,7 +31,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,6 +41,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.mame1839.codecanchor.R
@@ -97,13 +100,18 @@ fun SwitchRow(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        val disabled = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
         Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = if (enabled) Color.Unspecified else disabled,
+            )
             if (description != null) {
                 Text(
                     text = description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else disabled,
                 )
             }
         }
@@ -122,7 +130,7 @@ fun <T> ChoiceRow(
     description: String? = null,
     enabled: Boolean = true,
 ) {
-    var open by remember { mutableStateOf(false) }
+    var open by rememberSaveable { mutableStateOf(false) }
     val current = options.firstOrNull { it.first == selected }?.second ?: "-"
     Row(
         modifier = modifier
@@ -198,11 +206,16 @@ fun ExpandableHeader(
     onToggle: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val state = stringResource(if (expanded) R.string.state_expanded else R.string.state_collapsed)
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.small)
             .clickable(onClick = onToggle)
+            .semantics {
+                role = Role.Button
+                stateDescription = state
+            }
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

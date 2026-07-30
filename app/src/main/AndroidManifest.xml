@@ -31,6 +31,10 @@
         <meta-data
             android:name="xposedscope"
             android:resource="@array/xposed_scope" />
+        <!-- これが無いと XSharedPreferences から設定を読めない -->
+        <meta-data
+            android:name="xposedsharedprefs"
+            android:value="true" />
 
         <activity
             android:name="io.github.mame1839.codecanchor.ui.MainActivity"

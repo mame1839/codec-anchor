@@ -25,6 +25,8 @@
 
     <string name="cd_refresh_status">상태 다시 확인</string>
     <string name="cd_back">뒤로</string>
+    <string name="state_expanded">확장됨</string>
+    <string name="state_collapsed">축소됨</string>
 
     <string name="section_general">전체 설정</string>
     <string name="toggle_auto_apply">자동으로 적용</string>
@@ -38,11 +40,14 @@
 
     <string name="permission_title">블루투스 권한이 필요합니다</string>
     <string name="permission_body">허용하면 페어링된 기기와 이름을 읽을 수 있습니다.</string>
+    <string name="permission_denied">권한이 차단되어 있습니다. 시스템 설정에서 허용해 주세요.</string>
     <string name="bluetooth_off">블루투스가 꺼져 있습니다. 켜면 페어링된 기기가 표시됩니다.</string>
+    <string name="config_broken">저장된 설정을 읽을 수 없어 아무것도 편집할 수 없습니다. 백업을 가져오면 다시 시작할 수 있습니다.</string>
 
     <string name="section_audio_devices">오디오 기기</string>
     <string name="devices_empty">페어링된 오디오 기기를 찾을 수 없습니다.</string>
     <string name="devices_no_permission">권한이 없어 기기를 읽을 수 없습니다.</string>
+    <string name="devices_bluetooth_off">블루투스가 꺼져 있어 기기를 읽을 수 없습니다.</string>
     <string name="section_other_devices">기타 기기 (%1$d)</string>
     <string name="section_orphan_profiles">기기가 없는 설정</string>
 
@@ -94,6 +99,7 @@
 
     <string name="section_target">고정할 내용</string>
     <string name="target_no_capability">기기가 지원하는 조합을 읽지 못해 모든 후보를 표시합니다.</string>
+    <string name="target_not_connected">기기가 지원하는 조합은 연결된 상태에서만 읽을 수 있어 모든 후보를 표시합니다.</string>
     <string name="label_codec">코덱</string>
     <string name="label_sample_rate">샘플레이트</string>
     <string name="label_bit_depth">비트 심도</string>

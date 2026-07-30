@@ -25,6 +25,8 @@
 
     <string name="cd_refresh_status">重新检查状态</string>
     <string name="cd_back">返回</string>
+    <string name="state_expanded">已展开</string>
+    <string name="state_collapsed">已收起</string>
 
     <string name="section_general">通用设置</string>
     <string name="toggle_auto_apply">自动应用设置</string>
@@ -38,11 +40,14 @@
 
     <string name="permission_title">需要蓝牙权限</string>
     <string name="permission_body">授予后即可读取已配对的设备及其名称。</string>
+    <string name="permission_denied">权限已被阻止，请在系统设置中授予。</string>
     <string name="bluetooth_off">蓝牙已关闭。开启后即可看到已配对的设备。</string>
+    <string name="config_broken">无法读取已保存的设置，因此无法编辑任何内容。导入备份即可重新开始。</string>
 
     <string name="section_audio_devices">音频设备</string>
     <string name="devices_empty">未找到已配对的音频设备。</string>
     <string name="devices_no_permission">没有权限，无法读取设备。</string>
+    <string name="devices_bluetooth_off">蓝牙已关闭，无法读取设备。</string>
     <string name="section_other_devices">其他设备 (%1$d)</string>
     <string name="section_orphan_profiles">没有对应设备的设置</string>
 
@@ -94,6 +99,7 @@
 
     <string name="section_target">要锁定的内容</string>
     <string name="target_no_capability">无法读取该设备支持的组合，因此列出了所有候选项。</string>
+    <string name="target_not_connected">该设备支持的组合只能在连接时读取，因此列出了所有候选项。</string>
     <string name="label_codec">编解码器</string>
     <string name="label_sample_rate">采样率</string>
     <string name="label_bit_depth">位深度</string>

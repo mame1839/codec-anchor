@@ -6,6 +6,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: build-${{ github.ref }}
   cancel-in-progress: true
@@ -13,11 +16,6 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-      CA_STORE_PASSWORD: ${{ secrets.CA_STORE_PASSWORD }}
-      CA_KEY_ALIAS: ${{ secrets.CA_KEY_ALIAS }}
-      CA_KEY_PASSWORD: ${{ secrets.CA_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v7
 
@@ -28,14 +26,10 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v6
 
-      - name: 署名鍵を復元
-        if: env.KEYSTORE_BASE64 != ''
-        run: |
-          mkdir -p keystore
-          printf '%s' "$KEYSTORE_BASE64" | base64 -d > keystore/release.jks
-
-      - name: ビルド
-        run: ./gradlew assembleDebug assembleRelease --stacktrace
+      # 署名鍵は復元しない。ここの release は未署名で、構成が壊れていないかだけを見る
+      # (本番鍵で署名した APK を作業中のブランチから配ってしまわないため)。
+      - name: ビルドと lint
+        run: ./gradlew assembleDebug assembleRelease :app:lintRelease --stacktrace
 
       - name: APK を保存
         uses: actions/upload-artifact@v7
@@ -43,3 +37,11 @@ jobs:
           name: apk
           path: app/build/outputs/apk/*/*.apk
           if-no-files-found: error
+
+      - name: lint の結果を保存
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: lint
+          path: app/build/reports/lint-results-release.*
+          if-no-files-found: ignore

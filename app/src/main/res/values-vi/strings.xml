@@ -25,6 +25,8 @@
 
     <string name="cd_refresh_status">Kiểm tra lại trạng thái</string>
     <string name="cd_back">Quay lại</string>
+    <string name="state_expanded">Đã mở rộng</string>
+    <string name="state_collapsed">Đã thu gọn</string>
 
     <string name="section_general">Cài đặt chung</string>
     <string name="toggle_auto_apply">Tự động áp dụng cài đặt</string>
@@ -38,11 +40,14 @@
 
     <string name="permission_title">Cần quyền Bluetooth</string>
     <string name="permission_body">Cấp quyền để ứng dụng đọc được các thiết bị đã ghép nối và tên của chúng.</string>
+    <string name="permission_denied">Quyền đang bị chặn. Hãy cấp quyền trong cài đặt hệ thống.</string>
     <string name="bluetooth_off">Bluetooth đang tắt. Hãy bật để xem các thiết bị đã ghép nối.</string>
+    <string name="config_broken">Không đọc được cài đặt đã lưu nên không thể chỉnh sửa. Hãy nhập một bản sao lưu để bắt đầu lại.</string>
 
     <string name="section_audio_devices">Thiết bị âm thanh</string>
     <string name="devices_empty">Không tìm thấy thiết bị âm thanh nào đã ghép nối.</string>
     <string name="devices_no_permission">Không thể đọc thiết bị khi chưa có quyền.</string>
+    <string name="devices_bluetooth_off">Không thể đọc thiết bị khi Bluetooth đang tắt.</string>
     <string name="section_other_devices">Thiết bị khác (%1$d)</string>
     <string name="section_orphan_profiles">Cài đặt không còn thiết bị đã ghép nối</string>
 
@@ -94,6 +99,7 @@
 
     <string name="section_target">Giá trị cần cố định</string>
     <string name="target_no_capability">Không đọc được các tổ hợp mà thiết bị này hỗ trợ, nên mọi lựa chọn đều được liệt kê.</string>
+    <string name="target_not_connected">Các tổ hợp mà thiết bị này hỗ trợ chỉ đọc được khi đang kết nối, nên mọi lựa chọn đều được liệt kê.</string>
     <string name="label_codec">Codec</string>
     <string name="label_sample_rate">Tần số lấy mẫu</string>
     <string name="label_bit_depth">Độ sâu bit</string>

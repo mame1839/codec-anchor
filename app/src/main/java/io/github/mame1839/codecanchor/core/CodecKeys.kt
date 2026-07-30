@@ -47,6 +47,10 @@ object CodecKeys {
         CHANNEL_MODE_STEREO to "Stereo",
     )
 
+    val SAMPLE_RATE_BITS: Int = orOf(SAMPLE_RATES)
+    val BIT_DEPTH_BITS: Int = orOf(BIT_DEPTHS)
+    val CHANNEL_MODE_BITS: Int = orOf(CHANNEL_MODES)
+
     val LDAC_QUALITIES: List<Pair<Long, String>> = listOf(
         1000L to "990/909 kbps",
         1001L to "660/606 kbps",
@@ -64,6 +68,8 @@ object CodecKeys {
         6 to "Opus",
     )
 
+    private fun orOf(table: List<Pair<Int, String>>): Int = table.fold(0) { acc, entry -> acc or entry.first }
+
     fun prettifyConstant(constantName: String): String {
         val bare = constantName.removePrefix("SOURCE_CODEC_TYPE_")
         return when (bare) {
@@ -77,6 +83,9 @@ object CodecKeys {
             else -> if (bare.startsWith("LHDCV")) "LHDC V" + bare.removePrefix("LHDCV") else bare.replace('_', ' ')
         }
     }
+
+    // 端末から名前が取れなかったときの表示名。言語に依存しない表記に留める。
+    fun fallbackName(codecType: Int): String = FALLBACK_CODEC_NAMES[codecType] ?: "Codec $codecType"
 
     fun label(table: List<Pair<Int, String>>, mask: Int): String =
         table.firstOrNull { it.first == mask }?.second ?: "0x${mask.toString(16)}"
