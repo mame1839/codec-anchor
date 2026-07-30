@@ -8,9 +8,12 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Handler
 import android.os.HandlerThread
+import android.os.Build
 import android.os.Looper
 import android.os.Parcelable
 import android.widget.Toast
+import java.lang.reflect.Member
+import java.lang.reflect.Method
 import android.app.AndroidAppHelper
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XSharedPreferences
@@ -85,6 +88,9 @@ internal object A2dpHook {
             override fun afterHookedMethod(param: MethodHookParam) {
                 service = null
                 statuses.clear()
+                applyingMacs.clear()
+                announced.clear()
+                unregisterReceivers()
             }
         })
     }
@@ -131,6 +137,7 @@ internal object A2dpHook {
     private fun hookSelectableGate(classLoader: ClassLoader) {
         val gate = object : XC_MethodHook() {
             override fun beforeHookedMethod(param: MethodHookParam) {
+                if (!returnsBoolean(param.method)) return
                 val target = param.args.firstOrNull { Applying.allowsForce(it) } ?: return
                 param.result = true
                 XLog.d("選択可能チェックを迂回: ${Bt.codecInfo(target)?.summary()}")
@@ -142,6 +149,11 @@ internal object A2dpHook {
         XposedHelpers.findClassIfExists(CLASS_A2DP_CODEC_CONFIG, classLoader)?.let {
             XposedBridge.hookAllMethods(it, "isMiuiCodecConfigSelectable", gate)
         }
+    }
+
+    private fun returnsBoolean(method: Member?): Boolean {
+        val type = (method as? Method)?.returnType ?: return false
+        return type == Boolean::class.javaPrimitiveType || type == java.lang.Boolean::class.java
     }
 
     private fun onServiceReady(instance: Any) {
@@ -167,7 +179,7 @@ internal object A2dpHook {
             addAction(ACTION_CODEC_CONFIG_CHANGED)
         }
         runCatching {
-            ctx.registerReceiver(btReceiver, btFilter, null, worker, Context.RECEIVER_EXPORTED)
+            registerExported(ctx, btReceiver, btFilter, null)
         }.onFailure { XLog.e("A2DP ブロードキャストを受け取れない", it) }
 
         val bridgeFilter = IntentFilter().apply {
@@ -176,8 +188,30 @@ internal object A2dpHook {
             addAction(Bridge.ACTION_APPLY_NOW)
         }
         runCatching {
-            ctx.registerReceiver(bridgeReceiver, bridgeFilter, Bridge.PERMISSION, worker, Context.RECEIVER_EXPORTED)
+            registerExported(ctx, bridgeReceiver, bridgeFilter, Bridge.PERMISSION)
         }.onFailure { XLog.e("設定の受け口を作れない", it) }
+    }
+
+    private fun registerExported(
+        ctx: Context,
+        receiver: BroadcastReceiver,
+        filter: IntentFilter,
+        permission: String?,
+    ) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ctx.registerReceiver(receiver, filter, permission, worker, Context.RECEIVER_EXPORTED)
+        } else {
+            ctx.registerReceiver(receiver, filter, permission, worker)
+        }
+    }
+
+    private fun unregisterReceivers() {
+        val ctx = context
+        if (ctx != null) {
+            runCatching { ctx.unregisterReceiver(btReceiver) }
+            runCatching { ctx.unregisterReceiver(bridgeReceiver) }
+        }
+        receiversRegistered = false
     }
 
     // フックのコールバックと違い、レシーバとハンドラで投げた例外は Bluetooth プロセスを落とす。
@@ -210,7 +244,12 @@ internal object A2dpHook {
     private fun handleBridgeEvent(intent: Intent?) {
         when (intent?.action) {
             Bridge.ACTION_PUSH_CONFIG -> {
-                val received = AppConfig.decode(intent.getStringExtra(Bridge.EXTRA_JSON))
+                val json = intent.getStringExtra(Bridge.EXTRA_JSON)
+                if (json.isNullOrBlank()) {
+                    XLog.d("中身のない設定は無視する")
+                    return
+                }
+                val received = AppConfig.decode(json)
                 val changed = received != config
                 config = received
                 configLoaded = true
@@ -239,6 +278,10 @@ internal object A2dpHook {
     }
 
     private fun scheduleApply(device: BluetoothDevice, reason: String, immediate: Boolean = false) {
+        worker.post { safely("適用の予約") { scheduleOnWorker(device, reason, immediate) } }
+    }
+
+    private fun scheduleOnWorker(device: BluetoothDevice, reason: String, immediate: Boolean) {
         val mac = macOf(device) ?: return
         if (!configLoaded) context?.let { requestConfig(it) }
         if (!config.enabled) return
@@ -577,6 +620,10 @@ internal object A2dpHook {
 
     private fun sendReport(mac: String?) {
         val ctx = context ?: return
+        runCatching { buildAndSendReport(ctx, mac) }.onFailure { XLog.d("報告を送れない: ${it.message}") }
+    }
+
+    private fun buildAndSendReport(ctx: Context, mac: String?) {
         val devices = if (mac == null) statuses.values.toList() else listOfNotNull(statuses[mac])
         val report = StatusReport(
             moduleVersion = BuildConfig.VERSION_NAME,
@@ -592,7 +639,7 @@ internal object A2dpHook {
             putExtra(Bridge.EXTRA_JSON, report.encode())
             addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
         }
-        runCatching { ctx.sendBroadcast(intent) }.onFailure { XLog.d("報告を送れない: ${it.message}") }
+        ctx.sendBroadcast(intent)
     }
 
     private fun requestConfig(ctx: Context) {
