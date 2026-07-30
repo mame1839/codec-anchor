@@ -4,6 +4,7 @@ import android.os.SystemClock
 import de.robv.android.xposed.XposedHelpers
 import io.github.mame1839.codecanchor.core.CodecInfo
 import io.github.mame1839.codecanchor.core.CodecKeys
+import java.util.concurrent.CopyOnWriteArrayList
 import java.lang.reflect.Array as JavaArray
 
 internal object Bt {
@@ -14,7 +15,20 @@ internal object Bt {
         private set
     private var builderClass: Class<*>? = null
 
-    val codecNames = linkedMapOf<Int, String>()
+    // 名前は binder / スタック / worker の各スレッドから読み書きされる。順序は表示に使うので保ちたい。
+    private val names = linkedMapOf<Int, String>()
+    private val nameLock = Any()
+
+    val codecNames: Map<Int, String>
+        get() = synchronized(nameLock) { LinkedHashMap(names) }
+
+    private fun putName(codecType: Int, name: String) {
+        synchronized(nameLock) { names[codecType] = name }
+    }
+
+    private fun nameOf(codecType: Int): String? = synchronized(nameLock) { names[codecType] }
+
+    private fun hasName(codecType: Int): Boolean = synchronized(nameLock) { names.containsKey(codecType) }
 
     fun init(classLoader: ClassLoader) {
         codecConfigClass = XposedHelpers.findClass(CLASS_CODEC_CONFIG, classLoader)
@@ -31,13 +45,13 @@ internal object Bt {
             runCatching {
                 field.isAccessible = true
                 val value = field.getInt(null)
-                if (value in 0..9999 && !codecNames.containsKey(value)) {
-                    codecNames[value] = CodecKeys.prettifyConstant(name)
+                if (value in 0..9999 && !hasName(value)) {
+                    putName(value, CodecKeys.prettifyConstant(name))
                 }
             }
         }
         CodecKeys.FALLBACK_CODEC_NAMES.forEach { (value, label) ->
-            if (!codecNames.containsKey(value)) codecNames[value] = label
+            if (!hasName(value)) putName(value, label)
         }
         XLog.i("この端末のコーデック: $codecNames")
     }
@@ -100,16 +114,16 @@ internal object Bt {
                 val extended = XposedHelpers.callMethod(config, "getExtendedCodecType")
                 val name = extended?.let { XposedHelpers.callMethod(it, "getCodecName") as? String }
                 if (!name.isNullOrBlank()) {
-                    codecNames[codecType] = name
+                    putName(codecType, name)
                     return name
                 }
             }
         }
-        codecNames[codecType]?.let { return it }
+        nameOf(codecType)?.let { return it }
         runCatching {
             val name = XposedHelpers.callStaticMethod(codecConfigClass, "getCodecName", codecType) as? String
             if (!name.isNullOrBlank()) {
-                codecNames[codecType] = name
+                putName(codecType, name)
                 return name
             }
         }
@@ -141,25 +155,25 @@ internal object Bt {
 }
 
 // 自分が投げた設定かどうかを、オブジェクトの同一性と時間窓で判定する。スタックが別スレッドへ post した
-// 先でも成立させるため ThreadLocal は使わない。
+// 先でも成立させるため ThreadLocal は使わない。複数の機器が同時に接続するので枠は 1 つでは足りない。
 internal object Applying {
-    @Volatile
-    private var config: Any? = null
+    private class Entry(val config: Any, val force: Boolean, val expiresAt: Long)
 
-    @Volatile
-    private var force = false
-
-    @Volatile
-    private var expiresAt = 0L
+    private val entries = CopyOnWriteArrayList<Entry>()
 
     fun begin(target: Any, forceSelectable: Boolean, windowMs: Long = 5_000) {
-        config = target
-        force = forceSelectable
-        expiresAt = SystemClock.uptimeMillis() + windowMs
+        val now = SystemClock.uptimeMillis()
+        entries.removeAll(entries.filter { now > it.expiresAt })
+        entries.add(Entry(target, forceSelectable, now + windowMs))
     }
 
-    fun isOwn(candidate: Any?): Boolean =
-        candidate != null && candidate === config && SystemClock.uptimeMillis() <= expiresAt
+    fun isOwn(candidate: Any?): Boolean = find(candidate) != null
 
-    fun allowsForce(candidate: Any?): Boolean = force && isOwn(candidate)
+    fun allowsForce(candidate: Any?): Boolean = find(candidate)?.force == true
+
+    private fun find(candidate: Any?): Entry? {
+        if (candidate == null) return null
+        val now = SystemClock.uptimeMillis()
+        return entries.firstOrNull { it.config === candidate && now <= it.expiresAt }
+    }
 }
