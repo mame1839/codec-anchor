@@ -108,7 +108,7 @@
     <string name="ldac_hint_adaptive">adaptativo</string>
 
     <string name="section_advanced">Ajustes avanzados</string>
-    <string name="adv_force">Forzar</string>
+    <string name="adv_force">Forzar el cambio</string>
     <string name="adv_force_desc">Prueba también combinaciones que el dispositivo no declara</string>
     <string name="adv_via_sbc">Cambiar pasando por SBC</string>
     <string name="adv_via_sbc_desc">Baja primero a SBC y después pasa al códec elegido</string>
