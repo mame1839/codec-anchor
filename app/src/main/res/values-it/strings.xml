@@ -92,6 +92,7 @@
     <string name="detail_auto_apply">Applica a questi auricolari</string>
     <string name="detail_auto_apply_desc">Passa alle impostazioni sottostanti a ogni connessione</string>
     <string name="detail_current_codec">Codec attuale: %1$s</string>
+    <string name="ldac_bitrate_offload">Non è possibile leggere il bitrate effettivo perché l\'offload hardware di Bluetooth A2DP è attivo.</string>
     <string name="detail_note">Ultimo risultato: %1$s</string>
     <string name="outcome_applied">passaggio a %1$s</string>
     <string name="outcome_failed">cambio non riuscito, ancora %1$s</string>

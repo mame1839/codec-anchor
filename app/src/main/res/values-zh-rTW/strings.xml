@@ -90,6 +90,7 @@
     <string name="detail_auto_apply">套用到這副耳機</string>
     <string name="detail_auto_apply_desc">每次連線時切換為下方的設定</string>
     <string name="detail_current_codec">目前的編解碼器：%1$s</string>
+    <string name="ldac_bitrate_offload">由於已啟用藍牙 A2DP 硬體卸載，因此無法讀取實際位元率。</string>
     <string name="detail_note">最近的結果：%1$s</string>
     <string name="outcome_applied">已切換為 %1$s</string>
     <string name="outcome_failed">無法切換，目前仍為 %1$s</string>

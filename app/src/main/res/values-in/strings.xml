@@ -90,6 +90,7 @@
     <string name="detail_auto_apply">Terapkan ke earphone ini</string>
     <string name="detail_auto_apply_desc">Beralih ke setelan di bawah setiap kali earphone tersambung</string>
     <string name="detail_current_codec">Codec saat ini: %1$s</string>
+    <string name="ldac_bitrate_offload">Bitrate efektif tidak dapat dibaca karena offload perangkat keras Bluetooth A2DP aktif.</string>
     <string name="detail_note">Hasil terakhir: %1$s</string>
     <string name="outcome_applied">beralih ke %1$s</string>
     <string name="outcome_failed">tidak dapat beralih, masih %1$s</string>

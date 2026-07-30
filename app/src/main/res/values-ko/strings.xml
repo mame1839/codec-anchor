@@ -90,6 +90,7 @@
     <string name="detail_auto_apply">이 이어폰에 자동으로 적용</string>
     <string name="detail_auto_apply_desc">연결될 때 아래 설정으로 전환합니다</string>
     <string name="detail_current_codec">현재 코덱: %1$s</string>
+    <string name="ldac_bitrate_offload">Bluetooth A2DP 하드웨어 오프로드가 켜져 있어 실제 비트레이트를 읽을 수 없습니다.</string>
     <string name="detail_note">최근 결과: %1$s</string>
     <string name="outcome_applied">%1$s(으)로 전환했습니다</string>
     <string name="outcome_failed">전환하지 못했습니다. 현재 %1$s</string>

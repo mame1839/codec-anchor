@@ -93,6 +93,7 @@
     <string name="detail_auto_apply">Применять к этим наушникам</string>
     <string name="detail_auto_apply_desc">При подключении переключает на настройки ниже</string>
     <string name="detail_current_codec">Текущий кодек: %1$s</string>
+    <string name="ldac_bitrate_offload">Не удаётся получить фактический битрейт, так как включена аппаратная разгрузка Bluetooth A2DP.</string>
     <string name="detail_note">Последний результат: %1$s</string>
     <string name="outcome_applied">переключено на %1$s</string>
     <string name="outcome_failed">не удалось переключить, сейчас %1$s</string>

@@ -91,6 +91,7 @@
     <string name="detail_auto_apply">Bu kulaklığa uygula</string>
     <string name="detail_auto_apply_desc">Her bağlandığında aşağıdaki ayarlara geçer</string>
     <string name="detail_current_codec">Mevcut kodek: %1$s</string>
+    <string name="ldac_bitrate_offload">Bluetooth A2DP donanım aktarımı etkin olduğu için gerçek bit hızı okunamıyor.</string>
     <string name="detail_note">Son sonuç: %1$s</string>
     <string name="outcome_applied">%1$s olarak değiştirildi</string>
     <string name="outcome_failed">değiştirilemedi, hâlâ %1$s</string>

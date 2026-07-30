@@ -95,6 +95,7 @@
     <string name="detail_auto_apply">التطبيق على هذه السماعة</string>
     <string name="detail_auto_apply_desc">يحوّل إلى الإعدادات أدناه في كل مرة تتصل فيها السماعة</string>
     <string name="detail_current_codec">الكوديك الحالي: %1$s</string>
+    <string name="ldac_bitrate_offload">لا يمكن قراءة معدل البت الفعلي لأن التفريغ العتادي لـ Bluetooth A2DP مُمكَّن.</string>
     <string name="detail_note">النتيجة الأخيرة: %1$s</string>
     <string name="outcome_applied">تم التحويل إلى %1$s</string>
     <string name="outcome_failed">تعذّر التحويل، ولا يزال %1$s</string>

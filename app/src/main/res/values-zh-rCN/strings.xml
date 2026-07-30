@@ -90,6 +90,7 @@
     <string name="detail_auto_apply">对这副耳机自动应用</string>
     <string name="detail_auto_apply_desc">连接时切换为下面的设置</string>
     <string name="detail_current_codec">当前编解码器：%1$s</string>
+    <string name="ldac_bitrate_offload">由于已启用蓝牙 A2DP 硬件卸载，无法读取实际码率。</string>
     <string name="detail_note">最近的结果：%1$s</string>
     <string name="outcome_applied">已切换为 %1$s</string>
     <string name="outcome_failed">未能切换，当前为 %1$s</string>

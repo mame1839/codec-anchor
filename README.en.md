@@ -67,6 +67,12 @@ For devices that refuse to switch. The codec is set to SBC first, then to the on
 A short message is shown when the codec changes. The brief states right after connecting are skipped;
 only the settled result is shown. If the switch did not take, the current value is shown with it.
 
+### Effective bitrate
+
+While an earphone is connected over LDAC, the detail screen shows the bitrate that is actually being sent
+along with the quality mode, so an adaptive setting can be watched as it moves. The value cannot be read
+when the phone hands Bluetooth audio processing to hardware, and the screen says so instead.
+
 ### Nothing resident
 
 The code that applies the settings runs inside the Bluetooth process, so no resident process or polling is
