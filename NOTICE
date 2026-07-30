@@ -1,0 +1,12 @@
+Codec Anchor
+Copyright 2026 mame1839
+
+This product includes software developed as part of the Xposed project.
+
+  app/libs/xposed-api-82.jar (XposedBridge API, version 82)
+  Copyright 2013 rovo89, Tungstwenty
+  Licensed under the Apache License, Version 2.0
+  Source: https://github.com/rovo89/XposedBridge
+
+  The jar is used at compile time only and is not included in the built APK;
+  the framework provides these classes at runtime.
