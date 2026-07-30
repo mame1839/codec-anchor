@@ -1,5 +1,7 @@
 package io.github.mame1839.codecanchor.ui
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -20,6 +23,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -33,7 +37,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -41,6 +47,9 @@ import androidx.compose.ui.unit.dp
 import io.github.mame1839.codecanchor.R
 import io.github.mame1839.codecanchor.core.DeviceProfile
 import io.github.mame1839.codecanchor.core.DeviceStatus
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,14 +64,18 @@ fun DeviceListScreen(
     val otherRows = vm.bondedRows.filterNot { it.audio }
     val orphanRows = vm.orphanRows
     var othersExpanded by remember { mutableStateOf(false) }
+    val pushedMessage = stringResource(R.string.msg_config_pushed)
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Codec Anchor") },
+                title = { Text(stringResource(R.string.app_name)) },
                 actions = {
                     IconButton(onClick = { vm.refresh() }) {
-                        Icon(painterResource(R.drawable.ic_refresh), contentDescription = "状態を再確認")
+                        Icon(
+                            painter = painterResource(R.drawable.ic_refresh),
+                            contentDescription = stringResource(R.string.cd_refresh_status),
+                        )
                     }
                 },
             )
@@ -84,29 +97,35 @@ fun DeviceListScreen(
                     vm = vm,
                     onPush = {
                         vm.pushConfig()
-                        onNotify("設定を送り直しました")
+                        onNotify(pushedMessage)
                     },
                 )
             }
 
             item {
-                SettingsCard(title = "全体設定") {
+                SettingsCard(title = stringResource(R.string.section_general)) {
                     SwitchRow(
-                        title = "自動適用を有効にする",
-                        description = "オフにすると、すべての機器で何もしません",
+                        title = stringResource(R.string.toggle_auto_apply),
+                        description = stringResource(R.string.toggle_auto_apply_desc),
                         checked = vm.config.enabled,
                         onChange = { value -> vm.update { it.copy(enabled = value) } },
                     )
                     SwitchRow(
-                        title = "他アプリによる変更を上書きする",
-                        description = "システムや他アプリがコーデックを変えたら、設定した内容に戻します",
+                        title = stringResource(R.string.toggle_enforce),
+                        description = stringResource(R.string.toggle_enforce_desc),
                         checked = vm.config.enforce,
                         onChange = { value -> vm.update { it.copy(enforce = value) } },
                         enabled = vm.config.enabled,
                     )
                     SwitchRow(
-                        title = "詳細ログを出す",
-                        description = "うまく切り替わらないときの調査用",
+                        title = stringResource(R.string.toggle_notify),
+                        description = stringResource(R.string.toggle_notify_desc),
+                        checked = vm.config.notifyChanges,
+                        onChange = { value -> vm.update { it.copy(notifyChanges = value) } },
+                    )
+                    SwitchRow(
+                        title = stringResource(R.string.toggle_verbose),
+                        description = stringResource(R.string.toggle_verbose_desc),
                         checked = vm.config.verbose,
                         onChange = { value -> vm.update { it.copy(verbose = value) } },
                     )
@@ -117,14 +136,19 @@ fun DeviceListScreen(
                 item {
                     SettingsCard(container = MaterialTheme.colorScheme.tertiaryContainer) {
                         Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                            Text("Bluetooth の権限が必要です", style = MaterialTheme.typography.titleSmall)
+                            Text(
+                                text = stringResource(R.string.permission_title),
+                                style = MaterialTheme.typography.titleSmall,
+                            )
                             Spacer(Modifier.height(4.dp))
                             Text(
-                                "許可すると、ペアリング済みの機器と名前を読み取れます。",
+                                text = stringResource(R.string.permission_body),
                                 style = MaterialTheme.typography.bodyMedium,
                             )
                             Spacer(Modifier.height(10.dp))
-                            Button(onClick = onRequestPermission) { Text("権限を許可する") }
+                            Button(onClick = onRequestPermission) {
+                                Text(stringResource(R.string.action_grant))
+                            }
                         }
                     }
                 }
@@ -135,23 +159,23 @@ fun DeviceListScreen(
                     SettingsCard(container = MaterialTheme.colorScheme.surfaceContainerHighest) {
                         NoticeRow(
                             icon = R.drawable.ic_bluetooth,
-                            text = "Bluetooth がオフです。オンにするとペアリング済みの機器が表示されます。",
+                            text = stringResource(R.string.bluetooth_off),
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
                         )
                     }
                 }
             }
 
-            item { SectionHeader("オーディオ機器") }
+            item { SectionHeader(stringResource(R.string.section_audio_devices)) }
 
             if (audioRows.isEmpty()) {
                 item {
                     SettingsCard {
                         Text(
                             text = if (vm.connectGranted) {
-                                "ペアリング済みのオーディオ機器が見つかりません。"
+                                stringResource(R.string.devices_empty)
                             } else {
-                                "権限がないため機器を読み取れません。"
+                                stringResource(R.string.devices_no_permission)
                             },
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -175,7 +199,7 @@ fun DeviceListScreen(
                 item {
                     SettingsCard {
                         ExpandableHeader(
-                            title = "その他の機器 (${otherRows.size})",
+                            title = stringResource(R.string.section_other_devices, otherRows.size),
                             expanded = othersExpanded,
                             onToggle = { othersExpanded = !othersExpanded },
                         )
@@ -195,7 +219,7 @@ fun DeviceListScreen(
             }
 
             if (orphanRows.isNotEmpty()) {
-                item { SectionHeader("ペアリング一覧に無い設定") }
+                item { SectionHeader(stringResource(R.string.section_orphan_profiles)) }
                 items(orphanRows, key = { it.mac }) { row ->
                     DeviceCard(
                         row = row,
@@ -206,7 +230,89 @@ fun DeviceListScreen(
                     )
                 }
             }
+
+            item { BackupCard(vm = vm, onNotify = onNotify) }
         }
+    }
+}
+
+@Composable
+private fun BackupCard(vm: MainViewModel, onNotify: (String) -> Unit) {
+    val resources = LocalContext.current.resources
+    var confirmImport by remember { mutableStateOf(false) }
+
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json"),
+    ) { uri ->
+        uri ?: return@rememberLauncherForActivityResult
+        vm.exportConfig(uri) { ok ->
+            onNotify(
+                resources.getString(
+                    if (ok) R.string.msg_backup_exported else R.string.msg_backup_export_failed,
+                ),
+            )
+        }
+    }
+
+    val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri ?: return@rememberLauncherForActivityResult
+        vm.importConfig(uri) { result ->
+            onNotify(
+                resources.getString(
+                    when (result) {
+                        BackupResult.OK -> R.string.msg_backup_imported
+                        BackupResult.INVALID -> R.string.msg_backup_invalid
+                        BackupResult.FAILED -> R.string.msg_backup_failed
+                    },
+                ),
+            )
+        }
+    }
+
+    val stamp = remember { SimpleDateFormat("yyyyMMdd-HHmm", Locale.US).format(Date()) }
+    val fileName = stringResource(R.string.backup_filename, stamp)
+
+    SettingsCard(title = stringResource(R.string.section_backup)) {
+        Text(
+            text = stringResource(R.string.backup_body),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Button(onClick = { exportLauncher.launch(fileName) }, modifier = Modifier.weight(1f)) {
+                Text(stringResource(R.string.backup_export))
+            }
+            OutlinedButton(onClick = { confirmImport = true }, modifier = Modifier.weight(1f)) {
+                Text(stringResource(R.string.backup_import))
+            }
+        }
+    }
+
+    if (confirmImport) {
+        AlertDialog(
+            onDismissRequest = { confirmImport = false },
+            title = { Text(stringResource(R.string.backup_confirm_title)) },
+            text = { Text(stringResource(R.string.backup_confirm_body)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmImport = false
+                        importLauncher.launch(arrayOf("*/*"))
+                    },
+                ) {
+                    Text(stringResource(R.string.backup_confirm_action))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmImport = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
     }
 }
 
@@ -217,6 +323,7 @@ private fun ModuleCard(vm: MainViewModel, onPush: () -> Unit) {
         ModuleState.INACTIVE -> MaterialTheme.colorScheme.errorContainer
         else -> MaterialTheme.colorScheme.surfaceContainerLow
     }
+    val unknown = stringResource(R.string.value_unknown)
     SettingsCard(container = container) {
         Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
             when (vm.moduleState) {
@@ -224,7 +331,10 @@ private fun ModuleCard(vm: MainViewModel, onPush: () -> Unit) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                         Spacer(Modifier.size(12.dp))
-                        Text("モジュールの状態を確認しています", style = MaterialTheme.typography.titleSmall)
+                        Text(
+                            text = stringResource(R.string.module_checking),
+                            style = MaterialTheme.typography.titleSmall,
+                        )
                     }
                 }
 
@@ -237,29 +347,38 @@ private fun ModuleCard(vm: MainViewModel, onPush: () -> Unit) {
                             modifier = Modifier.size(20.dp),
                         )
                         Spacer(Modifier.size(10.dp))
-                        Text("モジュールは動作中", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            text = stringResource(R.string.module_active),
+                            style = MaterialTheme.typography.titleMedium,
+                        )
                     }
                     Spacer(Modifier.height(6.dp))
                     Text(
-                        text = "バージョン ${report?.moduleVersion.orEmpty().ifBlank { "?" }} · " +
-                            "注入先 ${report?.hostPackage.orEmpty().ifBlank { "?" }}",
+                        text = stringResource(
+                            R.string.module_meta,
+                            report?.moduleVersion.orEmpty().ifBlank { unknown },
+                            report?.hostPackage.orEmpty().ifBlank { unknown },
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
-                        text = "最終報告 ${clockLabel(report?.timestamp ?: 0L)}",
+                        text = stringResource(R.string.module_last_report, clockLabel(report?.timestamp ?: 0L)),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Spacer(Modifier.height(8.dp))
                     when {
-                        report?.configLoaded != true -> SyncLine("モジュールはまだ設定を読み込んでいません", onPush)
+                        report?.configLoaded != true ->
+                            SyncLine(stringResource(R.string.module_config_pending), onPush)
+
                         vm.configSynced -> Text(
-                            text = "設定は同期済み",
+                            text = stringResource(R.string.module_config_synced),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.primary,
                         )
-                        else -> SyncLine("編集した内容がモジュールに届いていません", onPush)
+
+                        else -> SyncLine(stringResource(R.string.module_config_stale), onPush)
                     }
                 }
 
@@ -271,29 +390,28 @@ private fun ModuleCard(vm: MainViewModel, onPush: () -> Unit) {
                             modifier = Modifier.size(20.dp),
                         )
                         Spacer(Modifier.size(10.dp))
-                        Text("モジュールが動いていません", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            text = stringResource(R.string.module_inactive),
+                            style = MaterialTheme.typography.titleMedium,
+                        )
                     }
                     Spacer(Modifier.height(6.dp))
                     Text(
-                        text = "Bluetooth プロセスから応答がありません。次を確認してください。",
+                        text = stringResource(R.string.module_inactive_body),
                         style = MaterialTheme.typography.bodyMedium,
                     )
                     Spacer(Modifier.height(6.dp))
-                    listOf(
-                        "1. Vector で Codec Anchor を有効にする",
-                        "2. スコープに Bluetooth を追加する",
-                        "3. Bluetooth をオフにして、もう一度オンにする",
-                    ).forEach { step ->
-                        Text(step, style = MaterialTheme.typography.bodyMedium)
+                    listOf(R.string.module_step_1, R.string.module_step_2, R.string.module_step_3).forEach { step ->
+                        Text(stringResource(step), style = MaterialTheme.typography.bodyMedium)
                     }
                     Spacer(Modifier.height(6.dp))
                     Text(
-                        text = "この状態でも設定の編集と保存はできます。モジュールが動き出したときに反映されます。",
+                        text = stringResource(R.string.module_inactive_hint),
                         style = MaterialTheme.typography.bodySmall,
                     )
                     Spacer(Modifier.height(6.dp))
                     TextButton(onClick = { vm.requestStatus() }, contentPadding = PaddingValues(horizontal = 8.dp)) {
-                        Text("もう一度確認する")
+                        Text(stringResource(R.string.action_recheck))
                     }
                 }
             }
@@ -309,7 +427,9 @@ private fun SyncLine(message: String, onPush: () -> Unit) {
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.weight(1f),
         )
-        TextButton(onClick = onPush, contentPadding = PaddingValues(horizontal = 8.dp)) { Text("送り直す") }
+        TextButton(onClick = onPush, contentPadding = PaddingValues(horizontal = 8.dp)) {
+            Text(stringResource(R.string.action_resend))
+        }
     }
 }
 
@@ -321,6 +441,7 @@ private fun DeviceCard(
     codecNames: Map<Int, String>,
     onClick: () -> Unit,
 ) {
+    val resources = LocalContext.current.resources
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
@@ -358,30 +479,30 @@ private fun DeviceCard(
 
                 Spacer(Modifier.height(6.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    if (status?.connected == true) Tag("接続中")
+                    if (status?.connected == true) Tag(stringResource(R.string.tag_connected))
                     if (status?.active == true) {
                         Tag(
-                            text = "再生中",
+                            text = stringResource(R.string.tag_active),
                             container = MaterialTheme.colorScheme.primaryContainer,
                             contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                         )
                     }
                     if (profile == null) {
                         Tag(
-                            text = "設定なし",
+                            text = stringResource(R.string.tag_no_profile),
                             container = MaterialTheme.colorScheme.surfaceContainerHighest,
                             contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     } else if (!profile.enabled) {
                         Tag(
-                            text = "自動適用オフ",
+                            text = stringResource(R.string.tag_profile_off),
                             container = MaterialTheme.colorScheme.surfaceContainerHighest,
                             contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                     if (!row.bonded) {
                         Tag(
-                            text = "未検出",
+                            text = stringResource(R.string.tag_not_found),
                             container = MaterialTheme.colorScheme.surfaceContainerHighest,
                             contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -391,13 +512,16 @@ private fun DeviceCard(
                 if (profile != null) {
                     Spacer(Modifier.height(6.dp))
                     Text(
-                        text = "固定: ${profileSummary(profile, codecNames)}",
+                        text = stringResource(
+                            R.string.device_target,
+                            profileSummary(resources, profile, codecNames),
+                        ),
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 }
                 status?.current?.let { current ->
                     Text(
-                        text = "現在: ${current.summary()}",
+                        text = stringResource(R.string.device_current, current.summary()),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

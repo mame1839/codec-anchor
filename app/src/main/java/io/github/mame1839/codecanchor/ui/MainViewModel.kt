@@ -7,6 +7,7 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.pm.PackageManager
+import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -20,11 +21,16 @@ import io.github.mame1839.codecanchor.core.CodecKeys
 import io.github.mame1839.codecanchor.core.DeviceProfile
 import io.github.mame1839.codecanchor.core.DeviceStatus
 import io.github.mame1839.codecanchor.core.StatusReport
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
 
 enum class ModuleState { CHECKING, ACTIVE, INACTIVE }
+
+enum class BackupResult { OK, INVALID, FAILED }
 
 data class DeviceRow(
     val mac: String,
@@ -142,6 +148,46 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun removeProfile(mac: String) = update { it.withoutProfile(mac) }
+
+    fun exportConfig(uri: Uri, onDone: (Boolean) -> Unit) {
+        val json = runCatching { JSONObject(config.encode()).toString(2) }.getOrDefault(config.encode())
+        viewModelScope.launch {
+            val ok = withContext(Dispatchers.IO) {
+                runCatching {
+                    val stream = context.contentResolver.openOutputStream(uri, "wt")
+                        ?: error("openOutputStream returned null")
+                    stream.use { it.write(json.toByteArray()) }
+                }.isSuccess
+            }
+            onDone(ok)
+        }
+    }
+
+    // AppConfig.decode() は壊れた JSON でも既定値を返すので、ここは fromJson を使って中身を検査する。
+    fun importConfig(uri: Uri, onDone: (BackupResult) -> Unit) {
+        viewModelScope.launch {
+            val text = withContext(Dispatchers.IO) {
+                runCatching {
+                    context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+                }.getOrNull()
+            }
+            if (text.isNullOrBlank()) {
+                onDone(BackupResult.FAILED)
+                return@launch
+            }
+            val parsed = runCatching { JSONObject(text) }.getOrNull()
+            if (parsed == null || !(parsed.has("profiles") || parsed.has("enabled"))) {
+                onDone(BackupResult.INVALID)
+                return@launch
+            }
+            val restored = AppConfig.fromJson(parsed)
+            config = restored
+            store.save(restored)
+            BridgeClient.pushConfig(context, restored)
+            refreshDevices()
+            onDone(BackupResult.OK)
+        }
+    }
 
     private fun isAudio(device: BluetoothDevice): Boolean = runCatching {
         val cls: BluetoothClass = device.bluetoothClass ?: return@runCatching false

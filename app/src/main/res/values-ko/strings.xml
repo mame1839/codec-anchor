@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="xposed_description">이어폰별로 블루투스 코덱과 음질을 고정합니다</string>
+    <string name="permission_bridge_label">Codec Anchor 설정 보내기</string>
+
+    <string name="hook_codec_changed">%1$s: %2$s(으)로 변경했습니다</string>
+    <string name="hook_codec_failed">%1$s: %2$s(으)로 변경할 수 없었습니다</string>
+    <string name="hook_codec_failed_with_current">%1$s: %2$s(으)로 변경할 수 없었습니다 (현재 %3$s)</string>
+
+    <string name="action_close">닫기</string>
+    <string name="action_cancel">취소</string>
+    <string name="action_delete">삭제</string>
+    <string name="action_resend">다시 보내기</string>
+    <string name="action_recheck">다시 확인</string>
+    <string name="action_grant">권한 허용</string>
+
+    <string name="value_keep">변경하지 않음</string>
+    <string name="value_unknown">알 수 없음</string>
+    <string name="value_immediately">즉시</string>
+    <string name="value_seconds">%1$s초</string>
+    <plurals name="retry_count">
+        <item quantity="other">%1$d회</item>
+    </plurals>
+
+    <string name="cd_refresh_status">상태 다시 확인</string>
+    <string name="cd_back">뒤로</string>
+
+    <string name="section_general">전체 설정</string>
+    <string name="toggle_auto_apply">자동으로 적용</string>
+    <string name="toggle_auto_apply_desc">끄면 어떤 기기도 변경하지 않습니다</string>
+    <string name="toggle_enforce">다른 앱의 변경을 되돌리기</string>
+    <string name="toggle_enforce_desc">시스템이나 다른 앱이 코덱을 바꾸면 설정한 내용으로 되돌립니다</string>
+    <string name="toggle_notify">코덱이 바뀌면 알리기</string>
+    <string name="toggle_notify_desc">전환된 뒤에 짧은 메시지를 표시합니다</string>
+    <string name="toggle_verbose">자세한 로그 남기기</string>
+    <string name="toggle_verbose_desc">전환되지 않는 기기를 살펴볼 때 사용합니다</string>
+
+    <string name="permission_title">블루투스 권한이 필요합니다</string>
+    <string name="permission_body">허용하면 페어링된 기기와 이름을 읽을 수 있습니다.</string>
+    <string name="bluetooth_off">블루투스가 꺼져 있습니다. 켜면 페어링된 기기가 표시됩니다.</string>
+
+    <string name="section_audio_devices">오디오 기기</string>
+    <string name="devices_empty">페어링된 오디오 기기를 찾을 수 없습니다.</string>
+    <string name="devices_no_permission">권한이 없어 기기를 읽을 수 없습니다.</string>
+    <string name="section_other_devices">기타 기기 (%1$d)</string>
+    <string name="section_orphan_profiles">기기가 없는 설정</string>
+
+    <string name="module_checking">모듈 상태를 확인하고 있습니다</string>
+    <string name="module_active">모듈이 동작 중입니다</string>
+    <string name="module_meta">버전 %1$s · 주입 대상 %2$s</string>
+    <string name="module_last_report">마지막 보고 %1$s</string>
+    <string name="module_config_pending">모듈이 아직 설정을 읽지 못했습니다</string>
+    <string name="module_config_synced">설정이 동기화되었습니다</string>
+    <string name="module_config_stale">변경한 내용이 모듈에 전달되지 않았습니다</string>
+    <string name="module_inactive">모듈이 동작하지 않습니다</string>
+    <string name="module_inactive_body">블루투스 프로세스가 응답하지 않습니다. 다음을 확인해 주세요.</string>
+    <string name="module_step_1">1. Vector에서 Codec Anchor를 활성화</string>
+    <string name="module_step_2">2. 범위에 블루투스를 추가</string>
+    <string name="module_step_3">3. 블루투스를 껐다가 다시 켜기</string>
+    <string name="module_inactive_hint">이 상태에서도 설정을 편집하고 저장할 수 있습니다. 모듈이 동작하기 시작하면 반영됩니다.</string>
+    <string name="msg_config_pushed">설정을 다시 보냈습니다</string>
+
+    <string name="tag_connected">연결됨</string>
+    <string name="tag_disconnected">연결 안 됨</string>
+    <string name="tag_active">재생 중</string>
+    <string name="tag_no_profile">설정 없음</string>
+    <string name="tag_profile_off">자동 적용 꺼짐</string>
+    <string name="tag_not_found">찾을 수 없음</string>
+    <string name="device_target">고정: %1$s</string>
+    <string name="device_current">현재: %1$s</string>
+    <string name="profile_no_target">아직 고정한 항목이 없습니다</string>
+
+    <string name="section_backup">백업</string>
+    <string name="backup_body">모든 설정을 JSON 파일로 내보냅니다.</string>
+    <string name="backup_export">내보내기</string>
+    <string name="backup_import">가져오기</string>
+    <string name="backup_confirm_title">백업을 가져올까요</string>
+    <string name="backup_confirm_body">현재 설정은 선택한 파일의 내용으로 모두 대체됩니다.</string>
+    <string name="backup_confirm_action">파일 선택</string>
+    <string name="msg_backup_exported">설정을 내보냈습니다</string>
+    <string name="msg_backup_export_failed">파일에 쓸 수 없었습니다</string>
+    <string name="msg_backup_imported">설정을 복원했습니다</string>
+    <string name="msg_backup_invalid">Codec Anchor의 백업 파일이 아닙니다</string>
+    <string name="msg_backup_failed">파일을 읽을 수 없었습니다</string>
+
+    <string name="detail_auto_apply">이 이어폰에 자동으로 적용</string>
+    <string name="detail_auto_apply_desc">연결될 때 아래 설정으로 전환합니다</string>
+    <string name="detail_current_codec">현재 코덱: %1$s</string>
+    <string name="detail_note">최근 결과: %1$s</string>
+    <string name="detail_updated_at">%1$s 기준</string>
+
+    <string name="section_target">고정할 내용</string>
+    <string name="target_no_capability">기기가 지원하는 조합을 읽지 못해 모든 후보를 표시합니다.</string>
+    <string name="label_codec">코덱</string>
+    <string name="label_sample_rate">샘플레이트</string>
+    <string name="label_bit_depth">비트 심도</string>
+    <string name="label_channel">채널</string>
+    <string name="label_ldac_quality">LDAC 음질</string>
+    <string name="channel_mono">모노</string>
+    <string name="channel_stereo">스테레오</string>
+    <string name="ldac_hint_quality">음질 우선</string>
+    <string name="ldac_hint_connection">연결 우선</string>
+    <string name="ldac_hint_adaptive">자동 조정</string>
+
+    <string name="section_advanced">고급 설정</string>
+    <string name="adv_force">강제 적용</string>
+    <string name="adv_force_desc">기기가 지원한다고 알리지 않은 조합도 시도합니다</string>
+    <string name="adv_via_sbc">SBC를 거쳐 전환</string>
+    <string name="adv_via_sbc_desc">먼저 SBC로 내린 다음 선택한 코덱으로 바꿉니다</string>
+    <string name="adv_auto_hd">HD 오디오를 자동으로 켜기</string>
+    <string name="adv_auto_hd_desc">시스템에서 HD 오디오가 꺼져 있으면 켭니다</string>
+    <string name="adv_delay">적용까지 기다리는 시간</string>
+    <string name="adv_delay_desc">연결 직후에는 전환을 받지 않는 기기가 있습니다</string>
+    <string name="adv_retries">재시도 횟수</string>
+    <string name="adv_retry_delay">재시도 간격</string>
+
+    <string name="action_apply_now">지금 적용</string>
+    <string name="action_delete_profile">이 기기의 설정 삭제</string>
+    <string name="delete_confirm_title">설정을 삭제할까요</string>
+    <string name="delete_confirm_body">%1$s의 설정을 삭제하면 이 기기는 더 이상 변경되지 않습니다.</string>
+    <string name="msg_apply_requested">적용을 요청했습니다</string>
+    <string name="msg_apply_module_inactive">모듈이 동작하지 않아 요청이 전달되지 않습니다</string>
+    <string name="msg_apply_not_connected">기기가 연결되지 않아 지금은 적용할 수 없습니다</string>
+</resources>

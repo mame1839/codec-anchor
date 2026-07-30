@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
@@ -38,6 +39,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -52,7 +54,7 @@ fun SettingsCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = container),
+        colors = CardDefaults.cardColors(containerColor = container),
     ) {
         Column(Modifier.padding(vertical = 6.dp)) {
             if (title != null) {
@@ -183,7 +185,7 @@ fun <T> ChoiceRow(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { open = false }) { Text("閉じる") }
+                TextButton(onClick = { open = false }) { Text(stringResource(R.string.action_close)) }
             },
         )
     }

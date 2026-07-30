@@ -1,5 +1,6 @@
 package io.github.mame1839.codecanchor.ui
 
+import android.content.res.Resources
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -34,7 +35,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import io.github.mame1839.codecanchor.R
@@ -61,10 +64,17 @@ fun DeviceDetailScreen(
         return
     }
 
+    val resources = LocalContext.current.resources
     val status = vm.statusOf(mac)
     val name = vm.nameOf(mac)
     var confirmDelete by remember { mutableStateOf(false) }
     var advancedExpanded by remember { mutableStateOf(false) }
+
+    val applyMessage = when {
+        vm.moduleState != ModuleState.ACTIVE -> stringResource(R.string.msg_apply_module_inactive)
+        status?.connected != true -> stringResource(R.string.msg_apply_not_connected)
+        else -> stringResource(R.string.msg_apply_requested)
+    }
 
     Scaffold(
         topBar = {
@@ -72,7 +82,10 @@ fun DeviceDetailScreen(
                 title = { Text(name, maxLines = 1) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(painterResource(R.drawable.ic_arrow_back), contentDescription = "戻る")
+                        Icon(
+                            painter = painterResource(R.drawable.ic_arrow_back),
+                            contentDescription = stringResource(R.string.cd_back),
+                        )
                     }
                 },
             )
@@ -92,8 +105,8 @@ fun DeviceDetailScreen(
 
             SettingsCard {
                 SwitchRow(
-                    title = "このイヤホンに自動適用する",
-                    description = "接続したときに、下の設定へ切り替えます",
+                    title = stringResource(R.string.detail_auto_apply),
+                    description = stringResource(R.string.detail_auto_apply_desc),
                     checked = profile.enabled,
                     onChange = { value -> vm.updateProfile(mac) { it.copy(enabled = value) } },
                 )
@@ -103,47 +116,49 @@ fun DeviceDetailScreen(
 
             SettingsCard {
                 ExpandableHeader(
-                    title = "詳細設定",
+                    title = stringResource(R.string.section_advanced),
                     expanded = advancedExpanded,
                     onToggle = { advancedExpanded = !advancedExpanded },
                 )
                 if (advancedExpanded) {
                     RowDivider()
                     SwitchRow(
-                        title = "強制適用",
-                        description = "機器が対応を申告していない組み合わせも試します",
+                        title = stringResource(R.string.adv_force),
+                        description = stringResource(R.string.adv_force_desc),
                         checked = profile.force,
                         onChange = { value -> vm.updateProfile(mac) { it.copy(force = value) } },
                     )
                     SwitchRow(
-                        title = "SBC を経由して切り替える",
-                        description = "いったん SBC に落としてから目的のコーデックにします",
+                        title = stringResource(R.string.adv_via_sbc),
+                        description = stringResource(R.string.adv_via_sbc_desc),
                         checked = profile.viaSbc,
                         onChange = { value -> vm.updateProfile(mac) { it.copy(viaSbc = value) } },
                     )
                     SwitchRow(
-                        title = "HD オーディオを自動で有効化",
-                        description = "システム側で HD オーディオがオフのときにオンにします",
+                        title = stringResource(R.string.adv_auto_hd),
+                        description = stringResource(R.string.adv_auto_hd_desc),
                         checked = profile.autoEnableHd,
                         onChange = { value -> vm.updateProfile(mac) { it.copy(autoEnableHd = value) } },
                     )
                     RowDivider()
                     ChoiceRow(
-                        title = "適用までの待ち時間",
-                        options = numberOptions(DELAY_STEPS, profile.delayMs, ::millisLabel),
+                        title = stringResource(R.string.adv_delay),
+                        options = numberOptions(DELAY_STEPS, profile.delayMs) { millisLabel(resources, it) },
                         selected = profile.delayMs,
                         onSelect = { value -> vm.updateProfile(mac) { it.copy(delayMs = value) } },
-                        description = "接続直後は切り替えを受け付けない機器があります",
+                        description = stringResource(R.string.adv_delay_desc),
                     )
                     ChoiceRow(
-                        title = "リトライ回数",
-                        options = numberOptions(RETRY_STEPS, profile.retries) { "$it 回" },
+                        title = stringResource(R.string.adv_retries),
+                        options = numberOptions(RETRY_STEPS, profile.retries) { retryLabel(resources, it) },
                         selected = profile.retries,
                         onSelect = { value -> vm.updateProfile(mac) { it.copy(retries = value) } },
                     )
                     ChoiceRow(
-                        title = "リトライ間隔",
-                        options = numberOptions(RETRY_DELAY_STEPS, profile.retryDelayMs, ::millisLabel),
+                        title = stringResource(R.string.adv_retry_delay),
+                        options = numberOptions(RETRY_DELAY_STEPS, profile.retryDelayMs) {
+                            millisLabel(resources, it)
+                        },
                         selected = profile.retryDelayMs,
                         onSelect = { value -> vm.updateProfile(mac) { it.copy(retryDelayMs = value) } },
                     )
@@ -153,19 +168,13 @@ fun DeviceDetailScreen(
             Button(
                 onClick = {
                     vm.applyNow(mac)
-                    onNotify(
-                        when {
-                            vm.moduleState != ModuleState.ACTIVE -> "モジュールが動いていないため届きません"
-                            status?.connected != true -> "機器が接続されていないため、いまは適用できません"
-                            else -> "適用を要求しました"
-                        }
-                    )
+                    onNotify(applyMessage)
                 },
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Icon(painterResource(R.drawable.ic_bolt), contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.size(8.dp))
-                Text("今すぐ適用")
+                Text(stringResource(R.string.action_apply_now))
             }
 
             OutlinedButton(
@@ -175,7 +184,7 @@ fun DeviceDetailScreen(
             ) {
                 Icon(painterResource(R.drawable.ic_delete), contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.size(8.dp))
-                Text("この機器の設定を削除")
+                Text(stringResource(R.string.action_delete_profile))
             }
         }
     }
@@ -183,8 +192,8 @@ fun DeviceDetailScreen(
     if (confirmDelete) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
-            title = { Text("設定を削除しますか") },
-            text = { Text("$name の設定を削除します。この機器には何もしなくなります。") },
+            title = { Text(stringResource(R.string.delete_confirm_title)) },
+            text = { Text(stringResource(R.string.delete_confirm_body, name)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -193,11 +202,13 @@ fun DeviceDetailScreen(
                         onBack()
                     },
                 ) {
-                    Text("削除", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { confirmDelete = false }) { Text("やめる") }
+                TextButton(onClick = { confirmDelete = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
             },
         )
     }
@@ -217,17 +228,17 @@ private fun DeviceHeader(name: String, mac: String, status: DeviceStatus?) {
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 if (status?.connected == true) {
-                    Tag("接続中")
+                    Tag(stringResource(R.string.tag_connected))
                 } else {
                     Tag(
-                        text = "未接続",
+                        text = stringResource(R.string.tag_disconnected),
                         container = MaterialTheme.colorScheme.surfaceContainerHighest,
                         contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
                 if (status?.active == true) {
                     Tag(
-                        text = "再生中",
+                        text = stringResource(R.string.tag_active),
                         container = MaterialTheme.colorScheme.primaryContainer,
                         contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
@@ -235,19 +246,22 @@ private fun DeviceHeader(name: String, mac: String, status: DeviceStatus?) {
             }
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "現在のコーデック: ${status?.current?.summary() ?: "不明"}",
+                text = stringResource(
+                    R.string.detail_current_codec,
+                    status?.current?.summary() ?: stringResource(R.string.value_unknown),
+                ),
                 style = MaterialTheme.typography.bodyMedium,
             )
             if (status != null && status.note.isNotBlank()) {
                 Text(
-                    text = "直近の結果: ${status.note}",
+                    text = stringResource(R.string.detail_note, status.note),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             if (status != null && status.updatedAt > 0) {
                 Text(
-                    text = "${clockLabel(status.updatedAt)} 時点",
+                    text = stringResource(R.string.detail_updated_at, clockLabel(status.updatedAt)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -263,9 +277,12 @@ private fun TargetCard(
     profile: DeviceProfile,
     status: DeviceStatus?,
 ) {
+    val resources = LocalContext.current.resources
+    val keep = stringResource(R.string.value_keep)
     val selectable = status?.selectable.orEmpty()
+
     val codecOptions = buildList {
-        add(CodecKeys.KEEP_INT to "変更しない")
+        add(CodecKeys.KEEP_INT to keep)
         if (selectable.isNotEmpty()) {
             addAll(selectable.map { it.codecType to it.codecName }.distinctBy { it.first })
         } else {
@@ -284,42 +301,42 @@ private fun TargetCard(
     }
     val showLdac = CodecKeys.isLdac(codecName) || profile.codecSpecific1 != CodecKeys.KEEP_LONG
 
-    SettingsCard(title = "固定する内容") {
+    SettingsCard(title = stringResource(R.string.section_target)) {
         if (selectable.isEmpty()) {
             NoticeRow(
                 icon = R.drawable.ic_warning,
-                text = "機器から選べる組み合わせを取得できていないため、すべての候補を表示しています。",
+                text = stringResource(R.string.target_no_capability),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
             )
         }
         ChoiceRow(
-            title = "コーデック",
+            title = stringResource(R.string.label_codec),
             options = codecOptions,
             selected = profile.codecType,
             onSelect = { value -> vm.updateProfile(mac) { it.copy(codecType = value) } },
         )
         ChoiceRow(
-            title = "サンプルレート",
-            options = maskOptions(CodecKeys.SAMPLE_RATES, capability?.sampleRate ?: 0, profile.sampleRate),
+            title = stringResource(R.string.label_sample_rate),
+            options = maskOptions(CodecKeys.SAMPLE_RATES, capability?.sampleRate ?: 0, profile.sampleRate, keep),
             selected = profile.sampleRate,
             onSelect = { value -> vm.updateProfile(mac) { it.copy(sampleRate = value) } },
         )
         ChoiceRow(
-            title = "ビット深度",
-            options = maskOptions(CodecKeys.BIT_DEPTHS, capability?.bitsPerSample ?: 0, profile.bitsPerSample),
+            title = stringResource(R.string.label_bit_depth),
+            options = maskOptions(CodecKeys.BIT_DEPTHS, capability?.bitsPerSample ?: 0, profile.bitsPerSample, keep),
             selected = profile.bitsPerSample,
             onSelect = { value -> vm.updateProfile(mac) { it.copy(bitsPerSample = value) } },
         )
         ChoiceRow(
-            title = "チャンネル",
-            options = maskOptions(CodecKeys.CHANNEL_MODES, capability?.channelMode ?: 0, profile.channelMode),
+            title = stringResource(R.string.label_channel),
+            options = maskOptions(channelModes(resources), capability?.channelMode ?: 0, profile.channelMode, keep),
             selected = profile.channelMode,
             onSelect = { value -> vm.updateProfile(mac) { it.copy(channelMode = value) } },
         )
         if (showLdac) {
             ChoiceRow(
-                title = "LDAC 音質",
-                options = ldacOptions(profile.codecSpecific1),
+                title = stringResource(R.string.label_ldac_quality),
+                options = ldacOptions(resources, profile.codecSpecific1, keep),
                 selected = profile.codecSpecific1,
                 onSelect = { value -> vm.updateProfile(mac) { it.copy(codecSpecific1 = value) } },
             )
@@ -327,15 +344,20 @@ private fun TargetCard(
     }
 }
 
-private fun maskOptions(table: List<Pair<Int, String>>, capability: Int, selected: Int): List<Pair<Int, String>> {
+private fun maskOptions(
+    table: List<Pair<Int, String>>,
+    capability: Int,
+    selected: Int,
+    keepLabel: String,
+): List<Pair<Int, String>> {
     val allowed = CodecKeys.options(table, capability).map { it.first }.toMutableSet()
     if (selected != CodecKeys.KEEP_MASK) allowed += selected
-    return listOf(CodecKeys.KEEP_MASK to "変更しない") + table.filter { it.first in allowed }
+    return listOf(CodecKeys.KEEP_MASK to keepLabel) + table.filter { it.first in allowed }
 }
 
-private fun ldacOptions(selected: Long): List<Pair<Long, String>> = buildList {
-    add(CodecKeys.KEEP_LONG to "変更しない")
-    addAll(CodecKeys.LDAC_QUALITIES)
+private fun ldacOptions(res: Resources, selected: Long, keepLabel: String): List<Pair<Long, String>> = buildList {
+    add(CodecKeys.KEEP_LONG to keepLabel)
+    CodecKeys.LDAC_QUALITIES.forEach { (value, label) -> add(value to ldacQualityLabel(res, value, label)) }
     if (selected != CodecKeys.KEEP_LONG && none { it.first == selected }) {
         add(selected to CodecKeys.ldacQualityLabel(selected))
     }
