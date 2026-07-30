@@ -50,7 +50,6 @@
     <string name="module_checking">Comprobando el estado del módulo</string>
     <string name="module_active">El módulo está funcionando</string>
     <string name="module_meta">Versión %1$s · inyectado en %2$s</string>
-    <string name="module_last_report">Último informe %1$s</string>
     <string name="module_config_pending">El módulo aún no ha leído los ajustes</string>
     <string name="module_config_synced">Los ajustes están sincronizados</string>
     <string name="module_config_stale">Tus cambios no han llegado al módulo</string>

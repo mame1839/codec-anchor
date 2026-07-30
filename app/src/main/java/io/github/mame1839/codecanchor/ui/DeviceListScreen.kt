@@ -71,11 +71,15 @@ fun DeviceListScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.app_name)) },
                 actions = {
-                    IconButton(onClick = { vm.refresh() }) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_refresh),
-                            contentDescription = stringResource(R.string.cd_refresh_status),
-                        )
+                    IconButton(onClick = { vm.refresh() }, enabled = !vm.probing) {
+                        if (vm.probing) {
+                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                        } else {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_refresh),
+                                contentDescription = stringResource(R.string.cd_refresh_status),
+                            )
+                        }
                     }
                 },
             )
@@ -359,11 +363,6 @@ private fun ModuleCard(vm: MainViewModel, onPush: () -> Unit) {
                             report?.moduleVersion.orEmpty().ifBlank { unknown },
                             report?.hostPackage.orEmpty().ifBlank { unknown },
                         ),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Text(
-                        text = stringResource(R.string.module_last_report, clockLabel(report?.timestamp ?: 0L)),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

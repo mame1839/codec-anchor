@@ -51,6 +51,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         private set
     var moduleState by mutableStateOf(ModuleState.CHECKING)
         private set
+    var probing by mutableStateOf(false)
+        private set
     var bondedRows by mutableStateOf<List<DeviceRow>>(emptyList())
         private set
     var connectGranted by mutableStateOf(true)
@@ -107,19 +109,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }.getOrDefault(emptyList()).sortedWith(compareBy({ !it.audio }, { it.name.lowercase() }))
     }
 
+    // 問い合わせ中に moduleState を戻すと、答えが返るまでの一瞬だけカードが差し替わって画面がちらつく。
+    // 状態は据え置き、進行中は probing で示す。
     fun requestStatus() {
-        moduleState = ModuleState.CHECKING
         BridgeClient.requestStatus(context)
+        probing = true
         probe?.cancel()
         probe = viewModelScope.launch {
             delay(REPORT_TIMEOUT_MS)
-            if (moduleState == ModuleState.CHECKING) moduleState = ModuleState.INACTIVE
+            probing = false
+            val last = report?.timestamp ?: 0L
+            if (System.currentTimeMillis() - last > STALE_REPORT_MS) moduleState = ModuleState.INACTIVE
         }
     }
 
     // フックは単一機器だけの報告も送るので、機器ごとにマージする。
     fun onReport(received: StatusReport) {
         probe?.cancel()
+        probing = false
         report = received
         if (received.devices.isNotEmpty()) statuses = statuses + received.devices.associateBy { it.mac }
         moduleState = ModuleState.ACTIVE
@@ -199,5 +206,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private companion object {
         const val REPORT_TIMEOUT_MS = 2_000L
+        const val STALE_REPORT_MS = 10_000L
     }
 }

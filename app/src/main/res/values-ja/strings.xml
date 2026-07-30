@@ -49,7 +49,6 @@
     <string name="module_checking">モジュールの状態を確認しています</string>
     <string name="module_active">モジュールは動作中</string>
     <string name="module_meta">バージョン %1$s · 注入先 %2$s</string>
-    <string name="module_last_report">最終報告 %1$s</string>
     <string name="module_config_pending">モジュールはまだ設定を読み込んでいません</string>
     <string name="module_config_synced">設定は同期済み</string>
     <string name="module_config_stale">編集した内容がモジュールに届いていません</string>

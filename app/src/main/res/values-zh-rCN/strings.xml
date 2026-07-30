@@ -49,7 +49,6 @@
     <string name="module_checking">正在检查模块状态</string>
     <string name="module_active">模块正在运行</string>
     <string name="module_meta">版本 %1$s · 注入到 %2$s</string>
-    <string name="module_last_report">最后一次报告 %1$s</string>
     <string name="module_config_pending">模块还没有读取到设置</string>
     <string name="module_config_synced">设置已同步</string>
     <string name="module_config_stale">你的修改还没有送达模块</string>
