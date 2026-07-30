@@ -29,7 +29,7 @@
     <string name="section_general">全体設定</string>
     <string name="toggle_auto_apply">自動適用を有効にする</string>
     <string name="toggle_auto_apply_desc">オフにすると、すべての機器で何もしません</string>
-    <string name="toggle_enforce">他アプリによる変更を上書きする</string>
+    <string name="toggle_enforce">システムや他アプリによる変更を上書きする</string>
     <string name="toggle_enforce_desc">システムや他アプリがコーデックを変えたら、設定した内容に戻します</string>
     <string name="toggle_notify">コーデックが変わったら知らせる</string>
     <string name="toggle_notify_desc">切り替わったときに短いメッセージを出します</string>
@@ -55,7 +55,7 @@
     <string name="module_inactive">モジュールが動いていません</string>
     <string name="module_inactive_body">Bluetooth プロセスから応答がありません。次を確認してください。</string>
     <string name="module_step_1">1. Vector で Codec Anchor を有効にする</string>
-    <string name="module_step_2">2. スコープに Bluetooth を追加する</string>
+    <string name="module_step_2">2. モジュールのスコープに Bluetooth を追加する</string>
     <string name="module_step_3">3. Bluetooth をオフにして、もう一度オンにする</string>
     <string name="module_inactive_hint">この状態でも設定の編集と保存はできます。モジュールが動き出したときに反映されます。</string>
     <string name="msg_config_pushed">設定を送り直しました</string>
@@ -87,6 +87,9 @@
     <string name="detail_auto_apply_desc">接続したときに、下の設定へ切り替えます</string>
     <string name="detail_current_codec">現在のコーデック: %1$s</string>
     <string name="detail_note">直近の結果: %1$s</string>
+    <string name="outcome_applied">%1$s に切り替えました</string>
+    <string name="outcome_failed">切り替えられず、いまは %1$s です</string>
+    <string name="outcome_undecided">指定する値を決められませんでした</string>
     <string name="detail_updated_at">%1$s 時点</string>
 
     <string name="section_target">固定する内容</string>

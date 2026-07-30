@@ -41,6 +41,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import io.github.mame1839.codecanchor.R
+import io.github.mame1839.codecanchor.core.ApplyOutcome
 import io.github.mame1839.codecanchor.core.CodecKeys
 import io.github.mame1839.codecanchor.core.DeviceProfile
 import io.github.mame1839.codecanchor.core.DeviceStatus
@@ -252,16 +253,27 @@ private fun DeviceHeader(name: String, mac: String, status: DeviceStatus?) {
                 ),
                 style = MaterialTheme.typography.bodyMedium,
             )
-            if (status != null && status.note.isNotBlank()) {
+            val unknown = stringResource(R.string.value_unknown)
+            val outcomeText = when (status?.outcome) {
+                ApplyOutcome.APPLIED ->
+                    stringResource(R.string.outcome_applied, status.outcomeValue.ifBlank { unknown })
+
+                ApplyOutcome.FAILED ->
+                    stringResource(R.string.outcome_failed, status.outcomeValue.ifBlank { unknown })
+
+                ApplyOutcome.UNDECIDED -> stringResource(R.string.outcome_undecided)
+                else -> null
+            }
+            if (outcomeText != null) {
                 Text(
-                    text = stringResource(R.string.detail_note, status.note),
+                    text = stringResource(R.string.detail_note, outcomeText),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             if (status != null && status.updatedAt > 0) {
                 Text(
-                    text = stringResource(R.string.detail_updated_at, clockLabel(status.updatedAt)),
+                    text = stringResource(R.string.detail_updated_at, clockLabel(LocalContext.current, status.updatedAt)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
