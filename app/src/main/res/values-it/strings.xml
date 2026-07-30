@@ -30,7 +30,7 @@
     <string name="section_general">Generali</string>
     <string name="toggle_auto_apply">Applica le impostazioni automaticamente</string>
     <string name="toggle_auto_apply_desc">Quando è disattivato, non viene modificato nulla su nessun dispositivo</string>
-    <string name="toggle_enforce">Annulla le modifiche di altre app</string>
+    <string name="toggle_enforce">Annulla le modifiche del sistema o di altre app</string>
     <string name="toggle_enforce_desc">Se il sistema o un\'altra app cambia il codec, ripristina l\'impostazione fissata</string>
     <string name="toggle_notify">Segnala i cambi di codec</string>
     <string name="toggle_notify_desc">Mostra un breve messaggio quando il codec cambia</string>
@@ -56,7 +56,7 @@
     <string name="module_inactive">Il modulo non è in esecuzione</string>
     <string name="module_inactive_body">Il processo Bluetooth non risponde. Controlla i punti seguenti.</string>
     <string name="module_step_1">1. Attivare Codec Anchor in Vector</string>
-    <string name="module_step_2">2. Aggiungere Bluetooth al suo ambito</string>
+    <string name="module_step_2">2. Aggiungere Bluetooth all\'ambito del modulo</string>
     <string name="module_step_3">3. Disattivare il Bluetooth e riattivarlo</string>
     <string name="module_inactive_hint">Puoi comunque modificare e salvare le impostazioni. Diventano attive appena il modulo entra in esecuzione.</string>
     <string name="msg_config_pushed">Impostazioni inviate di nuovo</string>
@@ -88,6 +88,9 @@
     <string name="detail_auto_apply_desc">Passa alle impostazioni sottostanti a ogni connessione</string>
     <string name="detail_current_codec">Codec attuale: %1$s</string>
     <string name="detail_note">Ultimo risultato: %1$s</string>
+    <string name="outcome_applied">passaggio a %1$s</string>
+    <string name="outcome_failed">cambio non riuscito, ancora %1$s</string>
+    <string name="outcome_undecided">non è stato possibile determinare i valori</string>
     <string name="detail_updated_at">Aggiornato alle %1$s</string>
 
     <string name="section_target">Valori da fissare</string>
@@ -120,6 +123,6 @@
     <string name="delete_confirm_title">Eliminare le impostazioni?</string>
     <string name="delete_confirm_body">Le impostazioni di %1$s vengono rimosse e su questo dispositivo non verrà più modificato nulla.</string>
     <string name="msg_apply_requested">È stato chiesto al modulo di applicare le impostazioni</string>
-    <string name="msg_apply_module_inactive">Il modulo non è in esecuzione, quindi la richiesta non arriva</string>
+    <string name="msg_apply_module_inactive">Il modulo non è in esecuzione, quindi la richiesta non può essere trasmessa</string>
     <string name="msg_apply_not_connected">Il dispositivo non è connesso, quindi ora non è possibile applicare nulla</string>
 </resources>

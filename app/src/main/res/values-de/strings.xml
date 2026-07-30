@@ -30,7 +30,7 @@
     <string name="section_general">Allgemein</string>
     <string name="toggle_auto_apply">Einstellungen automatisch anwenden</string>
     <string name="toggle_auto_apply_desc">Solange dies aus ist, wird an keinem Gerät etwas geändert</string>
-    <string name="toggle_enforce">Änderungen anderer Apps zurücknehmen</string>
+    <string name="toggle_enforce">Änderungen des Systems oder anderer Apps zurücknehmen</string>
     <string name="toggle_enforce_desc">Wenn das System oder eine andere App den Codec ändert, wird zurückgeschaltet</string>
     <string name="toggle_notify">Codec-Wechsel melden</string>
     <string name="toggle_notify_desc">Zeigt beim Umschalten des Codecs eine kurze Meldung</string>
@@ -56,7 +56,7 @@
     <string name="module_inactive">Das Modul läuft nicht</string>
     <string name="module_inactive_body">Der Bluetooth-Prozess antwortet nicht. Prüfe bitte Folgendes.</string>
     <string name="module_step_1">1. Codec Anchor in Vector aktivieren</string>
-    <string name="module_step_2">2. Bluetooth zum Anwendungsbereich hinzufügen</string>
+    <string name="module_step_2">2. Bluetooth zum Anwendungsbereich des Moduls hinzufügen</string>
     <string name="module_step_3">3. Bluetooth aus- und wieder einschalten</string>
     <string name="module_inactive_hint">Einstellungen lassen sich weiterhin bearbeiten und speichern. Sie greifen, sobald das Modul läuft.</string>
     <string name="msg_config_pushed">Einstellungen erneut gesendet</string>
@@ -88,6 +88,9 @@
     <string name="detail_auto_apply_desc">Schaltet bei jeder Verbindung auf die Einstellungen unten um</string>
     <string name="detail_current_codec">Aktueller Codec: %1$s</string>
     <string name="detail_note">Letztes Ergebnis: %1$s</string>
+    <string name="outcome_applied">auf %1$s umgeschaltet</string>
+    <string name="outcome_failed">Umschalten nicht möglich, weiterhin %1$s</string>
+    <string name="outcome_undecided">Werte konnten nicht bestimmt werden</string>
     <string name="detail_updated_at">Stand: %1$s</string>
 
     <string name="section_target">Zu fixierende Werte</string>
@@ -120,6 +123,6 @@
     <string name="delete_confirm_title">Einstellungen löschen?</string>
     <string name="delete_confirm_body">Die Einstellungen für %1$s werden entfernt, und an dem Gerät wird nichts mehr geändert.</string>
     <string name="msg_apply_requested">Das Modul wurde gebeten, die Einstellungen anzuwenden</string>
-    <string name="msg_apply_module_inactive">Das Modul läuft nicht, daher kommt die Anfrage nicht an</string>
+    <string name="msg_apply_module_inactive">Das Modul läuft nicht, daher kann die Anfrage nicht übermittelt werden</string>
     <string name="msg_apply_not_connected">Das Gerät ist nicht verbunden, daher kann jetzt nichts angewendet werden</string>
 </resources>

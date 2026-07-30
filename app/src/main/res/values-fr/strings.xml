@@ -30,7 +30,7 @@
     <string name="section_general">Général</string>
     <string name="toggle_auto_apply">Appliquer les réglages automatiquement</string>
     <string name="toggle_auto_apply_desc">Tant que c\'est désactivé, rien n\'est modifié sur aucun appareil</string>
-    <string name="toggle_enforce">Annuler les modifications des autres applications</string>
+    <string name="toggle_enforce">Annuler les modifications du système ou d\'autres applications</string>
     <string name="toggle_enforce_desc">Si le système ou une autre application change le codec, revient au réglage fixé</string>
     <string name="toggle_notify">Signaler les changements de codec</string>
     <string name="toggle_notify_desc">Affiche un message bref lors du changement de codec</string>
@@ -56,7 +56,7 @@
     <string name="module_inactive">Le module ne fonctionne pas</string>
     <string name="module_inactive_body">Le processus Bluetooth ne répond pas. Vérifiez les points suivants.</string>
     <string name="module_step_1">1. Activer Codec Anchor dans Vector</string>
-    <string name="module_step_2">2. Ajouter Bluetooth à sa portée</string>
+    <string name="module_step_2">2. Ajouter Bluetooth à la portée du module</string>
     <string name="module_step_3">3. Désactiver le Bluetooth, puis le réactiver</string>
     <string name="module_inactive_hint">Vous pouvez toujours modifier et enregistrer les réglages. Ils prennent effet dès que le module fonctionne.</string>
     <string name="msg_config_pushed">Réglages renvoyés</string>
@@ -88,6 +88,9 @@
     <string name="detail_auto_apply_desc">Bascule sur les réglages ci-dessous à chaque connexion</string>
     <string name="detail_current_codec">Codec actuel : %1$s</string>
     <string name="detail_note">Dernier résultat : %1$s</string>
+    <string name="outcome_applied">passage à %1$s</string>
+    <string name="outcome_failed">changement impossible, toujours %1$s</string>
+    <string name="outcome_undecided">les valeurs n\'ont pas pu être déterminées</string>
     <string name="detail_updated_at">Mis à jour à %1$s</string>
 
     <string name="section_target">Valeurs à fixer</string>
@@ -120,6 +123,6 @@
     <string name="delete_confirm_title">Supprimer les réglages ?</string>
     <string name="delete_confirm_body">Les réglages de %1$s sont supprimés et plus rien ne sera modifié sur cet appareil.</string>
     <string name="msg_apply_requested">Le module a été invité à appliquer les réglages</string>
-    <string name="msg_apply_module_inactive">Le module ne fonctionne pas, la demande n\'arrive donc pas</string>
+    <string name="msg_apply_module_inactive">Le module ne fonctionne pas, la demande ne peut donc pas être transmise</string>
     <string name="msg_apply_not_connected">L\'appareil n\'est pas connecté, rien ne peut être appliqué pour le moment</string>
 </resources>

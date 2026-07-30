@@ -29,7 +29,7 @@
     <string name="section_general">一般設定</string>
     <string name="toggle_auto_apply">自動套用設定</string>
     <string name="toggle_auto_apply_desc">關閉時不會變更任何裝置</string>
-    <string name="toggle_enforce">還原其他應用程式的變更</string>
+    <string name="toggle_enforce">還原系統或其他應用程式的變更</string>
     <string name="toggle_enforce_desc">系統或其他應用程式變更編解碼器時，切換回鎖定的內容</string>
     <string name="toggle_notify">編解碼器變更時提示</string>
     <string name="toggle_notify_desc">切換編解碼器後顯示簡短訊息</string>
@@ -55,7 +55,7 @@
     <string name="module_inactive">模組沒有運作</string>
     <string name="module_inactive_body">藍牙處理程序沒有回應，請依序確認以下項目。</string>
     <string name="module_step_1">1. 在 Vector 中啟用 Codec Anchor</string>
-    <string name="module_step_2">2. 把藍牙加入作用域</string>
+    <string name="module_step_2">2. 把藍牙加入模組的作用域</string>
     <string name="module_step_3">3. 關閉藍牙後再重新開啟</string>
     <string name="module_inactive_hint">此時仍可編輯並儲存設定，模組開始運作後就會生效。</string>
     <string name="msg_config_pushed">已重新傳送設定</string>
@@ -87,6 +87,9 @@
     <string name="detail_auto_apply_desc">每次連線時切換為下方的設定</string>
     <string name="detail_current_codec">目前的編解碼器：%1$s</string>
     <string name="detail_note">最近的結果：%1$s</string>
+    <string name="outcome_applied">已切換為 %1$s</string>
+    <string name="outcome_failed">無法切換，目前仍為 %1$s</string>
+    <string name="outcome_undecided">無法決定要套用的值</string>
     <string name="detail_updated_at">截至 %1$s</string>
 
     <string name="section_target">要鎖定的內容</string>
