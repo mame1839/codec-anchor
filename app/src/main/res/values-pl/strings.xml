@@ -109,7 +109,7 @@
     <string name="ldac_hint_adaptive">adaptacyjnie</string>
 
     <string name="section_advanced">Ustawienia zaawansowane</string>
-    <string name="adv_force">Wymuś</string>
+    <string name="adv_force">Wymuś przełączenie</string>
     <string name="adv_force_desc">Próbuje też kombinacji, których urządzenie nie zgłasza</string>
     <string name="adv_via_sbc">Przełączaj przez SBC</string>
     <string name="adv_via_sbc_desc">Najpierw schodzi do SBC, potem przechodzi na wybrany kodek</string>

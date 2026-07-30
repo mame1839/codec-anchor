@@ -109,7 +109,7 @@
     <string name="ldac_hint_adaptive">адаптивно</string>
 
     <string name="section_advanced">Дополнительно</string>
-    <string name="adv_force">Принудительно</string>
+    <string name="adv_force">Принудительное переключение</string>
     <string name="adv_force_desc">Пробует и комбинации, которые устройство не объявляет</string>
     <string name="adv_via_sbc">Переключать через SBC</string>
     <string name="adv_via_sbc_desc">Сначала опускает до SBC, затем переходит на выбранный кодек</string>

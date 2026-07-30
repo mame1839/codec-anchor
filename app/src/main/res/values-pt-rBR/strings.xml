@@ -108,7 +108,7 @@
     <string name="ldac_hint_adaptive">adaptativo</string>
 
     <string name="section_advanced">Configurações avançadas</string>
-    <string name="adv_force">Forçar</string>
+    <string name="adv_force">Forçar a mudança</string>
     <string name="adv_force_desc">Tenta também combinações que o dispositivo não declara</string>
     <string name="adv_via_sbc">Mudar passando pelo SBC</string>
     <string name="adv_via_sbc_desc">Cai para SBC primeiro e depois passa para o codec escolhido</string>

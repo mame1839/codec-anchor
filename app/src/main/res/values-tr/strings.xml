@@ -107,7 +107,7 @@
     <string name="ldac_hint_adaptive">uyarlamalı</string>
 
     <string name="section_advanced">Gelişmiş ayarlar</string>
-    <string name="adv_force">Zorla</string>
+    <string name="adv_force">Geçişi zorla</string>
     <string name="adv_force_desc">Cihazın bildirmediği kombinasyonları da dener</string>
     <string name="adv_via_sbc">SBC üzerinden geçiş yap</string>
     <string name="adv_via_sbc_desc">Önce SBC\'ye düşer, sonra seçtiğiniz kodeğe geçer</string>
