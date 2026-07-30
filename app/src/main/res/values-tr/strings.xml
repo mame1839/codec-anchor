@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="xposed_description">Her kulaklık için Bluetooth kodeğini ve ses kalitesini sabitler</string>
+    <string name="permission_bridge_label">Codec Anchor ayarlarını gönderme</string>
+
+    <string name="hook_codec_changed">%1$s: %2$s olarak değiştirildi</string>
+    <string name="hook_codec_failed">%1$s: %2$s olarak değiştirilemedi</string>
+    <string name="hook_codec_failed_with_current">%1$s: %2$s olarak değiştirilemedi (şimdi %3$s)</string>
+
+    <string name="action_close">Kapat</string>
+    <string name="action_cancel">İptal</string>
+    <string name="action_delete">Sil</string>
+    <string name="action_resend">Yeniden gönder</string>
+    <string name="action_recheck">Yeniden kontrol et</string>
+    <string name="action_grant">İzni ver</string>
+
+    <string name="value_keep">Değiştirme</string>
+    <string name="value_unknown">Bilinmiyor</string>
+    <string name="device_unnamed">Adsız cihaz</string>
+    <string name="value_immediately">Hemen</string>
+    <string name="value_seconds">%1$s sn</string>
+    <plurals name="retry_count">
+        <item quantity="one">%1$d deneme</item>
+        <item quantity="other">%1$d deneme</item>
+    </plurals>
+
+    <string name="cd_refresh_status">Durumu yeniden kontrol et</string>
+    <string name="cd_back">Geri</string>
+
+    <string name="section_general">Genel ayarlar</string>
+    <string name="toggle_auto_apply">Ayarları otomatik uygula</string>
+    <string name="toggle_auto_apply_desc">Kapalıyken hiçbir cihazda bir şey değiştirilmez</string>
+    <string name="toggle_enforce">Diğer uygulamaların değişikliklerini geri al</string>
+    <string name="toggle_enforce_desc">Sistem veya başka bir uygulama kodeği değiştirirse, sabitlediğiniz değere döndürür</string>
+    <string name="toggle_notify">Kodek değişimini bildir</string>
+    <string name="toggle_notify_desc">Kodek değiştiğinde kısa bir mesaj gösterir</string>
+    <string name="toggle_verbose">Ayrıntılı günlük tut</string>
+    <string name="toggle_verbose_desc">Geçiş yapmayan cihazları incelemek için</string>
+
+    <string name="permission_title">Bluetooth izni gerekiyor</string>
+    <string name="permission_body">İzin verdiğinizde uygulama eşleştirilmiş cihazlarınızı ve adlarını okuyabilir.</string>
+    <string name="bluetooth_off">Bluetooth kapalı. Eşleştirilmiş cihazlarınızı görmek için açın.</string>
+
+    <string name="section_audio_devices">Ses cihazları</string>
+    <string name="devices_empty">Eşleştirilmiş ses cihazı bulunamadı.</string>
+    <string name="devices_no_permission">İzin olmadan cihazlar okunamaz.</string>
+    <string name="section_other_devices">Diğer cihazlar (%1$d)</string>
+    <string name="section_orphan_profiles">Eşleştirilmiş cihazı olmayan ayarlar</string>
+
+    <string name="module_checking">Modül kontrol ediliyor</string>
+    <string name="module_active">Modül çalışıyor</string>
+    <string name="module_meta">Sürüm %1$s · %2$s içine enjekte edildi</string>
+    <string name="module_config_pending">Modül ayarları henüz yüklemedi</string>
+    <string name="module_config_synced">Ayarlar eşitlendi</string>
+    <string name="module_config_stale">Değişiklikleriniz modüle ulaşmadı</string>
+    <string name="module_inactive">Modül çalışmıyor</string>
+    <string name="module_inactive_body">Bluetooth süreci yanıt vermiyor. Aşağıdakileri kontrol edin.</string>
+    <string name="module_step_1">1. Vector\'de Codec Anchor\'ı etkinleştirin</string>
+    <string name="module_step_2">2. Bluetooth\'u kapsamına ekleyin</string>
+    <string name="module_step_3">3. Bluetooth\'u kapatıp yeniden açın</string>
+    <string name="module_inactive_hint">Ayarları yine de düzenleyip kaydedebilirsiniz. Modül çalışmaya başladığında geçerli olurlar.</string>
+    <string name="msg_config_pushed">Ayarlar yeniden gönderildi</string>
+
+    <string name="tag_connected">Bağlı</string>
+    <string name="tag_disconnected">Bağlı değil</string>
+    <string name="tag_active">Çalıyor</string>
+    <string name="tag_no_profile">Ayar yok</string>
+    <string name="tag_profile_off">Otomatik uygulama kapalı</string>
+    <string name="tag_not_found">Bulunamadı</string>
+    <string name="device_target">Sabit: %1$s</string>
+    <string name="device_current">Şu an: %1$s</string>
+    <string name="profile_no_target">Henüz bir şey sabitlenmedi</string>
+
+    <string name="section_backup">Yedekleme</string>
+    <string name="backup_body">Tüm ayarları bir JSON dosyasına kaydeder.</string>
+    <string name="backup_export">Dışa aktar</string>
+    <string name="backup_import">İçe aktar</string>
+    <string name="backup_confirm_title">Yedek içe aktarılsın mı?</string>
+    <string name="backup_confirm_body">Mevcut tüm ayarlar, seçtiğiniz dosyanın içeriğiyle değiştirilir.</string>
+    <string name="backup_confirm_action">Dosya seç</string>
+    <string name="msg_backup_exported">Ayarlar dışa aktarıldı</string>
+    <string name="msg_backup_export_failed">Dosya yazılamadı</string>
+    <string name="msg_backup_imported">Ayarlar geri yüklendi</string>
+    <string name="msg_backup_invalid">Bu dosya bir Codec Anchor yedeği değil</string>
+    <string name="msg_backup_failed">Dosya okunamadı</string>
+
+    <string name="detail_auto_apply">Bu kulaklığa uygula</string>
+    <string name="detail_auto_apply_desc">Her bağlandığında aşağıdaki ayarlara geçer</string>
+    <string name="detail_current_codec">Mevcut kodek: %1$s</string>
+    <string name="detail_note">Son sonuç: %1$s</string>
+    <string name="detail_updated_at">%1$s itibarıyla</string>
+
+    <string name="section_target">Sabitlenecek değerler</string>
+    <string name="target_no_capability">Bu cihazın desteklediği kombinasyonlar okunamadı, bu yüzden tüm seçenekler listeleniyor.</string>
+    <string name="label_codec">Kodek</string>
+    <string name="label_sample_rate">Örnekleme hızı</string>
+    <string name="label_bit_depth">Bit derinliği</string>
+    <string name="label_channel">Kanallar</string>
+    <string name="label_ldac_quality">LDAC kalitesi</string>
+    <string name="channel_mono">Mono</string>
+    <string name="channel_stereo">Stereo</string>
+    <string name="ldac_hint_quality">kalite öncelikli</string>
+    <string name="ldac_hint_connection">bağlantı öncelikli</string>
+    <string name="ldac_hint_adaptive">uyarlamalı</string>
+
+    <string name="section_advanced">Gelişmiş ayarlar</string>
+    <string name="adv_force">Zorla</string>
+    <string name="adv_force_desc">Cihazın bildirmediği kombinasyonları da dener</string>
+    <string name="adv_via_sbc">SBC üzerinden geçiş yap</string>
+    <string name="adv_via_sbc_desc">Önce SBC\'ye düşer, sonra seçtiğiniz kodeğe geçer</string>
+    <string name="adv_auto_hd">HD sesi otomatik aç</string>
+    <string name="adv_auto_hd_desc">Sistemde HD ses kapalıysa açar</string>
+    <string name="adv_delay">Uygulamadan önce bekleme</string>
+    <string name="adv_delay_desc">Bazı cihazlar bağlandıktan hemen sonra geçiş yapmaz</string>
+    <string name="adv_retries">Deneme sayısı</string>
+    <string name="adv_retry_delay">Denemeler arası süre</string>
+
+    <string name="action_apply_now">Şimdi uygula</string>
+    <string name="action_delete_profile">Bu ayarları sil</string>
+    <string name="delete_confirm_title">Ayarlar silinsin mi?</string>
+    <string name="delete_confirm_body">%1$s için ayarlar kaldırılır ve bu cihazda hiçbir şey değiştirilmez.</string>
+    <string name="msg_apply_requested">Modülden ayarları uygulaması istendi</string>
+    <string name="msg_apply_module_inactive">Modül çalışmadığı için istek ulaşmıyor</string>
+    <string name="msg_apply_not_connected">Cihaz bağlı olmadığı için şimdi uygulanamaz</string>
+</resources>
