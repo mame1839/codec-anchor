@@ -1,14 +1,14 @@
 # Codec Anchor
 
-An Xposed module that remembers the Bluetooth codec and audio quality you want for each pair of
-earphones, and applies it whenever those earphones connect.
+An Xposed module that stores a Bluetooth codec and audio quality per pair of earphones and applies it
+when those earphones connect.
 
 [日本語](README.md)
 
 ## What it does
 
-- Saves a codec, sample rate, bit depth and bitrate per pair of earphones
-- Applies what you saved whenever those earphones connect
+- Stores a codec, sample rate, bit depth and bitrate per pair of earphones
+- Applies what was stored when those earphones connect
 
 ## Requirements
 
@@ -22,50 +22,46 @@ earphones, and applies it whenever those earphones connect.
 3. Turn Bluetooth off and on again, or reboot
 4. Open the app, pick a pair of paired earphones and set it up
 
-Settings take effect as soon as you save them. Anything already connected is switched right away.
+Settings take effect as soon as they are saved. Anything already connected is switched right away.
 
 ## Details
 
 ### When it applies
 
-It watches for connections, changes of the device used for playback, and codec changes. After applying,
-it reads the values back to confirm them, and tries again after a pause if they do not match. The wait
-before applying, the number of tries and the interval between them can be set per pair of earphones.
+Once a connection is detected, the settings are applied after the configured wait. The same happens when
+the device used for playback changes. Afterwards the values are read back and compared, and applied again
+if they differ. The wait, the number of retries and the interval between them are set per pair of
+earphones.
 
-### Leaving values unchanged
+### What can be set
 
-Codec, sample rate, bit depth and bitrate can each be left unchanged, so you can pin only the codec and
-leave the rest to the system.
+Four items: codec, sample rate, bit depth and bitrate. Each can be left unchanged independently, so it is
+possible to pin only the codec and leave the rest to the system. The choices are built from what the phone
+and the earphones support. While nothing is connected, all candidates are listed.
 
-### Undoing changes made by other apps
+### Changes made by other apps
 
-If the system or another app changes the codec, it is switched back to what you saved. Turn this off to
-let such changes stand.
+When the system or another app changes the codec, it is set back to the stored value. This can be turned
+off.
 
 ### Force
 
-Combinations the earphones do not advertise are tried as well. When the usual path refuses them, the
-last try goes straight to the Bluetooth stack.
+Combinations the earphones do not advertise are tried as well. When the usual call refuses them, the last
+retry addresses the Bluetooth stack directly.
 
-### Turning HD audio on automatically
+### HD audio
 
-Codecs other than SBC are never selected while HD audio is switched off for that device, so it is
-enabled when needed.
+Codecs other than SBC are not selected while HD audio is disabled for the device, so it is enabled before
+applying.
 
 ### Switching by way of SBC
 
-For devices that are reluctant to switch, it drops to SBC first and then moves to the codec you picked.
-
-### Available values
-
-Codecs and their combinations are read from what the phone and the earphones support. While nothing is
-connected, every candidate can be selected.
+For devices that refuse to switch. The codec is set to SBC first, then to the one that was chosen.
 
 ### Announcements
 
-A short message appears when the codec switches. Nothing is shown for the brief states right after
-connecting — only the result once it settles. If the switch did not take, the message says so and
-includes the current state.
+A short message is shown when the codec changes. The brief states right after connecting are skipped;
+only the settled result is shown. If the switch did not take, the current value is shown with it.
 
 ### Backup
 
