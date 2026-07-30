@@ -34,7 +34,7 @@
     <string name="section_general">إعدادات عامة</string>
     <string name="toggle_auto_apply">تطبيق الإعدادات تلقائيًا</string>
     <string name="toggle_auto_apply_desc">عند إيقافه لا يُغيَّر أي شيء على أي جهاز</string>
-    <string name="toggle_enforce">التراجع عن تغييرات التطبيقات الأخرى</string>
+    <string name="toggle_enforce">التراجع عن تغييرات النظام أو التطبيقات الأخرى</string>
     <string name="toggle_enforce_desc">إذا غيّر النظام أو تطبيق آخر الكوديك، يُعاد إلى ما ثبّتته</string>
     <string name="toggle_notify">الإشعار عند تغيّر الكوديك</string>
     <string name="toggle_notify_desc">يعرض رسالة قصيرة عند تحويل الكوديك</string>
@@ -92,6 +92,9 @@
     <string name="detail_auto_apply_desc">يحوّل إلى الإعدادات أدناه في كل مرة تتصل فيها السماعة</string>
     <string name="detail_current_codec">الكوديك الحالي: %1$s</string>
     <string name="detail_note">النتيجة الأخيرة: %1$s</string>
+    <string name="outcome_applied">تم التحويل إلى %1$s</string>
+    <string name="outcome_failed">تعذّر التحويل، ولا يزال %1$s</string>
+    <string name="outcome_undecided">تعذّر تحديد القيم</string>
     <string name="detail_updated_at">حتى %1$s</string>
 
     <string name="section_target">القيم المراد تثبيتها</string>
@@ -108,7 +111,7 @@
     <string name="ldac_hint_adaptive">تكيّفي</string>
 
     <string name="section_advanced">إعدادات متقدّمة</string>
-    <string name="adv_force">الإجبار</string>
+    <string name="adv_force">إجبار التحويل</string>
     <string name="adv_force_desc">يجرّب أيضًا تركيبات لا يعلن الجهاز عن دعمها</string>
     <string name="adv_via_sbc">التحويل عبر SBC</string>
     <string name="adv_via_sbc_desc">ينزل إلى SBC أولًا، ثم ينتقل إلى الكوديك الذي اخترته</string>
@@ -122,8 +125,8 @@
     <string name="action_apply_now">تطبيق الآن</string>
     <string name="action_delete_profile">حذف هذه الإعدادات</string>
     <string name="delete_confirm_title">حذف الإعدادات؟</string>
-    <string name="delete_confirm_body">تُحذف إعدادات %1$s، ولن يُغيَّر أي شيء على هذا الجهاز.</string>
+    <string name="delete_confirm_body">تُحذف إعدادات %1$s ولا يُغيَّر بعدها أي شيء على هذا الجهاز.</string>
     <string name="msg_apply_requested">تم الطلب من الوحدة تطبيق الإعدادات</string>
-    <string name="msg_apply_module_inactive">الوحدة لا تعمل، لذا لا يصل الطلب</string>
+    <string name="msg_apply_module_inactive">الوحدة لا تعمل، لذا لا يمكن إيصال الطلب</string>
     <string name="msg_apply_not_connected">الجهاز غير متصل، لذا لا يمكن تطبيق أي شيء الآن</string>
 </resources>

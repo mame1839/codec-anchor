@@ -30,7 +30,7 @@
     <string name="section_general">सामान्य सेटिंग</string>
     <string name="toggle_auto_apply">सेटिंग अपने आप लागू करें</string>
     <string name="toggle_auto_apply_desc">बंद रहने पर किसी भी डिवाइस पर कुछ नहीं बदला जाता</string>
-    <string name="toggle_enforce">दूसरे ऐप के बदलाव पलट दें</string>
+    <string name="toggle_enforce">सिस्टम या दूसरे ऐप के बदलाव पलट दें</string>
     <string name="toggle_enforce_desc">सिस्टम या कोई दूसरा ऐप कोडेक बदले, तो उसे तय किए मान पर लौटा दिया जाता है</string>
     <string name="toggle_notify">कोडेक बदलने पर बताएँ</string>
     <string name="toggle_notify_desc">कोडेक बदलते समय छोटा संदेश दिखाता है</string>
@@ -85,9 +85,12 @@
     <string name="msg_backup_failed">फ़ाइल पढ़ी नहीं जा सकी</string>
 
     <string name="detail_auto_apply">इस ईयरफ़ोन पर लागू करें</string>
-    <string name="detail_auto_apply_desc">जब भी यह कनेक्ट हो, नीचे दी गई सेटिंग पर बदल देता है</string>
+    <string name="detail_auto_apply_desc">जब भी ईयरफ़ोन कनेक्ट हो, नीचे दी गई सेटिंग पर बदल देता है</string>
     <string name="detail_current_codec">मौजूदा कोडेक: %1$s</string>
     <string name="detail_note">पिछला नतीजा: %1$s</string>
+    <string name="outcome_applied">%1$s पर बदल दिया</string>
+    <string name="outcome_failed">बदल नहीं सका, अभी भी %1$s</string>
+    <string name="outcome_undecided">मानों का पता नहीं चल सका</string>
     <string name="detail_updated_at">%1$s तक</string>
 
     <string name="section_target">जो मान तय करने हैं</string>
@@ -104,7 +107,7 @@
     <string name="ldac_hint_adaptive">अनुकूली</string>
 
     <string name="section_advanced">उन्नत सेटिंग</string>
-    <string name="adv_force">ज़बरदस्ती</string>
+    <string name="adv_force">ज़बरदस्ती बदलें</string>
     <string name="adv_force_desc">जिन संयोजनों की घोषणा डिवाइस नहीं करता, वे भी आज़माता है</string>
     <string name="adv_via_sbc">SBC के रास्ते बदलें</string>
     <string name="adv_via_sbc_desc">पहले SBC पर उतरता है, फिर आपके चुने कोडेक पर जाता है</string>
@@ -118,8 +121,8 @@
     <string name="action_apply_now">अभी लागू करें</string>
     <string name="action_delete_profile">यह सेटिंग मिटाएँ</string>
     <string name="delete_confirm_title">सेटिंग मिटाएँ?</string>
-    <string name="delete_confirm_body">%1$s की सेटिंग हट जाएगी और उस पर कुछ नहीं बदला जाएगा।</string>
+    <string name="delete_confirm_body">%1$s की सेटिंग हट जाती है और उस पर कुछ नहीं बदला जाता।</string>
     <string name="msg_apply_requested">मॉड्यूल से सेटिंग लागू करने को कहा</string>
-    <string name="msg_apply_module_inactive">मॉड्यूल नहीं चल रहा, इसलिए अनुरोध नहीं पहुँचता</string>
+    <string name="msg_apply_module_inactive">मॉड्यूल नहीं चल रहा, इसलिए अनुरोध भेजा नहीं जा सकता</string>
     <string name="msg_apply_not_connected">डिवाइस कनेक्ट नहीं है, इसलिए अभी कुछ लागू नहीं हो सकता</string>
 </resources>

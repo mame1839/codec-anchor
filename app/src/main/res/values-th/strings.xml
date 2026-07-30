@@ -29,7 +29,7 @@
     <string name="section_general">การตั้งค่าทั่วไป</string>
     <string name="toggle_auto_apply">ใช้การตั้งค่าโดยอัตโนมัติ</string>
     <string name="toggle_auto_apply_desc">เมื่อปิด จะไม่มีการเปลี่ยนแปลงกับอุปกรณ์ใด</string>
-    <string name="toggle_enforce">ย้อนการเปลี่ยนแปลงจากแอปอื่น</string>
+    <string name="toggle_enforce">ย้อนการเปลี่ยนแปลงจากระบบหรือแอปอื่น</string>
     <string name="toggle_enforce_desc">ถ้าระบบหรือแอปอื่นเปลี่ยนโคเดก จะเปลี่ยนกลับเป็นค่าที่ตรึงไว้</string>
     <string name="toggle_notify">แจ้งเมื่อโคเดกเปลี่ยน</string>
     <string name="toggle_notify_desc">แสดงข้อความสั้น ๆ เมื่อโคเดกถูกเปลี่ยน</string>
@@ -87,6 +87,9 @@
     <string name="detail_auto_apply_desc">เปลี่ยนไปใช้การตั้งค่าด้านล่างทุกครั้งที่หูฟังเชื่อมต่อ</string>
     <string name="detail_current_codec">โคเดกปัจจุบัน: %1$s</string>
     <string name="detail_note">ผลล่าสุด: %1$s</string>
+    <string name="outcome_applied">เปลี่ยนเป็น %1$s แล้ว</string>
+    <string name="outcome_failed">เปลี่ยนไม่ได้ ยังเป็น %1$s</string>
+    <string name="outcome_undecided">ระบุค่าไม่ได้</string>
     <string name="detail_updated_at">ณ %1$s</string>
 
     <string name="section_target">ค่าที่จะตรึง</string>
@@ -103,7 +106,7 @@
     <string name="ldac_hint_adaptive">ปรับอัตโนมัติ</string>
 
     <string name="section_advanced">การตั้งค่าขั้นสูง</string>
-    <string name="adv_force">บังคับ</string>
+    <string name="adv_force">บังคับให้เปลี่ยน</string>
     <string name="adv_force_desc">ลองชุดค่าที่อุปกรณ์ไม่ได้ประกาศว่ารองรับด้วย</string>
     <string name="adv_via_sbc">เปลี่ยนผ่าน SBC</string>
     <string name="adv_via_sbc_desc">ลดไปที่ SBC ก่อน แล้วจึงเปลี่ยนเป็นโคเดกที่เลือก</string>
@@ -117,8 +120,8 @@
     <string name="action_apply_now">ใช้ค่าทันที</string>
     <string name="action_delete_profile">ลบการตั้งค่านี้</string>
     <string name="delete_confirm_title">ลบการตั้งค่าไหม</string>
-    <string name="delete_confirm_body">การตั้งค่าของ %1$s จะถูกลบ และจะไม่มีการเปลี่ยนแปลงใดกับอุปกรณ์นี้</string>
+    <string name="delete_confirm_body">ลบการตั้งค่าของ %1$s และเลิกเปลี่ยนแปลงสิ่งใดกับอุปกรณ์นี้</string>
     <string name="msg_apply_requested">ขอให้โมดูลใช้การตั้งค่าแล้ว</string>
-    <string name="msg_apply_module_inactive">โมดูลไม่ทำงาน คำขอจึงไปไม่ถึง</string>
+    <string name="msg_apply_module_inactive">โมดูลไม่ทำงาน จึงส่งคำขอไม่ได้</string>
     <string name="msg_apply_not_connected">อุปกรณ์ไม่ได้เชื่อมต่อ จึงยังใช้ค่าไม่ได้</string>
 </resources>

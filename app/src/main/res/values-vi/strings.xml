@@ -29,7 +29,7 @@
     <string name="section_general">Cài đặt chung</string>
     <string name="toggle_auto_apply">Tự động áp dụng cài đặt</string>
     <string name="toggle_auto_apply_desc">Khi tắt, không thiết bị nào bị thay đổi</string>
-    <string name="toggle_enforce">Hoàn tác thay đổi của ứng dụng khác</string>
+    <string name="toggle_enforce">Hoàn tác thay đổi của hệ thống hoặc ứng dụng khác</string>
     <string name="toggle_enforce_desc">Nếu hệ thống hoặc ứng dụng khác đổi codec, chuyển lại như đã cố định</string>
     <string name="toggle_notify">Thông báo khi codec thay đổi</string>
     <string name="toggle_notify_desc">Hiện một thông báo ngắn khi codec được chuyển</string>
@@ -87,6 +87,9 @@
     <string name="detail_auto_apply_desc">Chuyển sang các cài đặt bên dưới mỗi lần tai nghe kết nối</string>
     <string name="detail_current_codec">Codec hiện tại: %1$s</string>
     <string name="detail_note">Kết quả gần nhất: %1$s</string>
+    <string name="outcome_applied">đã chuyển sang %1$s</string>
+    <string name="outcome_failed">không chuyển được, vẫn là %1$s</string>
+    <string name="outcome_undecided">không xác định được các giá trị</string>
     <string name="detail_updated_at">Tính đến %1$s</string>
 
     <string name="section_target">Giá trị cần cố định</string>
@@ -103,7 +106,7 @@
     <string name="ldac_hint_adaptive">tự điều chỉnh</string>
 
     <string name="section_advanced">Cài đặt nâng cao</string>
-    <string name="adv_force">Buộc áp dụng</string>
+    <string name="adv_force">Buộc chuyển đổi</string>
     <string name="adv_force_desc">Thử cả những tổ hợp mà thiết bị không khai báo</string>
     <string name="adv_via_sbc">Chuyển qua SBC</string>
     <string name="adv_via_sbc_desc">Hạ về SBC trước, rồi mới sang codec bạn chọn</string>
@@ -117,8 +120,8 @@
     <string name="action_apply_now">Áp dụng ngay</string>
     <string name="action_delete_profile">Xoá cài đặt này</string>
     <string name="delete_confirm_title">Xoá cài đặt?</string>
-    <string name="delete_confirm_body">Cài đặt của %1$s bị xoá, và thiết bị đó sẽ không bị thay đổi gì.</string>
+    <string name="delete_confirm_body">Xoá cài đặt của %1$s và không thay đổi gì trên thiết bị đó nữa.</string>
     <string name="msg_apply_requested">Đã yêu cầu mô-đun áp dụng cài đặt</string>
-    <string name="msg_apply_module_inactive">Mô-đun không chạy nên yêu cầu không đến được</string>
+    <string name="msg_apply_module_inactive">Mô-đun không chạy nên không gửi được yêu cầu</string>
     <string name="msg_apply_not_connected">Thiết bị chưa kết nối nên bây giờ không áp dụng được</string>
 </resources>
