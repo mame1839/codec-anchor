@@ -53,9 +53,8 @@
 
     <string name="module_checking">Memeriksa modul</string>
     <string name="module_active">Modul berjalan</string>
-    <string name="module_meta">Versi %1$s · disuntikkan ke %2$s</string>
+    <string name="module_meta">Versi %1$s</string>
     <string name="module_config_pending">Modul belum memuat setelan</string>
-    <string name="module_config_synced">Setelan sudah sinkron</string>
     <string name="module_config_stale">Perubahan Anda belum sampai ke modul</string>
     <string name="module_inactive">Modul tidak berjalan</string>
     <string name="module_inactive_body">Proses Bluetooth tidak menjawab. Periksa hal berikut.</string>
@@ -91,6 +90,7 @@
     <string name="detail_auto_apply">Terapkan ke earphone ini</string>
     <string name="detail_auto_apply_desc">Beralih ke setelan di bawah setiap kali earphone tersambung</string>
     <string name="detail_current_codec">Codec saat ini: %1$s</string>
+    <string name="ldac_bitrate_offload">Bitrate efektif tidak dapat dibaca karena offload perangkat keras Bluetooth A2DP aktif.</string>
     <string name="detail_note">Hasil terakhir: %1$s</string>
     <string name="outcome_applied">beralih ke %1$s</string>
     <string name="outcome_failed">tidak dapat beralih, masih %1$s</string>

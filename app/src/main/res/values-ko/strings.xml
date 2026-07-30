@@ -53,9 +53,8 @@
 
     <string name="module_checking">모듈 상태를 확인하고 있습니다</string>
     <string name="module_active">모듈이 동작 중입니다</string>
-    <string name="module_meta">버전 %1$s · 주입 대상 %2$s</string>
+    <string name="module_meta">버전 %1$s</string>
     <string name="module_config_pending">모듈이 아직 설정을 읽지 못했습니다</string>
-    <string name="module_config_synced">설정이 동기화되었습니다</string>
     <string name="module_config_stale">변경한 내용이 모듈에 전달되지 않았습니다</string>
     <string name="module_inactive">모듈이 동작하지 않습니다</string>
     <string name="module_inactive_body">블루투스 프로세스가 응답하지 않습니다. 다음을 확인해 주세요.</string>
@@ -91,6 +90,7 @@
     <string name="detail_auto_apply">이 이어폰에 자동으로 적용</string>
     <string name="detail_auto_apply_desc">연결될 때 아래 설정으로 전환합니다</string>
     <string name="detail_current_codec">현재 코덱: %1$s</string>
+    <string name="ldac_bitrate_offload">Bluetooth A2DP 하드웨어 오프로드가 켜져 있어 실제 비트레이트를 읽을 수 없습니다.</string>
     <string name="detail_note">최근 결과: %1$s</string>
     <string name="outcome_applied">%1$s(으)로 전환했습니다</string>
     <string name="outcome_failed">전환하지 못했습니다. 현재 %1$s</string>

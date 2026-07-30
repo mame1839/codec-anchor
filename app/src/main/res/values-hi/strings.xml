@@ -54,9 +54,8 @@
 
     <string name="module_checking">मॉड्यूल की जाँच हो रही है</string>
     <string name="module_active">मॉड्यूल चल रहा है</string>
-    <string name="module_meta">वर्शन %1$s · %2$s में चल रहा है</string>
+    <string name="module_meta">वर्शन %1$s</string>
     <string name="module_config_pending">मॉड्यूल ने अभी सेटिंग नहीं पढ़ी</string>
-    <string name="module_config_synced">सेटिंग सिंक में है</string>
     <string name="module_config_stale">आपके बदलाव मॉड्यूल तक नहीं पहुँचे</string>
     <string name="module_inactive">मॉड्यूल नहीं चल रहा</string>
     <string name="module_inactive_body">Bluetooth प्रोसेस जवाब नहीं दे रही। नीचे दिए गए बिंदु जाँचें।</string>
@@ -92,6 +91,7 @@
     <string name="detail_auto_apply">इस ईयरफ़ोन पर लागू करें</string>
     <string name="detail_auto_apply_desc">जब भी ईयरफ़ोन कनेक्ट हो, नीचे दी गई सेटिंग पर बदल देता है</string>
     <string name="detail_current_codec">मौजूदा कोडेक: %1$s</string>
+    <string name="ldac_bitrate_offload">Bluetooth A2DP हार्डवेयर ऑफ़लोड चालू होने के कारण प्रभावी बिटरेट पढ़ा नहीं जा सकता।</string>
     <string name="detail_note">पिछला नतीजा: %1$s</string>
     <string name="outcome_applied">%1$s पर बदल दिया</string>
     <string name="outcome_failed">बदल नहीं सका, अभी भी %1$s</string>

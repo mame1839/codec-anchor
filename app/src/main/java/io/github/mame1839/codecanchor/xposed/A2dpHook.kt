@@ -1,6 +1,7 @@
 package io.github.mame1839.codecanchor.xposed
 
 import android.annotation.SuppressLint
+import android.app.KeyguardManager
 import android.bluetooth.BluetoothDevice
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -10,6 +11,7 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.os.Build
 import android.os.Looper
+import android.os.PowerManager
 import android.os.Parcelable
 import android.os.SystemClock
 import android.widget.Toast
@@ -51,6 +53,9 @@ internal object A2dpHook {
     private const val STATE_CONNECTED = 2
 
     private const val SBC_STEP_DELAY_MS = 900L
+
+    // 起動直後に保留した通知を、いつまで有効とみなすか
+    private const val PENDING_TOAST_TTL_MS = 3 * 60_000L
     private const val CYCLE_SLACK_MS = 2_000L
 
     // 適用サイクルの寿命。世代が違う run は打ち切り、締切で総時間を縛る。
@@ -66,6 +71,7 @@ internal object A2dpHook {
     private val statuses = ConcurrentHashMap<String, DeviceStatus>()
     private val reported = ConcurrentHashMap<String, DeviceStatus>()
     private val announced = ConcurrentHashMap<String, String>()
+    private val pendingToasts = ConcurrentHashMap<String, Pair<String, Long>>()
     private val applyingMacs = ConcurrentHashMap.newKeySet<String>()
     private val cycles = ConcurrentHashMap<String, Cycle>()
     private val generations = AtomicInteger()
@@ -116,6 +122,7 @@ internal object A2dpHook {
         statuses.clear()
         reported.clear()
         announced.clear()
+        LdacStats.clear()
         unregisterReceivers()
     }
 
@@ -151,11 +158,21 @@ internal object A2dpHook {
                 val device = param.args.getOrNull(0) as? BluetoothDevice ?: return
                 val profile = config.profileFor(macOf(device)) ?: return
                 if (!profile.enabled || !profile.hasAnyTarget()) return
+                val status = codecStatusOf(device)
                 // 固定していない項目は呼び出し元の要求をそのまま通すので、現在値ではなく incoming を基底にする。
-                val target = buildTarget(profile, codecStatusOf(device), Bt.codecInfo(incoming)) ?: return
+                val target = buildTarget(profile, status, Bt.codecInfo(incoming))
+                if (target == null) {
+                    // HD オーディオが無効なときはここで組めない。有効化を伴う通常の適用に回す。
+                    scheduleApply(device, "上書き")
+                    return
+                }
                 Applying.begin(target, profile.force)
                 param.args[1] = target
                 XLog.i("外部からの変更を上書き: ${macOf(device)} -> ${Bt.codecInfo(target)?.summary()}")
+                // 差し替えた内容が選択可能でないなら、有効化やリトライを伴う通常の適用も走らせる。
+                if (capabilityFor(status, Bt.codecTypeOf(target) ?: return) == null) {
+                    scheduleApply(device, "上書きの補完")
+                }
             }
         })
     }
@@ -204,6 +221,9 @@ internal object A2dpHook {
             addAction(ACTION_CONNECTION_STATE_CHANGED)
             addAction(ACTION_ACTIVE_DEVICE_CHANGED)
             addAction(ACTION_CODEC_CONFIG_CHANGED)
+            // 端末の起動直後は画面がトーストを出せる状態になる前に接続が終わる。保留したぶんはここで出す。
+            addAction(Intent.ACTION_USER_PRESENT)
+            addAction(Intent.ACTION_SCREEN_ON)
         }
         runCatching {
             registerExported(ctx, btReceiver, btFilter, null)
@@ -250,6 +270,10 @@ internal object A2dpHook {
 
     private fun handleBtEvent(intent: Intent?) {
         val action = intent?.action ?: return
+        if (action == Intent.ACTION_USER_PRESENT || action == Intent.ACTION_SCREEN_ON) {
+            flushPendingToasts()
+            return
+        }
         val device = deviceOf(intent) ?: return
         when (action) {
             ACTION_CONNECTION_STATE_CHANGED -> when (intent.getIntExtra(EXTRA_STATE, -1)) {
@@ -287,12 +311,12 @@ internal object A2dpHook {
                 XLog.verbose = received.verbose
                 XLog.i("設定を受信 (${received.profiles.size} 台, 有効=${received.enabled})")
                 if (changed) reapplyConnected("設定更新")
-                refreshAllConnected()
+                refreshAllConnected(readLdac = true)
                 sendReport(null)
             }
 
             Bridge.ACTION_REQUEST_STATUS -> {
-                refreshAllConnected()
+                refreshAllConnected(readLdac = true)
                 sendReport(null)
             }
 
@@ -418,7 +442,7 @@ internal object A2dpHook {
             finishCycle(mac, generation)
             return
         }
-        val status = codecStatusOf(device)
+        var status = codecStatusOf(device)
         val current = Bt.codecInfo(Bt.currentConfig(status))
 
         if (current != null && matches(current, profile)) {
@@ -428,18 +452,30 @@ internal object A2dpHook {
             return
         }
 
+        val maxAttempts = profile.retries.coerceIn(DeviceProfile.RETRIES_RANGE)
+        val lastAttempt = attempt >= maxAttempts
+
+        // HD オーディオが無効だと非必須コーデックが選択肢から消え、目標を組めなくなる。組む前に有効化する。
+        if (profile.autoEnableHd && ensureOptionalCodecs(svc, device, profile.codecType)) {
+            status = codecStatusOf(device)
+        }
+
         val target = buildTarget(profile, status)
         if (target == null) {
+            // 有効化の直後はケーパビリティの再交渉が終わっていないことがあるので、残り試行があれば待つ
+            if (!lastAttempt) {
+                worker.postDelayed(
+                    { runApply(device, profile, attempt + 1, reason, generation) },
+                    mac.intern(),
+                    retryDelayMs(profile),
+                )
+                return
+            }
             refreshStatus(device, status, ApplyOutcome.UNDECIDED)
             sendReport(mac)
             finishCycle(mac, generation)
             return
         }
-
-        val maxAttempts = profile.retries.coerceIn(DeviceProfile.RETRIES_RANGE)
-        val lastAttempt = attempt >= maxAttempts
-
-        if (profile.autoEnableHd) ensureOptionalCodecs(svc, device, target)
 
         if (profile.viaSbc && attempt == 1 && current?.codecType != CodecKeys.CODEC_TYPE_SBC) {
             applySbc(svc, device, status)
@@ -608,17 +644,19 @@ internal object A2dpHook {
         setCodec(svc, device, sbc, force = false, useNative = false)
     }
 
-    private fun ensureOptionalCodecs(svc: Any, device: BluetoothDevice, target: Any) {
-        if (Bt.codecTypeOf(target) == CodecKeys.CODEC_TYPE_SBC) return
-        runCatching {
+    // 有効化したときだけ true。呼び出し元はケーパビリティを読み直す。
+    private fun ensureOptionalCodecs(svc: Any, device: BluetoothDevice, codecType: Int): Boolean {
+        if (codecType == CodecKeys.CODEC_TYPE_SBC) return false
+        return runCatching {
             val supported = XposedHelpers.callMethod(svc, "getSupportsOptionalCodecs", device) as? Int
-            if (supported != CodecKeys.OPTIONAL_CODECS_SUPPORTED) return
+            if (supported != CodecKeys.OPTIONAL_CODECS_SUPPORTED) return false
             val enabled = XposedHelpers.callMethod(svc, "getOptionalCodecsEnabled", device) as? Int
-            if (enabled == CodecKeys.OPTIONAL_CODECS_PREF_ENABLED) return
+            if (enabled == CodecKeys.OPTIONAL_CODECS_PREF_ENABLED) return false
             XLog.i("HD オーディオを有効化する: ${macOf(device)}")
             XposedHelpers.callMethod(svc, "setOptionalCodecsEnabled", device, CodecKeys.OPTIONAL_CODECS_PREF_ENABLED)
             XposedHelpers.callMethod(svc, "enableOptionalCodecs", device)
-        }.onFailure { XLog.d("HD オーディオの有効化に失敗: ${it.message}") }
+            true
+        }.onFailure { XLog.d("HD オーディオの有効化に失敗: ${it.message}") }.getOrDefault(false)
     }
 
     private fun nativeInterface(svc: Any): Any? {
@@ -647,8 +685,31 @@ internal object A2dpHook {
         }.getOrDefault(emptyList())
     }
 
-    private fun refreshAllConnected() {
-        connectedDevices().forEach { refreshStatus(it, codecStatusOf(it)) }
+    private fun refreshAllConnected(readLdac: Boolean = false) {
+        connectedDevices().forEach { device ->
+            val codecStatus = codecStatusOf(device)
+            if (readLdac) refreshLdacStats(device, codecStatus)
+            refreshStatus(device, codecStatus)
+        }
+    }
+
+    // ダンプの A2DP 区画は今のストリーム 1 本分しかないので、複数台が LDAC で繋がっているときは
+    // アクティブな機器にだけ紐づける (他の機器に他人の値を出さない)。
+    private fun refreshLdacStats(device: BluetoothDevice, codecStatus: Any?) {
+        val mac = macOf(device) ?: return
+        val svc = service ?: return
+        val active = activeDevice()
+        val current = Bt.codecInfo(Bt.currentConfig(codecStatus))
+        if (!CodecKeys.isLdac(current?.displayName()) || (active != null && active != device)) {
+            LdacStats.forget(mac)
+            return
+        }
+        LdacStats.refresh(svc, mac)
+    }
+
+    private fun activeDevice(): Any? {
+        val svc = service ?: return null
+        return runCatching { XposedHelpers.callMethod(svc, "getActiveDevice") }.getOrNull()
     }
 
     // Bluetooth プロセスの中で動くので BLUETOOTH_CONNECT は常に許可されている
@@ -664,15 +725,18 @@ internal object A2dpHook {
         val connected = runCatching {
             XposedHelpers.callMethod(svc, "getConnectionState", device) as? Int == STATE_CONNECTED
         }.getOrDefault(false)
-        val active = runCatching {
-            device == XposedHelpers.callMethod(svc, "getActiveDevice")
-        }.getOrDefault(false)
+        val active = device == activeDevice()
+        val current = Bt.codecInfo(Bt.currentConfig(codecStatus))
+        // 読み取りは状態要求の経路だけで行う (適用サイクル中の報告にも直近の値を載せる)。
+        val ldac = if (CodecKeys.isLdac(current?.displayName())) LdacStats.cached(mac) else null
         val fresh = DeviceStatus(
             mac = mac,
             name = runCatching { device.name }.getOrNull().orEmpty(),
             connected = connected,
             active = active,
-            current = Bt.codecInfo(Bt.currentConfig(codecStatus)),
+            current = current,
+            ldacQualityMode = ldac?.mode.orEmpty(),
+            ldacBitrateKbps = ldac?.kbps ?: 0,
             selectable = Bt.selectableCapabilities(codecStatus).mapNotNull { Bt.codecInfo(it) },
             local = Bt.localCapabilities(codecStatus).mapNotNull { Bt.codecInfo(it) },
             outcome = outcome ?: ApplyOutcome.NONE,
@@ -695,8 +759,18 @@ internal object A2dpHook {
         cycles.remove(mac)
         applyingMacs.remove(mac)
         announced.remove(mac)
+        pendingToasts.remove(mac)
         reported.remove(mac)
-        statuses.computeIfPresent(mac) { _, prev -> prev.copy(connected = false, active = false, current = null) }
+        LdacStats.forget(mac)
+        statuses.computeIfPresent(mac) { _, prev ->
+            prev.copy(
+                connected = false,
+                active = false,
+                current = null,
+                ldacQualityMode = "",
+                ldacBitrateKbps = 0,
+            )
+        }
     }
 
     // 接続時はコーデック変更の通知が接続完了より先に届く。これから自分で変えるコーデックについて
@@ -740,7 +814,10 @@ internal object A2dpHook {
 
     private fun announceChanged(device: BluetoothDevice, summary: String) {
         val ctx = context ?: return
-        toast(HookStrings.format(ctx, "hook_codec_changed", "%1\$s: switched to %2\$s", label(device), summary))
+        toast(
+            macOf(device).orEmpty(),
+            HookStrings.format(ctx, "hook_codec_changed", "%1\$s: switched to %2\$s", label(device), summary),
+        )
     }
 
     private fun announceFailed(device: BluetoothDevice, target: String, current: String?) {
@@ -753,15 +830,43 @@ internal object A2dpHook {
                 "%1\$s: could not switch to %2\$s (now %3\$s)", label(device), target, current,
             )
         }
-        toast(text)
+        toast(macOf(device).orEmpty(), text)
     }
 
-    private fun toast(text: String) {
+    // 画面が消えている / ロック中は出しても捨てられるので保留し、使える状態になってから出す。
+    private fun toast(key: String, text: String) {
         if (!config.notifyChanges) return
         val ctx = context ?: return
+        if (!screenUsable(ctx)) {
+            pendingToasts[key] = text to SystemClock.uptimeMillis()
+            XLog.d("画面が使えないので通知を保留: $text")
+            return
+        }
+        showToast(ctx, text)
+    }
+
+    private fun showToast(ctx: Context, text: String) {
         mainHandler.post {
             runCatching { Toast.makeText(ctx, text, Toast.LENGTH_SHORT).show() }
                 .onFailure { XLog.d("トーストを出せない: ${it.message}") }
+        }
+    }
+
+    // 判定できないときは出す側に倒す (通知が消えるより、出て困らないほうを選ぶ)。
+    private fun screenUsable(ctx: Context): Boolean = runCatching {
+        val power = ctx.getSystemService(PowerManager::class.java)
+        val keyguard = ctx.getSystemService(KeyguardManager::class.java)
+        power?.isInteractive != false && keyguard?.isKeyguardLocked != true
+    }.getOrDefault(true)
+
+    private fun flushPendingToasts() {
+        if (pendingToasts.isEmpty()) return
+        val ctx = context ?: return
+        if (!screenUsable(ctx)) return
+        val now = SystemClock.uptimeMillis()
+        pendingToasts.keys.toList().forEach { key ->
+            val entry = pendingToasts.remove(key) ?: return@forEach
+            if (now - entry.second <= PENDING_TOAST_TTL_MS) showToast(ctx, entry.first)
         }
     }
 
@@ -781,6 +886,7 @@ internal object A2dpHook {
             hostPackage = hostPackage,
             configHash = config.hash(),
             configLoaded = configLoaded,
+            a2dpOffloadEnabled = a2dpOffloadEnabled(),
             devices = devices,
             codecNames = Bt.codecNames.toMap(),
             timestamp = System.currentTimeMillis(),
@@ -791,6 +897,18 @@ internal object A2dpHook {
             addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
         }
         ctx.sendBroadcast(intent)
+    }
+
+    // オフロードが有効な端末では、エンコードが DSP 内で行われて実効ビットレートが出てこないことがある。
+    // 出ないときの理由を画面に出せるよう、状態そのものを報告に載せる。
+    private fun a2dpOffloadEnabled(): Boolean {
+        val svc = service ?: return false
+        runCatching { XposedHelpers.getBooleanField(svc, "mA2dpOffloadEnabled") }
+            .getOrNull()?.let { return it }
+        return runCatching {
+            val adapter = XposedHelpers.getObjectField(svc, "mAdapterService")
+            XposedHelpers.callMethod(adapter, "isA2dpOffloadEnabled") as? Boolean
+        }.getOrNull() ?: false
     }
 
     private fun requestConfig(ctx: Context) {

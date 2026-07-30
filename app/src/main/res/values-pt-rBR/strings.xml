@@ -55,9 +55,8 @@
 
     <string name="module_checking">Verificando o módulo</string>
     <string name="module_active">O módulo está em execução</string>
-    <string name="module_meta">Versão %1$s · injetado em %2$s</string>
+    <string name="module_meta">Versão %1$s</string>
     <string name="module_config_pending">O módulo ainda não carregou as configurações</string>
-    <string name="module_config_synced">As configurações estão sincronizadas</string>
     <string name="module_config_stale">Suas alterações não chegaram ao módulo</string>
     <string name="module_inactive">O módulo não está em execução</string>
     <string name="module_inactive_body">O processo do Bluetooth não responde. Verifique o seguinte.</string>
@@ -93,6 +92,7 @@
     <string name="detail_auto_apply">Aplicar nestes fones</string>
     <string name="detail_auto_apply_desc">Muda para as configurações abaixo sempre que eles se conectarem</string>
     <string name="detail_current_codec">Codec atual: %1$s</string>
+    <string name="ldac_bitrate_offload">Não é possível ler a taxa de bits efetiva porque o offload de hardware do Bluetooth A2DP está ativado.</string>
     <string name="detail_note">Último resultado: %1$s</string>
     <string name="outcome_applied">alterado para %1$s</string>
     <string name="outcome_failed">não foi possível alterar, continua em %1$s</string>

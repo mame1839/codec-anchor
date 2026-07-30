@@ -54,9 +54,8 @@
 
     <string name="module_checking">Modül kontrol ediliyor</string>
     <string name="module_active">Modül çalışıyor</string>
-    <string name="module_meta">Sürüm %1$s · %2$s içine enjekte edildi</string>
+    <string name="module_meta">Sürüm %1$s</string>
     <string name="module_config_pending">Modül ayarları henüz yüklemedi</string>
-    <string name="module_config_synced">Ayarlar eşitlendi</string>
     <string name="module_config_stale">Değişiklikleriniz modüle ulaşmadı</string>
     <string name="module_inactive">Modül çalışmıyor</string>
     <string name="module_inactive_body">Bluetooth süreci yanıt vermiyor. Aşağıdakileri kontrol edin.</string>
@@ -92,6 +91,7 @@
     <string name="detail_auto_apply">Bu kulaklığa uygula</string>
     <string name="detail_auto_apply_desc">Her bağlandığında aşağıdaki ayarlara geçer</string>
     <string name="detail_current_codec">Mevcut kodek: %1$s</string>
+    <string name="ldac_bitrate_offload">Bluetooth A2DP donanım aktarımı etkin olduğu için gerçek bit hızı okunamıyor.</string>
     <string name="detail_note">Son sonuç: %1$s</string>
     <string name="outcome_applied">%1$s olarak değiştirildi</string>
     <string name="outcome_failed">değiştirilemedi, hâlâ %1$s</string>

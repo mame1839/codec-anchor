@@ -7,6 +7,7 @@ import io.github.mame1839.codecanchor.R
 import io.github.mame1839.codecanchor.core.CodecKeys
 import io.github.mame1839.codecanchor.core.DeviceProfile
 import java.text.NumberFormat
+import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
@@ -67,5 +68,11 @@ private fun secondsLabel(seconds: Double, digits: Int): String =
 fun retryLabel(res: Resources, count: Int): String =
     res.getQuantityString(R.plurals.retry_count, count, count)
 
-fun clockLabel(context: Context, timestamp: Long): String =
-    if (timestamp <= 0) "-" else DateFormat.getTimeFormat(context).format(Date(timestamp))
+// 適用結果が起きた時刻なので秒まで出す。12/24 時間の設定と語順は端末に合わせる。
+fun clockLabel(context: Context, timestamp: Long): String {
+    if (timestamp <= 0) return "-"
+    val locale = Locale.getDefault()
+    val skeleton = if (DateFormat.is24HourFormat(context)) "Hms" else "hms"
+    val pattern = DateFormat.getBestDateTimePattern(locale, skeleton)
+    return SimpleDateFormat(pattern, locale).format(Date(timestamp))
+}

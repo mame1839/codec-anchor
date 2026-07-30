@@ -55,9 +55,8 @@
 
     <string name="module_checking">Controllo del modulo</string>
     <string name="module_active">Il modulo è in esecuzione</string>
-    <string name="module_meta">Versione %1$s · iniettato in %2$s</string>
+    <string name="module_meta">Versione %1$s</string>
     <string name="module_config_pending">Il modulo non ha ancora caricato le impostazioni</string>
-    <string name="module_config_synced">Le impostazioni sono sincronizzate</string>
     <string name="module_config_stale">Le tue modifiche non hanno ancora raggiunto il modulo</string>
     <string name="module_inactive">Il modulo non è in esecuzione</string>
     <string name="module_inactive_body">Il processo Bluetooth non risponde. Controlla i punti seguenti.</string>
@@ -93,6 +92,7 @@
     <string name="detail_auto_apply">Applica a questi auricolari</string>
     <string name="detail_auto_apply_desc">Passa alle impostazioni sottostanti a ogni connessione</string>
     <string name="detail_current_codec">Codec attuale: %1$s</string>
+    <string name="ldac_bitrate_offload">Non è possibile leggere il bitrate effettivo perché l\'offload hardware di Bluetooth A2DP è attivo.</string>
     <string name="detail_note">Ultimo risultato: %1$s</string>
     <string name="outcome_applied">passaggio a %1$s</string>
     <string name="outcome_failed">cambio non riuscito, ancora %1$s</string>

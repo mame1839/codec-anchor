@@ -53,9 +53,8 @@
 
     <string name="module_checking">กำลังตรวจสอบโมดูล</string>
     <string name="module_active">โมดูลทำงานอยู่</string>
-    <string name="module_meta">เวอร์ชัน %1$s · แทรกเข้าใน %2$s</string>
+    <string name="module_meta">เวอร์ชัน %1$s</string>
     <string name="module_config_pending">โมดูลยังไม่ได้โหลดการตั้งค่า</string>
-    <string name="module_config_synced">การตั้งค่าตรงกันแล้ว</string>
     <string name="module_config_stale">การแก้ไขของคุณยังไม่ถึงโมดูล</string>
     <string name="module_inactive">โมดูลไม่ทำงาน</string>
     <string name="module_inactive_body">โปรเซส Bluetooth ไม่ตอบสนอง โปรดตรวจสอบรายการต่อไปนี้</string>
@@ -91,6 +90,7 @@
     <string name="detail_auto_apply">ใช้กับหูฟังนี้</string>
     <string name="detail_auto_apply_desc">เปลี่ยนไปใช้การตั้งค่าด้านล่างทุกครั้งที่หูฟังเชื่อมต่อ</string>
     <string name="detail_current_codec">โคเดกปัจจุบัน: %1$s</string>
+    <string name="ldac_bitrate_offload">ไม่สามารถอ่านบิตเรตที่ใช้จริงได้ เนื่องจากเปิดใช้งานการถ่ายโอนงานด้วยฮาร์ดแวร์ของ Bluetooth A2DP อยู่</string>
     <string name="detail_note">ผลล่าสุด: %1$s</string>
     <string name="outcome_applied">เปลี่ยนเป็น %1$s แล้ว</string>
     <string name="outcome_failed">เปลี่ยนไม่ได้ ยังเป็น %1$s</string>

@@ -56,9 +56,8 @@
 
     <string name="module_checking">Sprawdzanie modułu</string>
     <string name="module_active">Moduł działa</string>
-    <string name="module_meta">Wersja %1$s · wstrzyknięty do %2$s</string>
+    <string name="module_meta">Wersja %1$s</string>
     <string name="module_config_pending">Moduł jeszcze nie wczytał ustawień</string>
-    <string name="module_config_synced">Ustawienia są zsynchronizowane</string>
     <string name="module_config_stale">Twoje zmiany nie dotarły do modułu</string>
     <string name="module_inactive">Moduł nie działa</string>
     <string name="module_inactive_body">Proces Bluetooth nie odpowiada. Sprawdź poniższe punkty.</string>
@@ -94,6 +93,7 @@
     <string name="detail_auto_apply">Stosuj do tych słuchawek</string>
     <string name="detail_auto_apply_desc">Przy każdym połączeniu przełącza na ustawienia poniżej</string>
     <string name="detail_current_codec">Obecny kodek: %1$s</string>
+    <string name="ldac_bitrate_offload">Nie można odczytać efektywnej przepływności, ponieważ włączone jest sprzętowe odciążanie Bluetooth A2DP.</string>
     <string name="detail_note">Ostatni wynik: %1$s</string>
     <string name="outcome_applied">przełączono na %1$s</string>
     <string name="outcome_failed">nie udało się przełączyć, nadal %1$s</string>

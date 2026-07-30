@@ -53,9 +53,8 @@
 
     <string name="module_checking">モジュールの状態を確認しています</string>
     <string name="module_active">モジュールは動作中</string>
-    <string name="module_meta">バージョン %1$s · 注入先 %2$s</string>
+    <string name="module_meta">バージョン %1$s</string>
     <string name="module_config_pending">モジュールはまだ設定を読み込んでいません</string>
-    <string name="module_config_synced">設定は同期済み</string>
     <string name="module_config_stale">編集した内容がモジュールに届いていません</string>
     <string name="module_inactive">モジュールが動いていません</string>
     <string name="module_inactive_body">Bluetooth プロセスから応答がありません。次を確認してください。</string>
@@ -91,6 +90,7 @@
     <string name="detail_auto_apply">このイヤホンに自動適用する</string>
     <string name="detail_auto_apply_desc">接続したときに、下の設定へ切り替えます</string>
     <string name="detail_current_codec">現在のコーデック: %1$s</string>
+    <string name="ldac_bitrate_offload">Bluetooth A2DP ハードウェアオフロードが有効なため、実効ビットレートを取得できません。</string>
     <string name="detail_note">直近の結果: %1$s</string>
     <string name="outcome_applied">%1$s に切り替えました</string>
     <string name="outcome_failed">切り替えられず、いまは %1$s です</string>

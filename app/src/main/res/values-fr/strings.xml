@@ -55,9 +55,8 @@
 
     <string name="module_checking">Vérification du module</string>
     <string name="module_active">Le module fonctionne</string>
-    <string name="module_meta">Version %1$s · injecté dans %2$s</string>
+    <string name="module_meta">Version %1$s</string>
     <string name="module_config_pending">Le module n\'a pas encore chargé les réglages</string>
-    <string name="module_config_synced">Les réglages sont synchronisés</string>
     <string name="module_config_stale">Vos modifications ne sont pas encore parvenues au module</string>
     <string name="module_inactive">Le module ne fonctionne pas</string>
     <string name="module_inactive_body">Le processus Bluetooth ne répond pas. Vérifiez les points suivants.</string>
@@ -93,6 +92,7 @@
     <string name="detail_auto_apply">Appliquer à ces écouteurs</string>
     <string name="detail_auto_apply_desc">Bascule sur les réglages ci-dessous à chaque connexion</string>
     <string name="detail_current_codec">Codec actuel : %1$s</string>
+    <string name="ldac_bitrate_offload">Le débit effectif ne peut pas être lu, car le déchargement matériel Bluetooth A2DP est activé.</string>
     <string name="detail_note">Dernier résultat : %1$s</string>
     <string name="outcome_applied">passage à %1$s</string>
     <string name="outcome_failed">changement impossible, toujours %1$s</string>

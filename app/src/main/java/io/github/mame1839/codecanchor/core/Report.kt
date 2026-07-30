@@ -63,6 +63,9 @@ data class DeviceStatus(
     val connected: Boolean = false,
     val active: Boolean = false,
     val current: CodecInfo? = null,
+    // LDAC の実効ビットレート。ABR では送信中に動く。読めなければ空 / 0。
+    val ldacQualityMode: String = "",
+    val ldacBitrateKbps: Int = 0,
     val selectable: List<CodecInfo> = emptyList(),
     val local: List<CodecInfo> = emptyList(),
     val outcome: ApplyOutcome = ApplyOutcome.NONE,
@@ -75,6 +78,8 @@ data class DeviceStatus(
         put("connected", connected)
         put("active", active)
         current?.let { put("current", it.toJson()) }
+        put("ldacMode", ldacQualityMode)
+        put("ldacKbps", ldacBitrateKbps)
         put("selectable", JSONArray().also { a -> selectable.forEach { a.put(it.toJson()) } })
         put("local", JSONArray().also { a -> local.forEach { a.put(it.toJson()) } })
         put("outcome", outcome.name)
@@ -91,6 +96,8 @@ data class DeviceStatus(
             connected = o.optBoolean("connected", false),
             active = o.optBoolean("active", false),
             current = o.optJSONObject("current")?.let { CodecInfo.fromJson(it) },
+            ldacQualityMode = o.optString("ldacMode", ""),
+            ldacBitrateKbps = o.optInt("ldacKbps", 0),
             selectable = o.optJSONArray("selectable").toCodecList(),
             local = o.optJSONArray("local").toCodecList(),
             outcome = ApplyOutcome.from(o.optString("outcome")),
@@ -110,6 +117,8 @@ data class StatusReport(
     val hostPackage: String = "",
     val configHash: Int = 0,
     val configLoaded: Boolean = false,
+    // 端末ごとの性質なので機器ではなく報告に載せる。有効だと LDAC の実効ビットレートが読めない端末がある。
+    val a2dpOffloadEnabled: Boolean = false,
     val devices: List<DeviceStatus> = emptyList(),
     val codecNames: Map<Int, String> = emptyMap(),
     val timestamp: Long = 0,
@@ -119,6 +128,7 @@ data class StatusReport(
         put("hostPackage", hostPackage)
         put("configHash", configHash)
         put("configLoaded", configLoaded)
+        put("a2dpOffload", a2dpOffloadEnabled)
         put("ts", timestamp)
         put("devices", JSONArray().also { a -> devices.forEach { a.put(it.toJson()) } })
         put("codecNames", JSONObject().also { obj -> codecNames.forEach { (k, v) -> obj.put(k.toString(), v) } })
@@ -149,6 +159,7 @@ data class StatusReport(
                 hostPackage = o.optString("hostPackage", ""),
                 configHash = o.optInt("configHash", 0),
                 configLoaded = o.optBoolean("configLoaded", false),
+                a2dpOffloadEnabled = o.optBoolean("a2dpOffload", false),
                 devices = devices,
                 codecNames = names,
                 timestamp = o.optLong("ts", 0),

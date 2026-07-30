@@ -43,6 +43,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import io.github.mame1839.codecanchor.R
 import io.github.mame1839.codecanchor.core.ApplyOutcome
 import io.github.mame1839.codecanchor.core.CodecKeys
@@ -52,6 +53,15 @@ import io.github.mame1839.codecanchor.core.DeviceStatus
 private val DELAY_STEPS = listOf(0, 500, 1000, 1500, 2000, 3000, 5000, 8000)
 private val RETRY_STEPS = listOf(1, 2, 3, 4, 5, 8, 10)
 private val RETRY_DELAY_STEPS = listOf(500, 1000, 1500, 2000, 3000, 5000)
+
+// ネイティブのダンプが書く品質モードの表記。
+private const val ABR_MODE = "ABR"
+
+// 実効ビットレートは ABR のときだけ動く。固定の音質では上のコーデック行と同じ値になるので出さないし、
+// 取り直す意味もない。オフロードで読めなかったときはモードが分からないため、設定した音質で判断する。
+private fun DeviceStatus.isLdacAbr(): Boolean =
+    CodecKeys.isLdac(current?.displayName()) &&
+        (ldacQualityMode.equals(ABR_MODE, ignoreCase = true) || current?.codecSpecific1 == CodecKeys.LDAC_ABR)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,6 +83,13 @@ fun DeviceDetailScreen(
     val name = vm.nameOf(mac)
     var confirmDelete by rememberSaveable { mutableStateOf(false) }
     var advancedExpanded by rememberSaveable { mutableStateOf(false) }
+
+    // 取り直しが要るのは動く値があるときだけ。固定の音質では開いていても問い合わせない。
+    val watchBitrate = status?.connected == true && status.isLdacAbr()
+    LifecycleResumeEffect(watchBitrate) {
+        if (watchBitrate) vm.startWatching()
+        onPauseOrDispose { vm.stopWatching() }
+    }
 
     val applyMessage = when {
         vm.moduleState != ModuleState.ACTIVE -> stringResource(R.string.msg_apply_module_inactive)
@@ -106,7 +123,7 @@ fun DeviceDetailScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            DeviceHeader(name = name, mac = mac, status = status)
+            DeviceHeader(name = name, mac = mac, status = status, offloadEnabled = vm.a2dpOffloadEnabled)
 
             SettingsCard {
                 SwitchRow(
@@ -220,7 +237,7 @@ fun DeviceDetailScreen(
 }
 
 @Composable
-private fun DeviceHeader(name: String, mac: String, status: DeviceStatus?) {
+private fun DeviceHeader(name: String, mac: String, status: DeviceStatus?, offloadEnabled: Boolean) {
     SettingsCard {
         Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
             Text(name, style = MaterialTheme.typography.titleMedium)
@@ -250,14 +267,29 @@ private fun DeviceHeader(name: String, mac: String, status: DeviceStatus?) {
                 }
             }
             Spacer(Modifier.height(8.dp))
+            val unknown = stringResource(R.string.value_unknown)
             Text(
-                text = stringResource(
-                    R.string.detail_current_codec,
-                    status?.current?.summary() ?: stringResource(R.string.value_unknown),
-                ),
+                text = stringResource(R.string.detail_current_codec, status?.current?.summary() ?: unknown),
                 style = MaterialTheme.typography.bodyMedium,
             )
-            val unknown = stringResource(R.string.value_unknown)
+            if (status != null && status.isLdacAbr()) {
+                if (status.ldacBitrateKbps > 0) {
+                    Text(
+                        text = stringResource(
+                            R.string.ldac_bitrate,
+                            status.ldacBitrateKbps,
+                            status.ldacQualityMode.ifBlank { unknown },
+                        ),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                } else if (offloadEnabled) {
+                    Text(
+                        text = stringResource(R.string.ldac_bitrate_offload),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
             val outcomeText = when (status?.outcome) {
                 ApplyOutcome.APPLIED ->
                     stringResource(R.string.outcome_applied, status.outcomeValue.ifBlank { unknown })
@@ -269,6 +301,7 @@ private fun DeviceHeader(name: String, mac: String, status: DeviceStatus?) {
                 else -> null
             }
             if (outcomeText != null) {
+                Spacer(Modifier.height(6.dp))
                 Text(
                     text = stringResource(R.string.detail_note, outcomeText),
                     style = MaterialTheme.typography.bodyMedium,

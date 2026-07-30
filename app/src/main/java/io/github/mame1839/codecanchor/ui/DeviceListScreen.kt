@@ -363,23 +363,21 @@ private fun ModuleCard(vm: MainViewModel, onPush: () -> Unit) {
                         text = stringResource(
                             R.string.module_meta,
                             report?.moduleVersion.orEmpty().ifBlank { unknown },
-                            report?.hostPackage.orEmpty().ifBlank { unknown },
                         ),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    Spacer(Modifier.height(8.dp))
+                    // 届いているときは何も出さない。異常だけを知らせる。
                     when {
-                        report?.configLoaded != true ->
+                        report?.configLoaded != true -> {
+                            Spacer(Modifier.height(8.dp))
                             SyncLine(stringResource(R.string.module_config_pending), onPush)
+                        }
 
-                        vm.configSynced -> Text(
-                            text = stringResource(R.string.module_config_synced),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-
-                        else -> SyncLine(stringResource(R.string.module_config_stale), onPush)
+                        !vm.configSynced -> {
+                            Spacer(Modifier.height(8.dp))
+                            SyncLine(stringResource(R.string.module_config_stale), onPush)
+                        }
                     }
                 }
 
@@ -521,6 +519,7 @@ private fun DeviceCard(
                     )
                 }
                 status?.current?.let { current ->
+                    Spacer(Modifier.height(4.dp))
                     Text(
                         text = stringResource(R.string.device_current, current.summary()),
                         style = MaterialTheme.typography.bodyMedium,

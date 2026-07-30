@@ -53,9 +53,8 @@
 
     <string name="module_checking">Đang kiểm tra mô-đun</string>
     <string name="module_active">Mô-đun đang chạy</string>
-    <string name="module_meta">Phiên bản %1$s · chèn vào %2$s</string>
+    <string name="module_meta">Phiên bản %1$s</string>
     <string name="module_config_pending">Mô-đun chưa nạp cài đặt</string>
-    <string name="module_config_synced">Cài đặt đã đồng bộ</string>
     <string name="module_config_stale">Thay đổi của bạn chưa đến được mô-đun</string>
     <string name="module_inactive">Mô-đun không chạy</string>
     <string name="module_inactive_body">Tiến trình Bluetooth không phản hồi. Hãy kiểm tra những mục sau.</string>
@@ -91,6 +90,7 @@
     <string name="detail_auto_apply">Áp dụng cho tai nghe này</string>
     <string name="detail_auto_apply_desc">Chuyển sang các cài đặt bên dưới mỗi lần tai nghe kết nối</string>
     <string name="detail_current_codec">Codec hiện tại: %1$s</string>
+    <string name="ldac_bitrate_offload">Không thể đọc bitrate thực tế vì tính năng giảm tải phần cứng Bluetooth A2DP đang được bật.</string>
     <string name="detail_note">Kết quả gần nhất: %1$s</string>
     <string name="outcome_applied">đã chuyển sang %1$s</string>
     <string name="outcome_failed">không chuyển được, vẫn là %1$s</string>
