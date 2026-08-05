@@ -10,3 +10,12 @@ This product includes software developed as part of the Xposed project.
 
   The jar is used at compile time only and is not included in the built APK;
   the framework provides these classes at runtime.
+
+This product includes header definitions derived from the Android Open
+Source Project (https://source.android.com/), licensed under the Apache
+License, Version 2.0.
+
+  app/src/main/cpp/aosp/audio_effect.h
+  Copyright 2011 The Android Open Source Project
+  Derived from hardware/libhardware/include/hardware/audio_effect.h and
+  system/media/audio/include/system/audio.h
