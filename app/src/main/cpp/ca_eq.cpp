@@ -1,6 +1,7 @@
 // Codec Anchor の音響処理エフェクト。legacy (HIDL) の C ABI で vendor の audio HAL に読まれる。
 #include <atomic>
 #include <cerrno>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <ctime>
@@ -117,6 +118,8 @@ void ca_stats_attach(CaCtx* c, int32_t ioId) {
         ca_slot_t* s = &g_shm->slots[i];
         uint32_t expected = 0;
         if (ca_in_use(s)->compare_exchange_strong(expected, CA_SHM_MAGIC)) {
+            // ここに来た時点で中身はゼロ (ca_stats_detach の不変条件)。念のため書き直すが、
+            // ゼロ化を detach 側に置いてあることが、リーダの偽陽性を防いでいる本体。
             s->seq = 0; s->frames = 0; s->sample_rate = 0; s->channels = 0;
             s->block_frames = 0; s->state = 0; s->gain_mb = 0;
             s->io_id = ioId;
@@ -131,10 +134,19 @@ void ca_stats_attach(CaCtx* c, int32_t ioId) {
     CA_LOGE("stats: no free slot");
 }
 
+// 不変条件: in_use == 0 のスロットは、中身も必ずゼロ。
+//
+// **この順序を入れ替えないこと。**先に in_use を落とすと、次に attach した側が CAS を通してから
+// フィールドを初期化するまでの隙に、リーダが前のインスタンスの frames を読む。それは
+// 「カウンタが進んでいる」という偽陽性になり、この実証の結論そのものを壊す
+// (処理フレーム数が唯一の観測点なので、そこに嘘が混じる経路を作らない)。
 void ca_stats_detach(CaCtx* c) {
     ca_slot_t* s = c->slot;
     if (s == nullptr) return;
     c->slot = nullptr;
+    // in_use 以外を全部ゼロにする。フィールドを足したときに消し忘れないよう memset で消す。
+    std::memset(&s->seq, 0, sizeof(ca_slot_t) - offsetof(ca_slot_t, seq));
+    std::atomic_thread_fence(std::memory_order_release);
     ca_in_use(s)->store(0, std::memory_order_release);
 }
 
