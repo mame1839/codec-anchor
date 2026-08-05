@@ -137,7 +137,17 @@ public final class Spike {
     // session 0 は「どのスレッドに載るか」を選べず、無音のスレッドに刺さることがある
     // (実測: io 85 が standby のまま frames だけ進み、入力は silent だった)。
     // トラックのセッションに付ければ、その音が必ず process() を通る。
-    static void tonefx(int hz, int seconds, double dbfs, int gainMb) throws Exception {
+    static int newSessionId() throws Exception {
+        Class<?> as = Class.forName("android.media.AudioSystem");
+        Method m = as.getDeclaredMethod("newAudioSessionId");
+        m.setAccessible(true);
+        return (Integer) m.invoke(null);
+    }
+
+    // order 0 = トラックを作ってからエフェクト、1 = エフェクトを作ってからトラック。
+    // チェーンが後から足されたときにトラックの mainBuffer が張り替わるかは端末次第なので、
+    // 両方試して差を見る。
+    static void tonefx(int hz, int seconds, double dbfs, int gainMb, int order) throws Exception {
         if (dbfs > MAX_DBFS) {
             System.out.println("dBFS が " + MAX_DBFS + " を超えている。丸める (要求値=" + dbfs + ")");
             dbfs = MAX_DBFS;
@@ -156,16 +166,28 @@ public final class Spike {
                 .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build();
         int buf = AudioTrack.getMinBufferSize(rate, AudioFormat.CHANNEL_OUT_STEREO,
                                               AudioFormat.ENCODING_PCM_FLOAT) * 8;
-        AudioTrack t = new AudioTrack.Builder().setAudioFormat(fmt).setAudioAttributes(attrs)
-                .setBufferSizeInBytes(buf).setTransferMode(AudioTrack.MODE_STREAM).build();
-        t.setVolume(TRACK_VOLUME);
-        int session = t.getAudioSessionId();
-        System.out.println("track session=" + session);
-
         Constructor<AudioEffect> c = AudioEffect.class.getDeclaredConstructor(
                 UUID.class, UUID.class, int.class, int.class);
         c.setAccessible(true);
-        AudioEffect fx = c.newInstance(effectTypeNull(), IMPL, 0, session);
+
+        AudioTrack t;
+        AudioEffect fx;
+        int session;
+        if (order == 1) {
+            session = newSessionId();
+            System.out.println("order=1 (エフェクトが先) session=" + session);
+            fx = c.newInstance(effectTypeNull(), IMPL, 0, session);
+            t = new AudioTrack.Builder().setAudioFormat(fmt).setAudioAttributes(attrs)
+                    .setBufferSizeInBytes(buf).setTransferMode(AudioTrack.MODE_STREAM)
+                    .setSessionId(session).build();
+        } else {
+            t = new AudioTrack.Builder().setAudioFormat(fmt).setAudioAttributes(attrs)
+                    .setBufferSizeInBytes(buf).setTransferMode(AudioTrack.MODE_STREAM).build();
+            session = t.getAudioSessionId();
+            System.out.println("order=0 (トラックが先) session=" + session);
+            fx = c.newInstance(effectTypeNull(), IMPL, 0, session);
+        }
+        t.setVolume(TRACK_VOLUME);
         System.out.println("生成した: " + fx.getDescriptor().name);
         System.out.println("setParameter=" + setParam(fx, intToLe(1), intToLe(gainMb))
                 + " gain=" + gainMb + "mB");
@@ -290,7 +312,8 @@ public final class Spike {
                 break;
             case "tonefx":
                 tonefx(Integer.parseInt(args[1]), Integer.parseInt(args[2]),
-                       Double.parseDouble(args[3]), Integer.parseInt(args[4]));
+                       Double.parseDouble(args[3]), Integer.parseInt(args[4]),
+                       args.length > 5 ? Integer.parseInt(args[5]) : 0);
                 break;
             default:
                 System.out.println("不明なサブコマンド: " + args[0]);
