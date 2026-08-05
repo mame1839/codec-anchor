@@ -18,3 +18,9 @@ target_compile_options(caeq PRIVATE -fvisibility=hidden)
 # prebuilt の静的ライブラリは既定の可視性で入るので、--exclude-libs で libc++abi の
 # __cxa_* / _ZTI* をまとめて隠す。vendor の audio HAL に読ませる .so なので見える面は狭くする。
 target_link_options(caeq PRIVATE -Wl,--no-undefined -Wl,--exclude-libs,ALL)
+
+# 統計ファイルのリーダ。実体は実行ファイルだが、AGP に APK へ載せてもらうため lib*.so を名乗る。
+# 実機では chmod 755 して直接実行する。
+add_executable(caeqstat caeqstat.cpp)
+target_include_directories(caeqstat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+set_target_properties(caeqstat PROPERTIES PREFIX "lib" OUTPUT_NAME "caeqstat" SUFFIX ".so")

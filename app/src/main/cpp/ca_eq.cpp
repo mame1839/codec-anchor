@@ -1,10 +1,16 @@
 // Codec Anchor の音響処理エフェクト。legacy (HIDL) の C ABI で vendor の audio HAL に読まれる。
+#include <atomic>
 #include <cerrno>
 #include <cstdint>
 #include <cstring>
+#include <ctime>
 #include <new>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <unistd.h>
 #include <android/log.h>
 #include "aosp/audio_effect.h"
+#include "ca_eq_shm.h"
 
 #define CA_LOG_TAG "CodecAnchorEQ"
 // ログは制御スレッド (create / SET_CONFIG / ENABLE / release) からだけ呼ぶ。
@@ -39,7 +45,7 @@ struct CaCtx {
     int32_t  gain_mb;            // millibel。0 = 素通し
     float    gain_lin;           // 10^(gain_mb / 2000)
     uint32_t channels;
-    void*    slot;               // 共有メモリのスロット (Task 3)。nullptr なら記録しない
+    ca_slot_t* slot;             // 共有メモリのスロット。nullptr なら記録しない
 };
 
 uint32_t ca_channel_count(uint32_t mask) {
@@ -53,13 +59,128 @@ float ca_mb_to_lin(int32_t mb) {
     return __builtin_powf(10.0f, static_cast<float>(mb) / 2000.0f);
 }
 
-// Task 3 で共有メモリのカウンタを実装する。ここでは呼び出し位置だけ確定させておく。
-void ca_stats_attach(CaCtx*, int32_t) {}
-void ca_stats_detach(CaCtx*) {}
-void ca_stats_configure(CaCtx*) {}
-void ca_stats_set_enabled(CaCtx*, bool) {}
-void ca_stats_set_gain(CaCtx*, int32_t) {}
-void ca_stats_add(CaCtx*, size_t) {}
+// ---------------------------------------------------------------------------
+// 共有メモリの統計。フレームワークには実処理フレーム数を外へ出す経路が無いので、
+// 「本当に音声経路に入ったか」を見る唯一の観測点になる。
+//
+// mmap するのは制御スレッド (create_effect) だけ。process() は既に開いてある
+// ポインタへ書くだけで、確保もロックもログもしない。
+// ---------------------------------------------------------------------------
+
+// in_use は .so 側の CAS とリーダの素読みで共有する。std::atomic を被せて使うので、
+// 同じ大きさで、かつロックを持たないことを確かめておく (ロック付きだと別プロセスから読めない)。
+static_assert(sizeof(std::atomic<uint32_t>) == sizeof(uint32_t), "atomic が同じ大きさでない");
+static_assert(std::atomic<uint32_t>::is_always_lock_free, "atomic がロックを使う");
+
+ca_shm_t*        g_shm = nullptr;
+std::atomic<int> g_shm_tried{0};
+
+void ca_stats_open() {
+    if (g_shm_tried.exchange(1)) return;   // 1 プロセスに 1 回だけ
+    const int fd = open(CA_SHM_PATH, O_RDWR | O_CLOEXEC);
+    if (fd < 0) {
+        // 開けなくても絶対に落ちない。この 1 行が唯一の手がかりになる。
+        CA_LOGE("stats open failed: %s (errno=%d)", CA_SHM_PATH, errno);
+        return;
+    }
+    void* p = mmap(nullptr, sizeof(ca_shm_t), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    close(fd);
+    if (p == MAP_FAILED) { CA_LOGE("stats mmap failed errno=%d", errno); return; }
+    g_shm = static_cast<ca_shm_t*>(p);
+    g_shm->magic = CA_SHM_MAGIC;
+    g_shm->version = CA_SHM_VERSION;
+    g_shm->slot_count = CA_SHM_SLOTS;
+    g_shm->slot_size = static_cast<uint32_t>(sizeof(ca_slot_t));
+    CA_LOGI("stats mapped at %p pid=%d", p, static_cast<int>(getpid()));
+}
+
+// seqlock。書く前に奇数、書き終えたら偶数にする。読み手は前後で同じ偶数を見たら採用する。
+inline void ca_seq_begin(ca_slot_t* s) {
+    s->seq++;
+    std::atomic_thread_fence(std::memory_order_release);
+}
+
+inline void ca_seq_end(ca_slot_t* s) {
+    std::atomic_thread_fence(std::memory_order_release);
+    s->seq++;
+}
+
+inline std::atomic<uint32_t>* ca_in_use(ca_slot_t* s) {
+    return reinterpret_cast<std::atomic<uint32_t>*>(&s->in_use);
+}
+
+void ca_stats_attach(CaCtx* c, int32_t ioId) {
+    ca_stats_open();
+    c->slot = nullptr;
+    if (g_shm == nullptr) return;
+    for (int i = 0; i < CA_SHM_SLOTS; i++) {
+        ca_slot_t* s = &g_shm->slots[i];
+        uint32_t expected = 0;
+        if (ca_in_use(s)->compare_exchange_strong(expected, CA_SHM_MAGIC)) {
+            s->seq = 0; s->frames = 0; s->sample_rate = 0; s->channels = 0;
+            s->block_frames = 0; s->state = 0; s->gain_mb = 0;
+            s->io_id = ioId;
+            s->pid = static_cast<uint64_t>(getpid());
+            s->ctx = reinterpret_cast<uint64_t>(c);
+            s->last_ns = 0;
+            c->slot = s;
+            CA_LOGI("stats slot %d taken io=%d ctx=%p", i, ioId, static_cast<void*>(c));
+            return;
+        }
+    }
+    CA_LOGE("stats: no free slot");
+}
+
+void ca_stats_detach(CaCtx* c) {
+    ca_slot_t* s = c->slot;
+    if (s == nullptr) return;
+    c->slot = nullptr;
+    ca_in_use(s)->store(0, std::memory_order_release);
+}
+
+void ca_stats_configure(CaCtx* c) {
+    ca_slot_t* s = c->slot;
+    if (s == nullptr) return;
+    ca_seq_begin(s);
+    s->sample_rate = c->cfg.outputCfg.samplingRate;
+    s->channels = c->channels;
+    s->state |= CA_STATE_CONFIGURED;
+    if (c->passthrough_only) s->state |= CA_STATE_PASSTHROUGH_ONLY;
+    else                     s->state &= ~CA_STATE_PASSTHROUGH_ONLY;
+    ca_seq_end(s);
+}
+
+void ca_stats_set_enabled(CaCtx* c, bool enabled) {
+    ca_slot_t* s = c->slot;
+    if (s == nullptr) return;
+    ca_seq_begin(s);
+    if (enabled) s->state |= CA_STATE_ENABLED;
+    else         s->state &= ~CA_STATE_ENABLED;
+    ca_seq_end(s);
+}
+
+void ca_stats_set_gain(CaCtx* c, int32_t gain_mb) {
+    ca_slot_t* s = c->slot;
+    if (s == nullptr) return;
+    ca_seq_begin(s);
+    s->gain_mb = gain_mb;
+    ca_seq_end(s);
+}
+
+// process() から呼ばれる。確保・ロック・ログを一切しない。
+// clock_gettime(CLOCK_MONOTONIC) は vDSO 経由でシステムコールにならない。
+inline void ca_stats_add(CaCtx* c, size_t frames) {
+    ca_slot_t* s = c->slot;
+    if (s == nullptr) return;
+    ca_seq_begin(s);
+    s->frames += static_cast<uint64_t>(frames);
+    s->block_frames = static_cast<uint32_t>(frames);
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    s->last_ns = static_cast<uint64_t>(ts.tv_sec) * 1000000000ull +
+                 static_cast<uint64_t>(ts.tv_nsec);
+    ca_seq_end(s);
+}
 
 }  // namespace
 
@@ -76,8 +197,11 @@ extern "C" int32_t ca_process(effect_handle_t self, audio_buffer_t* in, audio_bu
     const size_t samples = frames * ch;
 
     if (c->passthrough_only) {
-        // format が想定外。サンプルに一切触らない (in-place なら何もしなくてよい)。
-        if (in->raw != out->raw) std::memcpy(out->raw, in->raw, samples * sizeof(float));
+        // 何もしない。format が float でない = 1 フレームのバイト数が分からないので、コピーの
+        // 長さを計算できない (samples * sizeof(float) は実サイズを超えて読み書きし、vendor HAL
+        // ごと落とす)。AUDIO_SESSION_DEVICE は in-place で out には既に入力が入っているから、
+        // 触らないことがそのまま素通しになる。仮に out-of-place で来ても、無音のほうが
+        // SIGSEGV よりまし。
     } else if (c->gain_lin == 1.0f) {
         if (in->raw != out->raw) std::memcpy(out->f32, in->f32, samples * sizeof(float));
     } else {
