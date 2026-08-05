@@ -698,6 +698,12 @@ internal object A2dpHook {
     private fun refreshLdacStats(device: BluetoothDevice, codecStatus: Any?) {
         val mac = macOf(device) ?: return
         val svc = service ?: return
+        // オフロード中はホスト側のエンコーダが動かないので、ダンプの値を更新する主体が居ない
+        // (ネゴシエートした公称値がそのまま残る)。1 回で数秒かかる読み取りを、意味の無い値のために払わない。
+        if (a2dpOffloadEnabled()) {
+            LdacStats.forget(mac)
+            return
+        }
         val active = activeDevice()
         val current = Bt.codecInfo(Bt.currentConfig(codecStatus))
         if (!CodecKeys.isLdac(current?.displayName()) || (active != null && active != device)) {
@@ -899,8 +905,9 @@ internal object A2dpHook {
         ctx.sendBroadcast(intent)
     }
 
-    // オフロードが有効な端末では、エンコードが DSP 内で行われて実効ビットレートが出てこないことがある。
-    // 出ないときの理由を画面に出せるよう、状態そのものを報告に載せる。
+    // オフロード中はエンコードが DSP の中で行われるので、ホスト側のダンプに出る実効ビットレートは
+    // 更新されない (値が残っていても測定値ではない)。ダンプを読むかどうかの判断と、画面に理由を
+    // 出すための材料として報告に載せる。
     private fun a2dpOffloadEnabled(): Boolean {
         val svc = service ?: return false
         runCatching { XposedHelpers.getBooleanField(svc, "mA2dpOffloadEnabled") }
