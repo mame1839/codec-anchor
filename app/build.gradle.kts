@@ -52,6 +52,27 @@ android {
         // タグが取れない環境 (浅い clone、アーカイブ展開) では 0 になるが、0 は AGP が受け付けない
         versionCode = versionCodeProp?.toInt() ?: versionCodeOf(latestTag).coerceAtLeast(1)
         versionName = versionNameProp ?: latestTag
+
+        ndk {
+            abiFilters += "arm64-v8a"
+        }
+        externalNativeBuild {
+            cmake {
+                arguments += listOf("-DANDROID_STL=c++_static", "-DANDROID_PLATFORM=android-31")
+            }
+        }
+    }
+
+    ndkVersion = "29.0.14206865"
+
+    // 実機は arm64-v8a のみ。他の ABI をビルドしても置き場が無い。
+    // ANDROID_STL=c++_static は必須 — libc++_shared.so を vendor の namespace から解決できず、
+    // 依存すると dlopen が黙って失敗する。static なら DT_NEEDED に現れない。
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.31.6"
+        }
     }
 
     signingConfigs {
@@ -97,6 +118,9 @@ android {
     lint {
         baseline = file("lint-baseline.xml")
         warningsAsErrors = true
+        // ネイティブライブラリの置き先は /vendor/lib64/soundfx だけで、そこを読むのは
+        // arm64 端末の audio HAL に限られる。x86_64 を積んでも読み込まれる場所が無い。
+        disable += "ChromeOsAbiSupport"
     }
 
     packaging {
