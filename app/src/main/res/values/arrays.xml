@@ -3,5 +3,6 @@
     <string-array name="xposed_scope">
         <item>com.android.bluetooth</item>
         <item>com.google.android.bluetooth</item>
+        <item>com.android.settings</item>
     </string-array>
 </resources>

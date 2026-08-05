@@ -25,4 +25,7 @@ object Bridge {
         "com.android.bluetooth",
         "com.google.android.bluetooth",
     )
+
+    // 開発者向けオプションのオフロードのトグルを解放するためだけに入る (SettingsHook)。
+    const val SETTINGS_PACKAGE = "com.android.settings"
 }
