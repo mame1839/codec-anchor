@@ -43,6 +43,8 @@
     <string name="permission_denied">权限已被阻止，请在系统设置中授予。</string>
     <string name="bluetooth_off">蓝牙已关闭。开启后即可看到已配对的设备。</string>
     <string name="config_broken">无法读取已保存的设置，因此无法编辑任何内容。导入备份即可重新开始。</string>
+    <string name="offload_hint">蓝牙 A2DP 硬件卸载已启用。在开发者选项中打开“停用蓝牙 A2DP 硬件卸载”，手机就会自行编码 LDAC，码率也能随链路变化。</string>
+    <string name="offload_hint_scope">本机上该开关无法操作。把“设置”应用加入模块的作用域，再重新打开开发者选项即可解除。</string>
 
     <string name="section_audio_devices">音频设备</string>
     <string name="devices_empty">未找到已配对的音频设备。</string>

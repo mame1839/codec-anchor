@@ -45,6 +45,8 @@
     <string name="permission_denied">L\'autorisation est bloquée. Accordez-la depuis les paramètres système.</string>
     <string name="bluetooth_off">Le Bluetooth est désactivé. Activez-le pour voir vos appareils associés.</string>
     <string name="config_broken">Les réglages enregistrés n\'ont pas pu être lus, aucune modification n\'est donc possible. Importez une sauvegarde pour repartir de zéro.</string>
+    <string name="offload_hint">Le déchargement matériel Bluetooth A2DP est activé. Activez « Désactiver le déchargement matériel Bluetooth A2DP » dans les options pour les développeurs afin que le téléphone encode lui-même le LDAC et que le débit puisse suivre la liaison.</string>
+    <string name="offload_hint_scope">Sur cet appareil, ce commutateur n\'est pas utilisable. Ajoutez l\'application Paramètres à la portée du module, puis rouvrez les options pour les développeurs pour le débloquer.</string>
 
     <string name="section_audio_devices">Appareils audio</string>
     <string name="devices_empty">Aucun appareil audio associé n\'a été trouvé.</string>

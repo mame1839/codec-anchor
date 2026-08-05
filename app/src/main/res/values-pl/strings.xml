@@ -46,6 +46,8 @@
     <string name="permission_denied">Uprawnienie jest zablokowane. Przyznaj je w ustawieniach systemu.</string>
     <string name="bluetooth_off">Bluetooth jest wyłączony. Włącz go, aby zobaczyć sparowane urządzenia.</string>
     <string name="config_broken">Nie udało się odczytać zapisanych ustawień, więc nie można ich edytować. Zaimportuj kopię zapasową, aby zacząć od nowa.</string>
+    <string name="offload_hint">Sprzętowe odciążanie Bluetooth A2DP jest włączone. Włącz „Wyłącz sprzętowe odciążanie Bluetooth A2DP” w opcjach programistycznych, aby telefon sam kodował LDAC, a przepływność mogła dostosowywać się do połączenia.</string>
+    <string name="offload_hint_scope">Na tym urządzeniu tego przełącznika nie da się użyć. Dodaj aplikację Ustawienia do zakresu modułu i otwórz opcje programistyczne ponownie, aby go odblokować.</string>
 
     <string name="section_audio_devices">Urządzenia audio</string>
     <string name="devices_empty">Nie znaleziono sparowanego urządzenia audio.</string>

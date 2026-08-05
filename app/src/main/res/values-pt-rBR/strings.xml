@@ -45,6 +45,8 @@
     <string name="permission_denied">A permissão está bloqueada. Conceda-a nas configurações do sistema.</string>
     <string name="bluetooth_off">O Bluetooth está desativado. Ative-o para ver seus dispositivos pareados.</string>
     <string name="config_broken">Não foi possível ler as configurações salvas, então não há como editar nada. Importe um backup para começar de novo.</string>
+    <string name="offload_hint">O offload de hardware do Bluetooth A2DP está ativado. Ative \"Desativar offload de hardware do Bluetooth A2DP\" nas opções do desenvolvedor para que o telefone codifique o LDAC por conta própria e a taxa de bits acompanhe o enlace.</string>
+    <string name="offload_hint_scope">Neste aparelho esse botão não pode ser usado. Adicione o app Configurações ao escopo do módulo e abra as opções do desenvolvedor de novo para liberá-lo.</string>
 
     <string name="section_audio_devices">Dispositivos de áudio</string>
     <string name="devices_empty">Nenhum dispositivo de áudio pareado foi encontrado.</string>

@@ -64,6 +64,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     var bluetoothOn by mutableStateOf(true)
         private set
 
+    // 設定アプリのフックが一度でも判定を差し替えたか。開発者向けオプションを開くのはアプリの外なので、
+    // 画面に戻ってきたときに読み直す。
+    var settingsHooked by mutableStateOf(store.settingsHooked())
+        private set
+
     // 画面が作り直されても消えないよう、書き出し / 復元の結果は未消費のメッセージとして持つ。
     var pendingMessage by mutableStateOf<Int?>(null)
         private set
@@ -123,6 +128,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun refresh() {
+        if (!settingsHooked) settingsHooked = store.settingsHooked()
         refreshDevices()
         requestStatus()
     }

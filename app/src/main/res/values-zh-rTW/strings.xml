@@ -43,6 +43,8 @@
     <string name="permission_denied">權限已被封鎖，請在系統設定中授予。</string>
     <string name="bluetooth_off">藍牙已關閉。開啟後即可看到已配對的裝置。</string>
     <string name="config_broken">無法讀取已儲存的設定，因此無法編輯任何內容。匯入備份即可重新開始。</string>
+    <string name="offload_hint">藍牙 A2DP 硬體卸載已啟用。在開發人員選項中開啟「停用藍牙 A2DP 硬體卸載」，手機就會自行編碼 LDAC，位元率也能隨連線變化。</string>
+    <string name="offload_hint_scope">本機上該開關無法操作。把「設定」應用程式加入模組的作用域，再重新開啟開發人員選項即可解除。</string>
 
     <string name="section_audio_devices">音訊裝置</string>
     <string name="devices_empty">找不到已配對的音訊裝置。</string>

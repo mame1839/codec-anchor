@@ -45,6 +45,8 @@
     <string name="permission_denied">El permiso está bloqueado. Concédelo desde los ajustes del sistema.</string>
     <string name="bluetooth_off">El Bluetooth está desactivado. Actívalo para ver tus dispositivos emparejados.</string>
     <string name="config_broken">No se han podido leer los ajustes guardados, así que no se puede editar nada. Importa una copia de seguridad para empezar de nuevo.</string>
+    <string name="offload_hint">La descarga por hardware de Bluetooth A2DP está activada. Activa «Inhabilitar la descarga por hardware de Bluetooth A2DP» en Opciones para desarrolladores para que el teléfono codifique LDAC por su cuenta y la tasa de bits pueda adaptarse al enlace.</string>
+    <string name="offload_hint_scope">En este dispositivo ese interruptor no se puede tocar. Añade la app Ajustes a su ámbito y vuelve a abrir Opciones para desarrolladores para liberarlo.</string>
 
     <string name="section_audio_devices">Dispositivos de audio</string>
     <string name="devices_empty">No se ha encontrado ningún dispositivo de audio emparejado.</string>

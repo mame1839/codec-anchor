@@ -5,10 +5,16 @@ import android.content.Context
 import android.content.Intent
 import io.github.mame1839.codecanchor.core.Bridge
 
+// フックからアプリへの入り口。どちらの合図もアプリが動いていない間に届くので、実行時登録では
+// 受け取れない。マニフェストのレシーバはここ 1 つにまとめて、外に開く口を増やさない。
 class HookRequestReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action != Bridge.ACTION_REQUEST_CONFIG) return
-        pushSaved(context)
+        when (intent.action) {
+            Bridge.ACTION_REQUEST_CONFIG -> pushSaved(context)
+            // 設定アプリのフックが判定を差し替えた合図。開発者向けオプションのトグルが
+            // 解放されていることの裏付けになるので、案内の出し分けのために残す。
+            Bridge.ACTION_SETTINGS_HOOKED -> runCatching { SettingsStore(context).markSettingsHooked() }
+        }
     }
 }
 
