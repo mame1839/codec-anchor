@@ -53,11 +53,12 @@ android {
         versionCode = versionCodeProp?.toInt() ?: versionCodeOf(latestTag).coerceAtLeast(1)
         versionName = versionNameProp ?: latestTag
 
-        ndk {
-            abiFilters += "arm64-v8a"
-        }
         externalNativeBuild {
             cmake {
+                // 絞るのはネイティブのビルドだけ。ndk { abiFilters } にすると APK 全体の対応 ABI が
+                // 減り、依存の AAR が持つ .so まで落ちてアプリ自体が非 arm64 端末に入らなくなる。
+                // EQ が使えない端末では、アプリは入ったうえで理由を出す。
+                abiFilters += "arm64-v8a"
                 arguments += listOf("-DANDROID_STL=c++_static", "-DANDROID_PLATFORM=android-31")
             }
         }
@@ -65,7 +66,7 @@ android {
 
     ndkVersion = "29.0.14206865"
 
-    // 実機は arm64-v8a のみ。他の ABI をビルドしても置き場が無い。
+    // .so の置き先は /vendor/lib64/soundfx だけなので、他の ABI をビルドしても置き場が無い。
     // ANDROID_STL=c++_static は必須 — libc++_shared.so を vendor の namespace から解決できず、
     // 依存すると dlopen が黙って失敗する。static なら DT_NEEDED に現れない。
     externalNativeBuild {
@@ -118,9 +119,6 @@ android {
     lint {
         baseline = file("lint-baseline.xml")
         warningsAsErrors = true
-        // ネイティブライブラリの置き先は /vendor/lib64/soundfx だけで、そこを読むのは
-        // arm64 端末の audio HAL に限られる。x86_64 を積んでも読み込まれる場所が無い。
-        disable += "ChromeOsAbiSupport"
     }
 
     packaging {
