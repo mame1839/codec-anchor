@@ -61,7 +61,16 @@ int main(int argc, char** argv) {
     if (p == MAP_FAILED) { fprintf(stderr, "mmap failed\n"); return 2; }
     const ca_shm_t* m = static_cast<const ca_shm_t*>(p);
     if (m->magic != CA_SHM_MAGIC) {
-        printf("magic=0x%08x (未初期化。まだ .so が一度も読み込まれていない)\n", m->magic);
+        // ここの文言を「.so が読み込まれていない」に戻さないこと。
+        // この領域を初期化する ca_stats_open() は create_effect() からしか呼ばれないので、
+        // HAL が .so を dlopen 済みでも、エフェクトが 1 度も生成されていなければ magic は 0 のまま。
+        // 2 つを混同すると、正しい観測から「刺さっていない」という誤った結論が出る。
+        printf("magic=0x%08x — まだエフェクトのインスタンスが 1 つも作られていない\n", m->magic);
+        printf("\n");
+        printf("  これは「.so が読み込まれていない」という意味ではない。\n");
+        printf("  この領域を初期化するのは ca_stats_open() で、create_effect() からしか呼ばれない。\n");
+        printf("  .so が読み込まれたかどうかは、HAL が map しているかで別に確かめる:\n");
+        printf("    grep libcaeq /proc/$(pidof android.hardware.audio.service.mediatek)/maps\n");
         return 1;
     }
     printf("version=%u slots=%u slot_size=%u\n", m->version, m->slot_count, m->slot_size);
@@ -86,8 +95,19 @@ int main(int argc, char** argv) {
                (s.state & CA_STATE_PASSTHROUGH_ONLY) ? "PASSTHROUGH_ONLY " : "",
                stable ? "" : "(読み取り中に更新された)");
     }
-    if (active == 0) printf("(使用中のスロットなし)\n");
-    printf("\nage = 最後に process() が回ってからの経過。再生中なのに age が伸び続けるなら、\n"
-           "そのインスタンスは音声経路に入っていない (pid のプロセスが死んでいる場合も含む)。\n");
+    if (active == 0) {
+        // magic が立っている = ca_stats_open() が走った = create_effect() が最低 1 回はあった。
+        // ここでも「.so が読み込まれていない」とは書かない。
+        printf("(使用中のスロットなし — エフェクトが作られたことはあるが、いま生きているものは無い)\n");
+    }
+    printf("\n");
+    printf("age = 最後に process() が回ってからの経過。読み方:\n");
+    printf("  never          このインスタンスで process() が 1 度も呼ばれていない。\n");
+    printf("                 生成も有効化もされたが、音声がここを通っていない\n");
+    printf("  伸び続ける     過去には回っていたが、いまは止まっている。\n");
+    printf("                 (再生していない / 経路から外れた / pid のプロセスが死んだ残骸)\n");
+    printf("  更新され続ける 音声が実際に通っている\n");
+    printf("\n");
+    printf("frames は 2 回実行して差を見ること。age だけでは「いま回っているか」しか分からない。\n");
     return 0;
 }
