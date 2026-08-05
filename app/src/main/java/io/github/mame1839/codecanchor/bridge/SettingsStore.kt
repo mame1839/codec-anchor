@@ -3,6 +3,7 @@ package io.github.mame1839.codecanchor.bridge
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import io.github.mame1839.codecanchor.core.AppConfig
 import io.github.mame1839.codecanchor.core.Bridge
 import io.github.mame1839.codecanchor.xposed.XLog
@@ -16,6 +17,14 @@ class SettingsStore(private val context: Context) {
 
     fun save(config: AppConfig) {
         prefs.edit().putString(Bridge.PREFS_KEY, config.encode()).apply()
+    }
+
+    // 設定アプリのフックが一度でも判定を差し替えたか。差し替えられていれば、開発者向けオプションの
+    // トグルは解放されている。
+    fun settingsHooked(): Boolean = prefs.getLong(Bridge.PREFS_KEY_SETTINGS_HOOKED, 0L) > 0L
+
+    fun markSettingsHooked() {
+        prefs.edit { putLong(Bridge.PREFS_KEY_SETTINGS_HOOKED, System.currentTimeMillis()) }
     }
 
     companion object {

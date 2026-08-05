@@ -43,6 +43,8 @@
     <string name="permission_denied">Izin diblokir. Berikan izin dari setelan sistem.</string>
     <string name="bluetooth_off">Bluetooth nonaktif. Aktifkan untuk melihat perangkat yang disandingkan.</string>
     <string name="config_broken">Setelan yang tersimpan tidak dapat dibaca, jadi tidak ada yang bisa diubah. Impor cadangan untuk memulai dari awal.</string>
+    <string name="offload_hint">Offload perangkat keras Bluetooth A2DP aktif. Aktifkan \"Nonaktifkan offload perangkat keras Bluetooth A2DP\" di opsi developer agar ponsel mengodekan LDAC sendiri dan bitrate bisa mengikuti koneksi.</string>
+    <string name="offload_hint_scope">Di perangkat ini sakelar tersebut tidak bisa digunakan. Tambahkan aplikasi Setelan ke cakupan modul, lalu buka opsi developer lagi untuk membukanya.</string>
 
     <string name="section_audio_devices">Perangkat audio</string>
     <string name="devices_empty">Tidak ada perangkat audio yang disandingkan.</string>

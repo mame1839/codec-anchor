@@ -43,6 +43,8 @@
     <string name="permission_denied">Quyền đang bị chặn. Hãy cấp quyền trong cài đặt hệ thống.</string>
     <string name="bluetooth_off">Bluetooth đang tắt. Hãy bật để xem các thiết bị đã ghép nối.</string>
     <string name="config_broken">Không đọc được cài đặt đã lưu nên không thể chỉnh sửa. Hãy nhập một bản sao lưu để bắt đầu lại.</string>
+    <string name="offload_hint">Tính năng giảm tải phần cứng Bluetooth A2DP đang được bật. Hãy bật \"Tắt tính năng giảm tải phần cứng Bluetooth A2DP\" trong tùy chọn cho nhà phát triển để điện thoại tự mã hóa LDAC và bitrate có thể thay đổi theo kết nối.</string>
+    <string name="offload_hint_scope">Trên máy này, công tắc đó không dùng được. Hãy thêm ứng dụng Cài đặt vào phạm vi của mô-đun rồi mở lại tùy chọn cho nhà phát triển để mở khóa.</string>
 
     <string name="section_audio_devices">Thiết bị âm thanh</string>
     <string name="devices_empty">Không tìm thấy thiết bị âm thanh nào đã ghép nối.</string>

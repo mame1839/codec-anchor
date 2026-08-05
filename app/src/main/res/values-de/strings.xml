@@ -44,6 +44,8 @@
     <string name="permission_denied">Die Berechtigung ist blockiert. Erteile sie bitte in den Systemeinstellungen.</string>
     <string name="bluetooth_off">Bluetooth ist aus. Schalte es ein, um die gekoppelten Geräte zu sehen.</string>
     <string name="config_broken">Die gespeicherten Einstellungen konnten nicht gelesen werden, daher lässt sich nichts bearbeiten. Importiere ein Backup, um neu zu beginnen.</string>
+    <string name="offload_hint">Die Hardware-Auslagerung von Bluetooth A2DP ist aktiviert. Schalte in den Entwickleroptionen „Bluetooth A2DP-Hardware-Auslagerung deaktivieren“ ein, damit das Telefon LDAC selbst codiert und die Bitrate der Verbindung folgen kann.</string>
+    <string name="offload_hint_scope">Auf diesem Gerät lässt sich dieser Schalter nicht bedienen. Füge die Einstellungen-App zum Anwendungsbereich des Moduls hinzu und öffne die Entwickleroptionen erneut, um ihn freizugeben.</string>
 
     <string name="section_audio_devices">Audiogeräte</string>
     <string name="devices_empty">Es wurde kein gekoppeltes Audiogerät gefunden.</string>

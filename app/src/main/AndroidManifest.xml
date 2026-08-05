@@ -51,6 +51,7 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="${applicationId}.action.REQUEST_CONFIG" />
+                <action android:name="${applicationId}.action.SETTINGS_HOOKED" />
             </intent-filter>
         </receiver>
 

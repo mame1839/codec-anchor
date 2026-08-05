@@ -43,6 +43,8 @@
     <string name="permission_denied">権限がブロックされています。システムの設定から許可してください。</string>
     <string name="bluetooth_off">Bluetooth がオフです。オンにするとペアリング済みの機器が表示されます。</string>
     <string name="config_broken">保存された設定を読めませんでした。このままでは編集できません。バックアップを読み込むとやり直せます。</string>
+    <string name="offload_hint">Bluetooth A2DP ハードウェアオフロードが有効です。開発者向けオプションで「Bluetooth A2DP ハードウェアオフロードの無効化」をオンにすると、端末側で LDAC をエンコードするようになり、ビットレートが回線に追従します。</string>
+    <string name="offload_hint_scope">この端末ではそのトグルを操作できないようになっています。モジュールのスコープに設定アプリを追加してから、開発者向けオプションを開き直すと解放されます。</string>
 
     <string name="section_audio_devices">オーディオ機器</string>
     <string name="devices_empty">ペアリング済みのオーディオ機器が見つかりません。</string>

@@ -48,6 +48,8 @@
     <string name="permission_denied">تم حظر الإذن. يُرجى منحه من إعدادات النظام.</string>
     <string name="bluetooth_off">تم إيقاف Bluetooth. شغّله لعرض أجهزتك المقترنة.</string>
     <string name="config_broken">تعذّرت قراءة الإعدادات المحفوظة، لذا لا يمكن تعديل أي شيء. استورد نسخة احتياطية للبدء من جديد.</string>
+    <string name="offload_hint">التفريغ العتادي لـ Bluetooth A2DP مُمكَّن. فعّل «إيقاف التفريغ العتادي لـ Bluetooth A2DP» في خيارات المطوّر ليُرمّز الهاتف LDAC بنفسه ويتكيّف معدل البت مع الاتصال.</string>
+    <string name="offload_hint_scope">لا يمكن استخدام هذا المفتاح على هذا الجهاز. أضف تطبيق الإعدادات إلى نطاق الوحدة، ثم افتح خيارات المطوّر مرة أخرى لتحريره.</string>
 
     <string name="section_audio_devices">أجهزة الصوت</string>
     <string name="devices_empty">لم يُعثر على أي جهاز صوت مقترن.</string>

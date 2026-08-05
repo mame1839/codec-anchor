@@ -44,6 +44,8 @@
     <string name="permission_denied">अनुमति ब्लॉक है। सिस्टम की सेटिंग से अनुमति दें।</string>
     <string name="bluetooth_off">Bluetooth बंद है। जोड़े गए डिवाइस देखने के लिए इसे चालू करें।</string>
     <string name="config_broken">सहेजी गई सेटिंग पढ़ी नहीं जा सकी, इसलिए कुछ भी बदला नहीं जा सकता। फिर से शुरू करने के लिए बैकअप इंपोर्ट करें।</string>
+    <string name="offload_hint">Bluetooth A2DP हार्डवेयर ऑफ़लोड चालू है। डेवलपर विकल्प में \"Bluetooth A2DP हार्डवेयर ऑफ़लोड बंद करें\" चालू करें, ताकि फ़ोन खुद LDAC एन्कोड करे और बिटरेट कनेक्शन के हिसाब से बदल सके।</string>
+    <string name="offload_hint_scope">इस डिवाइस पर वह स्विच इस्तेमाल नहीं किया जा सकता। मॉड्यूल के स्कोप में सेटिंग ऐप जोड़ें, फिर उसे खोलने के लिए डेवलपर विकल्प दोबारा खोलें।</string>
 
     <string name="section_audio_devices">ऑडियो डिवाइस</string>
     <string name="devices_empty">जोड़ा गया कोई ऑडियो डिवाइस नहीं मिला।</string>

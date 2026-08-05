@@ -46,6 +46,8 @@
     <string name="permission_denied">The permission is blocked. Please grant it from the system settings.</string>
     <string name="bluetooth_off">Bluetooth is off. Turn it on to see your paired devices.</string>
     <string name="config_broken">The saved settings could not be read, so nothing can be edited. Import a backup to start over.</string>
+    <string name="offload_hint">Bluetooth A2DP hardware offload is enabled. Turn on \"Disable Bluetooth A2DP hardware offload\" in Developer options so that the phone encodes LDAC itself and the bitrate can follow the link.</string>
+    <string name="offload_hint_scope">On this device that switch cannot be operated. Add the Settings app to the scope of the module, then open Developer options again to free it.</string>
 
     <string name="section_audio_devices">Audio devices</string>
     <string name="devices_empty">No paired audio device was found.</string>

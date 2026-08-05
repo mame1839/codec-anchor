@@ -44,6 +44,8 @@
     <string name="permission_denied">İzin engellendi. Lütfen sistem ayarlarından izin verin.</string>
     <string name="bluetooth_off">Bluetooth kapalı. Eşleştirilmiş cihazlarınızı görmek için açın.</string>
     <string name="config_broken">Kaydedilmiş ayarlar okunamadı, bu yüzden düzenleme yapılamıyor. Yeniden başlamak için bir yedek içe aktarın.</string>
+    <string name="offload_hint">Bluetooth A2DP donanım aktarımı etkin. Telefonun LDAC\'ı kendisi kodlaması ve bit hızının bağlantıya uyum sağlayabilmesi için geliştirici seçeneklerinde \"Bluetooth A2DP donanım aktarımını devre dışı bırak\" seçeneğini açın.</string>
+    <string name="offload_hint_scope">Bu cihazda o anahtar kullanılamıyor. Ayarlar uygulamasını modülün kapsamına ekleyin, sonra serbest bırakmak için geliştirici seçeneklerini yeniden açın.</string>
 
     <string name="section_audio_devices">Ses cihazları</string>
     <string name="devices_empty">Eşleştirilmiş ses cihazı bulunamadı.</string>
