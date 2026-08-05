@@ -48,3 +48,11 @@ jobs:
           name: lint
           path: app/build/reports/lint-results-release.*
           if-no-files-found: ignore
+
+  shell-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: モジュールのシェルスクリプトを検証する
+        run: bash module/test/patch_xml_test.sh

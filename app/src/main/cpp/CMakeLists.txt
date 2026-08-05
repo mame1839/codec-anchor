@@ -24,3 +24,9 @@ target_link_options(caeq PRIVATE -Wl,--no-undefined -Wl,--exclude-libs,ALL)
 add_executable(caeqstat caeqstat.cpp)
 target_include_directories(caeqstat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 set_target_properties(caeqstat PROPERTIES PREFIX "lib" OUTPUT_NAME "caeqstat" SUFFIX ".so")
+
+# post-fs-data から呼ぶ dlopen のセルフテスト。これも実体は実行ファイル。
+add_executable(dlopen_check dlopen_check.cpp)
+target_include_directories(dlopen_check PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(dlopen_check dl)
+set_target_properties(dlopen_check PROPERTIES PREFIX "lib" OUTPUT_NAME "dlopen_check" SUFFIX ".so")
