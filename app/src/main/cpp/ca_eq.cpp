@@ -181,12 +181,14 @@ void ca_stats_set_gain(CaCtx* c, int32_t gain_mb) {
 
 // process() から呼ばれる。確保・ロック・ログを一切しない。
 // clock_gettime(CLOCK_MONOTONIC) は vDSO 経由でシステムコールにならない。
-inline void ca_stats_add(CaCtx* c, size_t frames) {
+inline void ca_stats_add(CaCtx* c, size_t frames, float in_peak, float out_peak) {
     ca_slot_t* s = c->slot;
     if (s == nullptr) return;
     ca_seq_begin(s);
     s->frames += static_cast<uint64_t>(frames);
     s->block_frames = static_cast<uint32_t>(frames);
+    s->in_peak = in_peak;
+    s->out_peak = out_peak;
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     s->last_ns = static_cast<uint64_t>(ts.tv_sec) * 1000000000ull +
@@ -207,6 +209,8 @@ extern "C" int32_t ca_process(effect_handle_t self, audio_buffer_t* in, audio_bu
     if (frames == 0) return 0;
     const uint32_t ch = c->channels ? c->channels : 2;
     const size_t samples = frames * ch;
+    float in_peak = 0.0f;
+    float out_peak = 0.0f;
 
     if (c->passthrough_only) {
         // 何もしない。format が float でない = 1 フレームのバイト数が分からないので、コピーの
@@ -214,16 +218,24 @@ extern "C" int32_t ca_process(effect_handle_t self, audio_buffer_t* in, audio_bu
         // ごと落とす)。AUDIO_SESSION_DEVICE は in-place で out には既に入力が入っているから、
         // 触らないことがそのまま素通しになる。仮に out-of-place で来ても、無音のほうが
         // SIGSEGV よりまし。
-    } else if (c->gain_lin == 1.0f) {
-        if (in->raw != out->raw) std::memcpy(out->f32, in->f32, samples * sizeof(float));
     } else {
         // 将来ここが biquad のカスケードになる。ライブラリは使わず、係数は RBJ の cookbook を
         // 自前で書く。リアルタイムのコールバックに外部依存を持ち込まない。
+        // ピークはゲインの適用と同じ 1 パスで採る。加工が効いたかを外から見る唯一の手段なので、
+        // 素通し (g==1) のときも測る。確保もロックもしないのでオーディオスレッドで許される。
         const float g = c->gain_lin;
-        for (size_t i = 0; i < samples; i++) out->f32[i] = in->f32[i] * g;
+        for (size_t i = 0; i < samples; i++) {
+            const float x = in->f32[i];
+            const float y = x * g;
+            out->f32[i] = y;
+            const float ax = x < 0.0f ? -x : x;
+            const float ay = y < 0.0f ? -y : y;
+            if (ax > in_peak) in_peak = ax;
+            if (ay > out_peak) out_peak = ay;
+        }
     }
 
-    ca_stats_add(c, frames);
+    ca_stats_add(c, frames, in_peak, out_peak);
     return 0;
 }
 
@@ -276,17 +288,20 @@ extern "C" int32_t ca_command(effect_handle_t self, uint32_t cmd, uint32_t cmdSi
         return 0;
 
     case EFFECT_CMD_SET_PARAM: {
-        // レイアウト: [int32 psize][int32 vsize][param bytes][value bytes]
-        if (pCmd == nullptr || cmdSize < 4 * sizeof(int32_t)) return -EINVAL;
+        if (pCmd == nullptr || cmdSize < sizeof(effect_param_t)) return -EINVAL;
         if (!intReply) return -EINVAL;
-        const int32_t* h = static_cast<const int32_t*>(pCmd);
-        if (h[0] != static_cast<int32_t>(sizeof(int32_t)) ||
-            h[1] != static_cast<int32_t>(sizeof(int32_t))) {
+        const effect_param_t* pp = static_cast<const effect_param_t*>(pCmd);
+        if (pp->psize != sizeof(int32_t) || pp->vsize != sizeof(int32_t)) {
             *static_cast<int*>(pReply) = -EINVAL;
             return 0;
         }
-        const int32_t id = h[2];
-        int32_t v = h[3];
+        // value は param の直後ではなく、sizeof(int) 境界に切り上げた位置。
+        const size_t voff = ((pp->psize - 1) / sizeof(int32_t) + 1) * sizeof(int32_t);
+        if (cmdSize < sizeof(effect_param_t) + voff + pp->vsize) return -EINVAL;
+        int32_t id = 0;
+        int32_t v = 0;
+        std::memcpy(&id, pp->data, sizeof(id));
+        std::memcpy(&v, pp->data + voff, sizeof(v));
         if (id != 1) { *static_cast<int*>(pReply) = -EINVAL; return 0; }
         // 安全装置: 正のゲインは構造的に受け付けない。ここを緩めない。
         // 実機で音を鳴らす実験の上限を、スクリプトではなくドライバ側で保証する。

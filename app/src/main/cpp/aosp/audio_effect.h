@@ -95,6 +95,16 @@ typedef struct effect_config_s {
     buffer_config_t outputCfg;
 } effect_config_t;
 
+/* EFFECT_CMD_SET_PARAM / GET_PARAM が運ぶ形。
+ * 先頭が status で、psize はその次。ここを 1 つ詰めて読むと必ず弾くことになる。
+ * value は data + psize を sizeof(int) に切り上げた位置に置かれる (data の直後ではない)。 */
+typedef struct effect_param_s {
+    int32_t  status;
+    uint32_t psize;
+    uint32_t vsize;
+    char     data[];
+} effect_param_t;
+
 /*----------------------------------------------------------------------------
  * エフェクトの制御インタフェース
  *--------------------------------------------------------------------------*/

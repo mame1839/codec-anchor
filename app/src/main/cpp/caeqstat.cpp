@@ -32,6 +32,12 @@ uint64_t now_monotonic_ns() {
     return static_cast<uint64_t>(ts.tv_sec) * 1000000000ull + static_cast<uint64_t>(ts.tv_nsec);
 }
 
+// 振幅を dBFS で。無音 (0.0) は -inf なので別扱いにする。
+void format_dbfs(char* buf, size_t n, float peak) {
+    if (peak <= 0.0f) { snprintf(buf, n, "silent"); return; }
+    snprintf(buf, n, "%.1f", 20.0 * log10(static_cast<double>(peak)));
+}
+
 // 最後に process() が回ってからの経過。進んでいるのか凍っているのかは、これで 1 回で分かる。
 void format_age(char* buf, size_t n, uint64_t last_ns, uint64_t now_ns) {
     if (last_ns == 0) { snprintf(buf, n, "never"); return; }
@@ -74,8 +80,9 @@ int main(int argc, char** argv) {
         return 1;
     }
     printf("version=%u slots=%u slot_size=%u\n", m->version, m->slot_count, m->slot_size);
-    printf("%-4s %-18s %-6s %-10s %-4s %-7s %-6s %-9s %-6s %-7s %s\n",
-           "slot", "ctx", "io", "frames", "ch", "rate", "block", "age", "pid", "gain_mB", "state");
+    printf("%-4s %-18s %-6s %-10s %-4s %-7s %-6s %-9s %-6s %-7s %-8s %-8s %s\n",
+           "slot", "ctx", "io", "frames", "ch", "rate", "block", "age", "pid", "gain_mB",
+           "in_dBFS", "out_dBFS", "state");
 
     const uint64_t now_ns = now_monotonic_ns();
     int active = 0;
@@ -84,12 +91,14 @@ int main(int argc, char** argv) {
         const bool stable = read_slot(&m->slots[i], &s);
         if (s.in_use != CA_SHM_MAGIC) continue;
         active++;
-        char age[16];
+        char age[16], ind[16], outd[16];
         format_age(age, sizeof(age), s.last_ns, now_ns);
-        printf("%-4u 0x%-16llx %-6d %-10llu %-4u %-7u %-6u %-9s %-6llu %-7d %s%s%s%s\n",
+        format_dbfs(ind, sizeof(ind), s.in_peak);
+        format_dbfs(outd, sizeof(outd), s.out_peak);
+        printf("%-4u 0x%-16llx %-6d %-10llu %-4u %-7u %-6u %-9s %-6llu %-7d %-8s %-8s %s%s%s%s\n",
                i, (unsigned long long) s.ctx, s.io_id,
                (unsigned long long) s.frames, s.channels, s.sample_rate,
-               s.block_frames, age, (unsigned long long) s.pid, s.gain_mb,
+               s.block_frames, age, (unsigned long long) s.pid, s.gain_mb, ind, outd,
                (s.state & CA_STATE_ENABLED) ? "enabled " : "",
                (s.state & CA_STATE_CONFIGURED) ? "configured " : "",
                (s.state & CA_STATE_PASSTHROUGH_ONLY) ? "PASSTHROUGH_ONLY " : "",
@@ -109,5 +118,7 @@ int main(int argc, char** argv) {
     printf("  更新され続ける 音声が実際に通っている\n");
     printf("\n");
     printf("frames は 2 回実行して差を見ること。age だけでは「いま回っているか」しか分からない。\n");
+    printf("in_dBFS が silent なら無音が来ているだけで、経路に入っていないのとは別。\n");
+    printf("out_dBFS - in_dBFS が gain_mB/100 と一致していれば、加工が実際に効いている。\n");
     return 0;
 }

@@ -133,6 +133,60 @@ public final class Spike {
         System.out.println("トーン終了 " + hz + "Hz " + dbfs + "dBFS");
     }
 
+    // トーンを鳴らしつつ、その AudioTrack のセッションに自分のエフェクトを付ける。
+    // session 0 は「どのスレッドに載るか」を選べず、無音のスレッドに刺さることがある
+    // (実測: io 85 が standby のまま frames だけ進み、入力は silent だった)。
+    // トラックのセッションに付ければ、その音が必ず process() を通る。
+    static void tonefx(int hz, int seconds, double dbfs, int gainMb) throws Exception {
+        if (dbfs > MAX_DBFS) {
+            System.out.println("dBFS が " + MAX_DBFS + " を超えている。丸める (要求値=" + dbfs + ")");
+            dbfs = MAX_DBFS;
+        }
+        if (dbfs < MIN_DBFS) dbfs = MIN_DBFS;
+        if (gainMb > MAX_GAIN_MB) gainMb = MAX_GAIN_MB;
+        if (gainMb < MIN_GAIN_MB) gainMb = MIN_GAIN_MB;
+        final int rate = 48000;
+        final double amp = Math.pow(10.0, dbfs / 20.0);
+        AudioFormat fmt = new AudioFormat.Builder()
+                .setEncoding(AudioFormat.ENCODING_PCM_FLOAT)
+                .setSampleRate(rate)
+                .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO).build();
+        AudioAttributes attrs = new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build();
+        int buf = AudioTrack.getMinBufferSize(rate, AudioFormat.CHANNEL_OUT_STEREO,
+                                              AudioFormat.ENCODING_PCM_FLOAT) * 8;
+        AudioTrack t = new AudioTrack.Builder().setAudioFormat(fmt).setAudioAttributes(attrs)
+                .setBufferSizeInBytes(buf).setTransferMode(AudioTrack.MODE_STREAM).build();
+        t.setVolume(TRACK_VOLUME);
+        int session = t.getAudioSessionId();
+        System.out.println("track session=" + session);
+
+        Constructor<AudioEffect> c = AudioEffect.class.getDeclaredConstructor(
+                UUID.class, UUID.class, int.class, int.class);
+        c.setAccessible(true);
+        AudioEffect fx = c.newInstance(effectTypeNull(), IMPL, 0, session);
+        System.out.println("生成した: " + fx.getDescriptor().name);
+        System.out.println("setParameter=" + setParam(fx, intToLe(1), intToLe(gainMb))
+                + " gain=" + gainMb + "mB");
+        System.out.println("setEnabled=" + fx.setEnabled(true) + " enabled=" + fx.getEnabled());
+
+        t.play();
+        System.out.println("トーン開始 " + hz + "Hz " + dbfs + "dBFS vol=" + TRACK_VOLUME);
+        float[] chunk = new float[rate / 10 * 2];
+        long n = 0;
+        for (int i = 0; i < seconds * 10; i++) {
+            for (int j = 0; j < chunk.length; j += 2) {
+                float s = (float) (amp * Math.sin(2 * Math.PI * hz * n / rate));
+                chunk[j] = s; chunk[j + 1] = s; n++;
+            }
+            t.write(chunk, 0, chunk.length, AudioTrack.WRITE_BLOCKING);
+        }
+        t.stop(); t.release();
+        fx.setEnabled(false); fx.release();
+        System.out.println("終了");
+    }
+
     static void query(String mac) throws Exception {
         boolean found = false;
         for (AudioEffect.Descriptor d : AudioEffect.queryEffects()) {
@@ -218,6 +272,10 @@ public final class Spike {
                 break;
             case "diag":
                 diag(args[1]);
+                break;
+            case "tonefx":
+                tonefx(Integer.parseInt(args[1]), Integer.parseInt(args[2]),
+                       Double.parseDouble(args[3]), Integer.parseInt(args[4]));
                 break;
             default:
                 System.out.println("不明なサブコマンド: " + args[0]);
