@@ -58,7 +58,7 @@ private val RETRY_DELAY_STEPS = listOf(500, 1000, 1500, 2000, 3000, 5000)
 private const val ABR_MODE = "ABR"
 
 // 実効ビットレートは ABR のときだけ動く。固定の音質では上のコーデック行と同じ値になるので出さないし、
-// 取り直す意味もない。オフロードで読めなかったときはモードが分からないため、設定した音質で判断する。
+// 取り直す意味もない。ダンプのモードが読めないときはモードが分からないため、設定した音質で判断する。
 private fun DeviceStatus.isLdacAbr(): Boolean =
     CodecKeys.isLdac(current?.displayName()) &&
         (ldacQualityMode.equals(ABR_MODE, ignoreCase = true) || current?.codecSpecific1 == CodecKeys.LDAC_ABR)
@@ -84,8 +84,9 @@ fun DeviceDetailScreen(
     var confirmDelete by rememberSaveable { mutableStateOf(false) }
     var advancedExpanded by rememberSaveable { mutableStateOf(false) }
 
-    // 取り直しが要るのは動く値があるときだけ。固定の音質では開いていても問い合わせない。
-    val watchBitrate = status?.connected == true && status.isLdacAbr()
+    // 取り直しが要るのは動く値があるときだけ。固定の音質では開いていても問い合わせないし、
+    // オフロード中は誰も値を更新しないので取り直しても変わらない。
+    val watchBitrate = status?.connected == true && status.isLdacAbr() && !vm.a2dpOffloadEnabled
     LifecycleResumeEffect(watchBitrate) {
         if (watchBitrate) vm.startWatching()
         onPauseOrDispose { vm.stopWatching() }
@@ -272,8 +273,16 @@ private fun DeviceHeader(name: String, mac: String, status: DeviceStatus?, offlo
                 text = stringResource(R.string.detail_current_codec, status?.current?.summary() ?: unknown),
                 style = MaterialTheme.typography.bodyMedium,
             )
+            // オフロード中はホスト側のエンコーダが動かないので、ダンプの数値は誰にも更新されず
+            // ネゴシエートした公称値のまま残る。読めても実効値ではないので、値の有無より先に判断する。
             if (status != null && status.isLdacAbr()) {
-                if (status.ldacBitrateKbps > 0) {
+                if (offloadEnabled) {
+                    Text(
+                        text = stringResource(R.string.ldac_bitrate_offload),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                } else if (status.ldacBitrateKbps > 0) {
                     Text(
                         text = stringResource(
                             R.string.ldac_bitrate,
@@ -281,12 +290,6 @@ private fun DeviceHeader(name: String, mac: String, status: DeviceStatus?, offlo
                             status.ldacQualityMode.ifBlank { unknown },
                         ),
                         style = MaterialTheme.typography.bodyMedium,
-                    )
-                } else if (offloadEnabled) {
-                    Text(
-                        text = stringResource(R.string.ldac_bitrate_offload),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
