@@ -58,7 +58,8 @@ private val RETRY_DELAY_STEPS = listOf(500, 1000, 1500, 2000, 3000, 5000)
 private const val ABR_MODE = "ABR"
 
 // 実効ビットレートは ABR のときだけ動く。固定の音質では上のコーデック行と同じ値になるので出さないし、
-// 取り直す意味もない。ダンプのモードが読めないときはモードが分からないため、設定した音質で判断する。
+// 取り直す意味もない。オフロード中はフックがダンプを読まないのでモードは常に空になる。そのときは
+// 今のコーデック設定が持つ音質 (codecSpecific1) だけで判断する。
 private fun DeviceStatus.isLdacAbr(): Boolean =
     CodecKeys.isLdac(current?.displayName()) &&
         (ldacQualityMode.equals(ABR_MODE, ignoreCase = true) || current?.codecSpecific1 == CodecKeys.LDAC_ABR)

@@ -63,7 +63,8 @@ data class DeviceStatus(
     val connected: Boolean = false,
     val active: Boolean = false,
     val current: CodecInfo? = null,
-    // LDAC の実効ビットレート。ABR では送信中に動く。読めなければ空 / 0。
+    // LDAC の実効ビットレート。ABR では送信中に動く。読めないときと、読んでも無意味な
+    // オフロード中は空 / 0。
     val ldacQualityMode: String = "",
     val ldacBitrateKbps: Int = 0,
     val selectable: List<CodecInfo> = emptyList(),
