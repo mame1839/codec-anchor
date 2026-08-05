@@ -103,6 +103,14 @@ int main(int argc, char** argv) {
                (s.state & CA_STATE_CONFIGURED) ? "configured " : "",
                (s.state & CA_STATE_PASSTHROUGH_ONLY) ? "PASSTHROUGH_ONLY " : "",
                stable ? "" : "(読み取り中に更新された)");
+        // バッファの正体を決めるための行。float 解釈と int32 解釈を並べて出す。
+        printf("     buf: in=0x%llx out=0x%llx %s  frames in/out=%u/%u samples=%u cfg_fmt=%u\n",
+               (unsigned long long) s.in_addr, (unsigned long long) s.out_addr,
+               (s.in_addr == s.out_addr) ? "(in-place)" : "(out-of-place)",
+               s.dbg_in_frames, s.dbg_out_frames, s.dbg_samples, s.dbg_fmt);
+        printf("     peak: float in=%.9g out=%.9g / int32 in=%u out=%u\n",
+               static_cast<double>(s.in_peak), static_cast<double>(s.out_peak),
+               s.in_peak_i32, s.out_peak_i32);
     }
     if (active == 0) {
         // magic が立っている = ca_stats_open() が走った = create_effect() が最低 1 回はあった。
@@ -120,5 +128,12 @@ int main(int argc, char** argv) {
     printf("frames は 2 回実行して差を見ること。age だけでは「いま回っているか」しか分からない。\n");
     printf("in_dBFS が silent なら無音が来ているだけで、経路に入っていないのとは別。\n");
     printf("out_dBFS - in_dBFS が gain_mB/100 と一致していれば、加工が実際に効いている。\n");
+    printf("\n");
+    printf("peak の読み方 (バッファの正体を決める):\n");
+    printf("  float 側が 0〜1 の常識的な値      → バッファは本当に float\n");
+    printf("  float 側が 1e-38 級で int32 側が\n");
+    printf("  10^6〜10^9 の値                   → 実体は int32。float として誤読している\n");
+    printf("  両方 0                            → 本当に無音が来ている\n");
+    printf("samples が frames*channels と合わなければ、数え方のほうが間違っている。\n");
     return 0;
 }

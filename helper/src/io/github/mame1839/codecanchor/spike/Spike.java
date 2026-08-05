@@ -247,7 +247,22 @@ public final class Spike {
         }
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
+        int rc = 0;
+        try {
+            dispatch(args);
+        } catch (Throwable t) {
+            // app_process は main を抜けた例外を表に出さないことがある (実測: 出力なしで
+            // "Killed" だけ残る)。原因を握りつぶさないよう自分で出す。
+            t.printStackTrace(System.out);
+            rc = 1;
+        }
+        // AudioTrack / AudioEffect が非デーモンスレッドを残すので、main から戻っても
+        // プロセスは終わらない。切り分けを繰り返すたびに溜まるので明示的に落とす。
+        System.exit(rc);
+    }
+
+    static void dispatch(String[] args) throws Exception {
         if (args.length < 1) {
             System.out.println("使い方:");
             System.out.println("  hold <MAC> <gain_mB> <秒数>");

@@ -49,6 +49,24 @@ struct CaCtx {
     ca_slot_t* slot;             // 共有メモリのスロット。nullptr なら記録しない
 };
 
+// 1 ブロックぶんの計測。process() のスタックに置くだけで、確保はしない。
+struct CaBlock {
+    const void* in_addr;
+    const void* out_addr;
+    uint32_t in_frames;
+    uint32_t out_frames;
+    uint32_t samples;
+    float    in_peak_f;
+    float    out_peak_f;
+    uint32_t in_peak_i;
+    uint32_t out_peak_i;
+};
+
+// INT32_MIN の符号反転が int32 に収まらないので uint32 で受ける。
+inline uint32_t ca_abs_i32(int32_t v) {
+    return v < 0 ? static_cast<uint32_t>(-static_cast<int64_t>(v)) : static_cast<uint32_t>(v);
+}
+
 uint32_t ca_channel_count(uint32_t mask) {
     // audio_channel_mask_t の下位ビットが 1 チャンネル 1 ビット。
     const uint32_t n = static_cast<uint32_t>(__builtin_popcount(mask & 0x3FFFFFFFu));
@@ -181,14 +199,22 @@ void ca_stats_set_gain(CaCtx* c, int32_t gain_mb) {
 
 // process() から呼ばれる。確保・ロック・ログを一切しない。
 // clock_gettime(CLOCK_MONOTONIC) は vDSO 経由でシステムコールにならない。
-inline void ca_stats_add(CaCtx* c, size_t frames, float in_peak, float out_peak) {
+inline void ca_stats_add(CaCtx* c, size_t frames, const CaBlock& b) {
     ca_slot_t* s = c->slot;
     if (s == nullptr) return;
     ca_seq_begin(s);
     s->frames += static_cast<uint64_t>(frames);
     s->block_frames = static_cast<uint32_t>(frames);
-    s->in_peak = in_peak;
-    s->out_peak = out_peak;
+    s->in_peak = b.in_peak_f;
+    s->out_peak = b.out_peak_f;
+    s->in_peak_i32 = b.in_peak_i;
+    s->out_peak_i32 = b.out_peak_i;
+    s->in_addr = reinterpret_cast<uint64_t>(b.in_addr);
+    s->out_addr = reinterpret_cast<uint64_t>(b.out_addr);
+    s->dbg_in_frames = b.in_frames;
+    s->dbg_out_frames = b.out_frames;
+    s->dbg_samples = b.samples;
+    s->dbg_fmt = c->cfg.outputCfg.format;
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     s->last_ns = static_cast<uint64_t>(ts.tv_sec) * 1000000000ull +
@@ -209,8 +235,12 @@ extern "C" int32_t ca_process(effect_handle_t self, audio_buffer_t* in, audio_bu
     if (frames == 0) return 0;
     const uint32_t ch = c->channels ? c->channels : 2;
     const size_t samples = frames * ch;
-    float in_peak = 0.0f;
-    float out_peak = 0.0f;
+    CaBlock blk = {};
+    blk.in_addr = in->raw;
+    blk.out_addr = out->raw;
+    blk.in_frames = static_cast<uint32_t>(in->frameCount);
+    blk.out_frames = static_cast<uint32_t>(out->frameCount);
+    blk.samples = static_cast<uint32_t>(samples);
 
     if (c->passthrough_only) {
         // 何もしない。format が float でない = 1 フレームのバイト数が分からないので、コピーの
@@ -219,23 +249,32 @@ extern "C" int32_t ca_process(effect_handle_t self, audio_buffer_t* in, audio_bu
         // 触らないことがそのまま素通しになる。仮に out-of-place で来ても、無音のほうが
         // SIGSEGV よりまし。
     } else {
-        // 将来ここが biquad のカスケードになる。ライブラリは使わず、係数は RBJ の cookbook を
-        // 自前で書く。リアルタイムのコールバックに外部依存を持ち込まない。
-        // ピークはゲインの適用と同じ 1 パスで採る。加工が効いたかを外から見る唯一の手段なので、
-        // 素通し (g==1) のときも測る。確保もロックもしないのでオーディオスレッドで許される。
-        const float g = c->gain_lin;
+        // 1 パス目は入力を読むだけ。in-place だと書きながら読むと、加工後の値を
+        // 「入力」として測ってしまう。float と int32 の両方で測り、どちらの解釈が
+        // 本物かを外から判定できるようにする。
+        const int32_t* in_i = static_cast<const int32_t*>(in->raw);
         for (size_t i = 0; i < samples; i++) {
             const float x = in->f32[i];
-            const float y = x * g;
-            out->f32[i] = y;
             const float ax = x < 0.0f ? -x : x;
+            if (ax > blk.in_peak_f) blk.in_peak_f = ax;
+            const uint32_t ai = ca_abs_i32(in_i[i]);
+            if (ai > blk.in_peak_i) blk.in_peak_i = ai;
+        }
+        // 2 パス目で加工して書く。将来ここが biquad のカスケードになる。
+        // ライブラリは使わず、係数は RBJ の cookbook を自前で書く。
+        const float g = c->gain_lin;
+        const int32_t* out_i = static_cast<const int32_t*>(out->raw);
+        for (size_t i = 0; i < samples; i++) {
+            const float y = in->f32[i] * g;
+            out->f32[i] = y;
             const float ay = y < 0.0f ? -y : y;
-            if (ax > in_peak) in_peak = ax;
-            if (ay > out_peak) out_peak = ay;
+            if (ay > blk.out_peak_f) blk.out_peak_f = ay;
+            const uint32_t ao = ca_abs_i32(out_i[i]);
+            if (ao > blk.out_peak_i) blk.out_peak_i = ao;
         }
     }
 
-    ca_stats_add(c, frames, in_peak, out_peak);
+    ca_stats_add(c, frames, blk);
     return 0;
 }
 
