@@ -13,6 +13,8 @@
     <string name="action_resend">Kirim lagi</string>
     <string name="action_recheck">Periksa lagi</string>
     <string name="action_grant">Beri izin</string>
+    <string name="action_save">Simpan</string>
+    <string name="action_continue">Lanjutkan</string>
 
     <string name="value_keep">Jangan ubah</string>
     <string name="value_unknown">Tidak diketahui</string>
@@ -147,4 +149,44 @@
     <string name="msg_autoeq_invalid">Berkas itu bukan hasil AutoEQ</string>
     <string name="msg_autoeq_corner_shelf">Berkas AutoEQ itu memakai filter LS atau HS yang tidak didukung</string>
     <string name="msg_autoeq_no_bands">Berkas AutoEQ itu tidak punya filter</string>
+
+    <string name="section_eq">Pengolahan suara</string>
+    <string name="eq_enabled">Ekualiser</string>
+    <string name="eq_enabled_desc">Membentuk suara earphone ini</string>
+    <string name="eq_latency_zero">Tundaan tambahan: 0 ms</string>
+    <string name="eq_mode">Cara menyunting</string>
+    <string name="eq_mode_desc">Mode grafis menahan setiap pita pada frekuensi tetap. Mode parametrik membiarkan Anda menaruh tiap pita sesuka Anda.</string>
+    <string name="eq_mode_graphic">Grafis</string>
+    <string name="eq_mode_parametric">Parametrik</string>
+    <string name="eq_band_count">Jumlah pita</string>
+    <string name="eq_band_count_desc">Makin banyak pita, makin dekat kurva rinci bisa diikuti. Ini bukan setelan kecepatan: ponsel bekerja sama beratnya pada kedua pilihan.</string>
+    <string name="eq_band_none">Belum ada pita. Tambahkan satu, atau impor berkas AutoEQ.</string>
+    <string name="eq_band_add">Tambah pita</string>
+    <string name="eq_band_remove">Hapus pita ini</string>
+    <string name="eq_band_type">Bentuk</string>
+    <string name="eq_band_frequency">Frekuensi</string>
+    <string name="eq_band_q">Q</string>
+    <string name="eq_band_gain">Penguatan</string>
+    <string name="eq_type_peaking">Puncak</string>
+    <string name="eq_type_low_shelf">Shelf rendah</string>
+    <string name="eq_type_high_shelf">Shelf tinggi</string>
+    <string name="eq_preamp_auto">Atur preamp secara otomatis</string>
+    <string name="eq_preamp_auto_desc">Menurunkan level secukupnya agar bagian yang dinaikkan tidak pecah (kini %1$s)</string>
+    <string name="eq_preamp">Preamp</string>
+    <string name="eq_round_title">Beralih ke grafis?</string>
+    <string name="eq_round_body">Setiap pita pindah ke salah satu frekuensi tetap milik ekualiser grafis dan nilai Q-nya disesuaikan. Bentuk kurva dipertahankan sebisa mungkin, tetapi frekuensi dan nilai Q yang sekarang akan hilang.</string>
+    <string name="eq_round_quiet">Jangan tanya lagi</string>
+
+    <string name="eq_presets">Prasetel</string>
+    <string name="eq_preset_empty">Belum ada yang disimpan</string>
+    <string name="eq_preset_save">Simpan setelan ini</string>
+    <string name="eq_preset_save_title">Nama prasetel</string>
+    <string name="eq_preset_name">Nama</string>
+    <string name="eq_preset_apply">Terapkan</string>
+    <string name="eq_preset_export">Ekspor</string>
+    <string name="eq_preset_import">Impor prasetel</string>
+    <string name="eq_preset_delete_title">Hapus prasetel?</string>
+    <string name="eq_preset_delete_body">Menghapus \"%1$s\". Yang sudah tersetel di earphone Anda tetap seperti apa adanya.</string>
+    <string name="eq_autoeq_import">Impor AutoEQ</string>
+    <string name="eq_autoeq_desc">Membaca ParametricEQ.txt atau GraphicEQ.txt dari AutoEQ dan menggantikan setelan di atas.</string>
 </resources>

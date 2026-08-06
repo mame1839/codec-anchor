@@ -13,6 +13,8 @@
     <string name="action_resend">Renvoyer</string>
     <string name="action_recheck">Vérifier à nouveau</string>
     <string name="action_grant">Accorder l\'autorisation</string>
+    <string name="action_save">Enregistrer</string>
+    <string name="action_continue">Continuer</string>
 
     <string name="value_keep">Ne pas modifier</string>
     <string name="value_unknown">Inconnu</string>
@@ -149,4 +151,44 @@
     <string name="msg_autoeq_invalid">Ce fichier n\'est pas un résultat AutoEQ</string>
     <string name="msg_autoeq_corner_shelf">Ce fichier AutoEQ utilise des filtres LS ou HS, qui ne sont pas pris en charge</string>
     <string name="msg_autoeq_no_bands">Ce fichier AutoEQ ne contient aucun filtre</string>
+
+    <string name="section_eq">Traitement du son</string>
+    <string name="eq_enabled">Égaliseur</string>
+    <string name="eq_enabled_desc">Ajuste le son de ces écouteurs</string>
+    <string name="eq_latency_zero">Retard ajouté : 0 ms</string>
+    <string name="eq_mode">Mode d\'édition</string>
+    <string name="eq_mode_desc">Le mode graphique fixe la fréquence de chaque bande. Le mode paramétrique vous laisse placer chaque bande où vous voulez.</string>
+    <string name="eq_mode_graphic">Graphique</string>
+    <string name="eq_mode_parametric">Paramétrique</string>
+    <string name="eq_band_count">Nombre de bandes</string>
+    <string name="eq_band_count_desc">Plus il y a de bandes, plus la courbe suivie peut être détaillée. Ce n\'est pas un réglage de performance : le téléphone travaille autant dans les deux cas.</string>
+    <string name="eq_band_none">Aucune bande pour le moment. Ajoutez-en une ou importez un fichier AutoEQ.</string>
+    <string name="eq_band_add">Ajouter une bande</string>
+    <string name="eq_band_remove">Supprimer cette bande</string>
+    <string name="eq_band_type">Forme</string>
+    <string name="eq_band_frequency">Fréquence</string>
+    <string name="eq_band_q">Q</string>
+    <string name="eq_band_gain">Gain</string>
+    <string name="eq_type_peaking">Cloche</string>
+    <string name="eq_type_low_shelf">Plateau grave</string>
+    <string name="eq_type_high_shelf">Plateau aigu</string>
+    <string name="eq_preamp_auto">Régler le préampli automatiquement</string>
+    <string name="eq_preamp_auto_desc">Baisse le niveau juste assez pour que les parties amplifiées ne saturent pas (actuellement %1$s)</string>
+    <string name="eq_preamp">Préampli</string>
+    <string name="eq_round_title">Passer en graphique ?</string>
+    <string name="eq_round_body">Chaque bande est déplacée sur l\'une des fréquences fixes de l\'égaliseur graphique et son Q est ajusté en conséquence. La forme de la courbe est conservée autant que possible, mais les fréquences et les Q actuels sont perdus.</string>
+    <string name="eq_round_quiet">Ne plus demander</string>
+
+    <string name="eq_presets">Préréglages</string>
+    <string name="eq_preset_empty">Rien d\'enregistré pour le moment</string>
+    <string name="eq_preset_save">Enregistrer ces réglages</string>
+    <string name="eq_preset_save_title">Nom du préréglage</string>
+    <string name="eq_preset_name">Nom</string>
+    <string name="eq_preset_apply">Appliquer</string>
+    <string name="eq_preset_export">Exporter</string>
+    <string name="eq_preset_import">Importer un préréglage</string>
+    <string name="eq_preset_delete_title">Supprimer le préréglage ?</string>
+    <string name="eq_preset_delete_body">Supprime « %1$s ». Ce qui est déjà réglé sur vos écouteurs ne change pas.</string>
+    <string name="eq_autoeq_import">Importer AutoEQ</string>
+    <string name="eq_autoeq_desc">Lit un fichier ParametricEQ.txt ou GraphicEQ.txt d\'AutoEQ et remplace les réglages ci-dessus.</string>
 </resources>

@@ -13,6 +13,8 @@
     <string name="action_resend">Отправить снова</string>
     <string name="action_recheck">Проверить снова</string>
     <string name="action_grant">Выдать разрешение</string>
+    <string name="action_save">Сохранить</string>
+    <string name="action_continue">Продолжить</string>
 
     <string name="value_keep">Не менять</string>
     <string name="value_unknown">Неизвестно</string>
@@ -150,4 +152,44 @@
     <string name="msg_autoeq_invalid">Это не результат AutoEQ</string>
     <string name="msg_autoeq_corner_shelf">В этом файле AutoEQ используются фильтры LS или HS, которые не поддерживаются</string>
     <string name="msg_autoeq_no_bands">В этом файле AutoEQ нет фильтров</string>
+
+    <string name="section_eq">Обработка звука</string>
+    <string name="eq_enabled">Эквалайзер</string>
+    <string name="eq_enabled_desc">Настраивает звучание этих наушников</string>
+    <string name="eq_latency_zero">Добавленная задержка: 0 мс</string>
+    <string name="eq_mode">Способ настройки</string>
+    <string name="eq_mode_desc">В графическом режиме каждая полоса стоит на фиксированной частоте. В параметрическом полосу можно поставить куда угодно.</string>
+    <string name="eq_mode_graphic">Графический</string>
+    <string name="eq_mode_parametric">Параметрический</string>
+    <string name="eq_band_count">Число полос</string>
+    <string name="eq_band_count_desc">Чем больше полос, тем точнее повторяется подробная кривая. Это не настройка производительности: телефон в обоих случаях считает одинаково.</string>
+    <string name="eq_band_none">Полос пока нет. Добавьте полосу или загрузите файл AutoEQ.</string>
+    <string name="eq_band_add">Добавить полосу</string>
+    <string name="eq_band_remove">Удалить эту полосу</string>
+    <string name="eq_band_type">Форма</string>
+    <string name="eq_band_frequency">Частота</string>
+    <string name="eq_band_q">Q</string>
+    <string name="eq_band_gain">Усиление</string>
+    <string name="eq_type_peaking">Колокол</string>
+    <string name="eq_type_low_shelf">Низкочастотный шельф</string>
+    <string name="eq_type_high_shelf">Высокочастотный шельф</string>
+    <string name="eq_preamp_auto">Подбирать предусиление автоматически</string>
+    <string name="eq_preamp_auto_desc">Снижает уровень ровно настолько, чтобы поднятые участки не искажались (сейчас %1$s)</string>
+    <string name="eq_preamp">Предусиление</string>
+    <string name="eq_round_title">Перейти к графическому?</string>
+    <string name="eq_round_body">Каждая полоса перейдёт на одну из фиксированных частот графического эквалайзера, а её Q будет подобрано под неё. Форма кривой сохранится настолько, насколько это возможно, но нынешние частоты и значения Q будут потеряны.</string>
+    <string name="eq_round_quiet">Больше не спрашивать</string>
+
+    <string name="eq_presets">Пресеты</string>
+    <string name="eq_preset_empty">Пока ничего не сохранено</string>
+    <string name="eq_preset_save">Сохранить эти настройки</string>
+    <string name="eq_preset_save_title">Название пресета</string>
+    <string name="eq_preset_name">Название</string>
+    <string name="eq_preset_apply">Применить</string>
+    <string name="eq_preset_export">Экспорт</string>
+    <string name="eq_preset_import">Загрузить пресет</string>
+    <string name="eq_preset_delete_title">Удалить пресет?</string>
+    <string name="eq_preset_delete_body">Удаляет «%1$s». То, что уже настроено на наушниках, остаётся как есть.</string>
+    <string name="eq_autoeq_import">Загрузить AutoEQ</string>
+    <string name="eq_autoeq_desc">Читает ParametricEQ.txt или GraphicEQ.txt из AutoEQ и заменяет настройки выше.</string>
 </resources>

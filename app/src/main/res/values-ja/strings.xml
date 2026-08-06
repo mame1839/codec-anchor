@@ -13,6 +13,8 @@
     <string name="action_resend">送り直す</string>
     <string name="action_recheck">もう一度確認する</string>
     <string name="action_grant">権限を許可する</string>
+    <string name="action_save">保存</string>
+    <string name="action_continue">続ける</string>
 
     <string name="value_keep">変更しない</string>
     <string name="value_unknown">不明</string>
@@ -147,4 +149,44 @@
     <string name="msg_autoeq_invalid">AutoEQ の結果ファイルではありません</string>
     <string name="msg_autoeq_corner_shelf">この AutoEQ ファイルは対応していない LS / HS フィルタを使っています</string>
     <string name="msg_autoeq_no_bands">この AutoEQ ファイルにはフィルタがありません</string>
+
+    <string name="section_eq">音響処理</string>
+    <string name="eq_enabled">イコライザー</string>
+    <string name="eq_enabled_desc">このイヤホンの音を調整します</string>
+    <string name="eq_latency_zero">追加の遅延: 0 ms</string>
+    <string name="eq_mode">編集の方法</string>
+    <string name="eq_mode_desc">グラフィックは各バンドの周波数が固定です。パラメトリックは好きな位置にバンドを置けます。</string>
+    <string name="eq_mode_graphic">グラフィック</string>
+    <string name="eq_mode_parametric">パラメトリック</string>
+    <string name="eq_band_count">バンド数</string>
+    <string name="eq_band_count_desc">バンドが多いほど細かい曲線に近づきます。処理の重さは変わりません。</string>
+    <string name="eq_band_none">バンドがありません。追加するか、AutoEQ のファイルを読み込んでください。</string>
+    <string name="eq_band_add">バンドを追加</string>
+    <string name="eq_band_remove">このバンドを削除</string>
+    <string name="eq_band_type">種類</string>
+    <string name="eq_band_frequency">周波数</string>
+    <string name="eq_band_q">Q</string>
+    <string name="eq_band_gain">ゲイン</string>
+    <string name="eq_type_peaking">ピーク</string>
+    <string name="eq_type_low_shelf">ローシェルフ</string>
+    <string name="eq_type_high_shelf">ハイシェルフ</string>
+    <string name="eq_preamp_auto">プリアンプを自動で決める</string>
+    <string name="eq_preamp_auto_desc">持ち上げた部分が歪まない分だけ音量を下げます (現在 %1$s)</string>
+    <string name="eq_preamp">プリアンプ</string>
+    <string name="eq_round_title">グラフィックに切り替えますか</string>
+    <string name="eq_round_body">各バンドはグラフィックの固定された周波数へ移り、Q もそれに合わせた値になります。曲線の形はできるだけ保ちますが、いまの周波数と Q は失われます。</string>
+    <string name="eq_round_quiet">今後表示しない</string>
+
+    <string name="eq_presets">プリセット</string>
+    <string name="eq_preset_empty">保存されたプリセットはありません</string>
+    <string name="eq_preset_save">いまの設定を保存</string>
+    <string name="eq_preset_save_title">プリセットの名前</string>
+    <string name="eq_preset_name">名前</string>
+    <string name="eq_preset_apply">適用</string>
+    <string name="eq_preset_export">書き出す</string>
+    <string name="eq_preset_import">プリセットを読み込む</string>
+    <string name="eq_preset_delete_title">プリセットを削除しますか</string>
+    <string name="eq_preset_delete_body">「%1$s」を削除します。イヤホンに設定した内容はそのまま残ります。</string>
+    <string name="eq_autoeq_import">AutoEQ を読み込む</string>
+    <string name="eq_autoeq_desc">AutoEQ の ParametricEQ.txt または GraphicEQ.txt を読み込み、上の設定を置き換えます。</string>
 </resources>

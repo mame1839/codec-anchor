@@ -13,6 +13,8 @@
     <string name="action_resend">إرسال مرة أخرى</string>
     <string name="action_recheck">تحقّق مرة أخرى</string>
     <string name="action_grant">منح الإذن</string>
+    <string name="action_save">حفظ</string>
+    <string name="action_continue">متابعة</string>
 
     <string name="value_keep">دون تغيير</string>
     <string name="value_unknown">غير معروف</string>
@@ -152,4 +154,44 @@
     <string name="msg_autoeq_invalid">هذا الملف ليس نتيجة من AutoEQ</string>
     <string name="msg_autoeq_corner_shelf">يستخدم ملف AutoEQ هذا مرشحات LS أو HS غير المدعومة</string>
     <string name="msg_autoeq_no_bands">لا يحتوي ملف AutoEQ هذا على أي مرشحات</string>
+
+    <string name="section_eq">معالجة الصوت</string>
+    <string name="eq_enabled">المُعادل</string>
+    <string name="eq_enabled_desc">يضبط طابع صوت هذه السماعات</string>
+    <string name="eq_latency_zero">التأخير المُضاف: 0 مللي ثانية</string>
+    <string name="eq_mode">طريقة التحرير</string>
+    <string name="eq_mode_desc">في الوضع الرسومي يبقى كل نطاق على تردد ثابت. أما الوضع البارامتري فيتيح لك وضع كل نطاق حيث تشاء.</string>
+    <string name="eq_mode_graphic">رسومي</string>
+    <string name="eq_mode_parametric">بارامتري</string>
+    <string name="eq_band_count">عدد النطاقات</string>
+    <string name="eq_band_count_desc">كلما زادت النطاقات اقترب المنحنى أكثر من الشكل التفصيلي المطلوب. هذا ليس إعداد أداء: الهاتف يقوم بالقدر نفسه من العمل في الحالتين.</string>
+    <string name="eq_band_none">لا توجد نطاقات بعد. أضِف نطاقًا أو استورد ملف AutoEQ.</string>
+    <string name="eq_band_add">إضافة نطاق</string>
+    <string name="eq_band_remove">إزالة هذا النطاق</string>
+    <string name="eq_band_type">الشكل</string>
+    <string name="eq_band_frequency">التردد</string>
+    <string name="eq_band_q">Q</string>
+    <string name="eq_band_gain">الكسب</string>
+    <string name="eq_type_peaking">قمة</string>
+    <string name="eq_type_low_shelf">رف منخفض</string>
+    <string name="eq_type_high_shelf">رف مرتفع</string>
+    <string name="eq_preamp_auto">ضبط التضخيم المسبق تلقائيًا</string>
+    <string name="eq_preamp_auto_desc">يخفض المستوى بالقدر الكافي فقط كي لا تتشوه الأجزاء المرفوعة (الآن %1$s)</string>
+    <string name="eq_preamp">التضخيم المسبق</string>
+    <string name="eq_round_title">التبديل إلى الوضع الرسومي؟</string>
+    <string name="eq_round_body">سينتقل كل نطاق إلى أحد الترددات الثابتة للمعادل الرسومي وسيُضبط معامل Q الخاص به تبعًا لذلك. سيُحافظ على شكل المنحنى قدر الإمكان، لكن الترددات وقيم Q الحالية ستُفقد.</string>
+    <string name="eq_round_quiet">عدم السؤال مرة أخرى</string>
+
+    <string name="eq_presets">الإعدادات المحفوظة</string>
+    <string name="eq_preset_empty">لم يُحفظ أي شيء بعد</string>
+    <string name="eq_preset_save">حفظ هذه الإعدادات</string>
+    <string name="eq_preset_save_title">اسم الإعداد</string>
+    <string name="eq_preset_name">الاسم</string>
+    <string name="eq_preset_apply">تطبيق</string>
+    <string name="eq_preset_export">تصدير</string>
+    <string name="eq_preset_import">استيراد إعداد</string>
+    <string name="eq_preset_delete_title">حذف الإعداد؟</string>
+    <string name="eq_preset_delete_body">يحذف \"%1$s\". ويبقى ما هو مضبوط على سماعاتك كما هو.</string>
+    <string name="eq_autoeq_import">استيراد AutoEQ</string>
+    <string name="eq_autoeq_desc">يقرأ ملف ParametricEQ.txt أو GraphicEQ.txt من AutoEQ ويستبدل به الإعدادات أعلاه.</string>
 </resources>

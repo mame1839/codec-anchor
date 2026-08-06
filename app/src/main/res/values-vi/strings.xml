@@ -13,6 +13,8 @@
     <string name="action_resend">Gửi lại</string>
     <string name="action_recheck">Kiểm tra lại</string>
     <string name="action_grant">Cấp quyền</string>
+    <string name="action_save">Lưu</string>
+    <string name="action_continue">Tiếp tục</string>
 
     <string name="value_keep">Giữ nguyên</string>
     <string name="value_unknown">Không rõ</string>
@@ -147,4 +149,44 @@
     <string name="msg_autoeq_invalid">Tệp đó không phải kết quả của AutoEQ</string>
     <string name="msg_autoeq_corner_shelf">Tệp AutoEQ đó dùng bộ lọc LS hoặc HS, vốn không được hỗ trợ</string>
     <string name="msg_autoeq_no_bands">Tệp AutoEQ đó không có bộ lọc nào</string>
+
+    <string name="section_eq">Xử lý âm thanh</string>
+    <string name="eq_enabled">Bộ chỉnh âm</string>
+    <string name="eq_enabled_desc">Chỉnh chất âm của tai nghe này</string>
+    <string name="eq_latency_zero">Độ trễ thêm vào: 0 ms</string>
+    <string name="eq_mode">Cách chỉnh</string>
+    <string name="eq_mode_desc">Kiểu đồ họa giữ mỗi dải ở một tần số cố định. Kiểu tham số cho bạn đặt từng dải ở đâu tùy ý.</string>
+    <string name="eq_mode_graphic">Đồ họa</string>
+    <string name="eq_mode_parametric">Tham số</string>
+    <string name="eq_band_count">Số dải</string>
+    <string name="eq_band_count_desc">Càng nhiều dải thì càng bám sát một đường cong chi tiết. Đây không phải thiết lập về tốc độ: điện thoại làm cùng một khối lượng việc trong cả hai trường hợp.</string>
+    <string name="eq_band_none">Chưa có dải nào. Hãy thêm một dải, hoặc nhập tệp AutoEQ.</string>
+    <string name="eq_band_add">Thêm dải</string>
+    <string name="eq_band_remove">Bỏ dải này</string>
+    <string name="eq_band_type">Dạng</string>
+    <string name="eq_band_frequency">Tần số</string>
+    <string name="eq_band_q">Q</string>
+    <string name="eq_band_gain">Độ lợi</string>
+    <string name="eq_type_peaking">Đỉnh</string>
+    <string name="eq_type_low_shelf">Kệ trầm</string>
+    <string name="eq_type_high_shelf">Kệ cao</string>
+    <string name="eq_preamp_auto">Tự đặt tiền khuếch đại</string>
+    <string name="eq_preamp_auto_desc">Hạ mức vừa đủ để những chỗ được nâng lên không bị vỡ tiếng (hiện %1$s)</string>
+    <string name="eq_preamp">Tiền khuếch đại</string>
+    <string name="eq_round_title">Chuyển sang đồ họa?</string>
+    <string name="eq_round_body">Mỗi dải sẽ dời về một trong các tần số cố định của bộ chỉnh âm đồ họa và Q của nó được đặt cho khớp. Hình dạng đường cong được giữ lại nhiều nhất có thể, nhưng tần số và các giá trị Q hiện nay sẽ mất.</string>
+    <string name="eq_round_quiet">Đừng hỏi lại</string>
+
+    <string name="eq_presets">Thiết lập sẵn</string>
+    <string name="eq_preset_empty">Chưa lưu gì cả</string>
+    <string name="eq_preset_save">Lưu các thiết lập này</string>
+    <string name="eq_preset_save_title">Tên của thiết lập</string>
+    <string name="eq_preset_name">Tên</string>
+    <string name="eq_preset_apply">Áp dụng</string>
+    <string name="eq_preset_export">Xuất</string>
+    <string name="eq_preset_import">Nhập thiết lập</string>
+    <string name="eq_preset_delete_title">Xóa thiết lập?</string>
+    <string name="eq_preset_delete_body">Xóa “%1$s”. Những gì đã đặt trên tai nghe của bạn vẫn giữ nguyên.</string>
+    <string name="eq_autoeq_import">Nhập AutoEQ</string>
+    <string name="eq_autoeq_desc">Đọc tệp ParametricEQ.txt hoặc GraphicEQ.txt của AutoEQ và thay cho các thiết lập ở trên.</string>
 </resources>

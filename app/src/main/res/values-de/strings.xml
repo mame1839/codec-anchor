@@ -13,6 +13,8 @@
     <string name="action_resend">Erneut senden</string>
     <string name="action_recheck">Erneut prüfen</string>
     <string name="action_grant">Berechtigung erteilen</string>
+    <string name="action_save">Speichern</string>
+    <string name="action_continue">Weiter</string>
 
     <string name="value_keep">Unverändert lassen</string>
     <string name="value_unknown">Unbekannt</string>
@@ -148,4 +150,44 @@
     <string name="msg_autoeq_invalid">Diese Datei ist kein AutoEQ-Ergebnis</string>
     <string name="msg_autoeq_corner_shelf">Diese AutoEQ-Datei verwendet LS- oder HS-Filter, die nicht unterstützt werden</string>
     <string name="msg_autoeq_no_bands">Diese AutoEQ-Datei enthält keine Filter</string>
+
+    <string name="section_eq">Klangbearbeitung</string>
+    <string name="eq_enabled">Equalizer</string>
+    <string name="eq_enabled_desc">Passt den Klang dieser Kopfhörer an</string>
+    <string name="eq_latency_zero">Zusätzliche Verzögerung: 0 ms</string>
+    <string name="eq_mode">Art der Bearbeitung</string>
+    <string name="eq_mode_desc">Grafisch hält jedes Band auf einer festen Frequenz. Parametrisch lässt Sie jedes Band frei setzen.</string>
+    <string name="eq_mode_graphic">Grafisch</string>
+    <string name="eq_mode_parametric">Parametrisch</string>
+    <string name="eq_band_count">Anzahl der Bänder</string>
+    <string name="eq_band_count_desc">Mehr Bänder folgen einer feinen Kurve genauer. Das ist keine Leistungseinstellung: Das Telefon rechnet in beiden Fällen gleich viel.</string>
+    <string name="eq_band_none">Noch kein Band. Fügen Sie eines hinzu oder laden Sie eine AutoEQ-Datei.</string>
+    <string name="eq_band_add">Band hinzufügen</string>
+    <string name="eq_band_remove">Dieses Band entfernen</string>
+    <string name="eq_band_type">Form</string>
+    <string name="eq_band_frequency">Frequenz</string>
+    <string name="eq_band_q">Q</string>
+    <string name="eq_band_gain">Verstärkung</string>
+    <string name="eq_type_peaking">Glocke</string>
+    <string name="eq_type_low_shelf">Tiefen-Shelf</string>
+    <string name="eq_type_high_shelf">Höhen-Shelf</string>
+    <string name="eq_preamp_auto">Vorverstärkung automatisch setzen</string>
+    <string name="eq_preamp_auto_desc">Senkt den Pegel gerade so weit, dass die angehobenen Stellen nicht übersteuern (derzeit %1$s)</string>
+    <string name="eq_preamp">Vorverstärkung</string>
+    <string name="eq_round_title">Zu grafisch wechseln?</string>
+    <string name="eq_round_body">Jedes Band rückt auf eine der festen Frequenzen des grafischen Equalizers, und sein Q wird passend gesetzt. Die Form der Kurve bleibt so weit wie möglich erhalten, aber die jetzigen Frequenzen und Q-Werte gehen verloren.</string>
+    <string name="eq_round_quiet">Nicht mehr nachfragen</string>
+
+    <string name="eq_presets">Voreinstellungen</string>
+    <string name="eq_preset_empty">Noch nichts gespeichert</string>
+    <string name="eq_preset_save">Diese Einstellungen speichern</string>
+    <string name="eq_preset_save_title">Name der Voreinstellung</string>
+    <string name="eq_preset_name">Name</string>
+    <string name="eq_preset_apply">Anwenden</string>
+    <string name="eq_preset_export">Exportieren</string>
+    <string name="eq_preset_import">Voreinstellung laden</string>
+    <string name="eq_preset_delete_title">Voreinstellung löschen?</string>
+    <string name="eq_preset_delete_body">Entfernt „%1$s“. Was bereits an Ihren Kopfhörern eingestellt ist, bleibt bestehen.</string>
+    <string name="eq_autoeq_import">AutoEQ laden</string>
+    <string name="eq_autoeq_desc">Liest eine ParametricEQ.txt oder GraphicEQ.txt von AutoEQ und ersetzt die Einstellungen oben.</string>
 </resources>

@@ -15,6 +15,8 @@
     <string name="action_resend">Send again</string>
     <string name="action_recheck">Check again</string>
     <string name="action_grant">Grant the permission</string>
+    <string name="action_save">Save</string>
+    <string name="action_continue">Continue</string>
 
     <string name="value_keep">Leave unchanged</string>
     <string name="value_unknown">Unknown</string>
@@ -156,4 +158,49 @@
     <string name="msg_autoeq_invalid">That file is not an AutoEQ result</string>
     <string name="msg_autoeq_corner_shelf">This AutoEQ file uses LS or HS filters, which are not supported</string>
     <string name="msg_autoeq_no_bands">That AutoEQ file has no filters</string>
+
+    <string name="section_eq">Audio processing</string>
+    <string name="eq_enabled">Equaliser</string>
+    <string name="eq_enabled_desc">Shapes the sound of these earphones</string>
+    <string name="eq_latency_zero">Added delay: 0 ms</string>
+    <string name="eq_mode">How to edit</string>
+    <string name="eq_mode_desc">Graphic keeps every band on a fixed frequency. Parametric lets you put each band where you want it.</string>
+    <string name="eq_mode_graphic">Graphic</string>
+    <string name="eq_mode_parametric">Parametric</string>
+    <string name="eq_band_count">Number of bands</string>
+    <string name="eq_band_count_desc">More bands follow a detailed curve more closely. This is not a speed setting: the phone does the same amount of work either way.</string>
+    <string name="eq_band_none">No band yet. Add one, or import an AutoEQ file.</string>
+    <string name="eq_band_add">Add a band</string>
+    <string name="eq_band_remove">Remove this band</string>
+    <string name="eq_band_type">Shape</string>
+    <string name="eq_band_frequency">Frequency</string>
+    <string name="eq_band_q">Q</string>
+    <string name="eq_band_gain">Gain</string>
+    <string name="eq_type_peaking">Peak</string>
+    <string name="eq_type_low_shelf">Low shelf</string>
+    <string name="eq_type_high_shelf">High shelf</string>
+    <string name="eq_preamp_auto">Set the preamp automatically</string>
+    <string name="eq_preamp_auto_desc">Lowers the level just enough that the parts you boosted do not clip (now %1$s)</string>
+    <string name="eq_preamp">Preamp</string>
+    <string name="eq_round_title">Switch to graphic?</string>
+    <string name="eq_round_body">Every band moves to one of the fixed frequencies of the graphic equaliser and its Q is set to match. The shape of the curve is kept as closely as it can be, but the frequencies and Q values you have now are lost.</string>
+    <string name="eq_round_quiet">Do not ask again</string>
+
+    <string name="eq_presets">Presets</string>
+    <string name="eq_preset_empty">Nothing saved yet</string>
+    <string name="eq_preset_save">Save these settings</string>
+    <string name="eq_preset_save_title">Name the preset</string>
+    <string name="eq_preset_name">Name</string>
+    <string name="eq_preset_apply">Apply</string>
+    <string name="eq_preset_export">Export</string>
+    <string name="eq_preset_import">Import a preset</string>
+    <string name="eq_preset_delete_title">Delete the preset?</string>
+    <string name="eq_preset_delete_body">Removes \"%1$s\". What is already set on your earphones stays as it is.</string>
+    <string name="eq_autoeq_import">Import AutoEQ</string>
+    <string name="eq_autoeq_desc">Reads a ParametricEQ.txt or GraphicEQ.txt from AutoEQ and replaces the settings above.</string>
+    <string name="preset_filename" translatable="false">codec-anchor-eq-%1$s.json</string>
+
+    <string name="eq_unit_db" translatable="false">%1$s dB</string>
+    <string name="eq_unit_hz" translatable="false">%1$s Hz</string>
+    <string name="eq_unit_khz" translatable="false">%1$s kHz</string>
 </resources>

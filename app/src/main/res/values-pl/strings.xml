@@ -13,6 +13,8 @@
     <string name="action_resend">Wyślij ponownie</string>
     <string name="action_recheck">Sprawdź ponownie</string>
     <string name="action_grant">Przyznaj uprawnienie</string>
+    <string name="action_save">Zapisz</string>
+    <string name="action_continue">Kontynuuj</string>
 
     <string name="value_keep">Bez zmian</string>
     <string name="value_unknown">Nieznane</string>
@@ -150,4 +152,44 @@
     <string name="msg_autoeq_invalid">Ten plik nie jest wynikiem AutoEQ</string>
     <string name="msg_autoeq_corner_shelf">Ten plik AutoEQ używa filtrów LS lub HS, które nie są obsługiwane</string>
     <string name="msg_autoeq_no_bands">Ten plik AutoEQ nie zawiera filtrów</string>
+
+    <string name="section_eq">Obróbka dźwięku</string>
+    <string name="eq_enabled">Korektor</string>
+    <string name="eq_enabled_desc">Kształtuje brzmienie tych słuchawek</string>
+    <string name="eq_latency_zero">Dodane opóźnienie: 0 ms</string>
+    <string name="eq_mode">Sposób edycji</string>
+    <string name="eq_mode_desc">W trybie graficznym każde pasmo stoi na stałej częstotliwości. W parametrycznym możesz ustawić pasmo tam, gdzie chcesz.</string>
+    <string name="eq_mode_graphic">Graficzny</string>
+    <string name="eq_mode_parametric">Parametryczny</string>
+    <string name="eq_band_count">Liczba pasm</string>
+    <string name="eq_band_count_desc">Im więcej pasm, tym dokładniej odwzorowana jest szczegółowa krzywa. To nie jest ustawienie wydajności: telefon liczy tyle samo w obu przypadkach.</string>
+    <string name="eq_band_none">Nie ma jeszcze żadnego pasma. Dodaj je albo wczytaj plik AutoEQ.</string>
+    <string name="eq_band_add">Dodaj pasmo</string>
+    <string name="eq_band_remove">Usuń to pasmo</string>
+    <string name="eq_band_type">Kształt</string>
+    <string name="eq_band_frequency">Częstotliwość</string>
+    <string name="eq_band_q">Q</string>
+    <string name="eq_band_gain">Wzmocnienie</string>
+    <string name="eq_type_peaking">Dzwon</string>
+    <string name="eq_type_low_shelf">Półka dolna</string>
+    <string name="eq_type_high_shelf">Półka górna</string>
+    <string name="eq_preamp_auto">Ustawiaj przedwzmacniacz automatycznie</string>
+    <string name="eq_preamp_auto_desc">Obniża poziom dokładnie na tyle, żeby podbite miejsca się nie przesterowały (teraz %1$s)</string>
+    <string name="eq_preamp">Przedwzmacniacz</string>
+    <string name="eq_round_title">Przełączyć na graficzny?</string>
+    <string name="eq_round_body">Każde pasmo przejdzie na jedną ze stałych częstotliwości korektora graficznego, a jego Q zostanie do niej dopasowane. Kształt krzywej zostanie zachowany na tyle, na ile to możliwe, ale obecne częstotliwości i wartości Q przepadną.</string>
+    <string name="eq_round_quiet">Nie pytaj więcej</string>
+
+    <string name="eq_presets">Ustawienia własne</string>
+    <string name="eq_preset_empty">Nic jeszcze nie zapisano</string>
+    <string name="eq_preset_save">Zapisz te ustawienia</string>
+    <string name="eq_preset_save_title">Nazwa ustawienia</string>
+    <string name="eq_preset_name">Nazwa</string>
+    <string name="eq_preset_apply">Zastosuj</string>
+    <string name="eq_preset_export">Eksportuj</string>
+    <string name="eq_preset_import">Wczytaj ustawienie</string>
+    <string name="eq_preset_delete_title">Usunąć ustawienie?</string>
+    <string name="eq_preset_delete_body">Usuwa „%1$s”. To, co jest już ustawione w słuchawkach, zostaje bez zmian.</string>
+    <string name="eq_autoeq_import">Wczytaj AutoEQ</string>
+    <string name="eq_autoeq_desc">Czyta plik ParametricEQ.txt albo GraphicEQ.txt z AutoEQ i zastępuje ustawienia powyżej.</string>
 </resources>

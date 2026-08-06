@@ -13,6 +13,8 @@
     <string name="action_resend">फिर भेजें</string>
     <string name="action_recheck">फिर जाँचें</string>
     <string name="action_grant">अनुमति दें</string>
+    <string name="action_save">सहेजें</string>
+    <string name="action_continue">जारी रखें</string>
 
     <string name="value_keep">न बदलें</string>
     <string name="value_unknown">अज्ञात</string>
@@ -148,4 +150,44 @@
     <string name="msg_autoeq_invalid">यह फ़ाइल AutoEQ का नतीजा नहीं है</string>
     <string name="msg_autoeq_corner_shelf">इस AutoEQ फ़ाइल में LS या HS फ़िल्टर हैं, जो समर्थित नहीं हैं</string>
     <string name="msg_autoeq_no_bands">इस AutoEQ फ़ाइल में कोई फ़िल्टर नहीं है</string>
+
+    <string name="section_eq">ध्वनि प्रसंस्करण</string>
+    <string name="eq_enabled">इक्वलाइज़र</string>
+    <string name="eq_enabled_desc">इन ईयरफ़ोन की आवाज़ को ढालता है</string>
+    <string name="eq_latency_zero">अतिरिक्त विलंब: 0 ms</string>
+    <string name="eq_mode">संपादन का तरीक़ा</string>
+    <string name="eq_mode_desc">ग्राफ़िक में हर बैंड एक तय आवृत्ति पर रहता है। पैरामीट्रिक में आप हर बैंड को जहाँ चाहें रख सकते हैं।</string>
+    <string name="eq_mode_graphic">ग्राफ़िक</string>
+    <string name="eq_mode_parametric">पैरामीट्रिक</string>
+    <string name="eq_band_count">बैंड की संख्या</string>
+    <string name="eq_band_count_desc">जितने ज़्यादा बैंड, उतनी बारीक़ी से घुमावदार वक्र का पीछा किया जा सकता है। यह गति की सेटिंग नहीं है: फ़ोन दोनों हालात में उतना ही काम करता है।</string>
+    <string name="eq_band_none">अभी कोई बैंड नहीं है। एक जोड़ें, या AutoEQ फ़ाइल पढ़वाएँ।</string>
+    <string name="eq_band_add">बैंड जोड़ें</string>
+    <string name="eq_band_remove">यह बैंड हटाएँ</string>
+    <string name="eq_band_type">आकार</string>
+    <string name="eq_band_frequency">आवृत्ति</string>
+    <string name="eq_band_q">Q</string>
+    <string name="eq_band_gain">गेन</string>
+    <string name="eq_type_peaking">पीक</string>
+    <string name="eq_type_low_shelf">लो शेल्फ़</string>
+    <string name="eq_type_high_shelf">हाई शेल्फ़</string>
+    <string name="eq_preamp_auto">प्रीऐम्प अपने आप तय करें</string>
+    <string name="eq_preamp_auto_desc">उतना ही स्तर घटाता है जितना ज़रूरी हो, ताकि उभारे गए हिस्से बिगड़ें नहीं (अभी %1$s)</string>
+    <string name="eq_preamp">प्रीऐम्प</string>
+    <string name="eq_round_title">ग्राफ़िक पर जाएँ?</string>
+    <string name="eq_round_body">हर बैंड ग्राफ़िक इक्वलाइज़र की तय आवृत्तियों में से एक पर चला जाएगा और उसका Q भी उसी के अनुसार बैठ जाएगा। वक्र का आकार जितना बन सके उतना बचाया जाएगा, पर अभी की आवृत्तियाँ और Q मान चले जाएँगे।</string>
+    <string name="eq_round_quiet">दोबारा न पूछें</string>
+
+    <string name="eq_presets">प्रीसेट</string>
+    <string name="eq_preset_empty">अभी कुछ भी सहेजा नहीं गया</string>
+    <string name="eq_preset_save">ये सेटिंग सहेजें</string>
+    <string name="eq_preset_save_title">प्रीसेट का नाम</string>
+    <string name="eq_preset_name">नाम</string>
+    <string name="eq_preset_apply">लागू करें</string>
+    <string name="eq_preset_export">निर्यात</string>
+    <string name="eq_preset_import">प्रीसेट पढ़वाएँ</string>
+    <string name="eq_preset_delete_title">प्रीसेट मिटाएँ?</string>
+    <string name="eq_preset_delete_body">\"%1$s\" हटा देता है। आपके ईयरफ़ोन पर जो पहले से लगा है, वह वैसा ही रहता है।</string>
+    <string name="eq_autoeq_import">AutoEQ पढ़वाएँ</string>
+    <string name="eq_autoeq_desc">AutoEQ की ParametricEQ.txt या GraphicEQ.txt पढ़ता है और ऊपर की सेटिंग बदल देता है।</string>
 </resources>

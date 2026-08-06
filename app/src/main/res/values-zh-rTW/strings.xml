@@ -13,6 +13,8 @@
     <string name="action_resend">重新傳送</string>
     <string name="action_recheck">重新檢查</string>
     <string name="action_grant">授予權限</string>
+    <string name="action_save">儲存</string>
+    <string name="action_continue">繼續</string>
 
     <string name="value_keep">保持不變</string>
     <string name="value_unknown">未知</string>
@@ -147,4 +149,44 @@
     <string name="msg_autoeq_invalid">這不是 AutoEQ 的結果檔案</string>
     <string name="msg_autoeq_corner_shelf">這個 AutoEQ 檔案使用了不支援的 LS 或 HS 濾波器</string>
     <string name="msg_autoeq_no_bands">這個 AutoEQ 檔案沒有濾波器</string>
+
+    <string name="section_eq">音訊處理</string>
+    <string name="eq_enabled">等化器</string>
+    <string name="eq_enabled_desc">調整這副耳機的聲音</string>
+    <string name="eq_latency_zero">額外延遲：0 ms</string>
+    <string name="eq_mode">調整方式</string>
+    <string name="eq_mode_desc">圖示等化器把每個頻段固定在特定頻率上。參數等化器可以把頻段放在任意位置。</string>
+    <string name="eq_mode_graphic">圖示</string>
+    <string name="eq_mode_parametric">參數</string>
+    <string name="eq_band_count">頻段數量</string>
+    <string name="eq_band_count_desc">頻段越多，越能貼近細緻的曲線。這不是效能選項：兩種情況下手機的運算量相同。</string>
+    <string name="eq_band_none">還沒有頻段。請新增一個，或讀取 AutoEQ 檔案。</string>
+    <string name="eq_band_add">新增頻段</string>
+    <string name="eq_band_remove">刪除這個頻段</string>
+    <string name="eq_band_type">形狀</string>
+    <string name="eq_band_frequency">頻率</string>
+    <string name="eq_band_q">Q</string>
+    <string name="eq_band_gain">增益</string>
+    <string name="eq_type_peaking">鐘形</string>
+    <string name="eq_type_low_shelf">低頻棚化</string>
+    <string name="eq_type_high_shelf">高頻棚化</string>
+    <string name="eq_preamp_auto">自動設定前級增益</string>
+    <string name="eq_preamp_auto_desc">把音量降到剛好讓提升的部分不失真（目前 %1$s）</string>
+    <string name="eq_preamp">前級增益</string>
+    <string name="eq_round_title">要切換到圖示等化器嗎</string>
+    <string name="eq_round_body">每個頻段都會移到圖示等化器的固定頻率上，Q 值也會跟著調整。曲線的形狀會盡量保留，但目前的頻率和 Q 值會消失。</string>
+    <string name="eq_round_quiet">不再提示</string>
+
+    <string name="eq_presets">預設組合</string>
+    <string name="eq_preset_empty">還沒有儲存任何預設組合</string>
+    <string name="eq_preset_save">儲存目前的設定</string>
+    <string name="eq_preset_save_title">預設組合的名稱</string>
+    <string name="eq_preset_name">名稱</string>
+    <string name="eq_preset_apply">套用</string>
+    <string name="eq_preset_export">匯出</string>
+    <string name="eq_preset_import">讀取預設組合</string>
+    <string name="eq_preset_delete_title">要刪除預設組合嗎</string>
+    <string name="eq_preset_delete_body">刪除「%1$s」。耳機上已經設定的內容維持不變。</string>
+    <string name="eq_autoeq_import">讀取 AutoEQ</string>
+    <string name="eq_autoeq_desc">讀取 AutoEQ 的 ParametricEQ.txt 或 GraphicEQ.txt，並取代上面的設定。</string>
 </resources>
