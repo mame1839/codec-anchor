@@ -52,8 +52,14 @@ if ! "$MODDIR/dlopen_check" "$WORK/soundfx/libcaeq.so" >>"$CA_LOG" 2>&1; then
     ca_die ".so の dlopen セルフテストに失敗。overlay しない (ABI/シンボルの検査。SELinux は別)"
 fi
 
-# --- 4. XML に 2 行足す --------------------------------------------------
-if ! ca_patch_xml "$SRC_XML" "$WORK/etc/audio_effects.xml" 2>>"$CA_LOG"; then
+# --- 4. XML に行を足す ---------------------------------------------------
+# <postprocess> に載せると framework が自動でエフェクトを挿すので、
+# ユーザの再生に即座に掛かる。止めたいときにモジュールごと外さずに済むよう、
+# 空ファイル 1 つで切れるようにしておく (touch $MODDIR/no_postprocess で無効)。
+CA_PP=1
+[ -f "$MODDIR/no_postprocess" ] && CA_PP=0
+ca_log "postprocess への登録: $CA_PP"
+if ! ca_patch_xml "$SRC_XML" "$WORK/etc/audio_effects.xml" "$CA_PP" 2>>"$CA_LOG"; then
     ca_die "XML の patch に失敗"
 fi
 chmod 644 "$WORK/etc/audio_effects.xml"
