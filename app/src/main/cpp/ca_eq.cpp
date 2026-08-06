@@ -12,6 +12,7 @@
 #include <android/log.h>
 #include "aosp/audio_effect.h"
 #include "ca_eq_shm.h"
+#include "dsp/ca_eq_dsp.h"
 
 #define CA_LOG_TAG "CodecAnchorEQ"
 // ログは制御スレッド (create / SET_CONFIG / ENABLE / release) からだけ呼ぶ。
@@ -32,7 +33,9 @@ const effect_descriptor_t kCaEqDescriptor = {
     // DEVICE_IND はデバイスの変化を教えてもらうため。
     .flags       = EFFECT_FLAG_TYPE_POST_PROC | EFFECT_FLAG_INSERT_LAST | EFFECT_FLAG_DEVICE_IND,
     .cpuLoad     = 10,
-    .memoryUsage = 1,
+    // KB 単位。caeq::Eq が状態と作業領域で 40 KB ほど持つ (最大構成を create の時点で
+    // 確保して process() で一切確保しないため)。
+    .memoryUsage = 64,
     .name        = "Codec Anchor EQ",
     .implementor = "Codec Anchor",
 };
@@ -40,14 +43,15 @@ const effect_descriptor_t kCaEqDescriptor = {
 struct CaCtx {
     // 先頭でなければならない (effect_handle_t がこのアドレスを指す)。
     // 仮想関数を持たせない — vtable ポインタが先頭に入って ABI が壊れる。
+    // caeq::Eq も仮想関数を持たないが、念のため itfe より後ろに置く。
     const struct effect_interface_s* itfe;
     effect_config_t cfg;
     bool     enabled;
     bool     passthrough_only;   // format が float でないときに立つ。サンプルに触らない
     int32_t  gain_mb;            // millibel。0 = 素通し
-    float    gain_lin;           // 10^(gain_mb / 2000)
     uint32_t channels;
     ca_slot_t* slot;             // 共有メモリのスロット。nullptr なら記録しない
+    caeq::Eq dsp;                // 演算本体。ホストのハーネスで検証してあるものと同じコード
 };
 
 // 1 ブロックぶんの計測。process() のスタックに置くだけで、確保はしない。
@@ -68,16 +72,26 @@ inline uint32_t ca_abs_i32(int32_t v) {
     return v < 0 ? static_cast<uint32_t>(-static_cast<int64_t>(v)) : static_cast<uint32_t>(v);
 }
 
+// 同じバッファを float と int32 の 2 通りに解釈して測る。**ポインタを付け替えないこと** —
+// float* と int32_t* は別の型なので、strict aliasing のもとでは最適化が読みと書きを
+// 入れ替えてよい。計測が唯一の観測点である以上、ここが嘘をつくのは重い。
+// ビット列を memcpy で写せば、同じ値を見ていることが規格で保証される。
+inline uint32_t ca_abs_bits(float v) {
+    int32_t i;
+    std::memcpy(&i, &v, sizeof(i));
+    return ca_abs_i32(i);
+}
+
 uint32_t ca_channel_count(uint32_t mask) {
     // audio_channel_mask_t の下位ビットが 1 チャンネル 1 ビット。
     const uint32_t n = static_cast<uint32_t>(__builtin_popcount(mask & 0x3FFFFFFFu));
     return n ? n : 2;
 }
 
-float ca_mb_to_lin(int32_t mb) {
-    // 10^(mb / 2000)。制御スレッドからしか呼ばれないので powf でよい。
-    return __builtin_powf(10.0f, static_cast<float>(mb) / 2000.0f);
-}
+// 実測でブロック長は 512 / 960 / 1024 / 2048、チャンネル数は 2 と 12 が来る。
+// 決め打ちできないので SET_CONFIG の値をそのまま演算層へ渡す。
+// 構造の選択の根拠は dsp/ca_eq_dsp.h の Structure にある (ハーネスの実測)。
+constexpr caeq::Structure kStructure = caeq::kDefaultStructure;
 
 // ---------------------------------------------------------------------------
 // 共有メモリの統計。フレームワークには実処理フレーム数を外へ出す経路が無いので、
@@ -230,7 +244,10 @@ extern "C" int32_t ca_process(effect_handle_t self, audio_buffer_t* in, audio_bu
     // 落ちたら vendor HAL ごと死ぬ。毎回すべて検査する。
     if (c == nullptr || in == nullptr || out == nullptr) return -EINVAL;
     if (in->raw == nullptr || out->raw == nullptr) return -EINVAL;
-    if (!c->enabled) return -ENODATA;   // 無効時の作法。AudioFlinger は呼ばない想定だが念のため
+    // **無効になっても即座には抜けない。**DISABLE のあともフレームワークは 10 秒ほど
+    // process() を呼び続けるので、そのあいだにフェードを終わらせる。ここで -ENODATA を
+    // 返すと呼ばれなくなり、フェードが途中で切れて -26.7 dBFS のクリックが出る (実測)。
+    if (!c->enabled && c->dsp.idle()) return -ENODATA;
 
     const size_t frames = in->frameCount < out->frameCount ? in->frameCount : out->frameCount;
     if (frames == 0) return 0;
@@ -250,27 +267,29 @@ extern "C" int32_t ca_process(effect_handle_t self, audio_buffer_t* in, audio_bu
         // 触らないことがそのまま素通しになる。仮に out-of-place で来ても、無音のほうが
         // SIGSEGV よりまし。
     } else {
-        // 1 パス目は入力を読むだけ。in-place だと書きながら読むと、加工後の値を
+        // 1 パス目は入力を読むだけ。in-place だと書きながら読むことになり、加工後の値を
         // 「入力」として測ってしまう。float と int32 の両方で測り、どちらの解釈が
         // 本物かを外から判定できるようにする。
-        const int32_t* in_i = static_cast<const int32_t*>(in->raw);
         for (size_t i = 0; i < samples; i++) {
             const float x = in->f32[i];
             const float ax = x < 0.0f ? -x : x;
             if (ax > blk.in_peak_f) blk.in_peak_f = ax;
-            const uint32_t ai = ca_abs_i32(in_i[i]);
+            const uint32_t ai = ca_abs_bits(x);
             if (ai > blk.in_peak_i) blk.in_peak_i = ai;
         }
-        // 2 パス目で加工して書く。将来ここが biquad のカスケードになる。
-        // ライブラリは使わず、係数は RBJ の cookbook を自前で書く。
-        const float g = c->gain_lin;
-        const int32_t* out_i = static_cast<const int32_t*>(out->raw);
+
+        // 2 パス目は演算層に任せる。ここから先はホストのハーネスで検証済みのコード
+        // (app/src/main/cpp/dsp/)。確保もロックもログもしない。
+        const bool accumulate =
+            c->cfg.outputCfg.accessMode == EFFECT_BUFFER_ACCESS_ACCUMULATE;
+        c->dsp.process(in->f32, out->f32, static_cast<int>(frames), accumulate);
+
+        // 3 パス目で出力を測る。
         for (size_t i = 0; i < samples; i++) {
-            const float y = in->f32[i] * g;
-            out->f32[i] = y;
+            const float y = out->f32[i];
             const float ay = y < 0.0f ? -y : y;
             if (ay > blk.out_peak_f) blk.out_peak_f = ay;
-            const uint32_t ao = ca_abs_i32(out_i[i]);
+            const uint32_t ao = ca_abs_bits(y);
             if (ao > blk.out_peak_i) blk.out_peak_i = ao;
         }
     }
@@ -299,11 +318,18 @@ extern "C" int32_t ca_command(effect_handle_t self, uint32_t cmd, uint32_t cmdSi
         c->channels = ca_channel_count(c->cfg.outputCfg.channels);
         // 想定は float 固定。違ったらサンプルに触らない側へ倒す (エラーは返さない — 返すと
         // AudioFlinger がこのインスタンスを諦めて、何が起きたか分からなくなる)。
-        c->passthrough_only = (c->cfg.outputCfg.format != AUDIO_FORMAT_PCM_FLOAT_U8);
-        CA_LOGI("SET_CONFIG rate=%u ch=%u fmt=%u frames=%zu passthrough_only=%d",
+        // 演算層が持てるチャンネル数を超えたときも同じ扱いにする。演算層は自分の上限まで
+        // しか回さないので、そのまま通すと後ろのチャンネルだけ素通しになって並びも狂う。
+        c->passthrough_only = (c->cfg.outputCfg.format != AUDIO_FORMAT_PCM_FLOAT_U8) ||
+                              (c->channels > static_cast<uint32_t>(caeq::kMaxChannels));
+        // buffer.frameCount は常に 0 で来る (バッファは process() の引数で渡される)。
+        // ここを DSP の作業領域の大きさに使うと 0 で組んでしまうので、載せない。
+        CA_LOGI("SET_CONFIG rate=%u ch=%u fmt=%u access=%u passthrough_only=%d",
                 c->cfg.outputCfg.samplingRate, c->channels,
                 static_cast<unsigned>(c->cfg.outputCfg.format),
-                c->cfg.outputCfg.buffer.frameCount, c->passthrough_only);
+                static_cast<unsigned>(c->cfg.outputCfg.accessMode), c->passthrough_only);
+        c->dsp.configure(static_cast<double>(c->cfg.outputCfg.samplingRate),
+                         static_cast<int>(c->channels), kStructure);
         ca_stats_configure(c);
         *static_cast<int*>(pReply) = 0;
         return 0;
@@ -316,12 +342,17 @@ extern "C" int32_t ca_command(effect_handle_t self, uint32_t cmd, uint32_t cmdSi
         return 0;
 
     case EFFECT_CMD_RESET:
+        // 状態をゼロにしてよいのはここと ENABLE のときだけ。パラメータの変更のたびに
+        // ゼロにするとクリックが 27 dB 悪化する (実測 -64.6 → -37.7 dBFS)。
+        c->dsp.reset();
         return 0;
 
     case EFFECT_CMD_ENABLE:
     case EFFECT_CMD_DISABLE:
         if (!intReply) return -EINVAL;
         c->enabled = (cmd == EFFECT_CMD_ENABLE);
+        if (c->enabled) c->dsp.reset();
+        c->dsp.setActive(c->enabled);
         CA_LOGI("%s ctx=%p", c->enabled ? "ENABLE" : "DISABLE", static_cast<void*>(c));
         ca_stats_set_enabled(c, c->enabled);
         *static_cast<int*>(pReply) = 0;
@@ -348,8 +379,19 @@ extern "C" int32_t ca_command(effect_handle_t self, uint32_t cmd, uint32_t cmdSi
         if (v > 0) v = 0;
         if (v < -6000) v = -6000;
         c->gain_mb = v;
-        c->gain_lin = ca_mb_to_lin(v);
-        CA_LOGI("SET_PARAM gain=%d mB (lin=%.6f)", c->gain_mb, static_cast<double>(c->gain_lin));
+        // いまはバンドを持たず、プリアンプだけを動かす。fc / Q / gain の並びを
+        // 共有メモリで受け取る経路は別途 (seqlock の仕様が決まってから)。
+        caeq::Params p;
+        p.band_count = 0;
+        p.preamp_db = static_cast<double>(v) / 100.0;
+        if (!c->dsp.setParams(p)) {
+            // 検査に落ちたときは前の設定のまま鳴らし続ける。黙って捨てると
+            // 原因不明の「効かない」になるので、診断カウンタを見せる。
+            CA_LOGE("SET_PARAM rejected gain=%d mB (rejected=%u)", v, c->dsp.rejectedCount());
+            *static_cast<int*>(pReply) = -EINVAL;
+            return 0;
+        }
+        CA_LOGI("SET_PARAM gain=%d mB (preamp=%.2f dB)", c->gain_mb, p.preamp_db);
         ca_stats_set_gain(c, c->gain_mb);
         *static_cast<int*>(pReply) = 0;
         return 0;
@@ -395,9 +437,11 @@ extern "C" int32_t ca_lib_create(const effect_uuid_t* uuid, int32_t sessionId, i
     c->enabled = false;
     c->passthrough_only = false;
     c->gain_mb = 0;
-    c->gain_lin = 1.0f;
     c->channels = 2;
     c->slot = nullptr;
+    c->dsp.configure(48000.0, 2, kStructure);
+    // 初回のページフォルトと係数の初期化を process() の外へ出す。
+    c->dsp.warmUp();
     ca_stats_attach(c, ioId);
     CA_LOGI("create session=%d io=%d ctx=%p", sessionId, ioId, static_cast<void*>(c));
     *pHandle = reinterpret_cast<effect_handle_t>(c);

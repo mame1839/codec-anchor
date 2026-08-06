@@ -485,7 +485,7 @@ double clickDb(const std::vector<float>& y, size_t t) {
 struct ClickSetup {
     Structure structure = Structure::kTdf2;
     Interp interp = Interp::kCoef;
-    int stride = caeq::kChunkFrames;
+    int stride = caeq::kDefaultCoefStride;
     double ramp_ms = 10.0;
     int block = 960;
 };
@@ -595,9 +595,9 @@ void checkFcSweep(Report& r) {
 
     ClickSetup base;
     base.block = 24000;
-    base.stride = 32;
 
-    r.note("  fc 120 -> 480 Hz (Q=4, +12 dB 固定)");
+    r.note("  fc 120 -> 480 Hz (Q=4, +12 dB 固定)。刻みは既定 (%d フレーム)",
+           caeq::kDefaultCoefStride);
     r.note("  ramp    TDF2/係数  TDF2/パラメータ   SVF/係数  SVF/パラメータ  (dBFS)");
     for (double ms : {1.0, 5.0, 10.0, 20.0, 50.0}) {
         double v[4];
@@ -896,18 +896,21 @@ void checkPerf(Report& r) {
 void checkDenormal(Report& r) {
     r.section("12. 非正規化数 (ホストの x86-64 での実測。AArch64 の数字ではない)");
 
-    // 素の TDF2 ループを、状態が通常の領域にあるときと非正規化数の領域にあるときで比べる。
+    // 素の TDF2 ループを、値が通常の領域にあるときと非正規化数の領域にあるときで比べる。
     // Eq 本体は無音が続くと状態をゼロに落とすので、ここでは意図的に素のループで測る。
+    //
+    // **入力も同じ領域に置くこと。**入力を 0 にすると通常の側も減衰して途中から
+    // 非正規化数に入り、両方が同じ数字になる (最初にこれで測って「比 1.02x」を見た)。
     const Band band{BandType::kPeaking, 1000.0, 1.0, 6.0};
     const caeq::Coef k = caeq::designTdf2(band, kFs);
-    const int kIters = 4000000;
+    const int kIters = 2000000;
 
-    auto run = [&](double init) {
-        double s1 = init, s2 = init;
+    auto run = [&](double xin) {
+        double s1 = xin, s2 = xin;
         const auto t0 = std::chrono::steady_clock::now();
         double sink = 0.0;
         for (int i = 0; i < kIters; i++) {
-            const double x = 0.0;
+            const double x = xin;
             const double y = k.c[0] * x + s1;
             s1 = k.c[1] * x - k.c[3] * y + s2;
             s2 = k.c[2] * x - k.c[4] * y;
@@ -922,10 +925,10 @@ void checkDenormal(Report& r) {
     };
 
     const double normal = run(1e-3);
-    const double denorm = run(1e-310);
-    r.note("  通常の状態 (1e-3):      %.3f ns/sample", normal);
-    r.note("  非正規化数 (1e-310):    %.3f ns/sample  (比 %.2fx)", denorm, denorm / normal);
-    r.note("  ※ 状態は無音では減衰し続けるので、この領域に入るには double で 60 秒以上の無音が要る");
+    const double denorm = run(1e-315);  // double の非正規化数は 2.2e-308 より下
+    r.note("  通常の値 (1e-3):        %.3f ns/sample", normal);
+    r.note("  非正規化数 (1e-315):    %.3f ns/sample  (比 %.1fx)", denorm, denorm / normal);
+    r.note("  ※ 無音が続くと状態はここまで落ちる。入力が 0 のままなので自力では出られない");
 
     // 無音が続いたときのゼロクリアが働くか。
     Eq eq = makeReady(Structure::kTdf2, makeParams({band}));
@@ -1084,14 +1087,14 @@ int main(int argc, char** argv) {
     checkBlockLength(r);
     checkChannels(r);
     checkNonFinite(r);
-    checkParamGuards(r);
-    checkAccumulate(r);
     checkClick(r);
     checkFcSweep(r);
     checkFade(r);
     checkStability(r);
     checkPerf(r);
     checkDenormal(r);
+    checkParamGuards(r);
+    checkAccumulate(r);
 
     std::printf("\n%d / %d 件が通った。\n", r.total() - r.failures(), r.total());
     return r.failures() == 0 ? 0 : 1;

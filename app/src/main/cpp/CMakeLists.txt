@@ -6,10 +6,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # DSP のライブラリは使わない。biquad は自前で数十行。
 # リアルタイムのコールバックに外部依存を持ち込まない。find_package を書かないこと。
-add_compile_options(-Wall -Wextra -Werror -O2 -fno-exceptions -fno-rtti)
+#
+# **-ffast-math を付けないこと。**NaN / Inf の検査ごと消える (dsp/ca_eq_dsp.h が #error で
+# 止める)。FMA は積和が 1 回の丸めで済むので精度が上がる。ホストのハーネス
+# (test/CMakeLists.txt) と同じ方針にしてあり、同じコードが同じ丸めで走る。
+add_compile_options(-Wall -Wextra -Werror -O2 -ffp-contract=fast -fno-exceptions -fno-rtti)
 
 # エフェクト本体。vendor の audio HAL プロセスが dlopen する。
-add_library(caeq SHARED ca_eq.cpp)
+# dsp/ は Android に依存しない演算層で、同じソースを test/ のハーネスがホストでビルドする。
+add_library(caeq SHARED ca_eq.cpp dsp/ca_eq_dsp.cpp)
 target_include_directories(caeq PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(caeq log)
 target_compile_options(caeq PRIVATE -fvisibility=hidden)

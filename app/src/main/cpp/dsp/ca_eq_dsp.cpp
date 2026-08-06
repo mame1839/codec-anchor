@@ -127,7 +127,9 @@ Coef unityFor(const Band& band, double fs, Structure structure) {
 
 bool validate(const Params& p) {
     if (p.band_count < 0 || p.band_count > kMaxBands) return false;
-    if (!finite(p.preamp_db) || p.preamp_db < -kMaxGainDb || p.preamp_db > kMaxGainDb) return false;
+    if (!finite(p.preamp_db) || p.preamp_db < kMinPreampDb || p.preamp_db > kMaxPreampDb) {
+        return false;
+    }
     for (int i = 0; i < p.band_count; i++) {
         const Band& b = p.bands[i];
         if (b.type != BandType::kPeaking && b.type != BandType::kLowShelf &&

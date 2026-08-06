@@ -31,6 +31,14 @@ inline constexpr int kMaxChannels = 32;
 // (実測でどちらも -64.6 dBFS)。刻み目はブロック長ではなくランプの経過サンプル数で決める。
 inline constexpr int kChunkFrames = 32;
 
+// ランプ中に係数を組み直す間隔 (フレーム)。**毎サンプル。**
+// ハーネスの実測 (10 ms のランプでゲインを -6 → +12 dB):
+//   32 サンプルの階段 : クリック -84.7 dBFS / 156.7 ns/frame
+//   毎サンプル        : クリック -114.3 dBFS / 234.9 ns/frame
+// 定常が 151.5 ns/frame なので、増えるのはランプが走っている 10 ms のあいだの 55% だけ。
+// 30 dB と引き換えにする理由が無い。
+inline constexpr int kDefaultCoefStride = 1;
+
 // 受け付けるパラメータの範囲。1 つでも外れたら差し替えを丸ごと却下して前の設定を保つ。
 // **fc は fs と突き合わせない。**送り手 (アプリ) はサンプルレートを知らないので、
 // Nyquist との関係は係数を組むときにクランプで面倒を見る。
@@ -39,6 +47,9 @@ inline constexpr double kMaxFcHz   = 100000.0;
 inline constexpr double kMinQ      = 0.05;
 inline constexpr double kMaxQ      = 100.0;
 inline constexpr double kMaxGainDb = 40.0;
+// プリアンプは非対称。下は合成応答のピークを吸うために深く、上は音量事故を避けて浅く。
+inline constexpr double kMinPreampDb = -60.0;
+inline constexpr double kMaxPreampDb = 20.0;
 // fc/fs の上限。tan(pi*fc/fs) は fc/fs = 0.5 で発散する。
 inline constexpr double kMaxFcRatio = 0.4995;
 
@@ -54,23 +65,33 @@ enum class BandType : uint8_t {
     kHighShelf = 2,
 };
 
-// 実装する構造。**本命は転置形 II** (AOSP 自身の audio_utils::BiquadFilter も転置形 II で、
-// ソースが "better time-varying coefficient performance" を理由に挙げている)。
-// SVF は比較用に残す — 同じ伝達関数を別の状態変数で実現するので、ハーネスで
-// 「係数の間違い」と「構造の性質」を切り分ける物差しになる。
+// 実装する構造。**採るのは転置形 II。**
+// 両方が同じ伝達関数を別の状態変数で実現するので、ハーネスでは「係数の間違い」と
+// 「構造の性質」を切り分ける物差しになる。SVF を残してあるのはそのため。
+//
+// 決め手はゲイン変更のクリック (ハーネス 7 節)。EQ でいちばん頻繁に動くのがゲインで、
+// そこで SVF は 33 dB 負ける — 瞬時の入れ替えで -27.9 対 -64.6、10 ms のランプで
+// -81.4 対 -114.3 dBFS。時変安定性では SVF が強いが、そちらは取り込みを process() 1 回に
+// つき 1 回へ縛ることで構造的に塞いである (setParams の説明)。処理時間も 1.3〜1.5 倍。
 enum class Structure : uint8_t {
     kTdf2 = 0,
     kSvf  = 1,
 };
 
-// 差し替えのときに何を補間するか。
+// 差し替えのときに何を補間するか。**採るのは係数補間。**
 //   kCoef  — 係数を線形補間する。安い (バンドあたり 6 回の積和)
-//   kParam — fc / Q / gain を補間して刻みごとに係数を組み直す。高い (三角関数が要る) が、
-//            fc を動かすときは通る経路が実際のフィルタの軌跡になる
+//   kParam — fc / Q / gain を補間して刻みごとに係数を組み直す。三角関数が要るぶん高い
+//
+// パラメータ補間のほうが「通る軌跡が実際のフィルタの列になる」ぶん有利に見えるが、
+// 実信号のクリックでは差が付かないか係数補間のほうが良い (ハーネス 8 節。fc を 120→480 Hz、
+// 10 ms のランプで -121.8 対 -117.9 dBFS)。費用は毎サンプル刻みで 234 対 1082 ns/frame。
 enum class Interp : uint8_t {
     kCoef  = 0,
     kParam = 1,
 };
+
+inline constexpr Structure kDefaultStructure = Structure::kTdf2;
+inline constexpr Interp    kDefaultInterp    = Interp::kCoef;
 
 struct Band {
     BandType type    = BandType::kPeaking;
@@ -201,8 +222,8 @@ private:
 
     double    sr_        = 48000.0;
     int       ch_        = 2;
-    Structure structure_ = Structure::kTdf2;
-    Interp    interp_    = Interp::kCoef;
+    Structure structure_ = kDefaultStructure;
+    Interp    interp_    = kDefaultInterp;
 
     Params  params_{};       // いま鳴っている設定
     Params  pending_{};      // 次の process() で取り込む設定
@@ -227,7 +248,7 @@ private:
 
     int64_t ramp_len_    = 480;   // 10 ms @ 48 kHz
     int64_t ramp_pos_    = 480;   // pos >= len でランプ終了
-    int     coef_stride_ = kChunkFrames;
+    int     coef_stride_ = kDefaultCoefStride;
 
     bool    active_    = false;
     double  wet_cur_   = 0.0;
