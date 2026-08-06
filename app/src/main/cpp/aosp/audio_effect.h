@@ -188,6 +188,12 @@ typedef struct audio_effect_library_s {
  * uint8_t に切り詰めた値。この経路は float 固定で、int16 の経路は存在しない。 */
 #define AUDIO_FORMAT_PCM_FLOAT_U8  5
 
+/* buffer_config_t.accessMode。ACCUMULATE のときに出力を上書きすると、同じバッファへ
+ * 書き込む他のトラックの音が消える。既定は WRITE だが値を見ずに決め打ちしないこと。 */
+#define EFFECT_BUFFER_ACCESS_WRITE       0
+#define EFFECT_BUFFER_ACCESS_READ        1
+#define EFFECT_BUFFER_ACCESS_ACCUMULATE  2
+
 #ifdef __cplusplus
 }  /* extern "C" */
 #endif

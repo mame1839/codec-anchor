@@ -56,3 +56,16 @@ jobs:
 
       - name: モジュールのシェルスクリプトを検証する
         run: bash module/test/patch_xml_test.sh
+
+  # DSP はホストでビルドして検証する。`.so` からは logcat が出ないので、実機だけで書くと
+  # 係数の 1 文字の違いを共有メモリのピーク値だけで追うことになる。
+  dsp-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: EQ のオフラインハーネスをビルドする
+        run: cmake -S app/src/main/cpp/test -B build/ca_eq_test && cmake --build build/ca_eq_test --parallel
+
+      - name: EQ のオフラインハーネスを走らせる
+        run: ./build/ca_eq_test/ca_eq_test

@@ -6,10 +6,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # DSP のライブラリは使わない。biquad は自前で数十行。
 # リアルタイムのコールバックに外部依存を持ち込まない。find_package を書かないこと。
-add_compile_options(-Wall -Wextra -Werror -O2 -fno-exceptions -fno-rtti)
+#
+# **-ffast-math を付けないこと。**NaN / Inf の検査ごと消える (dsp/ca_eq_dsp.h が #error で
+# 止める)。FMA は積和が 1 回の丸めで済むので精度が上がる。ホストのハーネス
+# (test/CMakeLists.txt) と同じ方針にしてあり、同じコードが同じ丸めで走る。
+add_compile_options(-Wall -Wextra -Werror -O2 -ffp-contract=fast -fno-exceptions -fno-rtti)
 
 # エフェクト本体。vendor の audio HAL プロセスが dlopen する。
-add_library(caeq SHARED ca_eq.cpp)
+# dsp/ は Android に依存しない演算層で、同じソースを test/ のハーネスがホストでビルドする。
+add_library(caeq SHARED ca_eq.cpp dsp/ca_eq_dsp.cpp)
 target_include_directories(caeq PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(caeq log)
 target_compile_options(caeq PRIVATE -fvisibility=hidden)
@@ -24,6 +29,13 @@ target_link_options(caeq PRIVATE -Wl,--no-undefined -Wl,--exclude-libs,ALL)
 add_executable(caeqstat caeqstat.cpp)
 target_include_directories(caeqstat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 set_target_properties(caeqstat PROPERTIES PREFIX "lib" OUTPUT_NAME "caeqstat" SUFFIX ".so")
+
+# パラメータ枠への書き手。本番の書き手ができるまでのあいだ、実機でバンドを掛けさせる
+# 唯一の手段になる。seqlock の書き込みは .so の読み手と同じ定義 (dsp/ca_eq_params.h) を使い、
+# 書く前に演算層と同じ検査を通す。これも実体は実行ファイル。
+add_executable(caeqset caeqset.cpp dsp/ca_eq_dsp.cpp)
+target_include_directories(caeqset PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+set_target_properties(caeqset PROPERTIES PREFIX "lib" OUTPUT_NAME "caeqset" SUFFIX ".so")
 
 # post-fs-data から呼ぶ dlopen のセルフテスト。これも実体は実行ファイル。
 add_executable(dlopen_check dlopen_check.cpp)
