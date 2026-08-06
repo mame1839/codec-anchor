@@ -32,17 +32,21 @@ public final class Spike {
     static final int    MIN_GAIN_MB = -6000;
 
     static Object deviceAttrs(String mac) throws Exception {
+        return deviceAttrs(mac, TYPE_BLUETOOTH_A2DP);
+    }
+
+    static Object deviceAttrs(String mac, int devType) throws Exception {
         Class<?> ada = Class.forName("android.media.AudioDeviceAttributes");
         Constructor<?> ctor = ada.getDeclaredConstructor(int.class, int.class, String.class);
         ctor.setAccessible(true);
-        return ctor.newInstance(ROLE_OUTPUT, TYPE_BLUETOOTH_A2DP, mac);
+        return ctor.newInstance(ROLE_OUTPUT, devType, mac);
     }
 
-    static AudioEffect createDeviceEffect(String mac) throws Exception {
+    static AudioEffect createDeviceEffect(String mac, int devType) throws Exception {
         Class<?> ada = Class.forName("android.media.AudioDeviceAttributes");
         Constructor<?> ctor = AudioEffect.class.getDeclaredConstructor(UUID.class, ada);
         ctor.setAccessible(true);
-        return (AudioEffect) ctor.newInstance(IMPL, deviceAttrs(mac));
+        return (AudioEffect) ctor.newInstance(IMPL, deviceAttrs(mac, devType));
     }
 
     static byte[] intToLe(int x) {
@@ -70,8 +74,11 @@ public final class Spike {
         return (UUID) f.get(null);
     }
 
-    static void hold(String mac, int gainMb, int seconds) throws Exception {
-        AudioEffect fx = createDeviceEffect(mac);
+    // devType は AudioDeviceInfo の型。8 = BLUETOOTH_A2DP、2 = BUILTIN_SPEAKER。
+    // イヤホンが切れていると A2DP の patch が無く、proxy は attach 先が無いまま成功を返す
+    // (init_l の NAME_NOT_FOUND が握り潰される)。生きている patch で試すには speaker を使う。
+    static void hold(String mac, int gainMb, int seconds, int devType) throws Exception {
+        AudioEffect fx = createDeviceEffect(mac, devType);
         System.out.println("生成した: " + fx.getDescriptor().name);
         System.out.println("hasControl=" + fx.hasControl());
         // 安全装置 1/3: 正のゲインは .so 側でも 0 に丸められるが、ここでも通さない。
@@ -295,7 +302,8 @@ public final class Spike {
         }
         switch (args[0]) {
             case "hold":
-                hold(args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3]));
+                hold(args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3]),
+                     args.length > 4 ? Integer.parseInt(args[4]) : TYPE_BLUETOOTH_A2DP);
                 break;
             case "tone":
                 tone(Integer.parseInt(args[1]), Integer.parseInt(args[2]),

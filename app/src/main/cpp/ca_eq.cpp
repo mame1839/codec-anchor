@@ -402,6 +402,15 @@ extern "C" int32_t ca_lib_create(const effect_uuid_t* uuid, int32_t sessionId, i
     return 0;
 }
 
+// AUDIO_SESSION_DEVICE のときに呼ばれる 3.1 の入口。
+// deviceId は捨てる — SW の device effect には AUDIO_PORT_HANDLE_NONE (0) が literal で渡され、
+// どのイヤホンかは分からない。デバイスごとの設定は共有メモリで運ぶ前提のまま。
+extern "C" int32_t ca_lib_create_3_1(const effect_uuid_t* uuid, int32_t sessionId, int32_t ioId,
+                                     int32_t deviceId, effect_handle_t* pHandle) {
+    CA_LOGI("create_3_1 session=%d io=%d device=%d", sessionId, ioId, deviceId);
+    return ca_lib_create(uuid, sessionId, ioId, pHandle);
+}
+
 extern "C" int32_t ca_lib_release(effect_handle_t handle) {
     CaCtx* c = reinterpret_cast<CaCtx*>(handle);
     if (c == nullptr) return -EINVAL;
@@ -421,12 +430,16 @@ extern "C" int32_t ca_lib_get_descriptor(const effect_uuid_t* uuid, effect_descr
 // このシンボル名は固定。ローダはこの名前 (AELI) だけを dlsym する。
 // extern "C" と visibility("default") の両方が要る。
 extern "C" __attribute__((visibility("default")))
+// version と create_effect_3_1 は必ずセットで動かす。
+// 3.1 を名乗ると doEffectCreate が NULL チェックなしで create_effect_3_1 を呼ぶので、
+// 片方だけ変えると HAL が落ちて音が全く出なくなる。
 audio_effect_library_t AUDIO_EFFECT_LIBRARY_INFO_SYM = {
-    /* tag */            AUDIO_EFFECT_LIBRARY_TAG,
-    /* version */        EFFECT_LIBRARY_API_VERSION_3_0,
-    /* name */           "Codec Anchor EQ Library",
-    /* implementor */    "Codec Anchor",
-    /* create_effect */  ca_lib_create,
-    /* release_effect */ ca_lib_release,
-    /* get_descriptor */ ca_lib_get_descriptor,
+    /* tag */               AUDIO_EFFECT_LIBRARY_TAG,
+    /* version */           EFFECT_LIBRARY_API_VERSION_3_1,
+    /* name */              "Codec Anchor EQ Library",
+    /* implementor */       "Codec Anchor",
+    /* create_effect */     ca_lib_create,
+    /* release_effect */    ca_lib_release,
+    /* get_descriptor */    ca_lib_get_descriptor,
+    /* create_effect_3_1 */ ca_lib_create_3_1,
 };

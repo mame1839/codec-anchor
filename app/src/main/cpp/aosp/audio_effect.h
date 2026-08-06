@@ -133,6 +133,13 @@ typedef struct audio_effect_library_s {
                              effect_handle_t* pHandle);
     int32_t (*release_effect)(effect_handle_t handle);
     int32_t (*get_descriptor)(const effect_uuid_t* uuid, effect_descriptor_t* pDescriptor);
+    /* 3.1 で足された 4 本目。**位置が ABI なので get_descriptor の後から動かさない。**
+     * EffectsFactory.c の doEffectCreate() は AUDIO_SESSION_DEVICE のときだけこれを呼び、
+     * version が 3.1 未満なら関数を見ずに -ENOSYS を返す (= device effect が作れない)。
+     * しかも **NULL チェックをしないで呼ぶ**ので、メンバを持たずに 3.1 を名乗ると
+     * 境界外へ間接ジャンプして HAL が落ち、音が全く出なくなる。version とセットで扱うこと。 */
+    int32_t (*create_effect_3_1)(const effect_uuid_t* uuid, int32_t sessionId, int32_t ioId,
+                                 int32_t deviceId, effect_handle_t* pHandle);
 } audio_effect_library_t;
 
 #define AUDIO_EFFECT_LIBRARY_TAG  ((('A') << 24) | (('E') << 16) | (('L') << 8) | ('T'))
@@ -149,6 +156,8 @@ typedef struct audio_effect_library_s {
 
 #define EFFECT_MAKE_API_VERSION(M, m)   (((M) << 16) | ((m) & 0xFFFF))
 #define EFFECT_LIBRARY_API_VERSION_3_0  EFFECT_MAKE_API_VERSION(3, 0)
+/* AUDIO_SESSION_DEVICE への生成は 3.1 以上でないと通らない (doEffectCreate)。 */
+#define EFFECT_LIBRARY_API_VERSION_3_1  EFFECT_MAKE_API_VERSION(3, 1)
 #define EFFECT_CONTROL_API_VERSION      EFFECT_MAKE_API_VERSION(2, 0)
 
 /*----------------------------------------------------------------------------
