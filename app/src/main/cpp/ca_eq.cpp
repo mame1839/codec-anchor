@@ -22,18 +22,19 @@
 namespace {
 
 // eq-plan-1.md の識別子と 1 文字も違えないこと。
-// C++ では指示付き初期化子の順序が宣言順に固定されるので、メンバの順序も守る。
+// **ABI に依存する構造体は位置で初期化しない。**フィールド名で書けば、ヘッダの並びが
+// 変わっても値が別のフィールドに落ちない (並びが食い違えばコンパイルエラーになる)。
 const effect_descriptor_t kCaEqDescriptor = {
-    /* type */        { 0x7a1c9f61, 0x4a2e, 0x4f6b, 0x9d21, { 0x0a, 0x5c, 0x1b, 0x3e, 0x77, 0xd1 } },
-    /* uuid */        { 0x7a1c9f60, 0x4a2e, 0x4f6b, 0x9d21, { 0x0a, 0x5c, 0x1b, 0x3e, 0x77, 0xd1 } },
-    /* apiVersion */  EFFECT_CONTROL_API_VERSION,
+    .type        = { 0x7a1c9f61, 0x4a2e, 0x4f6b, 0x9d21, { 0x0a, 0x5c, 0x1b, 0x3e, 0x77, 0xd1 } },
+    .uuid        = { 0x7a1c9f60, 0x4a2e, 0x4f6b, 0x9d21, { 0x0a, 0x5c, 0x1b, 0x3e, 0x77, 0xd1 } },
+    .apiVersion  = EFFECT_CONTROL_API_VERSION,
     // POST_PROC は AUDIO_SESSION_DEVICE に必須。INSERT_LAST は Dolby DAP / MiSound の後段に入るため。
     // DEVICE_IND はデバイスの変化を教えてもらうため。
-    /* flags */       EFFECT_FLAG_TYPE_POST_PROC | EFFECT_FLAG_INSERT_LAST | EFFECT_FLAG_DEVICE_IND,
-    /* cpuLoad */     10,
-    /* memoryUsage */ 1,
-    /* name */        "Codec Anchor EQ",
-    /* implementor */ "Codec Anchor",
+    .flags       = EFFECT_FLAG_TYPE_POST_PROC | EFFECT_FLAG_INSERT_LAST | EFFECT_FLAG_DEVICE_IND,
+    .cpuLoad     = 10,
+    .memoryUsage = 1,
+    .name        = "Codec Anchor EQ",
+    .implementor = "Codec Anchor",
 };
 
 struct CaCtx {
@@ -373,11 +374,12 @@ extern "C" int32_t ca_get_descriptor(effect_handle_t self, effect_descriptor_t* 
 }
 
 namespace {
+// 関数ポインタ表。位置を 1 つずらすと別の関数が呼ばれるので、必ずフィールド名で書く。
 const struct effect_interface_s kCaEqInterface = {
-    /* process */         ca_process,
-    /* command */         ca_command,
-    /* get_descriptor */  ca_get_descriptor,
-    /* process_reverse */ nullptr,
+    .process         = ca_process,
+    .command         = ca_command,
+    .get_descriptor  = ca_get_descriptor,
+    .process_reverse = nullptr,
 };
 }  // namespace
 
@@ -433,13 +435,14 @@ extern "C" __attribute__((visibility("default")))
 // version と create_effect_3_1 は必ずセットで動かす。
 // 3.1 を名乗ると doEffectCreate が NULL チェックなしで create_effect_3_1 を呼ぶので、
 // 片方だけ変えると HAL が落ちて音が全く出なくなる。
+// ここもフィールド名で書く — 位置を 1 つ間違えるだけで同じ事故になる。
 audio_effect_library_t AUDIO_EFFECT_LIBRARY_INFO_SYM = {
-    /* tag */               AUDIO_EFFECT_LIBRARY_TAG,
-    /* version */           EFFECT_LIBRARY_API_VERSION_3_1,
-    /* name */              "Codec Anchor EQ Library",
-    /* implementor */       "Codec Anchor",
-    /* create_effect */     ca_lib_create,
-    /* release_effect */    ca_lib_release,
-    /* get_descriptor */    ca_lib_get_descriptor,
-    /* create_effect_3_1 */ ca_lib_create_3_1,
+    .tag               = AUDIO_EFFECT_LIBRARY_TAG,
+    .version           = EFFECT_LIBRARY_API_VERSION_3_1,
+    .name              = "Codec Anchor EQ Library",
+    .implementor       = "Codec Anchor",
+    .create_effect     = ca_lib_create,
+    .release_effect    = ca_lib_release,
+    .get_descriptor    = ca_lib_get_descriptor,
+    .create_effect_3_1 = ca_lib_create_3_1,
 };
