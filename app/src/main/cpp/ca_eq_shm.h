@@ -126,8 +126,9 @@ typedef struct ca_shm_s {
 CA_STATIC_ASSERT(sizeof(ca_shm_t) == 128 + 128 * CA_SHM_SLOTS + 576 * CA_SHM_SLOTS,
                  "ca_shm_t の並びが変わっている");
 
-/* module/post-fs-data.sh がこの大きさでファイルを作る。**片方だけ変えると、
- * .so がマップの外を触って SIGBUS で HAL ごと落ちる。**必ず同時に直すこと。 */
+/* module/common/setup.sh がこの大きさでファイルを作る。**片方だけ変えると、
+ * .so がマップの外を触って SIGBUS で HAL ごと落ちる。**必ず同時に直すこと。
+ * module/test/module_test.sh が両者の一致を見張っている。 */
 #define CA_SHM_BYTES  5760
 CA_STATIC_ASSERT(sizeof(ca_shm_t) == CA_SHM_BYTES, "CA_SHM_BYTES と実際の大きさが違う");
 

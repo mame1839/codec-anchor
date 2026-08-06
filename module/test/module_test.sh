@@ -153,6 +153,54 @@ for f in $SHIP module/build.sh module/version.sh; do
 done
 [ $e -eq 0 ] && ok "CRLF が混ざっていない" || ng "CRLF が混ざっていない"
 
+# ---- .so とモジュールの取り決め ----------------------------------------------
+# 共有メモリの形は、ヘッダ (.so 側) とシェル (モジュール側) の両方に書いてある。
+# 片方だけ直しても両方ビルドは通り、実機でしか出ない形で壊れる。
+# ヘッダ側は static_assert が構造体との一致を見ているので、ここではヘッダとシェルを突き合わせる。
+#
+# ⚠️ 取り出しに失敗したときは「一致した」ではなく失敗にすること。
+#    定義の綴りや書き方が変わったときに黙って素通しするテストは、無いのと同じ。
+
+SHM_H=app/src/main/cpp/ca_eq_shm.h
+is_num() { case "${1:-}" in ''|*[!0-9]*) return 1 ;; *) return 0 ;; esac; }
+# #define <名前> <数値> / #define <名前> "<文字列>" を 1 つだけ取り出す。
+defnum() { sed -n "s/^[[:space:]]*#define[[:space:]]\\+$1[[:space:]]\\+\\([0-9]\\+\\).*\$/\\1/p" "$SHM_H"; }
+defstr() { sed -n "s/^[[:space:]]*#define[[:space:]]\\+$1[[:space:]]\\+\"\\([^\"]\\+\\)\".*\$/\\1/p" "$SHM_H"; }
+setup_code=$(sed 's/#.*//' module/common/setup.sh)
+
+[ -f "$SHM_H" ] || ng "$SHM_H がある"
+
+# 21. 共有メモリの大きさ。食い違うと .so がマップの外を触り、SIGBUS で vendor の
+#     audio HAL ごと落ちる (= 端末が無音になる)。
+h_bytes=$(defnum CA_SHM_BYTES)
+s_bytes=$(printf '%s\n' "$setup_code" | sed -n 's/.*[[:space:]]bs=\([0-9]*\).*/\1/p')
+n_bs=$(printf '%s\n' "$setup_code" | grep -c 'bs=')
+if ! is_num "$h_bytes"; then
+    ng "共有メモリの大きさが一致する ($SHM_H の CA_SHM_BYTES を 1 つの数値として読めない)"
+elif [ "$n_bs" != 1 ]; then
+    ng "共有メモリの大きさが一致する (setup.sh の bs= が $n_bs 箇所)"
+elif ! is_num "$s_bytes"; then
+    ng "共有メモリの大きさが一致する (setup.sh の bs= を数値として読めない)"
+elif [ "$h_bytes" != "$s_bytes" ]; then
+    ng "共有メモリの大きさが一致する (ヘッダ $h_bytes / setup.sh $s_bytes)"
+else
+    ok "共有メモリの大きさが一致する ($h_bytes バイト)"
+fi
+
+# 22. 共有メモリの置き場。ずれると .so は何も見つけられず、観測点だけが黙って消える。
+#     uninstall.sh も同じ場所を消しているので 3 箇所を突き合わせる。
+h_path=$(defstr CA_SHM_PATH)
+s_path=$(printf '%s\n' "$setup_code" | sed -n 's/^[[:space:]]*SHM=\(.*[^[:space:]]\)[[:space:]]*$/\1/p')
+if [ -z "$h_path" ] || [ "$(printf '%s\n' "$h_path" | wc -l)" != 1 ]; then
+    ng "共有メモリの置き場が一致する ($SHM_H の CA_SHM_PATH を 1 つの文字列として読めない)"
+elif [ "$s_path" != "$h_path" ]; then
+    ng "共有メモリの置き場が一致する (ヘッダ $h_path / setup.sh $s_path)"
+elif ! grep -qF "$h_path" module/uninstall.sh; then
+    ng "共有メモリの置き場が一致する (uninstall.sh が $h_path を消していない)"
+else
+    ok "共有メモリの置き場が一致する ($h_path)"
+fi
+
 # ---- 版 ----------------------------------------------------------------------
 # タグが唯一の出どころ。モジュールの中身は APK から取り出すので、版はアプリと必ず一致する。
 
