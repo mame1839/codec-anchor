@@ -119,6 +119,11 @@ android {
     lint {
         baseline = file("lint-baseline.xml")
         warningsAsErrors = true
+        // 上流が新しい版を公開した日に、こちらのコードが 1 行も変わっていないのにビルドが落ちる
+        // 検査。**再現性が無い**ので外す。版を上げるのは意図してやる作業で、CI に催促させない。
+        // baseline に逃がさないのは、baseline が「いま出ている指摘」を固定するものだから —
+        // 次の版が出れば新しい指摘として素通りしてしまい、抑止にならない。
+        disable += setOf("AndroidGradlePluginVersion", "NewerVersionAvailable", "GradleDependency")
     }
 
     packaging {
