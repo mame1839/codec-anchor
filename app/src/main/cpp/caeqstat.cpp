@@ -111,6 +111,12 @@ int main(int argc, char** argv) {
         printf("     peak: float in=%.9g out=%.9g / int32 in=%u out=%u\n",
                static_cast<double>(s.in_peak), static_cast<double>(s.out_peak),
                s.in_peak_i32, s.out_peak_i32);
+        // **どの枠がイヤホン側かは session_id でしか分からない。**<postprocess> にも登録すると
+        // スピーカー / spatializer のスレッドにも同じエフェクトが挿さり、枠が同時に複数立つ。
+        printf("     session=%d %s\n", s.session_id,
+               s.session_id == CA_AUDIO_SESSION_DEVICE
+                   ? "(DEVICE = <deviceEffects> 経由 = イヤホン側)"
+                   : "(DEVICE でない = postprocess 等。イヤホンの設定を書く先ではない)");
         // パラメータ経路。**捨てたことが見えないと「効かない」の原因が追えない。**
         if (s.param_slot == CA_PARAM_SLOT_NONE) {
             printf("     param: 枠が未割り当て — パラメータを一切適用せず素通し\n");

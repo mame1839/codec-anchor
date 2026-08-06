@@ -162,7 +162,7 @@ inline std::atomic<uint32_t>* ca_in_use(ca_slot_t* s) {
     return reinterpret_cast<std::atomic<uint32_t>*>(&s->in_use);
 }
 
-void ca_stats_attach(CaCtx* c, int32_t ioId) {
+void ca_stats_attach(CaCtx* c, int32_t sessionId, int32_t ioId) {
     ca_stats_open();
     c->slot = nullptr;
     if (g_shm == nullptr) return;
@@ -175,16 +175,20 @@ void ca_stats_attach(CaCtx* c, int32_t ioId) {
             s->seq = 0; s->frames = 0; s->sample_rate = 0; s->channels = 0;
             s->block_frames = 0; s->state = 0; s->gain_mb = 0;
             s->io_id = ioId;
+            // **pid より先に書くこと。**書き手 (caeqset) は pid が入っている枠だけを見るので、
+            // この順序なら「pid は入ったが session_id はまだ 0」を掴む隙が無い。
+            s->session_id = sessionId;
             s->pid = static_cast<uint64_t>(getpid());
             s->ctx = reinterpret_cast<uint64_t>(c);
             s->last_ns = 0;
             c->slot = s;
             // 既定では自分が取った枠と同じ添字のパラメータを読む。書き手は統計側の
-            // io_id / ctx を見てどの枠がどのイヤホンかを決められるので、これで足りる。
+            // session_id を見てイヤホン側の枠を選ぶので、これで足りる。
             // SET_PARAM (id=2) が来たらそちらで上書きする。
             c->param_slot = static_cast<uint32_t>(i);
             s->param_slot = c->param_slot;
-            CA_LOGI("stats slot %d taken io=%d ctx=%p", i, ioId, static_cast<void*>(c));
+            CA_LOGI("stats slot %d taken session=%d io=%d ctx=%p", i, sessionId, ioId,
+                    static_cast<void*>(c));
             return;
         }
     }
@@ -536,7 +540,9 @@ extern "C" int32_t ca_lib_create(const effect_uuid_t* uuid, int32_t sessionId, i
     c->dsp.configure(48000.0, 2, kStructure);
     // 初回のページフォルトと係数の初期化を process() の外へ出す。
     c->dsp.warmUp();
-    ca_stats_attach(c, ioId);
+    // sessionId をそのまま統計へ渡す。**これが「この枠はイヤホン側か」を外から判定できる
+    // 唯一の手掛かり** — deviceId は SW の device effect では常に 0 で、MAC も運ばれない。
+    ca_stats_attach(c, sessionId, ioId);
     CA_LOGI("create session=%d io=%d ctx=%p", sessionId, ioId, static_cast<void*>(c));
     *pHandle = reinterpret_cast<effect_handle_t>(c);
     return 0;

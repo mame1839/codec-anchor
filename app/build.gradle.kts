@@ -137,6 +137,15 @@ android {
 
     packaging {
         resources.excludes += setOf("/META-INF/{AL2.0,LGPL2.1}", "META-INF/*.version")
+        // **APK に載せた実行ファイル (libcaeqset.so) を su から起動するので、展開させる。**
+        // AGP の既定は useLegacyPackaging = false で、マニフェストに
+        // android:extractNativeLibs="false" が入る。その場合 .so は APK の中に置かれたままで、
+        // **nativeLibraryDir にファイルが 1 つも現れない** — リンカは apk!/lib/... の形で
+        // dlopen できるが、**exec はできない。**EQ の値を書く経路が
+        // 「No such file or directory」で死ぬ。
+        // 退路も無い: アプリの files/ へ複製して実行する形は、Android 10 以降の W^X で
+        // 「アプリが書ける場所からの exec」が塞がれているため通らない。
+        jniLibs.useLegacyPackaging = true
     }
 }
 

@@ -1,13 +1,29 @@
-// 共有メモリのパラメータ枠に書く道具。実機で `.so` に実際のバンドを掛けさせるための、
-// **書き手の役をする最小限のツール。**本番の書き手 (保持プロセス or フック) ができるまでの
-// あいだ、これが唯一の書き手になる。
+// 共有メモリのパラメータ枠に書く道具。**`.so` に実際のバンドを掛けさせる唯一の書き手。**
+// アプリが APK の中の自分自身を `su` 経由で実行して呼ぶ (`nativeLibraryDir/libcaeqset.so`)。
 //
 // seqlock の書き込みは dsp/ca_eq_params.h の paramsBeginWrite / paramsEndWrite をそのまま使う。
 // **`.so` の読み手と同じ定義を共有している**ので、ここで書けたものは必ず読める。
 //
-//   caeqset --slot 0 --preamp -3 --band 100:1.0:6 --band 4000:2:-4 --band 10000:0.7:3:hs
-//   caeqset --slot 0 --off        # enabled を落とす (バンドはそのまま)
-//   caeqset --show                # いまの中身を出すだけ
+//   caeqset --auto-slot --preamp -3 --band 100:1.0:6 --band 4000:2:-4 --band 10000:0.7:3:hs
+//   caeqset --auto-slot --off     # enabled を落とす
+//   caeqset --slot 0 ...          # 枠を手で指定する (実機で調べるとき用)
+//   caeqset --show                # いまの中身と、どの枠が生きているかを出すだけ
+//   caeqset --auto-slot --dry-run # 選ぶところまでやって、書かずに終了コードだけ返す
+//
+// --- 終了コード -------------------------------------------------------------
+//
+// **`EqParams.kt` が同じ値を literal で持っている。片方だけ変えないこと。**
+// 番号はこのコマンドのもので、`module/eq_devices.sh` の表とは別 (0 と 10 だけ意味が揃っている)。
+//
+//   | 値 | 意味                                                                        |
+//   |----|-----------------------------------------------------------------------------|
+//   |  0 | 書けた                                                                      |
+//   | 10 | 使い方が不正。引数の組み立てを間違えている (通常は出ない)                    |
+//   | 11 | 共有メモリが無い / 開けない。モジュールが動いていない                        |
+//   | 12 | 共有メモリの版・大きさが合わない。**アプリとモジュールの版ずれ**             |
+//   | 13 | 生きた枠が無い。**イヤホンが繋がっていないだけで、失敗ではない**             |
+//   | 14 | 生きた枠が複数。イヤホンが 2 台繋がっているので断った                        |
+//   | 15 | パラメータが検査に落ちた (`.so` と同じ範囲で先に検査している)                |
 //
 // 実体は実行ファイルだが、AGP に APK へ載せてもらうため lib*.so を名乗る (caeqstat と同じ)。
 #include <cerrno>
@@ -19,19 +35,45 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "ca_eq_pick.h"
 #include "ca_eq_shm.h"
 #include "dsp/ca_eq_params.h"
 
+// **引数の検査より前に stdout へ出す印。**「プロセスは動いたが root マネージャに拒まれた」を、
+// 終了コードだけでは区別できない (su は拒否のとき自分の終了コードを返す) ので、
+// 「走ったこと」の証拠を別に持つ。`eq_devices.sh` の CA_EQ_DEVICES_BEGIN と同じ役。
+#define CA_EQ_SET_BEGIN "CA_EQ_SET_BEGIN"
+
 namespace {
+
+enum {
+    kExitOk            = 0,
+    kExitBadInput      = 10,
+    kExitNoShm         = 11,
+    kExitShmMismatch   = 12,
+    kExitNoLiveSlot    = 13,
+    kExitAmbiguousSlot = 14,
+    kExitRejected      = 15,
+};
 
 void usage() {
     printf("caeqset — 共有メモリのパラメータ枠に書く\n\n");
-    printf("  caeqset [--file PATH] --slot N [--off|--on] [--preamp dB]\n");
-    printf("          [--band fc:q:gain[:type]] ...\n");
+    printf("  caeqset [--file PATH] (--auto-slot|--slot N) [--off|--on] [--preamp dB]\n");
+    printf("          [--band fc:q:gain[:type]] ... [--dry-run]\n");
     printf("  caeqset [--file PATH] --show\n\n");
+    printf("  --auto-slot は生きているイヤホン側の枠を自分で選ぶ (アプリはこちらを使う)\n");
     printf("  type は pk (peaking, 既定) / ls (low shelf) / hs (high shelf)\n");
     printf("  --band を 1 つも渡さなければバンドは空 (プリアンプだけ) になる\n");
     printf("  検査は .so と同じ範囲で先に行う。落ちたら書かずに理由を出す\n");
+}
+
+// 実機での生存確認。/proc/<pid> が無ければそのプロセスは死んでいる。
+// kill(pid, 0) でも同じことは分かるが、シグナルを撃たない形のほうが事故が無い。
+bool pidAlive(uint64_t pid, void*) {
+    if (pid == 0) return false;
+    char path[64];
+    std::snprintf(path, sizeof(path), "/proc/%llu", static_cast<unsigned long long>(pid));
+    return access(path, F_OK) == 0;
 }
 
 // "fc:q:gain[:type]" を 1 バンドに。
@@ -66,8 +108,20 @@ const char* typeName(uint32_t t) {
     }
 }
 
+// 枠がどう見えているかを 1 行で。**「使用中」と「生きている」と「イヤホン側」は全部別。**
+void describeSlot(const ca_slot_t& s) {
+    if (s.in_use != CA_SHM_MAGIC) { printf("  | .so: この枠を読んでいるエフェクトは無い"); return; }
+    const bool alive = pidAlive(s.pid, nullptr);
+    const bool device = s.session_id == CA_AUDIO_SESSION_DEVICE;
+    printf("  | .so: io=%d session=%d rate=%u ch=%u 適用済み gen=%u 却下=%u [%s]",
+           s.io_id, s.session_id, s.sample_rate, s.channels, s.param_gen, s.param_rejected,
+           !alive  ? "残骸 (pid が死んでいる)"
+           : device ? "イヤホン側 (DEVICE)"
+                    : "イヤホン以外 (postprocess 等)");
+}
+
 void showAll(const ca_shm_t* m) {
-    printf("version=%u slots=%u\n", m->version, m->slot_count);
+    printf("version=%u (期待 %u) slots=%u\n", m->version, CA_SHM_VERSION, m->slot_count);
     for (uint32_t i = 0; i < CA_SHM_SLOTS; i++) {
         const ca_eq_slot_t* q = &m->params[i];
         const ca_slot_t* s = &m->slots[i];
@@ -75,12 +129,7 @@ void showAll(const ca_shm_t* m) {
         printf("枠 %u: gen=%u flags=0x%x bands=%u preamp=%.2f dB writer_pid=%u",
                i, q->generation, q->flags, q->band_count,
                static_cast<double>(q->preamp_db), q->writer_pid);
-        if (s->in_use == CA_SHM_MAGIC) {
-            printf("  | .so: io=%d rate=%u ch=%u 適用済み gen=%u 却下=%u",
-                   s->io_id, s->sample_rate, s->channels, s->param_gen, s->param_rejected);
-        } else {
-            printf("  | .so: この枠を読んでいるエフェクトは無い");
-        }
+        describeSlot(*s);
         printf("\n");
         for (uint32_t b = 0; b < q->band_count && b < CA_EQ_MAX_BANDS; b++) {
             printf("        %2u: %8.1f Hz  Q %5.2f  %+6.2f dB  %s\n", b,
@@ -88,14 +137,48 @@ void showAll(const ca_shm_t* m) {
                    static_cast<double>(q->band[b].gain_db), typeName(q->band[b].type));
         }
     }
+    const caeq::SlotPickResult pick = caeq::pickDeviceSlot(m, pidAlive, nullptr);
+    printf("\n自動選択: ");
+    switch (pick.status) {
+    case caeq::SlotPick::kOk:
+        printf("枠 %u (統計の枠 %u)\n", pick.param_slot, pick.stats_slot);
+        break;
+    case caeq::SlotPick::kNone:
+        printf("イヤホン側の生きた枠が無い — 繋がっていない (異常ではない)\n");
+        break;
+    case caeq::SlotPick::kAmbiguous:
+        printf("イヤホン側の生きた枠が %u — 2 台繋がっているので選ばない\n", pick.live_count);
+        break;
+    }
+    printf("  残骸 %u / イヤホン以外 %u\n", pick.stale_count, pick.other_count);
+}
+
+// 選べなかった理由を stderr に出して、対応する終了コードを返す。
+int reportPickFailure(const caeq::SlotPickResult& pick) {
+    if (pick.status == caeq::SlotPick::kAmbiguous) {
+        fprintf(stderr, "イヤホン側の生きた枠が %u ある。**どの枠がどのイヤホンかは .so から"
+                        "分からない**ので、推測せずに断る (--show で内訳が出る)\n",
+                pick.live_count);
+        return kExitAmbiguousSlot;
+    }
+    fprintf(stderr, "イヤホン側の生きた枠が無い (残骸 %u / イヤホン以外 %u)。"
+                    "イヤホンが繋がっていないだけなら異常ではない\n",
+            pick.stale_count, pick.other_count);
+    return kExitNoLiveSlot;
 }
 
 }  // namespace
 
 int main(int argc, char** argv) {
+    // **引数の検査より前に出す。**これが 1 行も出ていなければ「root を拒否された」。
+    printf("%s\n", CA_EQ_SET_BEGIN);
+    fflush(stdout);
+
     const char* path = CA_SHM_PATH;
     int slot = -1;
+    bool autoSlot = false;
     bool show = false;
+    bool dryRun = false;
     bool enabled = true;
     double preamp = 0.0;
     ca_eq_band_t bands[CA_EQ_MAX_BANDS];
@@ -105,31 +188,43 @@ int main(int argc, char** argv) {
         const char* a = argv[i];
         if (std::strcmp(a, "--file") == 0 && i + 1 < argc)        path = argv[++i];
         else if (std::strcmp(a, "--slot") == 0 && i + 1 < argc)   slot = atoi(argv[++i]);
+        else if (std::strcmp(a, "--auto-slot") == 0)              autoSlot = true;
         else if (std::strcmp(a, "--preamp") == 0 && i + 1 < argc) preamp = atof(argv[++i]);
         else if (std::strcmp(a, "--off") == 0)                    enabled = false;
         else if (std::strcmp(a, "--on") == 0)                     enabled = true;
         else if (std::strcmp(a, "--show") == 0)                   show = true;
+        else if (std::strcmp(a, "--dry-run") == 0)                dryRun = true;
         else if (std::strcmp(a, "--band") == 0 && i + 1 < argc) {
             if (band_count >= CA_EQ_MAX_BANDS) {
                 fprintf(stderr, "バンドが多すぎる (上限 %d)\n", CA_EQ_MAX_BANDS);
-                return 2;
+                return kExitBadInput;
             }
             if (!parseBand(argv[++i], &bands[band_count])) {
                 fprintf(stderr, "--band の書式が不正: %s\n", argv[i]);
-                return 2;
+                return kExitBadInput;
             }
             band_count++;
         } else {
             usage();
-            return 2;
+            return kExitBadInput;
         }
     }
-    if (!show && slot < 0) { usage(); return 2; }
+    if (!show) {
+        if (autoSlot == (slot >= 0)) {
+            fprintf(stderr, "--auto-slot と --slot はどちらか一方だけ指定する\n");
+            usage();
+            return kExitBadInput;
+        }
+        if (slot >= CA_SHM_SLOTS) {
+            fprintf(stderr, "--slot は 0..%d\n", CA_SHM_SLOTS - 1);
+            return kExitBadInput;
+        }
+    }
 
     const int fd = open(path, show ? O_RDONLY : O_RDWR);
     if (fd < 0) {
         fprintf(stderr, "open %s: %s\n", path, std::strerror(errno));
-        return 2;
+        return kExitNoShm;
     }
     // 短いファイルを map して後ろを触ると SIGBUS。版が古いまま残っていることがある。
     struct stat st;
@@ -138,28 +233,64 @@ int main(int argc, char** argv) {
                         "post-fs-data.sh が古い\n",
                 path, static_cast<long long>(st.st_size), sizeof(ca_shm_t));
         close(fd);
-        return 2;
+        return kExitShmMismatch;
     }
     void* p = mmap(nullptr, sizeof(ca_shm_t), show ? PROT_READ : (PROT_READ | PROT_WRITE),
                    MAP_SHARED, fd, 0);
     close(fd);
-    if (p == MAP_FAILED) { fprintf(stderr, "mmap: %s\n", std::strerror(errno)); return 2; }
+    if (p == MAP_FAILED) { fprintf(stderr, "mmap: %s\n", std::strerror(errno)); return kExitNoShm; }
     ca_shm_t* m = static_cast<ca_shm_t*>(p);
 
-    if (show) { showAll(m); return 0; }
+    if (show) { showAll(m); return kExitOk; }
 
-    if (slot >= CA_SHM_SLOTS) {
+    // magic が 0 なのは「エフェクトのインスタンスが 1 度も作られていない」。**版ずれではない** —
+    // この領域を初期化する ca_stats_open() は create_effect() からしか呼ばれないので、
+    // .so が読み込まれていても、まだ 1 度も生成されていなければ 0 のまま。
+    if (m->magic == 0) {
+        fprintf(stderr, "エフェクトのインスタンスが 1 度も作られていない。"
+                        "イヤホンが繋がっていないだけなら異常ではない\n");
+        return kExitNoLiveSlot;
+    }
+    if (m->magic != CA_SHM_MAGIC) {
+        fprintf(stderr, "magic=0x%08x — %s は我々のファイルではない\n", m->magic, path);
+        return kExitShmMismatch;
+    }
+    // **版が違うなら枠の中身の意味が違う。**特に版 2 の .so は session_id を書かないので、
+    // そのまま読むと「イヤホン側の枠が 1 つも無い」に見えて、繋がっているのに
+    // 「繋がっていない」という嘘の理由が出る。
+    if (m->version != CA_SHM_VERSION) {
+        fprintf(stderr, "共有メモリの版が %u (期待 %u)。アプリとモジュールの版がずれている。"
+                        "モジュールを入れ直すこと\n",
+                m->version, CA_SHM_VERSION);
+        return kExitShmMismatch;
+    }
+
+    // --slot は手で調べるとき用。**統計の枠とパラメータの枠が同じ添字である前提**に依る
+    // (.so の既定の対応。SET_PARAM で移していると外れる)。--auto-slot はその対応を見て決める。
+    uint32_t param_slot = 0;
+    uint32_t stats_slot = 0;
+    if (autoSlot) {
+        const caeq::SlotPickResult pick = caeq::pickDeviceSlot(m, pidAlive, nullptr);
+        if (pick.status != caeq::SlotPick::kOk) return reportPickFailure(pick);
+        param_slot = pick.param_slot;
+        stats_slot = pick.stats_slot;
+        printf("枠 %u を選んだ (統計の枠 %u / イヤホン以外 %u / 残骸 %u)\n",
+               param_slot, stats_slot, pick.other_count, pick.stale_count);
+    } else if (slot >= 0 && slot < CA_SHM_SLOTS) {
+        param_slot = static_cast<uint32_t>(slot);
+        stats_slot = param_slot;
+    } else {
         fprintf(stderr, "--slot は 0..%d\n", CA_SHM_SLOTS - 1);
-        return 2;
+        return kExitBadInput;
     }
 
     // **書く前に .so と同じ検査を通す。**サンプルレートは統計側から引く — fc の上限だけが
     // fs に依るので、ここを取り違えると「書けたのに黙って却下される」になる。
-    const uint32_t rate = m->slots[slot].sample_rate;
+    const uint32_t rate = m->slots[stats_slot].sample_rate;
     const double fs = rate ? static_cast<double>(rate) : 48000.0;
     if (rate == 0) {
-        printf("注意: 枠 %d を読むエフェクトがまだ SET_CONFIG を受けていない。"
-               "検査は 48000 Hz として行う\n", slot);
+        printf("注意: 枠 %u を読むエフェクトがまだ SET_CONFIG を受けていない。"
+               "検査は 48000 Hz として行う\n", stats_slot);
     }
     ca_eq_slot_t staged{};
     staged.band_count = band_count;
@@ -169,7 +300,7 @@ int main(int argc, char** argv) {
     caeq::Params check;
     if (!caeq::paramsConvert(staged, &check)) {
         fprintf(stderr, "並びが不正 (type かバンド数)\n");
-        return 1;
+        return kExitRejected;
     }
     if (!caeq::validate(check, fs)) {
         fprintf(stderr, "検査に落ちた (fs=%.0f Hz)。.so も同じ理由で却下する。\n", fs);
@@ -177,11 +308,16 @@ int main(int argc, char** argv) {
                         "preamp は %.0f 〜 +%.0f dB\n",
                 caeq::kMinFcHz, caeq::kValidFcRatio * fs, caeq::kMinQ, caeq::kMaxQ,
                 caeq::kMaxGainDb, caeq::kMinPreampDb, caeq::kMaxPreampDb);
-        return 1;
+        return kExitRejected;
+    }
+
+    if (dryRun) {
+        printf("--dry-run: 枠 %u に書けるところまで確かめた (書いていない)\n", param_slot);
+        return kExitOk;
     }
 
     // seqlock で書く。generation は必ず動かす — 動かさないと .so は読みに来ない。
-    ca_eq_slot_t* dst = &m->params[slot];
+    ca_eq_slot_t* dst = &m->params[param_slot];
     uint32_t gen = dst->generation + 1;
     if (gen == 0) gen = 1;   // 0 は「未割り当て」の意味なので使わない
 
@@ -196,13 +332,13 @@ int main(int argc, char** argv) {
     }
     caeq::paramsEndWrite(dst);
 
-    printf("枠 %d に書いた: gen=%u %s bands=%u preamp=%.2f dB (fs=%.0f Hz で検査済み)\n",
-           slot, gen, enabled ? "enabled" : "disabled", band_count, preamp, fs);
+    printf("枠 %u に書いた: gen=%u %s bands=%u preamp=%.2f dB (fs=%.0f Hz で検査済み)\n",
+           param_slot, gen, enabled ? "enabled" : "disabled", band_count, preamp, fs);
     for (uint32_t i = 0; i < band_count; i++) {
         printf("  %2u: %8.1f Hz  Q %5.2f  %+6.2f dB  %s\n", i,
                static_cast<double>(bands[i].fc_hz), static_cast<double>(bands[i].q),
                static_cast<double>(bands[i].gain_db), typeName(bands[i].type));
     }
     printf("\n反映は caeqstat の param 行で見る (適用済み gen が %u になれば通っている)\n", gen);
-    return 0;
+    return kExitOk;
 }

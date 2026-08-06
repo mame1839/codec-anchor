@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "ca_test_support.h"
+#include "../ca_eq_pick.h"
 #include "../dsp/ca_eq_params.h"
 
 using catest::Report;
@@ -1239,8 +1240,180 @@ void checkAccumulate(Report& r) {
 // 既定を変えればこの一覧も一緒に動く (手で書いた表と違って古くならない)。
 // --------------------------------------------------------------------------
 
+// --------------------------------------------------------------------------
+// 17. 枠の選択 — 実機でしか出ない並びを静的に固定する
+// --------------------------------------------------------------------------
+//
+// **ここが間違うと、掛かる先が黙って変わる。**イヤホンの補正曲線がスピーカーに当たったり、
+// 2 台繋いだ人が「たまに別のイヤホンの設定になる」を踏んだりする。どちらも実機では
+// 「なんとなくおかしい」としか見えないので、並びのほうを固定して先に落とす。
+
+// 生きている pid の表。実機の /proc/<pid> の代わり。
+struct FakePids {
+    uint64_t alive[8];
+    int count;
+};
+
+bool fakePidAlive(uint64_t pid, void* user) {
+    const FakePids* p = static_cast<const FakePids*>(user);
+    for (int i = 0; i < p->count; i++) {
+        if (p->alive[i] == pid) return true;
+    }
+    return false;
+}
+
+// 枠を 1 つ埋める。`.so` の ca_stats_attach が書くのと同じ顔ぶれ。
+void putSlot(ca_shm_t* m, uint32_t i, uint64_t pid, int32_t session) {
+    ca_slot_t& s = m->slots[i];
+    s.in_use = CA_SHM_MAGIC;
+    s.pid = pid;
+    s.session_id = session;
+    s.param_slot = i;
+    s.sample_rate = 48000;
+}
+
+ca_shm_t* newShm() {
+    auto* m = new ca_shm_t{};
+    m->magic = CA_SHM_MAGIC;
+    m->version = CA_SHM_VERSION;
+    m->slot_count = CA_SHM_SLOTS;
+    m->slot_size = static_cast<uint32_t>(sizeof(ca_slot_t));
+    return m;
+}
+
+void checkSlotPick(Report& r) {
+    r.section("17. 枠の選択 (書き手が「どの枠に書くか」を決める規則)");
+
+    // session_id は pad を潰して入れた。**ここがずれると版 2 の .so が書いた 0 を
+    // session_id として読むことになる** (共有メモリの版を上げてある理由でもある)。
+    r.check(offsetof(ca_slot_t, session_id) == 124 && sizeof(ca_slot_t) == 128,
+            "session_id は末尾の 4 バイト (offset %zu / 大きさ %zu)",
+            offsetof(ca_slot_t, session_id), sizeof(ca_slot_t));
+    r.check(CA_AUDIO_SESSION_DEVICE == -2, "AUDIO_SESSION_DEVICE は -2");
+
+    FakePids pids{{100, 200, 300, 0, 0, 0, 0, 0}, 3};
+
+    {   // 何も生きていない = イヤホンが繋がっていない。**失敗ではない**
+        ca_shm_t* m = newShm();
+        const caeq::SlotPickResult p = caeq::pickDeviceSlot(m, fakePidAlive, &pids);
+        r.check(p.status == caeq::SlotPick::kNone && p.live_count == 0,
+                "枠が 1 つも使われていなければ「無い」");
+        delete m;
+    }
+
+    {   // イヤホン 1 台だけ。
+        ca_shm_t* m = newShm();
+        putSlot(m, 3, 100, CA_AUDIO_SESSION_DEVICE);
+        const caeq::SlotPickResult p = caeq::pickDeviceSlot(m, fakePidAlive, &pids);
+        r.check(p.status == caeq::SlotPick::kOk && p.param_slot == 3 && p.stats_slot == 3,
+                "生きた DEVICE の枠が 1 つなら、それを選ぶ (枠 %u)", p.param_slot);
+        delete m;
+    }
+
+    {   // **通常の構成。**<postprocess> にも登録されていると、イヤホンが 1 台でも枠は複数立つ。
+        // ここを session_id で分けないと「2 台繋がっている」と誤判定して常に断ることになる。
+        ca_shm_t* m = newShm();
+        putSlot(m, 0, 100, 0);                          // スピーカー / spatializer 側
+        putSlot(m, 1, 100, CA_AUDIO_SESSION_DEVICE);    // A2DP 側
+        const caeq::SlotPickResult p = caeq::pickDeviceSlot(m, fakePidAlive, &pids);
+        r.check(p.status == caeq::SlotPick::kOk && p.param_slot == 1 && p.other_count == 1,
+                "DEVICE でない枠が同時に居ても、DEVICE の枠だけを選ぶ (枠 %u / 他 %u)",
+                p.param_slot, p.other_count);
+        delete m;
+    }
+
+    {   // **イヤホンが繋がっていないのにスピーカーで再生している状態。**
+        // session_id を見ないと、ここでスピーカーの枠に書いてしまう。
+        ca_shm_t* m = newShm();
+        putSlot(m, 0, 100, 0);
+        const caeq::SlotPickResult p = caeq::pickDeviceSlot(m, fakePidAlive, &pids);
+        r.check(p.status == caeq::SlotPick::kNone && p.other_count == 1,
+                "DEVICE でない枠しか無ければ「無い」— スピーカーには書かない");
+        delete m;
+    }
+
+    {   // **死んだプロセスの枠は残る。**.so はプロセスの死で枠を掃除しない。
+        ca_shm_t* m = newShm();
+        putSlot(m, 0, 999, CA_AUDIO_SESSION_DEVICE);    // 999 は死んでいる
+        putSlot(m, 2, 200, CA_AUDIO_SESSION_DEVICE);
+        const caeq::SlotPickResult p = caeq::pickDeviceSlot(m, fakePidAlive, &pids);
+        r.check(p.status == caeq::SlotPick::kOk && p.param_slot == 2 && p.stale_count == 1,
+                "pid が死んでいる残骸は数えない (選んだ枠 %u / 残骸 %u)",
+                p.param_slot, p.stale_count);
+        delete m;
+    }
+
+    {   // 残骸だけ。in_use を信じると「繋がっている」に見える。
+        ca_shm_t* m = newShm();
+        putSlot(m, 0, 999, CA_AUDIO_SESSION_DEVICE);
+        putSlot(m, 1, 998, CA_AUDIO_SESSION_DEVICE);
+        const caeq::SlotPickResult p = caeq::pickDeviceSlot(m, fakePidAlive, &pids);
+        r.check(p.status == caeq::SlotPick::kNone && p.stale_count == 2,
+                "残骸しか無ければ「無い」(in_use が立っていても)");
+        delete m;
+    }
+
+    {   // **イヤホンが 2 台。ここは断るのが正しい。**
+        ca_shm_t* m = newShm();
+        putSlot(m, 0, 100, CA_AUDIO_SESSION_DEVICE);
+        putSlot(m, 1, 200, CA_AUDIO_SESSION_DEVICE);
+        const caeq::SlotPickResult p = caeq::pickDeviceSlot(m, fakePidAlive, &pids);
+        r.check(p.status == caeq::SlotPick::kAmbiguous && p.live_count == 2,
+                "生きた DEVICE の枠が 2 つなら選ばない (推測すると別のイヤホンに掛かる)");
+        delete m;
+    }
+
+    {   // attach の途中 (CAS は通ったが pid はまだ)。次に呼べば埋まっている。
+        ca_shm_t* m = newShm();
+        putSlot(m, 0, 0, CA_AUDIO_SESSION_DEVICE);
+        const caeq::SlotPickResult p = caeq::pickDeviceSlot(m, fakePidAlive, &pids);
+        r.check(p.status == caeq::SlotPick::kNone && p.stale_count == 0,
+                "pid が 0 の枠 (attach の途中) は数えない");
+        delete m;
+    }
+
+    {   // 読みに行く枠が決まっていないインスタンスは、書いても素通しのまま。
+        ca_shm_t* m = newShm();
+        putSlot(m, 0, 100, CA_AUDIO_SESSION_DEVICE);
+        m->slots[0].param_slot = CA_PARAM_SLOT_NONE;
+        const caeq::SlotPickResult p = caeq::pickDeviceSlot(m, fakePidAlive, &pids);
+        r.check(p.status == caeq::SlotPick::kNone,
+                "param_slot が未割り当ての枠は選ばない (書いても適用されない)");
+        delete m;
+    }
+
+    {   // SET_PARAM (id=2) で読み先を移した場合。**統計の添字ではなく param_slot に書く。**
+        ca_shm_t* m = newShm();
+        putSlot(m, 1, 100, CA_AUDIO_SESSION_DEVICE);
+        m->slots[1].param_slot = 5;
+        const caeq::SlotPickResult p = caeq::pickDeviceSlot(m, fakePidAlive, &pids);
+        r.check(p.status == caeq::SlotPick::kOk && p.param_slot == 5 && p.stats_slot == 1,
+                "書き込み先は param_slot (統計の添字とは別。fs は統計の枠 %u から引く)",
+                p.stats_slot);
+        delete m;
+    }
+
+    {   // slot_count より後ろは見ない。古い .so が少ない枠数で開いていた場合。
+        ca_shm_t* m = newShm();
+        m->slot_count = 2;
+        putSlot(m, 4, 100, CA_AUDIO_SESSION_DEVICE);
+        const caeq::SlotPickResult p = caeq::pickDeviceSlot(m, fakePidAlive, &pids);
+        r.check(p.status == caeq::SlotPick::kNone, "slot_count の先は読まない");
+        delete m;
+    }
+
+    {   // in_use が立っていない枠は、他のフィールドが残っていても見ない。
+        ca_shm_t* m = newShm();
+        putSlot(m, 0, 100, CA_AUDIO_SESSION_DEVICE);
+        m->slots[0].in_use = 0;
+        const caeq::SlotPickResult p = caeq::pickDeviceSlot(m, fakePidAlive, &pids);
+        r.check(p.status == caeq::SlotPick::kNone, "in_use が立っていない枠は見ない");
+        delete m;
+    }
+}
+
 void printDeviceChecklist(Report& r) {
-    r.section("17. 実機で確かめること (ホストでは検証できない項目の一覧)");
+    r.section("18. 実機で確かめること (ホストでは検証できない項目の一覧)");
 
     Eq def;
     const double ramp_ms = def.rampMillis();
@@ -1252,6 +1425,9 @@ void printDeviceChecklist(Report& r) {
     r.note("   1152 のままなら: モジュールだけ古い。**.so は logcat に stats file too small を");
     r.note("     出して統計を諦める (音は素通しで正常)。SIGBUS で無音にならないことがこの経路の要点**");
     r.note("   caeqstat も同じ検査をするので too small で止まる");
+    r.note("   **大きさが同じでも版が %u でなければ駄目** (caeqset --show の version=)。", CA_SHM_VERSION);
+    r.note("     版 2 の .so は session_id を書かないので、**繋がっているのに");
+    r.note("     「イヤホン側の枠が無い」という嘘の理由が出る。**caeqset は版が違えば専用の値で落ちる");
     r.note("");
 
     r.note("B. 生成と経路 — 枠は取れたが、まだ誰にも宛てられていない状態");
@@ -1291,16 +1467,20 @@ void printDeviceChecklist(Report& r) {
     r.note("      caeqstat の param 行で却下が増える");
     r.note("");
 
-    r.note("E. バンドを実機で鳴らす — 書き手は libcaeqset.so (本番の書き手ができるまでの代役)");
+    r.note("E. バンドを実機で鳴らす — 書き手は libcaeqset.so (アプリが su 経由で呼ぶのと同じもの)");
     r.note("   **何もしなければ gen=0 のまま素通し。**これは正常な状態であって不具合ではない");
     r.note("   caeqset は .so と同じ seqlock の定義 (dsp/ca_eq_params.h) を使い、");
     r.note("     **書く前に演算層と同じ検査を通す** — 通ったものは必ず .so にも通る");
     r.note("   手順:");
-    r.note("     caeqset --show                        # どの枠を誰が読んでいるか");
-    r.note("     caeqset --slot N --preamp -3 --band 100:1:6 --band 4000:2:-4 --band 10000:0.7:3:hs");
+    r.note("     caeqset --show                        # どの枠が生きていて、どれがイヤホン側か");
+    r.note("     caeqset --auto-slot --dry-run         # 選ぶところまで。**書かずに終了コードだけ**");
+    r.note("     caeqset --auto-slot --preamp -3 --band 100:1:6 --band 4000:2:-4 --band 10000:0.7:3:hs");
     r.note("     caeqstat                              # 適用済み gen が上がっていれば通っている");
-    r.note("     caeqset --slot N --off                # enabled を落とす (フェードして素通しへ)");
+    r.note("     caeqset --auto-slot --off             # enabled を落とす (フェードして素通しへ)");
     r.note("   期待: **適用済み gen == 共有メモリ gen、却下=0、out_peak が変わる**");
+    r.note("   **枠を選ぶのは caeqset の中。**アプリはテキストを解析しない (--slot は手で調べるとき用)");
+    r.note("   終了コード: 0 成功 / 10 使い方 / 11 共有メモリ無し / 12 版ずれ /");
+    r.note("     13 生きた枠が無い (未接続。**異常ではない**) / 14 生きた枠が複数 / 15 検査に落ちた");
     r.note("   適用済み gen が上がらないなら: その枠を読んでいるエフェクトがいない (--show で確認)");
     r.note("   却下が増えるなら: fs が想定と違う。caeqset は統計側の rate を見て検査するので、");
     r.note("     **SET_CONFIG より先に書くと 48000 Hz として検査してしまう** (注意が出る)");
@@ -1310,7 +1490,20 @@ void printDeviceChecklist(Report& r) {
     r.note("   SET_PARAM id=%d で枠を上書きできる (保持者がいるときの経路)", CA_PARAM_ID_SLOT);
     r.note("");
 
-    r.note("F. ホストで既に押さえてあるので実機で測り直さないもの");
+    r.note("F. アプリから caeqset を呼ぶ経路 — **ホストでは 1 つも確かめられない**");
+    r.note("   1) **APK の中の実行ファイルが展開されているか。**これが前提で、外すと全部死ぬ");
+    r.note("      adb shell run-as <pkg> ls -l lib/arm64/libcaeqset.so   (0755 で見えること)");
+    r.note("      **見えないなら app/build.gradle.kts の jniLibs.useLegacyPackaging が false。**");
+    r.note("      その場合 .so は APK の中に置かれたままで、dlopen はできても exec はできない");
+    r.note("   2) **root マネージャの許可が「毎回聞く」になっていないか。**先に見ること。");
+    r.note("      そこが「毎回聞く」なら、背面から押す形は通る通らない以前に成立しない");
+    r.note("   3) **アプリ自身の uid から呼べるか。**`adb shell su` は答えにならない");
+    r.note("      (許可は uid ごと)。**アプリのコードから呼ばれること**が条件");
+    r.note("   4) 印 (CA_EQ_SET_BEGIN) が stdout に出ているか");
+    r.note("      出ていないのに終了コードが非 0 = **su 自身の値。表と突き合わせてはいけない**");
+    r.note("");
+
+    r.note("G. ホストで既に押さえてあるので実機で測り直さないもの");
     r.note("   RBJ の係数 / 振幅特性 / ブロック長とチャンネル数への非依存 / NaN からの復帰 /");
     r.note("   クリックの大きさ / 時変安定性 / seqlock の千切れ — すべてこのハーネスで検証済み");
     r.note("   **実機で見るのは「経路」と「フレームワークの挙動」だけ。**演算の正しさは見ない");
@@ -1341,6 +1534,7 @@ int main(int argc, char** argv) {
     checkAccumulate(r);
     checkSeqlock(r);
     checkRateChange(r);
+    checkSlotPick(r);
     printDeviceChecklist(r);
 
     std::printf("\n%d / %d 件が通った。\n", r.total() - r.failures(), r.total());
