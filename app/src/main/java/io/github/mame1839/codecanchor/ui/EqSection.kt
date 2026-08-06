@@ -501,8 +501,11 @@ private fun EqSettings.mapBand(index: Int, transform: (EqBand) -> EqBand): EqSet
  * ここで必ず止まる。1〜3 dB ずれるだけで形はおおむね保たれるし、
  * ユーザがバンド数を変えると言っているのに拒むほうが悪い。**通知も出さない** —
  * 操作のたびに消せない警告が出る画面になる。
+ *
+ * private ではなく internal なのは単体テストから呼ぶため。ここは黙って曲線を壊しうる唯一の場所で、
+ * 壊れても画面上は「なんとなく音が変わった」にしか見えない。
  */
-private fun reband(settings: EqSettings, bandCount: Int): EqSettings {
+internal fun reband(settings: EqSettings, bandCount: Int): EqSettings {
     val count = EqSettings.normalizeBandCount(bandCount)
     val freqs = EqSolver.centerFrequencies(count)
     val target = DoubleArray(freqs.size) {
@@ -524,7 +527,7 @@ private fun toGraphic(settings: EqSettings): EqSettings =
  * 読み込んだとき。並びが合っているときは触らない — 解き直すと値がわずかに動くので、
  * オンにするたびに設定が変わったことになる。
  */
-private fun withGraphicGrid(settings: EqSettings): EqSettings {
+internal fun withGraphicGrid(settings: EqSettings): EqSettings {
     if (settings.mode != EqMode.GRAPHIC) return settings
     val freqs = EqSolver.centerFrequencies(settings.bandCount)
     val matches = settings.bands.size == freqs.size &&
