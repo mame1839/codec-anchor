@@ -915,8 +915,9 @@ void checkDenormal(Report& r) {
         }
         const auto t1 = std::chrono::steady_clock::now();
         const double ns = std::chrono::duration<double, std::nano>(t1 - t0).count() / kIters;
-        // sink を捨てないことで最適化での消滅を防ぐ。
-        if (!std::isfinite(sink)) std::printf("");
+        // sink を捨てないことで最適化での消滅を防ぐ。空の書式文字列は -Wformat-zero-length に
+        // 掛かるので、到達しない側にも中身を持たせる。
+        if (!std::isfinite(sink)) std::printf("(非有限)\n");
         return ns;
     };
 
