@@ -30,6 +30,13 @@ add_executable(caeqstat caeqstat.cpp)
 target_include_directories(caeqstat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 set_target_properties(caeqstat PROPERTIES PREFIX "lib" OUTPUT_NAME "caeqstat" SUFFIX ".so")
 
+# パラメータ枠への書き手。本番の書き手ができるまでのあいだ、実機でバンドを掛けさせる
+# 唯一の手段になる。seqlock の書き込みは .so の読み手と同じ定義 (dsp/ca_eq_params.h) を使い、
+# 書く前に演算層と同じ検査を通す。これも実体は実行ファイル。
+add_executable(caeqset caeqset.cpp dsp/ca_eq_dsp.cpp)
+target_include_directories(caeqset PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+set_target_properties(caeqset PROPERTIES PREFIX "lib" OUTPUT_NAME "caeqset" SUFFIX ".so")
+
 # post-fs-data から呼ぶ dlopen のセルフテスト。これも実体は実行ファイル。
 add_executable(dlopen_check dlopen_check.cpp)
 target_include_directories(dlopen_check PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

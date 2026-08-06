@@ -1231,6 +1231,91 @@ void checkAccumulate(Report& r) {
     r.check(same, "無効なあいだは入力をそのまま返す");
 }
 
+// --------------------------------------------------------------------------
+// 17. 実機で確かめること
+//
+// **実機は 1 台で、入れ替えるたびに時間がかかる。**一度の投入で全部確かめられるよう、
+// 「何が起きるはずか」と「違ったら何を疑うか」を並べる。数値はコードの定数から出しているので、
+// 既定を変えればこの一覧も一緒に動く (手で書いた表と違って古くならない)。
+// --------------------------------------------------------------------------
+
+void printDeviceChecklist(Report& r) {
+    r.section("17. 実機で確かめること (ホストでは検証できない項目の一覧)");
+
+    Eq def;
+    const double ramp_ms = def.rampMillis();
+    const double fade_ms = def.fadeMillis();
+
+    r.note("A. 入れる前 — 共有メモリの版が上がっている (1152 -> %d バイト)", CA_SHM_BYTES);
+    r.note("   ls -l /data/vendor/audio/ca_eq_stats.bin");
+    r.note("   期待: %d バイト。post-fs-data.sh が作り直す", CA_SHM_BYTES);
+    r.note("   1152 のままなら: モジュールだけ古い。**.so は logcat に stats file too small を");
+    r.note("     出して統計を諦める (音は素通しで正常)。SIGBUS で無音にならないことがこの経路の要点**");
+    r.note("   caeqstat も同じ検査をするので too small で止まる");
+    r.note("");
+
+    r.note("B. 生成と経路 — 枠は取れたが、まだ誰にも宛てられていない状態");
+    r.note("   caeqstat の param: 行");
+    r.note("   期待: 「枠=N 適用済み gen=0 / 共有メモリ gen=0」+「書き手がまだ一度も書いていない」");
+    r.note("   **この状態で processedFrames が進み、in_peak == out_peak なら、**");
+    r.note("     **「宛てられるまで素通し」が実機で成立している** (gen==0 では何も適用しない)");
+    r.note("   進まないなら: エフェクトが音声経路に入っていない。param 経路とは別の問題");
+    r.note("");
+
+    r.note("C. 前と変わる 3 点 — 再実証のときに混乱しないための予測");
+    r.note("   1) SET_PARAM (id=%d) のゲインが %.0f ms のランプになった", CA_PARAM_ID_GAIN, ramp_ms);
+    r.note("      期待: in/out 比は %.0f ms 後に落ち着く。caeqstat を 2 回読めば同じ値", ramp_ms);
+    r.note("      **10 ms は 1 ブロック (20 ms) より短いので、観測できないのが正しい**");
+    r.note("      比が中途半端なまま止まるなら: ランプが終わっていない = process() が回っていない");
+    r.note("   2) DISABLE のあと 1 ブロックだけ余分に回る (%.0f ms のフェードを終わらせるため)",
+           fade_ms);
+    r.note("      期待: processedFrames が block_frames ぶんちょうど 1 回増えて止まる");
+    r.note("      **増えずに止まるなら: -ENODATA を idle() より先に返している = フェードが効かない**");
+    r.note("      増え続けるなら: idle() に到達していない");
+    r.note("   3) ENABLE で状態をゼロにする");
+    r.note("      **直接は観測できない。**クリックが減ることでしか分からないので、耳で確かめる");
+    r.note("   4) SET_PARAM のゲインの下限が -6000 -> -4000 mB");
+    r.note("      期待: -6000 を送っても -4000 mB として記録される (caeqstat の gain_mB)");
+    r.note("");
+
+    r.note("D. 新しく分かること — ログと caeqstat に出るようになった値");
+    r.note("   1) SET_CONFIG のログに access=N が出る (0=WRITE 1=READ 2=ACCUMULATE)");
+    r.note("      **2 が来るなら出力を上書きしてはいけない経路。**実装済みだが実測がまだ");
+    r.note("   2) SET_CONFIG のログから frames= を外した (常に 0 だったので判断に使えない)");
+    r.note("   3) チャンネル数の上限は %d。実測の 12 ch は passthrough_only にならないはず",
+           caeq::kMaxChannels);
+    r.note("      12 ch で PASSTHROUGH_ONLY が立つなら: format が float でない側の理由");
+    r.note("   4) fc の上限は %.2f x fs — 48 kHz で %.0f Hz、96 kHz (LDAC) で %.0f Hz",
+           caeq::kValidFcRatio, caeq::kValidFcRatio * 48000.0, caeq::kValidFcRatio * 96000.0);
+    r.note("      **サンプルレートが下がって前の設定が収まらなくなったら丸ごと捨てて平坦に戻る。**");
+    r.note("      caeqstat の param 行で却下が増える");
+    r.note("");
+
+    r.note("E. バンドを実機で鳴らす — 書き手は libcaeqset.so (本番の書き手ができるまでの代役)");
+    r.note("   **何もしなければ gen=0 のまま素通し。**これは正常な状態であって不具合ではない");
+    r.note("   caeqset は .so と同じ seqlock の定義 (dsp/ca_eq_params.h) を使い、");
+    r.note("     **書く前に演算層と同じ検査を通す** — 通ったものは必ず .so にも通る");
+    r.note("   手順:");
+    r.note("     caeqset --show                        # どの枠を誰が読んでいるか");
+    r.note("     caeqset --slot N --preamp -3 --band 100:1:6 --band 4000:2:-4 --band 10000:0.7:3:hs");
+    r.note("     caeqstat                              # 適用済み gen が上がっていれば通っている");
+    r.note("     caeqset --slot N --off                # enabled を落とす (フェードして素通しへ)");
+    r.note("   期待: **適用済み gen == 共有メモリ gen、却下=0、out_peak が変わる**");
+    r.note("   適用済み gen が上がらないなら: その枠を読んでいるエフェクトがいない (--show で確認)");
+    r.note("   却下が増えるなら: fs が想定と違う。caeqset は統計側の rate を見て検査するので、");
+    r.note("     **SET_CONFIG より先に書くと 48000 Hz として検査してしまう** (注意が出る)");
+    r.note("   検査範囲: fc %.0f Hz 以上 / Q %.1f〜%.0f / gain ±%.0f dB / preamp %.0f〜+%.0f dB",
+           caeq::kMinFcHz, caeq::kMinQ, caeq::kMaxQ, caeq::kMaxGainDb, caeq::kMinPreampDb,
+           caeq::kMaxPreampDb);
+    r.note("   SET_PARAM id=%d で枠を上書きできる (保持者がいるときの経路)", CA_PARAM_ID_SLOT);
+    r.note("");
+
+    r.note("F. ホストで既に押さえてあるので実機で測り直さないもの");
+    r.note("   RBJ の係数 / 振幅特性 / ブロック長とチャンネル数への非依存 / NaN からの復帰 /");
+    r.note("   クリックの大きさ / 時変安定性 / seqlock の千切れ — すべてこのハーネスで検証済み");
+    r.note("   **実機で見るのは「経路」と「フレームワークの挙動」だけ。**演算の正しさは見ない");
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -1256,6 +1341,7 @@ int main(int argc, char** argv) {
     checkAccumulate(r);
     checkSeqlock(r);
     checkRateChange(r);
+    printDeviceChecklist(r);
 
     std::printf("\n%d / %d 件が通った。\n", r.total() - r.failures(), r.total());
     return r.failures() == 0 ? 0 : 1;

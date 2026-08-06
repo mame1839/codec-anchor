@@ -156,6 +156,7 @@ public:
 
     // enable / disable のフェード長。無しだと -26.7 dBFS のクリックが出る (実測)。
     void setFadeMillis(double ms);
+    double fadeMillis() const { return fade_ms_; }
 
     // ランプ中に係数を組み直す間隔 (フレーム)。1 なら毎サンプル、kChunkFrames なら
     // 32 サンプルの階段。細かいほどクリックが小さくなり、そのぶん計算量が増える。
