@@ -13,6 +13,8 @@
     <string name="action_resend">Invia di nuovo</string>
     <string name="action_recheck">Controlla di nuovo</string>
     <string name="action_grant">Concedi l\'autorizzazione</string>
+    <string name="action_save">Salva</string>
+    <string name="action_continue">Continua</string>
 
     <string name="value_keep">Non modificare</string>
     <string name="value_unknown">Sconosciuto</string>
@@ -149,4 +151,44 @@
     <string name="msg_autoeq_invalid">Questo file non è un risultato di AutoEQ</string>
     <string name="msg_autoeq_corner_shelf">Questo file AutoEQ usa filtri LS o HS, che non sono supportati</string>
     <string name="msg_autoeq_no_bands">Questo file AutoEQ non contiene filtri</string>
+
+    <string name="section_eq">Elaborazione del suono</string>
+    <string name="eq_enabled">Equalizzatore</string>
+    <string name="eq_enabled_desc">Modella il suono di questi auricolari</string>
+    <string name="eq_latency_zero">Ritardo aggiunto: 0 ms</string>
+    <string name="eq_mode">Modo di modifica</string>
+    <string name="eq_mode_desc">Il modo grafico tiene ogni banda su una frequenza fissa. Il parametrico ti lascia mettere ogni banda dove vuoi.</string>
+    <string name="eq_mode_graphic">Grafico</string>
+    <string name="eq_mode_parametric">Parametrico</string>
+    <string name="eq_band_count">Numero di bande</string>
+    <string name="eq_band_count_desc">Più bande seguono più da vicino una curva dettagliata. Non è un\'impostazione di prestazioni: il telefono lavora allo stesso modo in entrambi i casi.</string>
+    <string name="eq_band_none">Ancora nessuna banda. Aggiungine una o importa un file AutoEQ.</string>
+    <string name="eq_band_add">Aggiungi una banda</string>
+    <string name="eq_band_remove">Rimuovi questa banda</string>
+    <string name="eq_band_type">Forma</string>
+    <string name="eq_band_frequency">Frequenza</string>
+    <string name="eq_band_q">Q</string>
+    <string name="eq_band_gain">Guadagno</string>
+    <string name="eq_type_peaking">Campana</string>
+    <string name="eq_type_low_shelf">Shelf bassi</string>
+    <string name="eq_type_high_shelf">Shelf alti</string>
+    <string name="eq_preamp_auto">Imposta il preamplificatore automaticamente</string>
+    <string name="eq_preamp_auto_desc">Abbassa il livello quel tanto che basta perché le parti alzate non distorcano (ora %1$s)</string>
+    <string name="eq_preamp">Preamplificatore</string>
+    <string name="eq_round_title">Passare al grafico?</string>
+    <string name="eq_round_body">Ogni banda si sposta su una delle frequenze fisse dell\'equalizzatore grafico e il suo Q viene adattato. La forma della curva viene mantenuta il più possibile, ma le frequenze e i valori di Q attuali vanno persi.</string>
+    <string name="eq_round_quiet">Non chiedere più</string>
+
+    <string name="eq_presets">Preimpostazioni</string>
+    <string name="eq_preset_empty">Non hai ancora salvato nulla</string>
+    <string name="eq_preset_save">Salva queste impostazioni</string>
+    <string name="eq_preset_save_title">Nome della preimpostazione</string>
+    <string name="eq_preset_name">Nome</string>
+    <string name="eq_preset_apply">Applica</string>
+    <string name="eq_preset_export">Esporta</string>
+    <string name="eq_preset_import">Importa una preimpostazione</string>
+    <string name="eq_preset_delete_title">Eliminare la preimpostazione?</string>
+    <string name="eq_preset_delete_body">Rimuove «%1$s». Quello che è già impostato sui tuoi auricolari resta com\'è.</string>
+    <string name="eq_autoeq_import">Importa AutoEQ</string>
+    <string name="eq_autoeq_desc">Legge un ParametricEQ.txt o GraphicEQ.txt di AutoEQ e sostituisce le impostazioni qui sopra.</string>
 </resources>

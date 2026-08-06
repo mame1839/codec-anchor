@@ -6,6 +6,7 @@ import android.text.format.DateFormat
 import io.github.mame1839.codecanchor.R
 import io.github.mame1839.codecanchor.core.CodecKeys
 import io.github.mame1839.codecanchor.core.DeviceProfile
+import java.text.DecimalFormat
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -67,6 +68,38 @@ private fun secondsLabel(seconds: Double, digits: Int): String =
 
 fun retryLabel(res: Resources, count: Int): String =
     res.getQuantityString(R.plurals.retry_count, count, count)
+
+// EQ の値の書式。単位 (dB / Hz / kHz) は訳語の要らない純粋な書式文字列なので translatable="false"
+// にしてあり、呼び出し側が stringResource で取った書式をここへ渡す。
+// 書式を Resources から直接引かないのは、新しい Composable のファイルで
+// LocalContext.current.resources を書くと lint の LocalContextResourcesRead が新規の警告になり、
+// baseline (ファイルパスで照合する) に無いのでビルドが落ちるため。
+
+/** 0.1 dB 単位の値。正の値にだけ + を付ける。 */
+fun eqGainText(db10: Int, format: String): String =
+    format.format(Locale.getDefault(), decimal(db10 / 10.0, 1, 1, signed = db10 > 0))
+
+/** 1 kHz 以上は kHz にする。1250 なら "1.25 kHz"、16000 なら "16 kHz"。 */
+fun eqFrequencyText(hz: Int, hzFormat: String, kiloFormat: String): String =
+    if (hz >= 1_000) {
+        kiloFormat.format(Locale.getDefault(), decimal(hz / 1_000.0, 0, 2))
+    } else {
+        hzFormat.format(Locale.getDefault(), decimal(hz.toDouble(), 0, 0))
+    }
+
+/** Q は 0.01 単位。無次元なので単位を付けない。 */
+fun eqQText(q100: Int): String = decimal(q100 / 100.0, 2, 2)
+
+/** バンド数のような、単位を持たない整数。 */
+fun eqCountText(value: Int): String = decimal(value.toDouble(), 0, 0)
+
+private fun decimal(value: Double, minDigits: Int, maxDigits: Int, signed: Boolean = false): String =
+    NumberFormat.getInstance(Locale.getDefault()).apply {
+        minimumFractionDigits = minDigits
+        maximumFractionDigits = maxDigits
+        // 0 には符号を付けない。"+0.0 dB" は持ち上げているようにしか読めない。
+        if (signed && this is DecimalFormat) positivePrefix = "+"
+    }.format(value)
 
 // 適用結果が起きた時刻なので秒まで出す。12/24 時間の設定と語順は端末に合わせる。
 fun clockLabel(context: Context, timestamp: Long): String {

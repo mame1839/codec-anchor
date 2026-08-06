@@ -59,6 +59,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     var presets by mutableStateOf(presetStore.load())
         private set
 
+    // パラメトリックからグラフィックへ移ると fc と Q が固定値へ丸められる。一度だけ確認し、
+    // 「今後表示しない」を押されたら二度と聞かない。
+    var eqRoundingConfirmed by mutableStateOf(presetStore.roundingConfirmed())
+        private set
+
     var config by mutableStateOf(stored ?: AppConfig())
         private set
 
@@ -309,6 +314,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun applyPreset(mac: String, name: String) {
         val preset = presets.presets.firstOrNull { it.name == name } ?: return
         updateEq(mac) { preset.settings }
+    }
+
+    fun confirmEqRounding() {
+        presetStore.confirmRounding()
+        eqRoundingConfirmed = true
     }
 
     // 名前が空のまま保存されたプロファイルは、実名が分かった時点で埋める (バックアップにも載る)。

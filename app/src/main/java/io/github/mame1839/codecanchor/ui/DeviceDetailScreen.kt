@@ -138,6 +138,8 @@ fun DeviceDetailScreen(
 
             TargetCard(vm = vm, mac = mac, profile = profile, status = status)
 
+            EqSection(vm = vm, mac = mac, profile = profile)
+
             SettingsCard {
                 ExpandableHeader(
                     title = stringResource(R.string.section_advanced),

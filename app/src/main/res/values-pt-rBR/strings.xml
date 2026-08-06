@@ -13,6 +13,8 @@
     <string name="action_resend">Enviar de novo</string>
     <string name="action_recheck">Verificar de novo</string>
     <string name="action_grant">Conceder a permissão</string>
+    <string name="action_save">Salvar</string>
+    <string name="action_continue">Continuar</string>
 
     <string name="value_keep">Não alterar</string>
     <string name="value_unknown">Desconhecido</string>
@@ -149,4 +151,44 @@
     <string name="msg_autoeq_invalid">Esse arquivo não é um resultado do AutoEQ</string>
     <string name="msg_autoeq_corner_shelf">Esse arquivo do AutoEQ usa filtros LS ou HS, que não têm suporte</string>
     <string name="msg_autoeq_no_bands">Esse arquivo do AutoEQ não tem filtros</string>
+
+    <string name="section_eq">Processamento de som</string>
+    <string name="eq_enabled">Equalizador</string>
+    <string name="eq_enabled_desc">Ajusta o som destes fones</string>
+    <string name="eq_latency_zero">Atraso adicionado: 0 ms</string>
+    <string name="eq_mode">Modo de edição</string>
+    <string name="eq_mode_desc">No modo gráfico cada banda fica em uma frequência fixa. No paramétrico você coloca cada banda onde quiser.</string>
+    <string name="eq_mode_graphic">Gráfico</string>
+    <string name="eq_mode_parametric">Paramétrico</string>
+    <string name="eq_band_count">Número de bandas</string>
+    <string name="eq_band_count_desc">Quanto mais bandas, mais de perto uma curva detalhada é seguida. Não é um ajuste de desempenho: o telefone trabalha igual nos dois casos.</string>
+    <string name="eq_band_none">Nenhuma banda ainda. Adicione uma ou importe um arquivo do AutoEQ.</string>
+    <string name="eq_band_add">Adicionar uma banda</string>
+    <string name="eq_band_remove">Remover esta banda</string>
+    <string name="eq_band_type">Formato</string>
+    <string name="eq_band_frequency">Frequência</string>
+    <string name="eq_band_q">Q</string>
+    <string name="eq_band_gain">Ganho</string>
+    <string name="eq_type_peaking">Sino</string>
+    <string name="eq_type_low_shelf">Shelf de graves</string>
+    <string name="eq_type_high_shelf">Shelf de agudos</string>
+    <string name="eq_preamp_auto">Definir o pré-amplificador automaticamente</string>
+    <string name="eq_preamp_auto_desc">Baixa o nível só o suficiente para as partes realçadas não distorcerem (agora %1$s)</string>
+    <string name="eq_preamp">Pré-amplificador</string>
+    <string name="eq_round_title">Mudar para gráfico?</string>
+    <string name="eq_round_body">Cada banda vai para uma das frequências fixas do equalizador gráfico e o Q dela é ajustado. O formato da curva é mantido o quanto for possível, mas as frequências e os valores de Q atuais são perdidos.</string>
+    <string name="eq_round_quiet">Não perguntar de novo</string>
+
+    <string name="eq_presets">Predefinições</string>
+    <string name="eq_preset_empty">Nada salvo ainda</string>
+    <string name="eq_preset_save">Salvar estes ajustes</string>
+    <string name="eq_preset_save_title">Nome da predefinição</string>
+    <string name="eq_preset_name">Nome</string>
+    <string name="eq_preset_apply">Aplicar</string>
+    <string name="eq_preset_export">Exportar</string>
+    <string name="eq_preset_import">Importar uma predefinição</string>
+    <string name="eq_preset_delete_title">Excluir a predefinição?</string>
+    <string name="eq_preset_delete_body">Remove “%1$s”. O que já está ajustado nos seus fones continua como está.</string>
+    <string name="eq_autoeq_import">Importar AutoEQ</string>
+    <string name="eq_autoeq_desc">Lê um ParametricEQ.txt ou GraphicEQ.txt do AutoEQ e substitui os ajustes acima.</string>
 </resources>
