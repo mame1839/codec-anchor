@@ -243,26 +243,28 @@ int main(int argc, char** argv) {
 
     if (show) { showAll(m); return kExitOk; }
 
-    // magic が 0 なのは「エフェクトのインスタンスが 1 度も作られていない」。**版ずれではない** —
-    // この領域を初期化する ca_stats_open() は create_effect() からしか呼ばれないので、
-    // .so が読み込まれていても、まだ 1 度も生成されていなければ 0 のまま。
-    if (m->magic == 0) {
+    // 判定は caeq::shmState に一本化してある (ハーネスが表ごと固定している)。
+    // **順序が肝で、version は magic が正しいときにしか意味を持たない** —
+    // 起動直後のファイルは全部ゼロなので、version だけ見ると毎回「版ずれ」になる。
+    switch (caeq::shmState(m)) {
+    case caeq::ShmState::kNotInitialised:
+        // この領域を初期化する ca_stats_open() は create_effect() からしか呼ばれない。
+        // **.so が入っていてもインスタンスが立つまでここに来る。異常ではない。**
         fprintf(stderr, "エフェクトのインスタンスが 1 度も作られていない。"
                         "イヤホンが繋がっていないだけなら異常ではない\n");
         return kExitNoLiveSlot;
-    }
-    if (m->magic != CA_SHM_MAGIC) {
+    case caeq::ShmState::kForeign:
         fprintf(stderr, "magic=0x%08x — %s は我々のファイルではない\n", m->magic, path);
         return kExitShmMismatch;
-    }
-    // **版が違うなら枠の中身の意味が違う。**特に版 2 の .so は session_id を書かないので、
-    // そのまま読むと「イヤホン側の枠が 1 つも無い」に見えて、繋がっているのに
-    // 「繋がっていない」という嘘の理由が出る。
-    if (m->version != CA_SHM_VERSION) {
+    case caeq::ShmState::kVersionMismatch:
+        // 版 2 の .so は session_id を書かないので、そのまま読むと「イヤホン側の枠が 1 つも
+        // 無い」に見えて、繋がっているのに「繋がっていない」という嘘の理由が出る。
         fprintf(stderr, "共有メモリの版が %u (期待 %u)。アプリとモジュールの版がずれている。"
                         "モジュールを入れ直すこと\n",
                 m->version, CA_SHM_VERSION);
         return kExitShmMismatch;
+    case caeq::ShmState::kOk:
+        break;
     }
 
     // --slot は手で調べるとき用。**統計の枠とパラメータの枠が同じ添字である前提**に依る

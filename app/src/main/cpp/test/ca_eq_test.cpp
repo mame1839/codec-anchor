@@ -1291,6 +1291,43 @@ void checkSlotPick(Report& r) {
             offsetof(ca_slot_t, session_id), sizeof(ca_slot_t));
     r.check(CA_AUDIO_SESSION_DEVICE == -2, "AUDIO_SESSION_DEVICE は -2");
 
+    // --- 共有メモリそのものの状態 -----------------------------------------
+    //
+    // ⚠️ **version だけを見て「版ずれ」と言うと、毎回の起動で必ず嘘が出る。**
+    // post-fs-data は dd if=/dev/zero でファイルを作り、版を刻むのは ca_stats_open() =
+    // create_effect() からしか呼ばれない。**イヤホンを繋ぐまで version は 0 のまま。**
+
+    {   // **起動直後のゼロ埋め。**ここが「版ずれ」になると、登録した直後の未接続で
+        // 「アプリとモジュールの版が合っていません」が出る。真実は「繋がっていない」。
+        auto* zero = new ca_shm_t{};
+        r.check(caeq::shmState(zero) == caeq::ShmState::kNotInitialised,
+                "ゼロ埋めの共有メモリは「未初期化」— **版ずれではない**");
+        delete zero;
+    }
+
+    {
+        ca_shm_t* m = newShm();
+        r.check(caeq::shmState(m) == caeq::ShmState::kOk, "magic と版が揃っていれば通る");
+
+        m->version = CA_SHM_VERSION - 1u;
+        r.check(caeq::shmState(m) == caeq::ShmState::kVersionMismatch,
+                "magic が正しくて版が古いのが**本物の版ずれ** (版 %u の .so)", m->version);
+
+        // magic が立つ前は版を信じない。ca_stats_open が magic を最後に書くのはこのため。
+        m->magic = 0u;
+        r.check(caeq::shmState(m) == caeq::ShmState::kNotInitialised,
+                "magic が 0 なら、版が何であれ「未初期化」");
+
+        m->magic = 0xDEADBEEFu;
+        r.check(caeq::shmState(m) == caeq::ShmState::kForeign,
+                "magic が別の値なら「我々のファイルではない」(未接続と混ぜない)");
+        delete m;
+    }
+
+    r.check(caeq::shmState(nullptr) == caeq::ShmState::kForeign, "nullptr を渡しても落ちない");
+
+    // --- 枠の選択 -----------------------------------------------------------
+
     FakePids pids{{100, 200, 300, 0, 0, 0, 0, 0}, 3};
 
     {   // 何も生きていない = イヤホンが繋がっていない。**失敗ではない**

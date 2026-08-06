@@ -16,6 +16,36 @@
 
 namespace caeq {
 
+/**
+ * 共有メモリそのものが読める状態か。
+ *
+ * ⚠️ **`version` だけを見て「版ずれ」と言わないこと。**`post-fs-data` は `dd if=/dev/zero` で
+ * ファイルを作るので、起きた直後は `magic` も `version` も 0。版を刻むのは `ca_stats_open()` で、
+ * **`create_effect()` からしか呼ばれない** — つまり **`.so` が入っていても、エフェクトの
+ * インスタンスが 1 つも立つまで `version` は 0 のまま**で、これは毎回の起動で必ず通る正常な状態。
+ * ここで「アプリとモジュールの版が合っていない」と出すと、真実が
+ * 「イヤホンが繋がっていない」のときに嘘の理由を出すことになる。
+ *
+ * **`magic` が版の有効性を決める** (同じ関数で一緒に書かれ、`magic` が最後に立つ)。
+ */
+enum class ShmState {
+    kOk = 0,
+    /** `magic` が 0。**まだどの `.so` も attach していない。正常な状態。** */
+    kNotInitialised,
+    /** `magic` が別の値。この置き場にあるのは我々のファイルではない。 */
+    kForeign,
+    /** `magic` は正しいが版が違う。**本物の版ずれ。** */
+    kVersionMismatch,
+};
+
+inline ShmState shmState(const ca_shm_t* m) {
+    if (m == nullptr) return ShmState::kForeign;
+    if (m->magic == 0u) return ShmState::kNotInitialised;
+    if (m->magic != CA_SHM_MAGIC) return ShmState::kForeign;
+    if (m->version != CA_SHM_VERSION) return ShmState::kVersionMismatch;
+    return ShmState::kOk;
+}
+
 enum class SlotPick {
     kOk = 0,      /* 生きた DEVICE の枠がちょうど 1 つ */
     kNone,        /* 1 つも無い。**失敗ではなく「イヤホンが繋がっていない」正常な状態** */

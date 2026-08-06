@@ -12,6 +12,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.File
 import java.util.Locale
 
 /** `caeqset` に渡す引数の組み立てと、終了コードの読み方。 */
@@ -221,6 +222,59 @@ class EqParamsTest {
             EqParamsExit.REJECTED,
         )
         assertEquals(codes.size, codes.toSet().size)
+    }
+
+    // --- ビルド設定 ---------------------------------------------------------
+
+    /**
+     * **`jniLibs.useLegacyPackaging = true` が消えていないこと。**
+     *
+     * ⚠️ **このテストを「gradle を読む変なテスト」と判断して消さないこと。これだけが気づく手段。**
+     *
+     * AGP の既定は `false` で、マニフェストに `android:extractNativeLibs="false"` が入る。
+     * そうなると `.so` は APK の中に置かれたままで **`nativeLibraryDir` にファイルが 1 つも
+     * 現れず、[EqParams.apply] の `su` からの exec が「No such file or directory」で死ぬ。**
+     *
+     * **外してもビルドもテストも通る。**実機に入れて初めて「EQ の値が届かない」として出るうえ、
+     * その症状から `build.gradle.kts` に辿り着くのはほぼ不可能。将来 AGP の既定に合わせようと
+     * した人がここで止まる。
+     */
+    @Test
+    fun nativeExecutablesAreExtractedOnInstall() {
+        val file = appBuildFile()
+        val declared = file.readText()
+            .lineSequence()
+            .map { it.substringBefore("//").trim() }
+            .any { Regex("""jniLibs\.useLegacyPackaging\s*=\s*true""").containsMatchIn(it) }
+        assertTrue(
+            "${file.absolutePath} に jniLibs.useLegacyPackaging = true が無い。" +
+                "これが無いと libcaeqset.so が nativeLibraryDir に現れず、su から起動できない",
+            declared,
+        )
+    }
+
+    /**
+     * `app/build.gradle.kts` を探す。単体テストの作業ディレクトリは Gradle の設定で
+     * `app/` にもリポジトリ直下にもなる。
+     *
+     * **見つからなければ失敗させる。**「読めなかったので一致とみなす」にすると、
+     * 配置が変わった日に上の検査が黙って何も見なくなる。
+     */
+    private fun appBuildFile(): File {
+        var dir: File? = File("").absoluteFile
+        while (dir != null) {
+            val nested = File(dir, "app/build.gradle.kts")
+            if (nested.isFile) return nested
+            if (dir.name == "app") {
+                val here = File(dir, "build.gradle.kts")
+                if (here.isFile) return here
+            }
+            dir = dir.parentFile
+        }
+        throw AssertionError(
+            "app/build.gradle.kts が見つからない (作業ディレクトリ ${File("").absolutePath})。" +
+                "移動したなら、この検査の探し方も直すこと",
+        )
     }
 
     private fun List<String>.bandTokens(): List<String> =

@@ -140,10 +140,14 @@ void ca_stats_open() {
     close(fd);
     if (p == MAP_FAILED) { CA_LOGE("stats mmap failed errno=%d", errno); return; }
     g_shm = static_cast<ca_shm_t*>(p);
-    g_shm->magic = CA_SHM_MAGIC;
+    // **magic は最後に立てる。**読み手は magic が正しいことをもって version を信じるので、
+    // 先に magic を書くと「magic は本物・version はまだ 0」を掴む隙ができ、
+    // 起きていない版ずれを報告されることになる (caeq::shmState を参照)。
     g_shm->version = CA_SHM_VERSION;
     g_shm->slot_count = CA_SHM_SLOTS;
     g_shm->slot_size = static_cast<uint32_t>(sizeof(ca_slot_t));
+    std::atomic_thread_fence(std::memory_order_release);
+    g_shm->magic = CA_SHM_MAGIC;
     CA_LOGI("stats mapped at %p pid=%d", p, static_cast<int>(getpid()));
 }
 
