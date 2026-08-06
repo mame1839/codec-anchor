@@ -68,6 +68,11 @@
     <string name="module_inactive_hint">Puoi comunque modificare e salvare le impostazioni. Diventano attive appena il modulo entra in esecuzione.</string>
     <string name="msg_config_pushed">Impostazioni inviate di nuovo</string>
 
+    <string name="eq_module_version_mismatch">Il modulo di elaborazione audio (%1$s) e l\'app (%2$s) hanno versioni diverse. Aggiorna entrambi alla stessa versione, poi riavvia il telefono.</string>
+    <string name="eq_unavailable_not_registered">L\'elaborazione audio non è disponibile: il modulo di elaborazione audio non è installato, oppure questo telefono non lo ha ancora caricato. Installalo, poi riavvia il telefono.</string>
+    <string name="eq_unavailable_offload">L\'elaborazione audio non è disponibile finché lo scaricamento hardware Bluetooth A2DP è attivo. L\'avviso nell\'elenco dei dispositivi spiega come disattivarlo.</string>
+    <string name="eq_unavailable_hook_old">L\'elaborazione audio non è disponibile: il modulo in esecuzione nel processo Bluetooth è di una versione precedente che non la conosce. Disattiva il Bluetooth e riattivalo.</string>
+
     <string name="tag_connected">Connesso</string>
     <string name="tag_disconnected">Non connesso</string>
     <string name="tag_active">In riproduzione</string>

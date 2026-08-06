@@ -15,6 +15,7 @@ import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import io.github.mame1839.codecanchor.BuildConfig
 import io.github.mame1839.codecanchor.R
 import io.github.mame1839.codecanchor.bridge.BridgeClient
 import io.github.mame1839.codecanchor.bridge.SettingsStore
@@ -22,6 +23,10 @@ import io.github.mame1839.codecanchor.core.AppConfig
 import io.github.mame1839.codecanchor.core.CodecKeys
 import io.github.mame1839.codecanchor.core.DeviceProfile
 import io.github.mame1839.codecanchor.core.DeviceStatus
+import io.github.mame1839.codecanchor.core.EqAvailability
+import io.github.mame1839.codecanchor.core.EqSupport
+import io.github.mame1839.codecanchor.core.ModuleVersion
+import io.github.mame1839.codecanchor.core.ModuleVersionState
 import io.github.mame1839.codecanchor.core.StatusReport
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -69,6 +74,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     var settingsHooked by mutableStateOf(store.settingsHooked())
         private set
 
+    // queryEffects() は audioserver への binder 呼び出し。Compose の再構成のたびに走らせないよう、
+    // ここに持って refresh() でだけ取り直す。
+    private var effectRegistered by mutableStateOf(EqSupport.effectRegistered())
+
+    // ro.* は読み取り専用でプロセスの生存中に変わらないので 1 回だけ読む。
+    private val moduleVersionCode = ModuleVersion.read(ModuleVersion.PROPERTY_CODE)
+
+    // 表示にだけ使う。突き合わせは versionCode 側でやるので、版がずれているときにしか読まれない。
+    // 読むのは getprop の exec なので、by lazy にして「揃っている / モジュールが無い」ほうの
+    // 起動から外す。ro.* は変わらないので、遅らせても値は同じ。
+    val moduleSemver: String by lazy { ModuleVersion.read(ModuleVersion.PROPERTY_SEMVER) }
+
     // 画面が作り直されても消えないよう、書き出し / 復元の結果は未消費のメッセージとして持つ。
     var pendingMessage by mutableStateOf<Int?>(null)
         private set
@@ -98,6 +115,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     val a2dpOffloadEnabled: Boolean
         get() = report?.a2dpOffloadEnabled == true
+
+    val moduleVersionState: ModuleVersionState
+        get() = ModuleVersion.compare(moduleVersionCode, BuildConfig.VERSION_CODE)
+
+    // 表示の判断はここ 1 箇所。順序は「アプリから確実に分かるもの」から。
+    // 版の判定だけは報告が要るので、1 通も来ていないうちは判定しない — フックが動いていないことは
+    // 一覧のカードが既に出しているし、起動直後の数秒だけ「古い版です」が出て消えるのは嘘に近い。
+    val eqAvailability: EqAvailability
+        get() = when {
+            !effectRegistered -> EqAvailability.EFFECT_NOT_REGISTERED
+            a2dpOffloadEnabled -> EqAvailability.OFFLOAD_ENABLED
+            report?.let { it.eqSchema < EqSupport.SCHEMA } == true -> EqAvailability.HOOK_TOO_OLD
+            else -> EqAvailability.OK
+        }
 
     // ボンド済みに出てこない MAC (ペアリングを解除した) も設定を残しておく。
     // 権限が無い / Bluetooth がオフのときは一覧そのものが読めないので、ボンド済みに無いことを根拠にできない。
@@ -129,6 +160,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun refresh() {
         if (!settingsHooked) settingsHooked = store.settingsHooked()
+        // モジュールを入れた直後は audioserver の作り直しで登録が変わる。手動の更新でだけ取り直す。
+        effectRegistered = EqSupport.effectRegistered()
         refreshDevices()
         requestStatus()
     }

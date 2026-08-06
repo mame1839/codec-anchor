@@ -50,9 +50,11 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import io.github.mame1839.codecanchor.BuildConfig
 import io.github.mame1839.codecanchor.R
 import io.github.mame1839.codecanchor.core.DeviceProfile
 import io.github.mame1839.codecanchor.core.DeviceStatus
+import io.github.mame1839.codecanchor.core.ModuleVersionState
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -72,6 +74,7 @@ fun DeviceListScreen(
     var othersExpanded by rememberSaveable { mutableStateOf(false) }
     val pushedMessage = stringResource(R.string.msg_config_pushed)
     val refreshLabel = stringResource(R.string.cd_refresh_status)
+    val unknownVersion = stringResource(R.string.value_unknown)
 
     Scaffold(
         topBar = {
@@ -218,6 +221,26 @@ fun DeviceListScreen(
                                 modifier = Modifier.padding(start = 46.dp, end = 16.dp, bottom = 10.dp),
                             )
                         }
+                    }
+                }
+            }
+
+            // 音響処理モジュールとアプリは別々に更新されるので、片方だけ古い状態が普通に起きる。
+            // 端末全体の話なので機器ごとの詳細ではなく一覧に出す。
+            // UNKNOWN (プロパティが空 = モジュールが入っていないか、版を出さない古いモジュール) では
+            // 何も出さない — 音響処理が使えない理由と二重になるため。
+            if (vm.moduleVersionState == ModuleVersionState.MISMATCHED) {
+                item {
+                    SettingsCard(container = MaterialTheme.colorScheme.surfaceContainerHighest) {
+                        NoticeRow(
+                            icon = R.drawable.ic_info,
+                            text = stringResource(
+                                R.string.eq_module_version_mismatch,
+                                vm.moduleSemver.ifBlank { unknownVersion },
+                                BuildConfig.VERSION_NAME,
+                            ),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
+                        )
                     }
                 }
             }

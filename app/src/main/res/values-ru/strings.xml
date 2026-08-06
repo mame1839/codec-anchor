@@ -69,6 +69,11 @@
     <string name="module_inactive_hint">Настройки всё равно можно изменять и сохранять. Они вступят в силу, когда модуль начнёт работать.</string>
     <string name="msg_config_pushed">Настройки отправлены снова</string>
 
+    <string name="eq_module_version_mismatch">Версии модуля обработки звука (%1$s) и приложения (%2$s) не совпадают. Обновите оба до одной версии и перезагрузите телефон.</string>
+    <string name="eq_unavailable_not_registered">Обработка звука недоступна: модуль обработки звука не установлен или телефон ещё не загрузил его. Установите его и перезагрузите телефон.</string>
+    <string name="eq_unavailable_offload">Обработка звука недоступна, пока включена аппаратная разгрузка Bluetooth A2DP. Как её отключить, написано в примечании в списке устройств.</string>
+    <string name="eq_unavailable_hook_old">Обработка звука недоступна: в процессе Bluetooth работает более старая версия модуля, которая о ней не знает. Выключите Bluetooth и включите снова.</string>
+
     <string name="tag_connected">Подключено</string>
     <string name="tag_disconnected">Не подключено</string>
     <string name="tag_active">Воспроизведение</string>
