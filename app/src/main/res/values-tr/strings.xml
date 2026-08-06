@@ -133,4 +133,14 @@
     <string name="msg_apply_requested">Modülden ayarları uygulaması istendi</string>
     <string name="msg_apply_module_inactive">Modül çalışmadığı için istek iletilemiyor</string>
     <string name="msg_apply_not_connected">Cihaz bağlı olmadığı için şimdi uygulanamaz</string>
+
+    <string name="msg_preset_exported">Hazır ayar dışa aktarıldı</string>
+    <string name="msg_preset_export_failed">Dosya yazılamadı</string>
+    <string name="msg_preset_imported">Hazır ayar içe aktarıldı</string>
+    <string name="msg_preset_invalid">Bu dosya bir Codec Anchor hazır ayarı değil</string>
+    <string name="msg_autoeq_imported">AutoEQ filtreleri içe aktarıldı</string>
+    <string name="msg_autoeq_failed">Dosya okunamadı</string>
+    <string name="msg_autoeq_invalid">Bu dosya bir AutoEQ sonucu değil</string>
+    <string name="msg_autoeq_corner_shelf">Bu AutoEQ dosyası desteklenmeyen LS veya HS filtreleri kullanıyor</string>
+    <string name="msg_autoeq_no_bands">Bu AutoEQ dosyasında filtre yok</string>
 </resources>

@@ -132,4 +132,14 @@
     <string name="msg_apply_requested">Đã yêu cầu mô-đun áp dụng cài đặt</string>
     <string name="msg_apply_module_inactive">Mô-đun không chạy nên không gửi được yêu cầu</string>
     <string name="msg_apply_not_connected">Thiết bị chưa kết nối nên bây giờ không áp dụng được</string>
+
+    <string name="msg_preset_exported">Đã xuất cài đặt sẵn</string>
+    <string name="msg_preset_export_failed">Không ghi được tệp</string>
+    <string name="msg_preset_imported">Đã nhập cài đặt sẵn</string>
+    <string name="msg_preset_invalid">Tệp đó không phải cài đặt sẵn của Codec Anchor</string>
+    <string name="msg_autoeq_imported">Đã nhập bộ lọc AutoEQ</string>
+    <string name="msg_autoeq_failed">Không đọc được tệp</string>
+    <string name="msg_autoeq_invalid">Tệp đó không phải kết quả của AutoEQ</string>
+    <string name="msg_autoeq_corner_shelf">Tệp AutoEQ đó dùng bộ lọc LS hoặc HS, vốn không được hỗ trợ</string>
+    <string name="msg_autoeq_no_bands">Tệp AutoEQ đó không có bộ lọc nào</string>
 </resources>

@@ -132,4 +132,14 @@
     <string name="msg_apply_requested">Modul diminta menerapkan setelan</string>
     <string name="msg_apply_module_inactive">Modul tidak berjalan, jadi permintaan tidak dapat dikirim</string>
     <string name="msg_apply_not_connected">Perangkat tidak tersambung, jadi tidak ada yang bisa diterapkan sekarang</string>
+
+    <string name="msg_preset_exported">Preset diekspor</string>
+    <string name="msg_preset_export_failed">Berkas tidak dapat ditulis</string>
+    <string name="msg_preset_imported">Preset diimpor</string>
+    <string name="msg_preset_invalid">Berkas itu bukan preset Codec Anchor</string>
+    <string name="msg_autoeq_imported">Filter AutoEQ diimpor</string>
+    <string name="msg_autoeq_failed">Berkas tidak dapat dibaca</string>
+    <string name="msg_autoeq_invalid">Berkas itu bukan hasil AutoEQ</string>
+    <string name="msg_autoeq_corner_shelf">Berkas AutoEQ itu memakai filter LS atau HS yang tidak didukung</string>
+    <string name="msg_autoeq_no_bands">Berkas AutoEQ itu tidak punya filter</string>
 </resources>

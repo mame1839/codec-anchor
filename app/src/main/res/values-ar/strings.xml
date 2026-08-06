@@ -137,4 +137,14 @@
     <string name="msg_apply_requested">تم الطلب من الوحدة تطبيق الإعدادات</string>
     <string name="msg_apply_module_inactive">الوحدة لا تعمل، لذا لا يمكن إيصال الطلب</string>
     <string name="msg_apply_not_connected">الجهاز غير متصل، لذا لا يمكن تطبيق أي شيء الآن</string>
+
+    <string name="msg_preset_exported">تم تصدير الإعداد المسبق</string>
+    <string name="msg_preset_export_failed">تعذّرت الكتابة في الملف</string>
+    <string name="msg_preset_imported">تم استيراد الإعداد المسبق</string>
+    <string name="msg_preset_invalid">هذا الملف ليس إعدادًا مسبقًا من Codec Anchor</string>
+    <string name="msg_autoeq_imported">تم استيراد مرشحات AutoEQ</string>
+    <string name="msg_autoeq_failed">تعذّرت قراءة الملف</string>
+    <string name="msg_autoeq_invalid">هذا الملف ليس نتيجة من AutoEQ</string>
+    <string name="msg_autoeq_corner_shelf">يستخدم ملف AutoEQ هذا مرشحات LS أو HS غير المدعومة</string>
+    <string name="msg_autoeq_no_bands">لا يحتوي ملف AutoEQ هذا على أي مرشحات</string>
 </resources>

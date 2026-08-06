@@ -135,4 +135,14 @@
     <string name="msg_apply_requested">Модулю отправлен запрос на применение</string>
     <string name="msg_apply_module_inactive">Модуль не работает, поэтому запрос доставить нельзя</string>
     <string name="msg_apply_not_connected">Устройство не подключено, поэтому применить сейчас нельзя</string>
+
+    <string name="msg_preset_exported">Пресет экспортирован</string>
+    <string name="msg_preset_export_failed">Не удалось записать файл</string>
+    <string name="msg_preset_imported">Пресет импортирован</string>
+    <string name="msg_preset_invalid">Это не пресет Codec Anchor</string>
+    <string name="msg_autoeq_imported">Фильтры AutoEQ импортированы</string>
+    <string name="msg_autoeq_failed">Не удалось прочитать файл</string>
+    <string name="msg_autoeq_invalid">Это не результат AutoEQ</string>
+    <string name="msg_autoeq_corner_shelf">В этом файле AutoEQ используются фильтры LS или HS, которые не поддерживаются</string>
+    <string name="msg_autoeq_no_bands">В этом файле AutoEQ нет фильтров</string>
 </resources>

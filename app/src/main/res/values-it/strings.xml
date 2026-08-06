@@ -134,4 +134,14 @@
     <string name="msg_apply_requested">È stato chiesto al modulo di applicare le impostazioni</string>
     <string name="msg_apply_module_inactive">Il modulo non è in esecuzione, quindi la richiesta non può essere trasmessa</string>
     <string name="msg_apply_not_connected">Il dispositivo non è connesso, quindi ora non è possibile applicare nulla</string>
+
+    <string name="msg_preset_exported">Preset esportato</string>
+    <string name="msg_preset_export_failed">Impossibile scrivere il file</string>
+    <string name="msg_preset_imported">Preset importato</string>
+    <string name="msg_preset_invalid">Questo file non è un preset di Codec Anchor</string>
+    <string name="msg_autoeq_imported">Filtri AutoEQ importati</string>
+    <string name="msg_autoeq_failed">Impossibile leggere il file</string>
+    <string name="msg_autoeq_invalid">Questo file non è un risultato di AutoEQ</string>
+    <string name="msg_autoeq_corner_shelf">Questo file AutoEQ usa filtri LS o HS, che non sono supportati</string>
+    <string name="msg_autoeq_no_bands">Questo file AutoEQ non contiene filtri</string>
 </resources>

@@ -17,11 +17,16 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.mame1839.codecanchor.R
 import io.github.mame1839.codecanchor.bridge.BridgeClient
+import io.github.mame1839.codecanchor.bridge.PresetStore
 import io.github.mame1839.codecanchor.bridge.SettingsStore
 import io.github.mame1839.codecanchor.core.AppConfig
+import io.github.mame1839.codecanchor.core.AutoEqParser
+import io.github.mame1839.codecanchor.core.AutoEqResult
 import io.github.mame1839.codecanchor.core.CodecKeys
 import io.github.mame1839.codecanchor.core.DeviceProfile
 import io.github.mame1839.codecanchor.core.DeviceStatus
+import io.github.mame1839.codecanchor.core.EqPreset
+import io.github.mame1839.codecanchor.core.EqSettings
 import io.github.mame1839.codecanchor.core.StatusReport
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -44,6 +49,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val context: Context = application.applicationContext
     private val store = SettingsStore(context)
     private val stored = store.load()
+    private val presetStore = PresetStore(context)
+
+    var presets by mutableStateOf(presetStore.load())
+        private set
 
     var config by mutableStateOf(stored ?: AppConfig())
         private set
@@ -248,6 +257,27 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         current.withProfile(transform(base))
     }
 
+    fun updateEq(mac: String, transform: (EqSettings) -> EqSettings) =
+        updateProfile(mac) { it.copy(eq = transform(it.eq)) }
+
+    // プリセットは設定とは別のファイルに持つ。同じ名前で保存し直したら差し替える。
+    fun savePreset(name: String, settings: EqSettings) {
+        val trimmed = name.trim()
+        if (trimmed.isEmpty()) return
+        presets = presets.with(EqPreset(trimmed, settings))
+        presetStore.save(presets)
+    }
+
+    fun deletePreset(name: String) {
+        presets = presets.without(name)
+        presetStore.save(presets)
+    }
+
+    fun applyPreset(mac: String, name: String) {
+        val preset = presets.presets.firstOrNull { it.name == name } ?: return
+        updateEq(mac) { preset.settings }
+    }
+
     // 名前が空のまま保存されたプロファイルは、実名が分かった時点で埋める (バックアップにも載る)。
     fun ensureProfile(mac: String) {
         val key = mac.uppercase()
@@ -299,6 +329,67 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             refreshDevices()
             pendingMessage = R.string.msg_backup_imported
         }
+    }
+
+    // 既存の exportConfig は openOutputStream(uri, "wt") を使っているが、"wt" は
+    // provider が実装していないことがある (PLAN.md の UI-18)。CreateDocument は必ず
+    // 新規の空ファイルを作るので、新しい経路では切り詰めの要らない "w" を使う。
+    fun exportPreset(uri: Uri, preset: EqPreset) {
+        val json = EqPreset.encodeSingle(preset)
+        viewModelScope.launch {
+            val ok = withContext(Dispatchers.IO) {
+                runCatching {
+                    val stream = context.contentResolver.openOutputStream(uri, "w")
+                        ?: error("openOutputStream returned null")
+                    stream.use { it.write(json.toByteArray()) }
+                }.isSuccess
+            }
+            pendingMessage = if (ok) R.string.msg_preset_exported else R.string.msg_preset_export_failed
+        }
+    }
+
+    fun importPreset(uri: Uri) {
+        viewModelScope.launch {
+            val text = readText(uri)
+            val preset = text?.let { EqPreset.decodeSingle(it) }
+            if (preset == null) {
+                pendingMessage = R.string.msg_preset_invalid
+                return@launch
+            }
+            presets = presets.with(preset)
+            presetStore.save(presets)
+            pendingMessage = R.string.msg_preset_imported
+        }
+    }
+
+    fun importAutoEq(uri: Uri, mac: String, bandCount: Int) {
+        viewModelScope.launch {
+            val text = readText(uri)
+            if (text == null) {
+                pendingMessage = R.string.msg_autoeq_failed
+                return@launch
+            }
+            when (val result = AutoEqParser.parse(text, bandCount)) {
+                is AutoEqResult.Ok -> {
+                    updateEq(mac) { result.settings }
+                    pendingMessage = R.string.msg_autoeq_imported
+                }
+
+                is AutoEqResult.Error -> {
+                    pendingMessage = when (result.reason) {
+                        AutoEqResult.Reason.CORNER_SHELF -> R.string.msg_autoeq_corner_shelf
+                        AutoEqResult.Reason.NO_BANDS -> R.string.msg_autoeq_no_bands
+                        AutoEqResult.Reason.NOT_AUTOEQ -> R.string.msg_autoeq_invalid
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend fun readText(uri: Uri): String? = withContext(Dispatchers.IO) {
+        runCatching {
+            context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+        }.getOrNull()
     }
 
     // 既知の版で profiles を持つファイルだけを復元する。緩い判定だと無関係な JSON で全設定が消える。

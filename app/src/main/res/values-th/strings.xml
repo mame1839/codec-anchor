@@ -132,4 +132,14 @@
     <string name="msg_apply_requested">ขอให้โมดูลใช้การตั้งค่าแล้ว</string>
     <string name="msg_apply_module_inactive">โมดูลไม่ทำงาน จึงส่งคำขอไม่ได้</string>
     <string name="msg_apply_not_connected">อุปกรณ์ไม่ได้เชื่อมต่อ จึงยังใช้ค่าไม่ได้</string>
+
+    <string name="msg_preset_exported">ส่งออกพรีเซ็ตแล้ว</string>
+    <string name="msg_preset_export_failed">เขียนไฟล์ไม่ได้</string>
+    <string name="msg_preset_imported">นำเข้าพรีเซ็ตแล้ว</string>
+    <string name="msg_preset_invalid">ไฟล์นั้นไม่ใช่พรีเซ็ตของ Codec Anchor</string>
+    <string name="msg_autoeq_imported">นำเข้าฟิลเตอร์ AutoEQ แล้ว</string>
+    <string name="msg_autoeq_failed">อ่านไฟล์ไม่ได้</string>
+    <string name="msg_autoeq_invalid">ไฟล์นั้นไม่ใช่ผลลัพธ์ของ AutoEQ</string>
+    <string name="msg_autoeq_corner_shelf">ไฟล์ AutoEQ นี้ใช้ฟิลเตอร์ LS หรือ HS ซึ่งไม่รองรับ</string>
+    <string name="msg_autoeq_no_bands">ไฟล์ AutoEQ นี้ไม่มีฟิลเตอร์</string>
 </resources>
