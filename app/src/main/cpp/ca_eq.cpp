@@ -22,18 +22,19 @@
 namespace {
 
 // eq-plan-1.md の識別子と 1 文字も違えないこと。
-// C++ では指示付き初期化子の順序が宣言順に固定されるので、メンバの順序も守る。
+// **ABI に依存する構造体は位置で初期化しない。**フィールド名で書けば、ヘッダの並びが
+// 変わっても値が別のフィールドに落ちない (並びが食い違えばコンパイルエラーになる)。
 const effect_descriptor_t kCaEqDescriptor = {
-    /* type */        { 0x7a1c9f61, 0x4a2e, 0x4f6b, 0x9d21, { 0x0a, 0x5c, 0x1b, 0x3e, 0x77, 0xd1 } },
-    /* uuid */        { 0x7a1c9f60, 0x4a2e, 0x4f6b, 0x9d21, { 0x0a, 0x5c, 0x1b, 0x3e, 0x77, 0xd1 } },
-    /* apiVersion */  EFFECT_CONTROL_API_VERSION,
+    .type        = { 0x7a1c9f61, 0x4a2e, 0x4f6b, 0x9d21, { 0x0a, 0x5c, 0x1b, 0x3e, 0x77, 0xd1 } },
+    .uuid        = { 0x7a1c9f60, 0x4a2e, 0x4f6b, 0x9d21, { 0x0a, 0x5c, 0x1b, 0x3e, 0x77, 0xd1 } },
+    .apiVersion  = EFFECT_CONTROL_API_VERSION,
     // POST_PROC は AUDIO_SESSION_DEVICE に必須。INSERT_LAST は Dolby DAP / MiSound の後段に入るため。
     // DEVICE_IND はデバイスの変化を教えてもらうため。
-    /* flags */       EFFECT_FLAG_TYPE_POST_PROC | EFFECT_FLAG_INSERT_LAST | EFFECT_FLAG_DEVICE_IND,
-    /* cpuLoad */     10,
-    /* memoryUsage */ 1,
-    /* name */        "Codec Anchor EQ",
-    /* implementor */ "Codec Anchor",
+    .flags       = EFFECT_FLAG_TYPE_POST_PROC | EFFECT_FLAG_INSERT_LAST | EFFECT_FLAG_DEVICE_IND,
+    .cpuLoad     = 10,
+    .memoryUsage = 1,
+    .name        = "Codec Anchor EQ",
+    .implementor = "Codec Anchor",
 };
 
 struct CaCtx {
@@ -48,6 +49,24 @@ struct CaCtx {
     uint32_t channels;
     ca_slot_t* slot;             // 共有メモリのスロット。nullptr なら記録しない
 };
+
+// 1 ブロックぶんの計測。process() のスタックに置くだけで、確保はしない。
+struct CaBlock {
+    const void* in_addr;
+    const void* out_addr;
+    uint32_t in_frames;
+    uint32_t out_frames;
+    uint32_t samples;
+    float    in_peak_f;
+    float    out_peak_f;
+    uint32_t in_peak_i;
+    uint32_t out_peak_i;
+};
+
+// INT32_MIN の符号反転が int32 に収まらないので uint32 で受ける。
+inline uint32_t ca_abs_i32(int32_t v) {
+    return v < 0 ? static_cast<uint32_t>(-static_cast<int64_t>(v)) : static_cast<uint32_t>(v);
+}
 
 uint32_t ca_channel_count(uint32_t mask) {
     // audio_channel_mask_t の下位ビットが 1 チャンネル 1 ビット。
@@ -181,12 +200,22 @@ void ca_stats_set_gain(CaCtx* c, int32_t gain_mb) {
 
 // process() から呼ばれる。確保・ロック・ログを一切しない。
 // clock_gettime(CLOCK_MONOTONIC) は vDSO 経由でシステムコールにならない。
-inline void ca_stats_add(CaCtx* c, size_t frames) {
+inline void ca_stats_add(CaCtx* c, size_t frames, const CaBlock& b) {
     ca_slot_t* s = c->slot;
     if (s == nullptr) return;
     ca_seq_begin(s);
     s->frames += static_cast<uint64_t>(frames);
     s->block_frames = static_cast<uint32_t>(frames);
+    s->in_peak = b.in_peak_f;
+    s->out_peak = b.out_peak_f;
+    s->in_peak_i32 = b.in_peak_i;
+    s->out_peak_i32 = b.out_peak_i;
+    s->in_addr = reinterpret_cast<uint64_t>(b.in_addr);
+    s->out_addr = reinterpret_cast<uint64_t>(b.out_addr);
+    s->dbg_in_frames = b.in_frames;
+    s->dbg_out_frames = b.out_frames;
+    s->dbg_samples = b.samples;
+    s->dbg_fmt = c->cfg.outputCfg.format;
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     s->last_ns = static_cast<uint64_t>(ts.tv_sec) * 1000000000ull +
@@ -207,6 +236,12 @@ extern "C" int32_t ca_process(effect_handle_t self, audio_buffer_t* in, audio_bu
     if (frames == 0) return 0;
     const uint32_t ch = c->channels ? c->channels : 2;
     const size_t samples = frames * ch;
+    CaBlock blk = {};
+    blk.in_addr = in->raw;
+    blk.out_addr = out->raw;
+    blk.in_frames = static_cast<uint32_t>(in->frameCount);
+    blk.out_frames = static_cast<uint32_t>(out->frameCount);
+    blk.samples = static_cast<uint32_t>(samples);
 
     if (c->passthrough_only) {
         // 何もしない。format が float でない = 1 フレームのバイト数が分からないので、コピーの
@@ -214,16 +249,33 @@ extern "C" int32_t ca_process(effect_handle_t self, audio_buffer_t* in, audio_bu
         // ごと落とす)。AUDIO_SESSION_DEVICE は in-place で out には既に入力が入っているから、
         // 触らないことがそのまま素通しになる。仮に out-of-place で来ても、無音のほうが
         // SIGSEGV よりまし。
-    } else if (c->gain_lin == 1.0f) {
-        if (in->raw != out->raw) std::memcpy(out->f32, in->f32, samples * sizeof(float));
     } else {
-        // 将来ここが biquad のカスケードになる。ライブラリは使わず、係数は RBJ の cookbook を
-        // 自前で書く。リアルタイムのコールバックに外部依存を持ち込まない。
+        // 1 パス目は入力を読むだけ。in-place だと書きながら読むと、加工後の値を
+        // 「入力」として測ってしまう。float と int32 の両方で測り、どちらの解釈が
+        // 本物かを外から判定できるようにする。
+        const int32_t* in_i = static_cast<const int32_t*>(in->raw);
+        for (size_t i = 0; i < samples; i++) {
+            const float x = in->f32[i];
+            const float ax = x < 0.0f ? -x : x;
+            if (ax > blk.in_peak_f) blk.in_peak_f = ax;
+            const uint32_t ai = ca_abs_i32(in_i[i]);
+            if (ai > blk.in_peak_i) blk.in_peak_i = ai;
+        }
+        // 2 パス目で加工して書く。将来ここが biquad のカスケードになる。
+        // ライブラリは使わず、係数は RBJ の cookbook を自前で書く。
         const float g = c->gain_lin;
-        for (size_t i = 0; i < samples; i++) out->f32[i] = in->f32[i] * g;
+        const int32_t* out_i = static_cast<const int32_t*>(out->raw);
+        for (size_t i = 0; i < samples; i++) {
+            const float y = in->f32[i] * g;
+            out->f32[i] = y;
+            const float ay = y < 0.0f ? -y : y;
+            if (ay > blk.out_peak_f) blk.out_peak_f = ay;
+            const uint32_t ao = ca_abs_i32(out_i[i]);
+            if (ao > blk.out_peak_i) blk.out_peak_i = ao;
+        }
     }
 
-    ca_stats_add(c, frames);
+    ca_stats_add(c, frames, blk);
     return 0;
 }
 
@@ -276,17 +328,20 @@ extern "C" int32_t ca_command(effect_handle_t self, uint32_t cmd, uint32_t cmdSi
         return 0;
 
     case EFFECT_CMD_SET_PARAM: {
-        // レイアウト: [int32 psize][int32 vsize][param bytes][value bytes]
-        if (pCmd == nullptr || cmdSize < 4 * sizeof(int32_t)) return -EINVAL;
+        if (pCmd == nullptr || cmdSize < sizeof(effect_param_t)) return -EINVAL;
         if (!intReply) return -EINVAL;
-        const int32_t* h = static_cast<const int32_t*>(pCmd);
-        if (h[0] != static_cast<int32_t>(sizeof(int32_t)) ||
-            h[1] != static_cast<int32_t>(sizeof(int32_t))) {
+        const effect_param_t* pp = static_cast<const effect_param_t*>(pCmd);
+        if (pp->psize != sizeof(int32_t) || pp->vsize != sizeof(int32_t)) {
             *static_cast<int*>(pReply) = -EINVAL;
             return 0;
         }
-        const int32_t id = h[2];
-        int32_t v = h[3];
+        // value は param の直後ではなく、sizeof(int) 境界に切り上げた位置。
+        const size_t voff = ((pp->psize - 1) / sizeof(int32_t) + 1) * sizeof(int32_t);
+        if (cmdSize < sizeof(effect_param_t) + voff + pp->vsize) return -EINVAL;
+        int32_t id = 0;
+        int32_t v = 0;
+        std::memcpy(&id, pp->data, sizeof(id));
+        std::memcpy(&v, pp->data + voff, sizeof(v));
         if (id != 1) { *static_cast<int*>(pReply) = -EINVAL; return 0; }
         // 安全装置: 正のゲインは構造的に受け付けない。ここを緩めない。
         // 実機で音を鳴らす実験の上限を、スクリプトではなくドライバ側で保証する。
@@ -319,11 +374,12 @@ extern "C" int32_t ca_get_descriptor(effect_handle_t self, effect_descriptor_t* 
 }
 
 namespace {
+// 関数ポインタ表。位置を 1 つずらすと別の関数が呼ばれるので、必ずフィールド名で書く。
 const struct effect_interface_s kCaEqInterface = {
-    /* process */         ca_process,
-    /* command */         ca_command,
-    /* get_descriptor */  ca_get_descriptor,
-    /* process_reverse */ nullptr,
+    .process         = ca_process,
+    .command         = ca_command,
+    .get_descriptor  = ca_get_descriptor,
+    .process_reverse = nullptr,
 };
 }  // namespace
 
@@ -348,6 +404,15 @@ extern "C" int32_t ca_lib_create(const effect_uuid_t* uuid, int32_t sessionId, i
     return 0;
 }
 
+// AUDIO_SESSION_DEVICE のときに呼ばれる 3.1 の入口。
+// deviceId は捨てる — SW の device effect には AUDIO_PORT_HANDLE_NONE (0) が literal で渡され、
+// どのイヤホンかは分からない。デバイスごとの設定は共有メモリで運ぶ前提のまま。
+extern "C" int32_t ca_lib_create_3_1(const effect_uuid_t* uuid, int32_t sessionId, int32_t ioId,
+                                     int32_t deviceId, effect_handle_t* pHandle) {
+    CA_LOGI("create_3_1 session=%d io=%d device=%d", sessionId, ioId, deviceId);
+    return ca_lib_create(uuid, sessionId, ioId, pHandle);
+}
+
 extern "C" int32_t ca_lib_release(effect_handle_t handle) {
     CaCtx* c = reinterpret_cast<CaCtx*>(handle);
     if (c == nullptr) return -EINVAL;
@@ -367,12 +432,17 @@ extern "C" int32_t ca_lib_get_descriptor(const effect_uuid_t* uuid, effect_descr
 // このシンボル名は固定。ローダはこの名前 (AELI) だけを dlsym する。
 // extern "C" と visibility("default") の両方が要る。
 extern "C" __attribute__((visibility("default")))
+// version と create_effect_3_1 は必ずセットで動かす。
+// 3.1 を名乗ると doEffectCreate が NULL チェックなしで create_effect_3_1 を呼ぶので、
+// 片方だけ変えると HAL が落ちて音が全く出なくなる。
+// ここもフィールド名で書く — 位置を 1 つ間違えるだけで同じ事故になる。
 audio_effect_library_t AUDIO_EFFECT_LIBRARY_INFO_SYM = {
-    /* tag */            AUDIO_EFFECT_LIBRARY_TAG,
-    /* version */        EFFECT_LIBRARY_API_VERSION_3_0,
-    /* name */           "Codec Anchor EQ Library",
-    /* implementor */    "Codec Anchor",
-    /* create_effect */  ca_lib_create,
-    /* release_effect */ ca_lib_release,
-    /* get_descriptor */ ca_lib_get_descriptor,
+    .tag               = AUDIO_EFFECT_LIBRARY_TAG,
+    .version           = EFFECT_LIBRARY_API_VERSION_3_1,
+    .name              = "Codec Anchor EQ Library",
+    .implementor       = "Codec Anchor",
+    .create_effect     = ca_lib_create,
+    .release_effect    = ca_lib_release,
+    .get_descriptor    = ca_lib_get_descriptor,
+    .create_effect_3_1 = ca_lib_create_3_1,
 };

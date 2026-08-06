@@ -1,5 +1,8 @@
 * text=auto eol=lf
 *.bat text eol=crlf
+
+# CRLF を拒否することを確かめるための fixture。改行を正規化されるとテストが素通りする
+module/test/fixtures/crlf.xml -text
 *.jar binary
 *.jks binary
 *.png binary

@@ -32,8 +32,23 @@ typedef struct ca_slot_s {
     uint64_t pid;           /* 書き手のプロセス */
     uint64_t ctx;           /* ctx ポインタ。インスタンスの一意な識別子として使う */
     uint64_t last_ns;       /* 直近に process() した CLOCK_MONOTONIC */
-    /* 上は uint32/int32 が 8 本 (32 バイト) + uint64 が 4 本 (32 バイト) = 64 バイト。 */
-    uint8_t  pad[128 - (8 * 4) - (4 * 8)];
+    /* 直近の process() の絶対値の最大。in が 0 なら無音が来ているだけで、
+     * 経路に入っていないのとは別。out/in の比がゲインと一致すれば加工が効いている。 */
+    float    in_peak;
+    float    out_peak;
+    /* バッファの正体を決めるための計測。float 解釈と int32 解釈を並べ、
+     * さらに in-place かどうかとループ回数も出す。3 つの仮説
+     * (int32 を float と誤読 / 本当に無音 / ピークの計算違い) を 1 回で分ける。 */
+    uint64_t in_addr;         /* process() に来た in->raw。out_addr と同じなら in-place */
+    uint64_t out_addr;
+    uint32_t dbg_in_frames;   /* in->frameCount */
+    uint32_t dbg_out_frames;  /* out->frameCount */
+    uint32_t dbg_samples;     /* 実際にループした回数 */
+    uint32_t dbg_fmt;         /* SET_CONFIG で受け取った outputCfg.format */
+    uint32_t in_peak_i32;     /* 同じバッファを int32 として読んだ絶対値の最大 */
+    uint32_t out_peak_i32;
+    /* uint32/int32 が 14 本 (56 B) + uint64 が 6 本 (48 B) + float が 2 本 (8 B) = 112 B。 */
+    uint8_t  pad[128 - (14 * 4) - (6 * 8) - (2 * 4)];
 } ca_slot_t;
 
 CA_STATIC_ASSERT(sizeof(ca_slot_t) == 128, "ca_slot_t は 128 バイト固定");

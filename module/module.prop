@@ -1,0 +1,6 @@
+id=codecanchor_eq
+name=Codec Anchor EQ (spike)
+version=0.0.1-spike
+versionCode=1
+author=mame1839
+description=AUDIO_SESSION_DEVICE に自前の POST_PROC エフェクトを登録する実証用モジュール。bind mount のみで /vendor の実ファイルは変更しない。
