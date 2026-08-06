@@ -133,4 +133,14 @@
     <string name="msg_apply_requested">मॉड्यूल से सेटिंग लागू करने को कहा</string>
     <string name="msg_apply_module_inactive">मॉड्यूल नहीं चल रहा, इसलिए अनुरोध भेजा नहीं जा सकता</string>
     <string name="msg_apply_not_connected">डिवाइस कनेक्ट नहीं है, इसलिए अभी कुछ लागू नहीं हो सकता</string>
+
+    <string name="msg_preset_exported">प्रीसेट एक्सपोर्ट हो गया</string>
+    <string name="msg_preset_export_failed">फ़ाइल में लिखा नहीं जा सका</string>
+    <string name="msg_preset_imported">प्रीसेट इंपोर्ट हो गया</string>
+    <string name="msg_preset_invalid">यह फ़ाइल Codec Anchor का प्रीसेट नहीं है</string>
+    <string name="msg_autoeq_imported">AutoEQ के फ़िल्टर इंपोर्ट हो गए</string>
+    <string name="msg_autoeq_failed">फ़ाइल पढ़ी नहीं जा सकी</string>
+    <string name="msg_autoeq_invalid">यह फ़ाइल AutoEQ का नतीजा नहीं है</string>
+    <string name="msg_autoeq_corner_shelf">इस AutoEQ फ़ाइल में LS या HS फ़िल्टर हैं, जो समर्थित नहीं हैं</string>
+    <string name="msg_autoeq_no_bands">इस AutoEQ फ़ाइल में कोई फ़िल्टर नहीं है</string>
 </resources>

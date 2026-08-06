@@ -135,4 +135,14 @@
     <string name="msg_apply_requested">Wysłano do modułu żądanie zastosowania ustawień</string>
     <string name="msg_apply_module_inactive">Moduł nie działa, więc żądania nie można dostarczyć</string>
     <string name="msg_apply_not_connected">Urządzenie nie jest połączone, więc nie można teraz nic zastosować</string>
+
+    <string name="msg_preset_exported">Preset wyeksportowany</string>
+    <string name="msg_preset_export_failed">Nie udało się zapisać pliku</string>
+    <string name="msg_preset_imported">Preset zaimportowany</string>
+    <string name="msg_preset_invalid">Ten plik nie jest presetem Codec Anchor</string>
+    <string name="msg_autoeq_imported">Filtry AutoEQ zaimportowane</string>
+    <string name="msg_autoeq_failed">Nie udało się odczytać pliku</string>
+    <string name="msg_autoeq_invalid">Ten plik nie jest wynikiem AutoEQ</string>
+    <string name="msg_autoeq_corner_shelf">Ten plik AutoEQ używa filtrów LS lub HS, które nie są obsługiwane</string>
+    <string name="msg_autoeq_no_bands">Ten plik AutoEQ nie zawiera filtrów</string>
 </resources>

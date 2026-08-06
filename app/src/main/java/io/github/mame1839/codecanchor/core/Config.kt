@@ -21,6 +21,7 @@ data class DeviceProfile(
     val delayMs: Int = 3000,
     val retries: Int = 3,
     val retryDelayMs: Int = 1500,
+    val eq: EqSettings = EqSettings(),
 ) {
     fun toJson(): JSONObject = JSONObject().apply {
         put("mac", mac)
@@ -40,6 +41,7 @@ data class DeviceProfile(
         put("delayMs", delayMs)
         put("retries", retries)
         put("retryDelayMs", retryDelayMs)
+        put("eq", eq.toJson())
     }
 
     fun hasAnyTarget(): Boolean =
@@ -76,6 +78,7 @@ data class DeviceProfile(
                 delayMs = o.optInt("delayMs", default.delayMs).coerceIn(DELAY_MS_RANGE),
                 retries = o.optInt("retries", default.retries).coerceIn(RETRIES_RANGE),
                 retryDelayMs = o.optInt("retryDelayMs", default.retryDelayMs).coerceIn(RETRY_DELAY_MS_RANGE),
+                eq = EqSettings.fromJson(o.optJSONObject("eq")),
             )
         }
 

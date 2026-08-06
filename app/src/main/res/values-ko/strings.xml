@@ -132,4 +132,14 @@
     <string name="msg_apply_requested">적용을 요청했습니다</string>
     <string name="msg_apply_module_inactive">모듈이 동작하지 않아 요청이 전달되지 않습니다</string>
     <string name="msg_apply_not_connected">기기가 연결되지 않아 지금은 적용할 수 없습니다</string>
+
+    <string name="msg_preset_exported">프리셋을 내보냈습니다</string>
+    <string name="msg_preset_export_failed">파일에 쓸 수 없었습니다</string>
+    <string name="msg_preset_imported">프리셋을 가져왔습니다</string>
+    <string name="msg_preset_invalid">Codec Anchor의 프리셋 파일이 아닙니다</string>
+    <string name="msg_autoeq_imported">AutoEQ 필터를 가져왔습니다</string>
+    <string name="msg_autoeq_failed">파일을 읽을 수 없었습니다</string>
+    <string name="msg_autoeq_invalid">AutoEQ의 결과 파일이 아닙니다</string>
+    <string name="msg_autoeq_corner_shelf">이 AutoEQ 파일은 지원하지 않는 LS 또는 HS 필터를 사용합니다</string>
+    <string name="msg_autoeq_no_bands">이 AutoEQ 파일에는 필터가 없습니다</string>
 </resources>

@@ -132,4 +132,14 @@
     <string name="msg_apply_requested">適用を要求しました</string>
     <string name="msg_apply_module_inactive">モジュールが動いていないため届きません</string>
     <string name="msg_apply_not_connected">機器が接続されていないため、いまは適用できません</string>
+
+    <string name="msg_preset_exported">プリセットを書き出しました</string>
+    <string name="msg_preset_export_failed">ファイルに書き込めませんでした</string>
+    <string name="msg_preset_imported">プリセットを読み込みました</string>
+    <string name="msg_preset_invalid">Codec Anchor のプリセットではありません</string>
+    <string name="msg_autoeq_imported">AutoEQ のフィルタを読み込みました</string>
+    <string name="msg_autoeq_failed">ファイルを読み込めませんでした</string>
+    <string name="msg_autoeq_invalid">AutoEQ の結果ファイルではありません</string>
+    <string name="msg_autoeq_corner_shelf">この AutoEQ ファイルは対応していない LS / HS フィルタを使っています</string>
+    <string name="msg_autoeq_no_bands">この AutoEQ ファイルにはフィルタがありません</string>
 </resources>

@@ -133,4 +133,14 @@
     <string name="msg_apply_requested">Das Modul wurde gebeten, die Einstellungen anzuwenden</string>
     <string name="msg_apply_module_inactive">Das Modul läuft nicht, daher kann die Anfrage nicht übermittelt werden</string>
     <string name="msg_apply_not_connected">Das Gerät ist nicht verbunden, daher kann jetzt nichts angewendet werden</string>
+
+    <string name="msg_preset_exported">Voreinstellung exportiert</string>
+    <string name="msg_preset_export_failed">Datei konnte nicht geschrieben werden</string>
+    <string name="msg_preset_imported">Voreinstellung importiert</string>
+    <string name="msg_preset_invalid">Diese Datei ist keine Voreinstellung von Codec Anchor</string>
+    <string name="msg_autoeq_imported">AutoEQ-Filter importiert</string>
+    <string name="msg_autoeq_failed">Datei konnte nicht gelesen werden</string>
+    <string name="msg_autoeq_invalid">Diese Datei ist kein AutoEQ-Ergebnis</string>
+    <string name="msg_autoeq_corner_shelf">Diese AutoEQ-Datei verwendet LS- oder HS-Filter, die nicht unterstützt werden</string>
+    <string name="msg_autoeq_no_bands">Diese AutoEQ-Datei enthält keine Filter</string>
 </resources>

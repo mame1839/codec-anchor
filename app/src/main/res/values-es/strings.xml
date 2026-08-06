@@ -134,4 +134,14 @@
     <string name="msg_apply_requested">Se ha pedido aplicar los ajustes</string>
     <string name="msg_apply_module_inactive">El módulo no está funcionando, así que la petición no llega</string>
     <string name="msg_apply_not_connected">El dispositivo no está conectado, así que no se puede aplicar ahora</string>
+
+    <string name="msg_preset_exported">Preajuste exportado</string>
+    <string name="msg_preset_export_failed">No se pudo escribir el archivo</string>
+    <string name="msg_preset_imported">Preajuste importado</string>
+    <string name="msg_preset_invalid">Ese archivo no es un preajuste de Codec Anchor</string>
+    <string name="msg_autoeq_imported">Filtros de AutoEQ importados</string>
+    <string name="msg_autoeq_failed">No se pudo leer el archivo</string>
+    <string name="msg_autoeq_invalid">Ese archivo no es un resultado de AutoEQ</string>
+    <string name="msg_autoeq_corner_shelf">Ese archivo de AutoEQ usa filtros LS o HS, que no son compatibles</string>
+    <string name="msg_autoeq_no_bands">Ese archivo de AutoEQ no tiene filtros</string>
 </resources>

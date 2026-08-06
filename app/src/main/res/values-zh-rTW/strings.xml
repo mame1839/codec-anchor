@@ -132,4 +132,14 @@
     <string name="msg_apply_requested">已請求模組套用設定</string>
     <string name="msg_apply_module_inactive">模組沒有運作，請求無法送達</string>
     <string name="msg_apply_not_connected">裝置未連線，現在無法套用</string>
+
+    <string name="msg_preset_exported">已匯出預設</string>
+    <string name="msg_preset_export_failed">無法寫入檔案</string>
+    <string name="msg_preset_imported">已匯入預設</string>
+    <string name="msg_preset_invalid">這不是 Codec Anchor 的預設檔案</string>
+    <string name="msg_autoeq_imported">已匯入 AutoEQ 濾波器</string>
+    <string name="msg_autoeq_failed">無法讀取檔案</string>
+    <string name="msg_autoeq_invalid">這不是 AutoEQ 的結果檔案</string>
+    <string name="msg_autoeq_corner_shelf">這個 AutoEQ 檔案使用了不支援的 LS 或 HS 濾波器</string>
+    <string name="msg_autoeq_no_bands">這個 AutoEQ 檔案沒有濾波器</string>
 </resources>

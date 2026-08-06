@@ -138,4 +138,14 @@
     <string name="msg_apply_requested">Asked the module to apply the settings</string>
     <string name="msg_apply_module_inactive">The module is not running, so the request cannot be delivered</string>
     <string name="msg_apply_not_connected">The device is not connected, so nothing can be applied now</string>
+
+    <string name="msg_preset_exported">Exported the preset</string>
+    <string name="msg_preset_export_failed">Could not write the file</string>
+    <string name="msg_preset_imported">Imported the preset</string>
+    <string name="msg_preset_invalid">That file is not a Codec Anchor preset</string>
+    <string name="msg_autoeq_imported">Imported the AutoEQ filters</string>
+    <string name="msg_autoeq_failed">Could not read the file</string>
+    <string name="msg_autoeq_invalid">That file is not an AutoEQ result</string>
+    <string name="msg_autoeq_corner_shelf">This AutoEQ file uses LS or HS filters, which are not supported</string>
+    <string name="msg_autoeq_no_bands">That AutoEQ file has no filters</string>
 </resources>

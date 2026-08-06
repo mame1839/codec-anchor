@@ -132,4 +132,14 @@
     <string name="msg_apply_requested">已请求应用设置</string>
     <string name="msg_apply_module_inactive">模块没有运行，请求无法送达</string>
     <string name="msg_apply_not_connected">设备未连接，现在无法应用</string>
+
+    <string name="msg_preset_exported">已导出预设</string>
+    <string name="msg_preset_export_failed">无法写入文件</string>
+    <string name="msg_preset_imported">已导入预设</string>
+    <string name="msg_preset_invalid">这不是 Codec Anchor 的预设文件</string>
+    <string name="msg_autoeq_imported">已导入 AutoEQ 滤波器</string>
+    <string name="msg_autoeq_failed">无法读取文件</string>
+    <string name="msg_autoeq_invalid">这不是 AutoEQ 的结果文件</string>
+    <string name="msg_autoeq_corner_shelf">该 AutoEQ 文件使用了不支持的 LS 或 HS 滤波器</string>
+    <string name="msg_autoeq_no_bands">该 AutoEQ 文件没有滤波器</string>
 </resources>
