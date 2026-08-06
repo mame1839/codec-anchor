@@ -111,6 +111,22 @@ int main(int argc, char** argv) {
         printf("     peak: float in=%.9g out=%.9g / int32 in=%u out=%u\n",
                static_cast<double>(s.in_peak), static_cast<double>(s.out_peak),
                s.in_peak_i32, s.out_peak_i32);
+        // パラメータ経路。**捨てたことが見えないと「効かない」の原因が追えない。**
+        if (s.param_slot == CA_PARAM_SLOT_NONE) {
+            printf("     param: 枠が未割り当て — パラメータを一切適用せず素通し\n");
+        } else {
+            const ca_eq_slot_t* q = &m->params[s.param_slot];
+            printf("     param: 枠=%u 適用済み gen=%u / 共有メモリ gen=%u bands=%u "
+                   "preamp=%.2f dB flags=0x%x 却下=%u\n",
+                   s.param_slot, s.param_gen, q->generation, q->band_count,
+                   static_cast<double>(q->preamp_db), q->flags, s.param_rejected);
+            if (q->generation == 0) {
+                printf("            (書き手がまだ一度も書いていない = 誰にも宛てられていない)\n");
+            } else if (s.param_gen != q->generation) {
+                printf("            (共有メモリの世代に追いついていない。"
+                       "却下が増えているなら検査に落ちている)\n");
+            }
+        }
     }
     if (active == 0) {
         // magic が立っている = ca_stats_open() が走った = create_effect() が最低 1 回はあった。

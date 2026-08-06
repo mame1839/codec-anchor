@@ -5,13 +5,16 @@
 //
 // 参照実装は llmdocs/tools/eq/ の Python スクリプト。突き合わせる数値はそこから取ってある。
 
+#include <atomic>
 #include <chrono>
 #include <cstdlib>
 #include <cstring>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "ca_test_support.h"
+#include "../dsp/ca_eq_params.h"
 
 using catest::Report;
 using catest::Rng;
@@ -1036,6 +1039,162 @@ void checkParamGuards(Report& r) {
     }
 }
 
+// --------------------------------------------------------------------------
+// 15. 共有メモリの seqlock — 書き手のスレッドを本当に立てて確かめる
+// --------------------------------------------------------------------------
+
+// generation から全フィールドを決めて、読み手が「この世代ならこの値」を照合できるようにする。
+// 1 つでもずれていれば、それは千切れた読みを採用したということ。
+void fillGeneration(ca_eq_slot_t* s, uint32_t gen) {
+    s->generation = gen;
+    s->flags = CA_EQ_FLAG_ENABLED;
+    s->band_count = CA_EQ_MAX_BANDS;
+    s->preamp_db = -static_cast<float>(gen % 13);
+    s->writer_pid = gen;
+    for (uint32_t i = 0; i < CA_EQ_MAX_BANDS; i++) {
+        s->band[i].fc_hz = 100.0f + static_cast<float>(gen % 97);
+        s->band[i].q = 1.0f + static_cast<float>(gen % 7);
+        s->band[i].gain_db = static_cast<float>(gen % 11) - 5.0f;
+        s->band[i].type = CA_EQ_BAND_PEAKING;
+    }
+}
+
+bool matchesGeneration(const ca_eq_slot_t& s) {
+    ca_eq_slot_t want{};
+    fillGeneration(&want, s.generation);
+    if (s.flags != want.flags || s.band_count != want.band_count ||
+        s.preamp_db != want.preamp_db || s.writer_pid != want.writer_pid) {
+        return false;
+    }
+    for (uint32_t i = 0; i < CA_EQ_MAX_BANDS; i++) {
+        if (s.band[i].fc_hz != want.band[i].fc_hz || s.band[i].q != want.band[i].q ||
+            s.band[i].gain_db != want.band[i].gain_db || s.band[i].type != want.band[i].type) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void checkSeqlock(Report& r) {
+    r.section("15. 共有メモリの seqlock (書き手を別スレッドで走らせる)");
+
+    r.check(sizeof(ca_shm_t) == CA_SHM_BYTES,
+            "ca_shm_t = %zu バイト。post-fs-data.sh が作る大きさと一致 (%d)", sizeof(ca_shm_t),
+            CA_SHM_BYTES);
+    r.check(sizeof(ca_eq_slot_t) == 576 && sizeof(ca_eq_band_t) == 16,
+            "並びが固定 (ca_eq_slot_t %zu / ca_eq_band_t %zu)", sizeof(ca_eq_slot_t),
+            sizeof(ca_eq_band_t));
+
+    // 書き手と読み手を同時に回して、千切れた並びを採用しないことを見る。
+    {
+        auto* slot = new ca_eq_slot_t{};
+        std::atomic<bool> stop{false};
+        std::atomic<uint64_t> writes{0};
+
+        std::thread writer([&] {
+            uint32_t gen = 1;
+            while (!stop.load(std::memory_order_relaxed)) {
+                caeq::paramsBeginWrite(slot);
+                fillGeneration(slot, gen);
+                caeq::paramsEndWrite(slot);
+                gen++;
+                writes.fetch_add(1, std::memory_order_relaxed);
+            }
+        });
+
+        uint64_t ok = 0, gave_up = 0, torn = 0;
+        const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(600);
+        while (std::chrono::steady_clock::now() < deadline) {
+            ca_eq_slot_t snap;
+            if (caeq::paramsRead(slot, &snap)) {
+                ok++;
+                if (snap.generation != 0 && !matchesGeneration(snap)) torn++;
+            } else {
+                gave_up++;
+            }
+        }
+        stop.store(true);
+        writer.join();
+
+        r.check(torn == 0, "千切れた並びを採用した回数 %llu / 成功 %llu / 諦め %llu "
+                           "(書き込み %llu 回)",
+                static_cast<unsigned long long>(torn), static_cast<unsigned long long>(ok),
+                static_cast<unsigned long long>(gave_up),
+                static_cast<unsigned long long>(writes.load()));
+        r.check(ok > 0, "書き込みと同時でも読めている");
+        delete slot;
+    }
+
+    // 書き手が書き込みの途中で死んだ場合。seq が奇数のまま残る。
+    {
+        ca_eq_slot_t slot{};
+        fillGeneration(&slot, 7);
+        caeq::paramsBeginWrite(&slot);   // 奇数のまま放置 = 書き手が死んだ状態
+        ca_eq_slot_t snap;
+        const auto t0 = std::chrono::steady_clock::now();
+        const bool got = caeq::paramsRead(&slot, &snap);
+        const double us = std::chrono::duration<double, std::micro>(
+                              std::chrono::steady_clock::now() - t0).count();
+        r.check(!got && us < 1000.0,
+                "書き手が途中で死んでも %.1f us で諦める (スピンしない)", us);
+    }
+
+    // 変換と検査。範囲の表は演算層にしか無いので、そこで弾かれることを見る。
+    {
+        Eq eq;
+        eq.configure(kFs, 2, Structure::kTdf2);
+        ca_eq_slot_t slot{};
+        fillGeneration(&slot, 3);
+        Params p;
+        r.check(caeq::paramsConvert(slot, &p) && eq.setParams(p), "正常な並びは通る");
+
+        slot.band_count = CA_EQ_MAX_BANDS + 1;
+        r.check(!caeq::paramsConvert(slot, &p), "band_count が上限超えなら変換しない");
+
+        fillGeneration(&slot, 3);
+        slot.band[5].type = 99;
+        r.check(!caeq::paramsConvert(slot, &p), "未知の type を弾く");
+
+        // fc が Nyquist を越える並び。**送り手は fs を知らないので、ここが最後の砦。**
+        fillGeneration(&slot, 3);
+        slot.band[9].fc_hz = 30000.0f;
+        const uint32_t before = eq.rejectedCount();
+        r.check(caeq::paramsConvert(slot, &p) && !eq.setParams(p) &&
+                    eq.rejectedCount() == before + 1,
+                "48 kHz で fc 30 kHz の並びを丸ごと却下する");
+    }
+}
+
+void checkRateChange(Report& r) {
+    r.section("16. サンプルレートが変わったとき");
+
+    // 48 kHz で通る 20 kHz のバンドは、32 kHz では Nyquist を越える。
+    // runMono がインタリーブしない信号を渡すので 1 ch で組む。
+    Eq eq;
+    eq.configure(48000.0, 1, Structure::kTdf2);
+    eq.setActive(true);
+    eq.setFadeMillis(0.0);
+    r.check(eq.snapParams(makeParams({Band{BandType::kPeaking, 20000.0, 2.0, 6.0},
+                                      Band{BandType::kPeaking, 1000.0, 1.0, 3.0}})),
+            "48 kHz では 20 kHz のバンドが通る");
+    r.check(eq.activeBands() == 2, "2 バンドが載っている");
+
+    const uint32_t before = eq.rejectedCount();
+    eq.configure(32000.0, 1, Structure::kTdf2);
+    r.check(eq.activeBands() == 0 && eq.rejectedCount() == before + 1,
+            "32 kHz に変わったら丸ごと捨てて平坦に戻す (勝手に fc を動かさない)");
+
+    // 32 kHz で収まる設定は通る。
+    r.check(eq.snapParams(makeParams({Band{BandType::kPeaking, 12000.0, 2.0, 6.0}})) &&
+                eq.activeBands() == 1,
+            "32 kHz で収まる設定は通る");
+
+    // 出力が有限であることも確かめる (係数が壊れていないこと)。
+    std::vector<float> x = catest::makeNoise(4800, 0.3, 8);
+    std::vector<float> y = runMono(eq, x, 960);
+    r.check(catest::allFinite(y), "レート変更後の出力が有限");
+}
+
 void checkAccumulate(Report& r) {
     r.section("14. ACCUMULATE と素通し");
 
@@ -1095,6 +1254,8 @@ int main(int argc, char** argv) {
     checkDenormal(r);
     checkParamGuards(r);
     checkAccumulate(r);
+    checkSeqlock(r);
+    checkRateChange(r);
 
     std::printf("\n%d / %d 件が通った。\n", r.total() - r.failures(), r.total());
     return r.failures() == 0 ? 0 : 1;

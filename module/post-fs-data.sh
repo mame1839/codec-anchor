@@ -66,11 +66,15 @@ chmod 644 "$WORK/etc/audio_effects.xml"
 chcon --reference="$SRC_XML" "$WORK/etc/audio_effects.xml" || ca_die "XML のラベル継承に失敗"
 ca_log "XML patch 完了 ($(wc -c < "$SRC_XML") -> $(wc -c < "$WORK/etc/audio_effects.xml") バイト)"
 
-# --- 5. 統計ファイルを用意する -------------------------------------------
+# --- 5. 共有メモリを用意する ---------------------------------------------
+# 統計 (.so -> 外) とパラメータ (外 -> .so) の両方が入る。
+# **大きさは app/src/main/cpp/ca_eq_shm.h の CA_SHM_BYTES と一致させること。**
+# 足りないと .so がマップの外を触って SIGBUS で vendor の audio HAL ごと落ちる
+# (= 端末が無音になる)。.so 側でも大きさを確かめてから mmap している。
 SHM=/data/vendor/audio/ca_eq_stats.bin
 if [ -d /data/vendor/audio ]; then
     rm -f "$SHM"
-    dd if=/dev/zero of="$SHM" bs=1152 count=1 2>/dev/null
+    dd if=/dev/zero of="$SHM" bs=5760 count=1 2>/dev/null
     chmod 664 "$SHM"
     chown audioserver:audio "$SHM"
     chcon --reference=/data/vendor/audio "$SHM"

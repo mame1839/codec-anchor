@@ -125,18 +125,20 @@ Coef unityFor(const Band& band, double fs, Structure structure) {
     return design(flat, fs, structure);
 }
 
-bool validate(const Params& p) {
+bool validate(const Params& p, double fs) {
+    if (!finite(fs) || fs <= 0.0) return false;
     if (p.band_count < 0 || p.band_count > kMaxBands) return false;
     if (!finite(p.preamp_db) || p.preamp_db < kMinPreampDb || p.preamp_db > kMaxPreampDb) {
         return false;
     }
+    const double fc_max = kValidFcRatio * fs;
     for (int i = 0; i < p.band_count; i++) {
         const Band& b = p.bands[i];
         if (b.type != BandType::kPeaking && b.type != BandType::kLowShelf &&
             b.type != BandType::kHighShelf) {
             return false;
         }
-        if (!finite(b.fc) || b.fc < kMinFcHz || b.fc > kMaxFcHz) return false;
+        if (!finite(b.fc) || b.fc < kMinFcHz || b.fc > fc_max) return false;
         if (!finite(b.q) || b.q < kMinQ || b.q > kMaxQ) return false;
         if (!finite(b.gain_db) || b.gain_db < -kMaxGainDb || b.gain_db > kMaxGainDb) return false;
     }
@@ -200,6 +202,13 @@ void Eq::configure(double sample_rate, int channels, Structure structure) {
 }
 
 void Eq::rebuildFromParams() {
+    // fc の上限は fs に依る。サンプルレートが下がって前の設定が収まらなくなったら、
+    // クランプして鳴らし続けるのではなく平坦に戻す。**部分適用はしない** — 勝手に
+    // 動かした fc で鳴り続けるより、掛かっていないほうが原因を追える。
+    if (!validate(params_, sr_)) {
+        params_ = Params{};
+        rejected_++;
+    }
     for (int b = 0; b < params_.band_count; b++) {
         band_from_[b] = params_.bands[b];
         band_to_[b]   = params_.bands[b];
@@ -217,7 +226,7 @@ void Eq::rebuildFromParams() {
 }
 
 bool Eq::setParams(const Params& p) {
-    if (!validate(p)) {
+    if (!validate(p, sr_)) {
         rejected_++;
         return false;
     }
@@ -228,7 +237,7 @@ bool Eq::setParams(const Params& p) {
 }
 
 bool Eq::snapParams(const Params& p) {
-    if (!validate(p)) {
+    if (!validate(p, sr_)) {
         rejected_++;
         return false;
     }

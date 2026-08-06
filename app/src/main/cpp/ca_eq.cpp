@@ -8,11 +8,13 @@
 #include <new>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <android/log.h>
 #include "aosp/audio_effect.h"
 #include "ca_eq_shm.h"
 #include "dsp/ca_eq_dsp.h"
+#include "dsp/ca_eq_params.h"
 
 #define CA_LOG_TAG "CodecAnchorEQ"
 // ログは制御スレッド (create / SET_CONFIG / ENABLE / release) からだけ呼ぶ。
@@ -51,6 +53,12 @@ struct CaCtx {
     int32_t  gain_mb;            // millibel。0 = 素通し
     uint32_t channels;
     ca_slot_t* slot;             // 共有メモリのスロット。nullptr なら記録しない
+    // 読みに行くパラメータ枠。**割り当てられていないあいだは何も適用せず素通しする** —
+    // 「たぶん自分宛て」で読むと、2 台目のイヤホンに 1 台目の設定が掛かる。
+    uint32_t   param_slot;
+    uint32_t   param_gen;        // 最後に適用した generation
+    uint32_t   param_rejected;
+    bool       user_enabled;     // 共有メモリ側の on/off。framework の ENABLE とは別
     caeq::Eq dsp;                // 演算本体。ホストのハーネスで検証してあるものと同じコード
 };
 
@@ -117,6 +125,17 @@ void ca_stats_open() {
         CA_LOGE("stats open failed: %s (errno=%d)", CA_SHM_PATH, errno);
         return;
     }
+    // **大きさを確かめてから map する。**短いファイルを map して後ろを触ると SIGBUS で
+    // vendor の audio HAL ごと落ちる (= 端末が無音になる)。版 1 の 1152 バイトのまま
+    // 残っている環境が実際にありうるので、ここは省けない。
+    struct stat st;
+    if (fstat(fd, &st) != 0 || static_cast<uint64_t>(st.st_size) < sizeof(ca_shm_t)) {
+        CA_LOGE("stats file too small: %lld < %zu — module/post-fs-data.sh が古い",
+                fstat(fd, &st) == 0 ? static_cast<long long>(st.st_size) : -1LL,
+                sizeof(ca_shm_t));
+        close(fd);
+        return;
+    }
     void* p = mmap(nullptr, sizeof(ca_shm_t), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     close(fd);
     if (p == MAP_FAILED) { CA_LOGE("stats mmap failed errno=%d", errno); return; }
@@ -160,6 +179,11 @@ void ca_stats_attach(CaCtx* c, int32_t ioId) {
             s->ctx = reinterpret_cast<uint64_t>(c);
             s->last_ns = 0;
             c->slot = s;
+            // 既定では自分が取った枠と同じ添字のパラメータを読む。書き手は統計側の
+            // io_id / ctx を見てどの枠がどのイヤホンかを決められるので、これで足りる。
+            // SET_PARAM (id=2) が来たらそちらで上書きする。
+            c->param_slot = static_cast<uint32_t>(i);
+            s->param_slot = c->param_slot;
             CA_LOGI("stats slot %d taken io=%d ctx=%p", i, ioId, static_cast<void*>(c));
             return;
         }
@@ -212,6 +236,43 @@ void ca_stats_set_gain(CaCtx* c, int32_t gain_mb) {
     ca_seq_end(s);
 }
 
+// ---------------------------------------------------------------------------
+// パラメータの読み出し。統計とは向きが逆で、書き手が外・読み手がここ。
+// ---------------------------------------------------------------------------
+
+// seqlock の読み手と並びの変換は dsp/ca_eq_params.h。**書き手と同じ定義を共有していて、
+// ホストのハーネスが書き手のスレッドを立てて千切れた読みが起きないことを確かめている。**
+
+// process() の先頭で 1 回だけ呼ぶ。**ブロックの途中で読み直さない** —
+// 取り込みを process() 1 回につき 1 回に縛ることが、係数の変調速度に構造的な上限を
+// 与えている (dsp/ca_eq_dsp.h の setParams を参照)。
+void ca_params_poll(CaCtx* c) {
+    if (g_shm == nullptr || c->param_slot >= CA_SHM_SLOTS) return;
+    const ca_eq_slot_t* src = &g_shm->params[c->param_slot];
+
+    // 世代が動いていなければ何もしない。ここは目安なので素で読んでよい
+    // (途中まで書かれた並びを掴んでも、下の seqlock が弾く)。
+    const uint32_t gen = __atomic_load_n(&src->generation, __ATOMIC_RELAXED);
+    if (gen == 0 || gen == c->param_gen) return;
+
+    ca_eq_slot_t snap;
+    if (!caeq::paramsRead(src, &snap)) return;   // 掴めなければ次のブロックで
+    if (snap.generation == 0 || snap.generation == c->param_gen) return;
+
+    caeq::Params p;
+    if (!caeq::paramsConvert(snap, &p) || !c->dsp.setParams(p)) {
+        // **丸ごと捨てて前の設定を保つ。**部分適用はしない。
+        // 同じ世代を毎ブロック試し直さないよう、捨てた世代も覚える。
+        c->param_gen = snap.generation;
+        c->param_rejected++;
+        return;
+    }
+    c->param_gen = snap.generation;
+    c->user_enabled = (snap.flags & CA_EQ_FLAG_ENABLED) != 0;
+    c->dsp.setActive(c->enabled && c->user_enabled);
+    // 統計への転記は ca_stats_add が seqlock の中でまとめてやる。
+}
+
 // process() から呼ばれる。確保・ロック・ログを一切しない。
 // clock_gettime(CLOCK_MONOTONIC) は vDSO 経由でシステムコールにならない。
 inline void ca_stats_add(CaCtx* c, size_t frames, const CaBlock& b) {
@@ -230,6 +291,9 @@ inline void ca_stats_add(CaCtx* c, size_t frames, const CaBlock& b) {
     s->dbg_out_frames = b.out_frames;
     s->dbg_samples = b.samples;
     s->dbg_fmt = c->cfg.outputCfg.format;
+    s->param_slot = c->param_slot;
+    s->param_gen = c->param_gen;
+    s->param_rejected = c->param_rejected;
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     s->last_ns = static_cast<uint64_t>(ts.tv_sec) * 1000000000ull +
@@ -277,6 +341,9 @@ extern "C" int32_t ca_process(effect_handle_t self, audio_buffer_t* in, audio_bu
             const uint32_t ai = ca_abs_bits(x);
             if (ai > blk.in_peak_i) blk.in_peak_i = ai;
         }
+
+        // 設定の取り込みはここ 1 回だけ。ブロックの途中では読み直さない。
+        ca_params_poll(c);
 
         // 2 パス目は演算層に任せる。ここから先はホストのハーネスで検証済みのコード
         // (app/src/main/cpp/dsp/)。確保もロックもログもしない。
@@ -352,7 +419,9 @@ extern "C" int32_t ca_command(effect_handle_t self, uint32_t cmd, uint32_t cmdSi
         if (!intReply) return -EINVAL;
         c->enabled = (cmd == EFFECT_CMD_ENABLE);
         if (c->enabled) c->dsp.reset();
-        c->dsp.setActive(c->enabled);
+        // 有効になるのは framework とユーザ設定の両方が有効なときだけ。
+        // **どちらの側の OFF でも、素通しになるまでフェードを掛けてから止まる。**
+        c->dsp.setActive(c->enabled && c->user_enabled);
         CA_LOGI("%s ctx=%p", c->enabled ? "ENABLE" : "DISABLE", static_cast<void*>(c));
         ca_stats_set_enabled(c, c->enabled);
         *static_cast<int*>(pReply) = 0;
@@ -373,14 +442,29 @@ extern "C" int32_t ca_command(effect_handle_t self, uint32_t cmd, uint32_t cmdSi
         int32_t v = 0;
         std::memcpy(&id, pp->data, sizeof(id));
         std::memcpy(&v, pp->data + voff, sizeof(v));
-        if (id != 1) { *static_cast<int*>(pReply) = -EINVAL; return 0; }
+        if (id == CA_PARAM_ID_SLOT) {
+            // 経路の確立。**「お前が読むのは枠 N だ」を 1 回だけ受ける。**
+            // 以後の更新は共有メモリの seqlock で、ここは通らない。
+            if (v < 0 || v >= CA_SHM_SLOTS) {
+                CA_LOGE("SET_PARAM slot=%d は範囲外", v);
+                *static_cast<int*>(pReply) = -EINVAL;
+                return 0;
+            }
+            c->param_slot = static_cast<uint32_t>(v);
+            c->param_gen = 0;   // 新しい枠なので、次のブロックで読み直す
+            CA_LOGI("SET_PARAM slot=%d ctx=%p", v, static_cast<void*>(c));
+            *static_cast<int*>(pReply) = 0;
+            return 0;
+        }
+        if (id != CA_PARAM_ID_GAIN) { *static_cast<int*>(pReply) = -EINVAL; return 0; }
+        // 実証用のゲイン。共有メモリの経路が通ったあとも、`.so` だけを単体で動かして
+        // 音が変わることを確かめる手段として残す。
         // 安全装置: 正のゲインは構造的に受け付けない。ここを緩めない。
         // 実機で音を鳴らす実験の上限を、スクリプトではなくドライバ側で保証する。
         if (v > 0) v = 0;
-        if (v < -6000) v = -6000;
+        // 下限は演算層のプリアンプの下限 (-40 dB) と揃える。ここだけ深くしても弾かれる。
+        if (v < -4000) v = -4000;
         c->gain_mb = v;
-        // いまはバンドを持たず、プリアンプだけを動かす。fc / Q / gain の並びを
-        // 共有メモリで受け取る経路は別途 (seqlock の仕様が決まってから)。
         caeq::Params p;
         p.band_count = 0;
         p.preamp_db = static_cast<double>(v) / 100.0;
@@ -391,6 +475,10 @@ extern "C" int32_t ca_command(effect_handle_t self, uint32_t cmd, uint32_t cmdSi
             *static_cast<int*>(pReply) = -EINVAL;
             return 0;
         }
+        // 明示的に指示された以上「宛てられた」とみなす。共有メモリを使わずに
+        // この経路だけで実証するときに、ここが無いと素通しのままになる。
+        c->user_enabled = true;
+        c->dsp.setActive(c->enabled);
         CA_LOGI("SET_PARAM gain=%d mB (preamp=%.2f dB)", c->gain_mb, p.preamp_db);
         ca_stats_set_gain(c, c->gain_mb);
         *static_cast<int*>(pReply) = 0;
@@ -439,6 +527,12 @@ extern "C" int32_t ca_lib_create(const effect_uuid_t* uuid, int32_t sessionId, i
     c->gain_mb = 0;
     c->channels = 2;
     c->slot = nullptr;
+    // 枠を宛てられるまでパラメータを一切適用しない。ca_stats_attach が枠を取れたら
+    // その添字が入る。
+    c->param_slot = CA_PARAM_SLOT_NONE;
+    c->param_gen = 0;
+    c->param_rejected = 0;
+    c->user_enabled = false;
     c->dsp.configure(48000.0, 2, kStructure);
     // 初回のページフォルトと係数の初期化を process() の外へ出す。
     c->dsp.warmUp();

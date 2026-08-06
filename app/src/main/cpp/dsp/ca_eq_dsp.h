@@ -39,18 +39,22 @@ inline constexpr int kChunkFrames = 32;
 // 30 dB と引き換えにする理由が無い。
 inline constexpr int kDefaultCoefStride = 1;
 
-// 受け付けるパラメータの範囲。1 つでも外れたら差し替えを丸ごと却下して前の設定を保つ。
-// **fc は fs と突き合わせない。**送り手 (アプリ) はサンプルレートを知らないので、
-// Nyquist との関係は係数を組むときにクランプで面倒を見る。
+// 受け付けるパラメータの範囲。llmdocs/eq-spec.md §3 の検査表と同じ値にしてある。
+// **1 つでも外れたら差し替えを丸ごと却下して前の設定を保つ。**部分適用はしない
+// (半分だけ効いた状態は原因の切り分けを不可能にする)。
 inline constexpr double kMinFcHz   = 1.0;
-inline constexpr double kMaxFcHz   = 100000.0;
-inline constexpr double kMinQ      = 0.05;
-inline constexpr double kMaxQ      = 100.0;
+inline constexpr double kMinQ      = 0.1;
+inline constexpr double kMaxQ      = 40.0;
 inline constexpr double kMaxGainDb = 40.0;
-// プリアンプは非対称。下は合成応答のピークを吸うために深く、上は音量事故を避けて浅く。
-inline constexpr double kMinPreampDb = -60.0;
-inline constexpr double kMaxPreampDb = 20.0;
-// fc/fs の上限。tan(pi*fc/fs) は fc/fs = 0.5 で発散する。
+inline constexpr double kMinPreampDb = -40.0;
+inline constexpr double kMaxPreampDb = 12.0;
+
+// **fc の上限だけがサンプルレートに依存する。**送り手 (アプリ) は fs を知らないので、
+// ここが最後の砦になる。Nyquist を超えた fc は RBJ の式で sin(w0) < 0 を作り、
+// 極が単位円の外へ出る (= 発散して爆音)。SVF なら tan が発散する。
+inline constexpr double kValidFcRatio = 0.49;
+// 係数を組むときのクランプ。検査を通った値には効かないが、検査を迂回する経路が
+// できたときに Inf を作らないための二重化。
 inline constexpr double kMaxFcRatio = 0.4995;
 
 // 状態の合計がこれを下回り、かつ入力が完全な無音なら状態をゼロに落とす。
@@ -127,9 +131,10 @@ Coef design(const Band& band, double sample_rate, Structure structure);
 // 通る軌跡が素直になる。
 Coef unityFor(const Band& band, double sample_rate, Structure structure);
 
-// 1 つでも外れたら false。呼び出し側は前の設定を保って診断カウンタを進める
+// 1 つでも外れたら false。sample_rate は fc の上限を決めるために要る。呼び出し側は
+// 前の設定を保って診断カウンタを進める
 // (黙って捨てると原因不明の「効かない」になる)。
-bool validate(const Params& p);
+bool validate(const Params& p, double sample_rate);
 
 class Eq {
 public:
