@@ -9,4 +9,4 @@ MODDIR=${0%/*}
 . "$MODDIR/common/patch_xml.sh"
 . "$MODDIR/common/setup.sh"
 
-ca_setup post-fs-data
+ca_setup late-load

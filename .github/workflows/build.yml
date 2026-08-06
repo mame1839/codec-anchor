@@ -55,7 +55,9 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: モジュールのシェルスクリプトを検証する
-        run: bash module/test/patch_xml_test.sh
+        run: |
+          bash module/test/patch_xml_test.sh
+          bash module/test/module_test.sh
 
   # DSP はホストでビルドして検証する。`.so` からは logcat が出ないので、実機だけで書くと
   # 係数の 1 文字の違いを共有メモリのピーク値だけで追うことになる。
