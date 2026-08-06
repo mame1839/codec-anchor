@@ -55,4 +55,6 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: モジュールのシェルスクリプトを検証する
-        run: bash module/test/patch_xml_test.sh
+        run: |
+          bash module/test/patch_xml_test.sh
+          bash module/test/module_test.sh

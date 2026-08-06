@@ -6,12 +6,30 @@ cd "$(dirname "$0")/.."
 APK=app/build/outputs/apk/debug/app-debug.apk
 [ -f "$APK" ] || { echo "先に .\\gradlew.bat :app:assembleDebug を実行する" >&2; exit 1; }
 
+. module/version.sh
+CA_VER=$(ca_version_name)
+CA_VER_CODE=$(ca_version_code "$CA_VER")
+[ "$CA_VER" != "0.0.0" ] || echo "警告: タグが取れないので版が 0.0.0 になる" >&2
+echo "版: $CA_VER ($CA_VER_CODE)"
+
 OUT=module/build/staging
 rm -rf module/build; mkdir -p "$OUT/common"
 
-cp module/module.prop module/post-fs-data.sh module/service.sh module/uninstall.sh \
+cp module/post-fs-data.sh module/late-load.sh module/service.sh module/uninstall.sh \
    module/sepolicy.rule "$OUT/"
-cp module/common/log.sh module/common/patch_xml.sh "$OUT/common/"
+cp module/common/log.sh module/common/patch_xml.sh module/common/setup.sh "$OUT/common/"
+
+# 版は module.prop に literal で持たない。タグが唯一の出どころ。
+sed -e "s/^version=.*/version=$CA_VER/" -e "s/^versionCode=.*/versionCode=$CA_VER_CODE/" \
+    module/module.prop > "$OUT/module.prop"
+grep -qx "version=$CA_VER" "$OUT/module.prop" \
+  || { echo "module.prop の version を置き換えられなかった" >&2; exit 1; }
+grep -qx "versionCode=$CA_VER_CODE" "$OUT/module.prop" \
+  || { echo "module.prop の versionCode を置き換えられなかった" >&2; exit 1; }
+
+# アプリが自分の版と突き合わせるためのもの。system.prop は Magisk / KernelSU / APatch の
+# 3 者共通で、どれも resetprop で読み込む (KernelSU は late-load モードでも読む)。
+ca_system_prop "$CA_VER" "$CA_VER_CODE" > "$OUT/system.prop"
 
 # lib*.so を名乗っているが実体は実行ファイル。モジュール内では素の名前に戻す。
 unzip -p "$APK" lib/arm64-v8a/libcaeq.so        > "$OUT/libcaeq.so"
@@ -23,7 +41,7 @@ chmod 755 "$OUT/caeqstat" "$OUT/dlopen_check"
 
 # 改行は LF。CRLF が混ざると /system/bin/sh が読めない。
 # grep で CR を探さないこと (Windows の grep は行末の CR を落としてから照合する)。
-for f in $(find "$OUT" -name '*.sh') "$OUT/module.prop" "$OUT/sepolicy.rule"; do
+for f in $(find "$OUT" -name '*.sh') "$OUT/module.prop" "$OUT/system.prop" "$OUT/sepolicy.rule"; do
     if [ "$(tr -dc '\015' < "$f" | wc -c)" -ne 0 ]; then echo "CRLF が混ざっている: $f" >&2; exit 1; fi
 done
 
