@@ -73,6 +73,25 @@
     <string name="eq_unavailable_not_registered">Ses işleme kullanılamıyor: ses işleme modülü kurulu değil ya da bu telefon modülü henüz yüklemedi. Modülü kurun, sonra telefonu yeniden başlatın.</string>
     <string name="eq_unavailable_offload">Bluetooth A2DP donanım boşaltma açıkken ses işleme kullanılamaz. Nasıl kapatılacağı cihaz listesindeki notta anlatılıyor.</string>
     <string name="eq_unavailable_hook_old">Ses işleme kullanılamıyor: Bluetooth sürecinde çalışan modül, bunu bilmeyen eski bir sürüm. Bluetooth\'u kapatıp yeniden açın.</string>
+    <string name="eq_unavailable_device">Bu kulaklık ses işleme için kayıtlı değil, bu yüzden burada ayarladığınız hiçbir şey sese yansımaz.</string>
+
+    <string name="eq_device_register">Bu kulaklıkla ses işleme kullan</string>
+    <string name="eq_device_register_desc">Bu kulaklığı telefonun ses ayarlarına ekler. Uygulanırken ses bir an için kesilir.</string>
+    <string name="eq_device_confirm_on_title">Bu kulaklık için ses işleme açılsın mı?</string>
+    <string name="eq_device_confirm_off_title">Bu kulaklık için ses işleme kapatılsın mı?</string>
+    <string name="eq_device_confirm_body">Telefonun ses hizmeti yeniden başlar, bu yüzden şu anda çalan her şey birkaç saniyeliğine sessize düşer. Bluetooth bağlı kalır ve ekolayzır ayarlarınız her durumda korunur.</string>
+    <string name="eq_device_running">Uygulanıyor. Ses birkaç saniye içinde geri gelir.</string>
+    <string name="eq_device_result_on">Bu kulaklık ses işleme için kayıtlı.</string>
+    <string name="eq_device_result_off">Bu kulaklık artık ses işleme için kayıtlı değil.</string>
+    <string name="eq_device_failed_no_module">Hiçbir şey değişmedi: ses işleme modülü kurulu değil.</string>
+    <string name="eq_device_failed_root">Hiçbir şey değişmedi: root erişimi reddedildi ya da bu telefonda root yöneticisi yok. Root yöneticinizde Codec Anchor\'a izin verin, sonra yeniden deneyin.</string>
+    <string name="eq_device_failed_timeout">Zamanında bitmediği için durduruldu. Ses hizmeti hâlâ yeniden başlıyor olabilir. Birazdan yeniden kontrol edin.</string>
+    <string name="eq_device_failed_input">Hiçbir şey değişmedi: uygulama, modülün okuyamadığı bir şey gönderdi. Bu, uygulamadaki bir hata.</string>
+    <string name="eq_device_failed_no_state">Hiçbir şey değişmedi: ses işleme modülü başlamadı. Telefonu yeniden başlatın, sonra yeniden deneyin.</string>
+    <string name="eq_device_failed_xml">Telefonun ses ayarları dosyası yeniden oluşturulamadı, bu yüzden hiçbir şey değişmedi.</string>
+    <string name="eq_device_failed_apply">Yeniden oluşturulan ses ayarları yerleştirilemedi, bu yüzden hiçbir şey değişmedi.</string>
+    <string name="eq_device_failed_audioserver">Ses hizmeti geri gelmedi. Telefonu yeniden başlatın.</string>
+    <string name="eq_device_failed_unknown">Uygulamanın bu sürümünün bilmediği bir şekilde başarısız oldu (kod %1$d).</string>
 
     <string name="tag_connected">Bağlı</string>
     <string name="tag_disconnected">Bağlı değil</string>

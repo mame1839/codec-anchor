@@ -75,6 +75,25 @@
     <string name="eq_unavailable_not_registered">Przetwarzanie dźwięku jest niedostępne: moduł przetwarzania dźwięku nie jest zainstalowany albo telefon jeszcze go nie wczytał. Zainstaluj go i uruchom telefon ponownie.</string>
     <string name="eq_unavailable_offload">Przetwarzanie dźwięku jest niedostępne, dopóki włączone jest sprzętowe odciążanie Bluetooth A2DP. Jak je wyłączyć, wyjaśnia uwaga na liście urządzeń.</string>
     <string name="eq_unavailable_hook_old">Przetwarzanie dźwięku jest niedostępne: w procesie Bluetooth działa starsza wersja modułu, która go nie zna. Wyłącz Bluetooth i włącz go ponownie.</string>
+    <string name="eq_unavailable_device">Te słuchawki nie są zarejestrowane do przetwarzania dźwięku, więc nic z tego, co tu ustawisz, nie dociera do dźwięku.</string>
+
+    <string name="eq_device_register">Używaj przetwarzania dźwięku z tymi słuchawkami</string>
+    <string name="eq_device_register_desc">Dodaje te słuchawki do ustawień audio telefonu. Podczas stosowania dźwięk na chwilę milknie.</string>
+    <string name="eq_device_confirm_on_title">Włączyć przetwarzanie dźwięku dla tych słuchawek?</string>
+    <string name="eq_device_confirm_off_title">Wyłączyć przetwarzanie dźwięku dla tych słuchawek?</string>
+    <string name="eq_device_confirm_body">Usługa audio telefonu uruchamia się ponownie, więc to, co teraz gra, na kilka sekund ucichnie. Bluetooth pozostaje połączony, a ustawienia korektora są zachowywane w obu przypadkach.</string>
+    <string name="eq_device_running">Trwa stosowanie. Dźwięk wróci za kilka sekund.</string>
+    <string name="eq_device_result_on">Te słuchawki są zarejestrowane do przetwarzania dźwięku.</string>
+    <string name="eq_device_result_off">Te słuchawki nie są już zarejestrowane do przetwarzania dźwięku.</string>
+    <string name="eq_device_failed_no_module">Nic nie zostało zmienione: moduł przetwarzania dźwięku nie jest zainstalowany.</string>
+    <string name="eq_device_failed_root">Nic nie zostało zmienione: dostęp roota został odrzucony albo ten telefon nie ma menedżera roota. Zezwól na Codec Anchor w swoim menedżerze roota, a potem spróbuj ponownie.</string>
+    <string name="eq_device_failed_timeout">Nie zakończyło się na czas i zostało zatrzymane. Usługa audio może wciąż się uruchamiać ponownie. Sprawdź jeszcze raz za chwilę.</string>
+    <string name="eq_device_failed_input">Nic nie zostało zmienione: aplikacja wysłała coś, czego moduł nie mógł odczytać. To błąd aplikacji.</string>
+    <string name="eq_device_failed_no_state">Nic nie zostało zmienione: moduł przetwarzania dźwięku się nie uruchomił. Uruchom telefon ponownie, a potem spróbuj jeszcze raz.</string>
+    <string name="eq_device_failed_xml">Nie udało się odtworzyć pliku ustawień audio telefonu, więc nic nie zostało zmienione.</string>
+    <string name="eq_device_failed_apply">Nie udało się wprowadzić odtworzonych ustawień audio, więc nic nie zostało zmienione.</string>
+    <string name="eq_device_failed_audioserver">Usługa audio nie wróciła do działania. Uruchom telefon ponownie.</string>
+    <string name="eq_device_failed_unknown">Wystąpił błąd, którego ta wersja aplikacji nie rozpoznaje (kod %1$d).</string>
 
     <string name="tag_connected">Połączone</string>
     <string name="tag_disconnected">Brak połączenia</string>

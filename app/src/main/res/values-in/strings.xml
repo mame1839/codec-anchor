@@ -72,6 +72,25 @@
     <string name="eq_unavailable_not_registered">Pemrosesan audio tidak tersedia: modul pemrosesan audio belum terpasang, atau ponsel ini belum memuatnya. Pasang modulnya, lalu mulai ulang ponsel.</string>
     <string name="eq_unavailable_offload">Pemrosesan audio tidak tersedia selama offload perangkat keras Bluetooth A2DP aktif. Cara mematikannya dijelaskan pada catatan di daftar perangkat.</string>
     <string name="eq_unavailable_hook_old">Pemrosesan audio tidak tersedia: modul yang berjalan di proses Bluetooth adalah versi lama yang belum mengenalnya. Matikan Bluetooth, lalu nyalakan lagi.</string>
+    <string name="eq_unavailable_device">Earphone ini belum terdaftar untuk pemrosesan audio, jadi apa pun yang disetel di sini tidak berpengaruh pada suara.</string>
+
+    <string name="eq_device_register">Gunakan pemrosesan audio dengan earphone ini</string>
+    <string name="eq_device_register_desc">Menambahkan earphone ini ke setelan audio ponsel. Suara terhenti sebentar saat diterapkan.</string>
+    <string name="eq_device_confirm_on_title">Aktifkan pemrosesan audio untuk earphone ini?</string>
+    <string name="eq_device_confirm_off_title">Nonaktifkan pemrosesan audio untuk earphone ini?</string>
+    <string name="eq_device_confirm_body">Layanan audio ponsel dimulai ulang, jadi apa pun yang sedang diputar akan senyap selama beberapa detik. Bluetooth tetap tersambung, dan setelan ekualiser Anda tetap tersimpan apa pun hasilnya.</string>
+    <string name="eq_device_running">Menerapkan. Suara akan kembali dalam beberapa detik.</string>
+    <string name="eq_device_result_on">Earphone ini terdaftar untuk pemrosesan audio.</string>
+    <string name="eq_device_result_off">Earphone ini tidak lagi terdaftar untuk pemrosesan audio.</string>
+    <string name="eq_device_failed_no_module">Tidak ada yang diubah: modul pemrosesan audio belum terpasang.</string>
+    <string name="eq_device_failed_root">Tidak ada yang diubah: akses root ditolak, atau ponsel ini tidak punya pengelola root. Izinkan Codec Anchor di pengelola root Anda, lalu coba lagi.</string>
+    <string name="eq_device_failed_timeout">Tidak selesai tepat waktu sehingga dihentikan. Layanan audio mungkin masih dimulai ulang. Periksa lagi sesaat lagi.</string>
+    <string name="eq_device_failed_input">Tidak ada yang diubah: aplikasi mengirim sesuatu yang tidak dapat dibaca modul. Ini kesalahan pada aplikasi.</string>
+    <string name="eq_device_failed_no_state">Tidak ada yang diubah: modul pemrosesan audio belum berjalan. Mulai ulang ponsel, lalu coba lagi.</string>
+    <string name="eq_device_failed_xml">Berkas setelan audio ponsel tidak dapat dibuat ulang, jadi tidak ada yang diubah.</string>
+    <string name="eq_device_failed_apply">Setelan audio yang dibuat ulang tidak dapat diterapkan, jadi tidak ada yang diubah.</string>
+    <string name="eq_device_failed_audioserver">Layanan audio tidak kembali berjalan. Mulai ulang ponsel.</string>
+    <string name="eq_device_failed_unknown">Gagal dengan cara yang tidak dikenali oleh versi aplikasi ini (kode %1$d).</string>
 
     <string name="tag_connected">Tersambung</string>
     <string name="tag_disconnected">Tidak tersambung</string>

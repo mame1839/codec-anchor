@@ -77,6 +77,25 @@
     <string name="eq_unavailable_not_registered">معالجة الصوت غير متاحة: وحدة معالجة الصوت غير مثبّتة، أو أن هذا الهاتف لم يحمّلها بعد. ثبّتها، ثم أعد تشغيل الهاتف.</string>
     <string name="eq_unavailable_offload">معالجة الصوت غير متاحة ما دام تفريغ Bluetooth A2DP بالعتاد مفعّلًا. تشرح الملاحظة في قائمة الأجهزة كيفية إيقافه.</string>
     <string name="eq_unavailable_hook_old">معالجة الصوت غير متاحة: الوحدة العاملة في عملية Bluetooth إصدار أقدم لا يعرفها. أوقف Bluetooth ثم شغّله مرة أخرى.</string>
+    <string name="eq_unavailable_device">هذه السماعات غير مسجَّلة لمعالجة الصوت، لذلك لا يصل أي مما يُضبط هنا إلى الصوت الفعلي.</string>
+
+    <string name="eq_device_register">استخدام معالجة الصوت مع هذه السماعات</string>
+    <string name="eq_device_register_desc">يضيف هذه السماعات إلى إعدادات الصوت في الهاتف. يتوقف الصوت للحظة أثناء التطبيق.</string>
+    <string name="eq_device_confirm_on_title">تفعيل معالجة الصوت لهذه السماعات؟</string>
+    <string name="eq_device_confirm_off_title">إيقاف معالجة الصوت لهذه السماعات؟</string>
+    <string name="eq_device_confirm_body">تُعاد تشغيل خدمة الصوت في الهاتف، لذا يتوقف أي صوت قيد التشغيل الآن لبضع ثوانٍ. يبقى Bluetooth متصلًا، وتُحفظ إعدادات المُعادل في كلتا الحالتين.</string>
+    <string name="eq_device_running">جارٍ التطبيق. سيعود الصوت خلال ثوانٍ قليلة.</string>
+    <string name="eq_device_result_on">هذه السماعات مسجَّلة لمعالجة الصوت.</string>
+    <string name="eq_device_result_off">هذه السماعات لم تعد مسجَّلة لمعالجة الصوت.</string>
+    <string name="eq_device_failed_no_module">لم يتغيّر شيء: وحدة معالجة الصوت غير مثبَّتة.</string>
+    <string name="eq_device_failed_root">لم يتغيّر شيء: رُفض الوصول بصلاحيات root، أو لا يملك هذا الهاتف مدير صلاحيات root. اسمح لـ Codec Anchor في مدير صلاحيات root، ثم أعد المحاولة.</string>
+    <string name="eq_device_failed_timeout">لم تكتمل العملية في الوقت المحدد فأُوقفت. قد تكون خدمة الصوت لا تزال تُعاد تشغيلها. تحقّق مرة أخرى بعد قليل.</string>
+    <string name="eq_device_failed_input">لم يتغيّر شيء: أرسل التطبيق شيئًا تعذّر على الوحدة قراءته. هذا خطأ في التطبيق.</string>
+    <string name="eq_device_failed_no_state">لم يتغيّر شيء: وحدة معالجة الصوت لم تبدأ العمل بعد. أعد تشغيل الهاتف، ثم أعد المحاولة.</string>
+    <string name="eq_device_failed_xml">تعذّرت إعادة بناء ملف إعدادات الصوت في الهاتف، لذا لم يتغيّر شيء.</string>
+    <string name="eq_device_failed_apply">تعذّر وضع إعدادات الصوت المُعاد بناؤها موضع التنفيذ، لذا لم يتغيّر شيء.</string>
+    <string name="eq_device_failed_audioserver">لم تعد خدمة الصوت إلى العمل. أعد تشغيل الهاتف.</string>
+    <string name="eq_device_failed_unknown">فشلت العملية بطريقة لا تعرفها هذه النسخة من التطبيق (الرمز %1$d).</string>
 
     <string name="tag_connected">متصل</string>
     <string name="tag_disconnected">غير متصل</string>

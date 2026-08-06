@@ -72,6 +72,25 @@
     <string name="eq_unavailable_not_registered">無法使用音訊處理：尚未安裝音訊處理模組，或本機還沒有載入。請先安裝，然後重新啟動手機。</string>
     <string name="eq_unavailable_offload">藍牙 A2DP 硬體卸載開啟期間無法使用音訊處理。關閉方式請見裝置清單中的提示。</string>
     <string name="eq_unavailable_hook_old">無法使用音訊處理：藍牙處理程序中執行的模組是不認識音訊處理的舊版本。請關閉藍牙後再重新開啟。</string>
+    <string name="eq_unavailable_device">這副耳機還沒有註冊音訊處理，因此這裡設定的任何內容都不會影響聲音。</string>
+
+    <string name="eq_device_register">對這副耳機使用音訊處理</string>
+    <string name="eq_device_register_desc">把這副耳機加入手機的音訊設定。套用期間聲音會中斷片刻。</string>
+    <string name="eq_device_confirm_on_title">要為這副耳機開啟音訊處理嗎</string>
+    <string name="eq_device_confirm_off_title">要為這副耳機關閉音訊處理嗎</string>
+    <string name="eq_device_confirm_body">手機的音訊服務會重新啟動，此刻正在播放的聲音會中斷幾秒鐘。藍牙連線不受影響，等化器設定無論如何都會保留。</string>
+    <string name="eq_device_running">正在套用，幾秒後聲音就會恢復。</string>
+    <string name="eq_device_result_on">這副耳機已註冊音訊處理。</string>
+    <string name="eq_device_result_off">這副耳機已取消註冊音訊處理。</string>
+    <string name="eq_device_failed_no_module">未做任何變更：尚未安裝音訊處理模組。</string>
+    <string name="eq_device_failed_root">未做任何變更：root 權限遭拒，或本機沒有 root 管理程式。請在你的 root 管理程式中允許 Codec Anchor，然後重試。</string>
+    <string name="eq_device_failed_timeout">未能如期完成，已被中止。音訊服務可能仍在重新啟動。請稍後再檢查一次。</string>
+    <string name="eq_device_failed_input">未做任何變更：應用程式傳送的內容模組無法讀取。這是應用程式的問題。</string>
+    <string name="eq_device_failed_no_state">未做任何變更：音訊處理模組尚未啟動。請重新啟動手機後重試。</string>
+    <string name="eq_device_failed_xml">無法重新產生手機的音訊設定檔案，因此未做任何變更。</string>
+    <string name="eq_device_failed_apply">無法套用重新產生的音訊設定，因此未做任何變更。</string>
+    <string name="eq_device_failed_audioserver">音訊服務未能恢復。請重新啟動手機。</string>
+    <string name="eq_device_failed_unknown">失敗原因是目前版本應用程式無法識別的情況（代碼 %1$d）。</string>
 
     <string name="tag_connected">已連線</string>
     <string name="tag_disconnected">未連線</string>

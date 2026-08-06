@@ -72,6 +72,25 @@
     <string name="eq_unavailable_not_registered">ใช้การประมวลผลเสียงไม่ได้ เพราะยังไม่ได้ติดตั้งโมดูลประมวลผลเสียง หรือเครื่องนี้ยังไม่ได้โหลดโมดูล โปรดติดตั้งแล้วรีสตาร์ทเครื่อง</string>
     <string name="eq_unavailable_offload">ใช้การประมวลผลเสียงไม่ได้ขณะที่เปิด Bluetooth A2DP hardware offload อยู่ วิธีปิดอธิบายไว้ในหมายเหตุที่รายการอุปกรณ์</string>
     <string name="eq_unavailable_hook_old">ใช้การประมวลผลเสียงไม่ได้ เพราะโมดูลที่ทำงานอยู่ในโปรเซส Bluetooth เป็นเวอร์ชันเก่าที่ยังไม่รู้จักการประมวลผลเสียง โปรดปิด Bluetooth แล้วเปิดอีกครั้ง</string>
+    <string name="eq_unavailable_device">หูฟังคู่นี้ยังไม่ได้ลงทะเบียนสำหรับการประมวลผลเสียง สิ่งที่ตั้งค่าไว้ที่นี่จึงไม่มีผลกับเสียงที่ได้ยิน</string>
+
+    <string name="eq_device_register">ใช้การประมวลผลเสียงกับหูฟังคู่นี้</string>
+    <string name="eq_device_register_desc">เพิ่มหูฟังคู่นี้ลงในการตั้งค่าเสียงของเครื่อง เสียงจะหยุดชั่วขณะระหว่างที่กำลังใช้ค่า</string>
+    <string name="eq_device_confirm_on_title">เปิดการประมวลผลเสียงสำหรับหูฟังคู่นี้ไหม</string>
+    <string name="eq_device_confirm_off_title">ปิดการประมวลผลเสียงสำหรับหูฟังคู่นี้ไหม</string>
+    <string name="eq_device_confirm_body">บริการเสียงของเครื่องจะรีสตาร์ท เสียงที่กำลังเล่นอยู่ตอนนี้จึงเงียบไปสองสามวินาที การเชื่อมต่อ Bluetooth ยังคงอยู่ และการตั้งค่าอีควอไลเซอร์ของคุณจะยังคงอยู่ไม่ว่าผลจะเป็นอย่างไร</string>
+    <string name="eq_device_running">กำลังใช้ค่า เสียงจะกลับมาในอีกไม่กี่วินาที</string>
+    <string name="eq_device_result_on">หูฟังคู่นี้ลงทะเบียนสำหรับการประมวลผลเสียงแล้ว</string>
+    <string name="eq_device_result_off">หูฟังคู่นี้เลิกลงทะเบียนสำหรับการประมวลผลเสียงแล้ว</string>
+    <string name="eq_device_failed_no_module">ไม่มีการเปลี่ยนแปลง: ยังไม่ได้ติดตั้งโมดูลประมวลผลเสียง</string>
+    <string name="eq_device_failed_root">ไม่มีการเปลี่ยนแปลง: สิทธิ์ root ถูกปฏิเสธ หรือเครื่องนี้ไม่มีตัวจัดการสิทธิ์ root โปรดอนุญาต Codec Anchor ในตัวจัดการสิทธิ์ root ของคุณ แล้วลองใหม่</string>
+    <string name="eq_device_failed_timeout">ทำไม่เสร็จทันเวลาจึงถูกหยุดไว้ บริการเสียงอาจยังอยู่ระหว่างรีสตาร์ท โปรดตรวจสอบอีกครั้งในอีกสักครู่</string>
+    <string name="eq_device_failed_input">ไม่มีการเปลี่ยนแปลง: แอปส่งข้อมูลที่โมดูลอ่านไม่ได้ นี่เป็นข้อบกพร่องของแอป</string>
+    <string name="eq_device_failed_no_state">ไม่มีการเปลี่ยนแปลง: โมดูลประมวลผลเสียงยังไม่เริ่มทำงาน โปรดรีสตาร์ทเครื่องแล้วลองใหม่</string>
+    <string name="eq_device_failed_xml">สร้างไฟล์การตั้งค่าเสียงของเครื่องขึ้นใหม่ไม่ได้ จึงไม่มีการเปลี่ยนแปลง</string>
+    <string name="eq_device_failed_apply">นำการตั้งค่าเสียงที่สร้างใหม่ไปใช้ไม่ได้ จึงไม่มีการเปลี่ยนแปลง</string>
+    <string name="eq_device_failed_audioserver">บริการเสียงไม่กลับมาทำงาน โปรดรีสตาร์ทเครื่อง</string>
+    <string name="eq_device_failed_unknown">ล้มเหลวในแบบที่แอปเวอร์ชันนี้ยังไม่รู้จัก (รหัส %1$d)</string>
 
     <string name="tag_connected">เชื่อมต่อแล้ว</string>
     <string name="tag_disconnected">ไม่ได้เชื่อมต่อ</string>

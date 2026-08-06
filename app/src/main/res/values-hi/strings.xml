@@ -73,6 +73,25 @@
     <string name="eq_unavailable_not_registered">ऑडियो प्रोसेसिंग उपलब्ध नहीं है: ऑडियो प्रोसेसिंग मॉड्यूल इंस्टॉल नहीं है, या इस फ़ोन ने उसे अभी तक लोड नहीं किया। उसे इंस्टॉल करें, फिर फ़ोन को रीस्टार्ट करें।</string>
     <string name="eq_unavailable_offload">जब तक Bluetooth A2DP हार्डवेयर ऑफ़लोड चालू है, ऑडियो प्रोसेसिंग उपलब्ध नहीं है। उसे बंद करने का तरीक़ा डिवाइस सूची की सूचना में बताया गया है।</string>
     <string name="eq_unavailable_hook_old">ऑडियो प्रोसेसिंग उपलब्ध नहीं है: Bluetooth प्रोसेस में चल रहा मॉड्यूल पुराने वर्शन का है और उसे नहीं जानता। Bluetooth बंद करके फिर चालू करें।</string>
+    <string name="eq_unavailable_device">इन ईयरफ़ोन के लिए ऑडियो प्रोसेसिंग रजिस्टर नहीं है, इसलिए यहाँ जो भी सेट किया जाए, वह आवाज़ तक नहीं पहुँचता।</string>
+
+    <string name="eq_device_register">इन ईयरफ़ोन के साथ ऑडियो प्रोसेसिंग इस्तेमाल करें</string>
+    <string name="eq_device_register_desc">इन ईयरफ़ोन को फ़ोन की ऑडियो सेटिंग में जोड़ता है। लागू होते समय आवाज़ पल भर के लिए रुक जाती है।</string>
+    <string name="eq_device_confirm_on_title">इन ईयरफ़ोन के लिए ऑडियो प्रोसेसिंग चालू करें?</string>
+    <string name="eq_device_confirm_off_title">इन ईयरफ़ोन के लिए ऑडियो प्रोसेसिंग बंद करें?</string>
+    <string name="eq_device_confirm_body">फ़ोन की ऑडियो सर्विस फिर शुरू होती है, इसलिए अभी जो भी चल रहा है वह कुछ सेकंड के लिए शांत हो जाता है। Bluetooth जुड़ा रहता है, और आपकी इक्वलाइज़र सेटिंग हर हाल में बनी रहती है।</string>
+    <string name="eq_device_running">लागू हो रहा है। कुछ सेकंड में आवाज़ वापस आ जाएगी।</string>
+    <string name="eq_device_result_on">इन ईयरफ़ोन के लिए ऑडियो प्रोसेसिंग रजिस्टर हो गई है।</string>
+    <string name="eq_device_result_off">इन ईयरफ़ोन के लिए ऑडियो प्रोसेसिंग अब रजिस्टर नहीं है।</string>
+    <string name="eq_device_failed_no_module">कुछ नहीं बदला: ऑडियो प्रोसेसिंग मॉड्यूल इंस्टॉल नहीं है।</string>
+    <string name="eq_device_failed_root">कुछ नहीं बदला: root ऐक्सेस से मना कर दिया गया, या इस फ़ोन में कोई root मैनेजर नहीं है। अपने root मैनेजर में Codec Anchor को अनुमति दें, फिर दोबारा कोशिश करें।</string>
+    <string name="eq_device_failed_timeout">यह समय पर पूरा नहीं हुआ और रोक दिया गया। हो सकता है ऑडियो सर्विस अभी भी फिर शुरू हो रही हो। थोड़ी देर बाद फिर जाँचें।</string>
+    <string name="eq_device_failed_input">कुछ नहीं बदला: ऐप ने कुछ ऐसा भेजा जिसे मॉड्यूल पढ़ नहीं सका। यह ऐप की गड़बड़ी है।</string>
+    <string name="eq_device_failed_no_state">कुछ नहीं बदला: ऑडियो प्रोसेसिंग मॉड्यूल शुरू नहीं हुआ है। फ़ोन को रीस्टार्ट करें, फिर दोबारा कोशिश करें।</string>
+    <string name="eq_device_failed_xml">फ़ोन की ऑडियो सेटिंग फ़ाइल फिर से नहीं बन सकी, इसलिए कुछ नहीं बदला।</string>
+    <string name="eq_device_failed_apply">फिर से बनाई गई ऑडियो सेटिंग लागू नहीं हो सकी, इसलिए कुछ नहीं बदला।</string>
+    <string name="eq_device_failed_audioserver">ऑडियो सर्विस वापस नहीं आई। फ़ोन को रीस्टार्ट करें।</string>
+    <string name="eq_device_failed_unknown">यह ऐसी तरह से विफल हुआ जिसे ऐप का यह वर्शन नहीं जानता (कोड %1$d)।</string>
 
     <string name="tag_connected">कनेक्ट है</string>
     <string name="tag_disconnected">कनेक्ट नहीं है</string>
