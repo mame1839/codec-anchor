@@ -476,6 +476,37 @@ runeq '38:D5:18:47:31:A4
 cmp -s "$TMP/once.xml" "$FAKE/etc/audio_effects.xml" \
   && ok "2 回登録しても増えない" || { ng "2 回登録しても増えない"; diff "$TMP/once.xml" "$FAKE/etc/audio_effects.xml"; }
 
+# 34b. 「書けたのに効かない」を捕まえる。
+#      bind mount は inode 単位なので、live に書けても $CA_SRC_XML が別 inode を
+#      指していれば audioserver には何も届かない。これを捕まえるのは
+#      live に書いた後の cmp 1 つだけで、そこが死んでいても他のテストは全部通る。
+#      実機の bind mount は要らない — paths の $CA_SRC_XML を別ファイルに向ければ、
+#      「書けたのに効かない」状態はホストで作れる。
+#      nsenter はホストで使えないので、これは CA_NS が空の経路も通っている。
+rm -rf "$FAKE"; mkdir -p "$FAKE/etc"
+cp module/test/fixtures/shape.xml "$FAKE/etc/audio_effects.xml.pristine"
+cp module/test/fixtures/shape.xml "$FAKE/etc/audio_effects.xml"
+cp module/test/fixtures/shape.xml "$FAKE/etc/audio_effects.xml.notbound"
+{
+    echo "CA_STAGE=post-fs-data"
+    echo "CA_SRC_XML=$FAKE/etc/audio_effects.xml.notbound"
+    echo "CA_LIBDIR=$FAKE/soundfx"
+    echo "CA_PRISTINE_XML=$FAKE/etc/audio_effects.xml.pristine"
+} > "$FAKE/paths"
+rm -f "$TMP/devices"
+runeq '38:D5:18:47:31:A4
+' apply ; rc=$?
+if [ "$rc" != 13 ]; then
+    ng "live と \$CA_SRC_XML が食い違ったら 13 (rc=$rc)"; cat "$TMP/eq.out"
+elif [ -f "$TMP/devices" ]; then
+    # 反映が確かめられていないのに一覧を残すと、次回起動で「登録されている」ことになる。
+    ng "live と \$CA_SRC_XML が食い違ったら 13 (一覧を残している)"
+elif ! grep -q '使わない' "$TMP/eq.log"; then
+    ng "live と \$CA_SRC_XML が食い違ったら 13 (CA_NS が空の経路を通っていない)"
+else
+    ok "live と \$CA_SRC_XML が食い違ったら 13"
+fi
+
 # 35. list は状態が無くても 0 で終わる (診断用なので落ちないこと)
 rm -rf "$FAKE"; mkdir -p "$FAKE"
 runeq '' list ; rc=$?

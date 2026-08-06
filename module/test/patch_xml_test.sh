@@ -161,8 +161,21 @@ ca_patch_xml "$SHAPE_DE" "$TMP/v1.xml" 1 "$TMP/dev1" || ng "ベンダーの節�
   && ok "deviceEffects の節は 1 つのまま" || ng "deviceEffects の節は 1 つのまま"
 grep -q 'vendor_speaker_fx' "$TMP/v1.xml" \
   && ok "ベンダーの devicePort が残る" || ng "ベンダーの devicePort が残る"
-sed -n '/<deviceEffects>/,/<\/deviceEffects>/p' "$TMP/v1.xml" | grep -B1 '</deviceEffects>' \
-  | grep -q '</devicePort>' && ok "我々の devicePort は節の末尾" || ng "我々の devicePort は節の末尾"
+#      中身を丸ごと突き合わせる。「末尾の行が </devicePort> か」では、先頭に足しても
+#      末尾に足しても通ってしまう (どちらの並びでも最後は </devicePort> で終わる)。
+sed -n '/<deviceEffects>/,/<\/deviceEffects>/p' "$TMP/v1.xml" > "$TMP/v1.sec"
+diff -u - "$TMP/v1.sec" > "$TMP/v1.diff" <<EOF
+    <deviceEffects>
+        <devicePort type="AUDIO_DEVICE_OUT_SPEAKER" address="">
+            <apply effect="vendor_speaker_fx"/>
+        </devicePort>
+        <devicePort type="AUDIO_DEVICE_OUT_BLUETOOTH_A2DP" address="$M1">
+            <apply effect="ca_eq"/>
+        </devicePort>
+    </deviceEffects>
+EOF
+[ $? -eq 0 ] && ok "ベンダーの節の末尾に足す (節の中身が完全一致)" \
+  || { ng "ベンダーの節の末尾に足す (節の中身が完全一致)"; cat "$TMP/v1.diff"; }
 
 # 24. ベンダーの節があっても可逆。ベンダーの節ごと消してしまうとここで落ちる。
 ca_strip_ours "$TMP/v1.xml" > "$TMP/v1.rt"
@@ -236,9 +249,21 @@ for bad in '38:d5:18:47:31:a4' '38:D5:18:47:31' '38:D5:18:47:31:A4:B0' '38-D5-18
 done
 [ $e -eq 0 ] && ok "書式外の MAC を拒否" || ng "書式外の MAC を拒否"
 
-# 36. CRLF は拒否する (grep で CR を探さない。tr の 8 進で見る)
+# 36. CRLF は CR の検査で弾く (grep で CR を探さない。tr の 8 進で見る)。
+#     ⚠️ 「非 0 で落ちること」だけを見てはいけない — CR 付きの行は MAC の書式検査でも
+#     どのみち落ちるので、CR の検査を丸ごと外しても通ってしまう (実際に変異で確認した)。
+#     理由まで固定する。CR を見ないと、画面には行末の見えない文字について
+#     「MAC の書式が違う」とだけ出て、原因に辿り着けない。
 printf '%s\r\n' "$M1" > "$TMP/c_crlf"
-[ "$(canon_rc "$TMP/c_crlf")" != 0 ] && ok "CRLF を拒否" || ng "CRLF を拒否"
+ca_canon_devices "$TMP/c_crlf" "$TMP/canon.out" > "$TMP/crlf.err" 2>&1
+crlf_rc=$?
+if [ "$crlf_rc" = 0 ]; then
+    ng "一覧の CRLF を CR の検査で拒否 (通ってしまった)"
+elif ! grep -q 'CR が混ざっている' "$TMP/crlf.err"; then
+    ng "一覧の CRLF を CR の検査で拒否 (落ちたが CR の検査ではない)"; cat "$TMP/crlf.err"
+else
+    ok "一覧の CRLF を CR の検査で拒否"
+fi
 
 # 37. 件数の上限。64 は通り、65 は落ちる
 awk 'BEGIN { for (i = 0; i < 64; i++) printf "AA:BB:CC:DD:00:%02X\n", i }' > "$TMP/c_64"
