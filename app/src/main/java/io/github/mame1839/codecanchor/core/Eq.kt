@@ -87,14 +87,19 @@ data class EqSettings(
             return EqSettings(
                 enabled = o.optBoolean("on", false),
                 mode = EqMode.normalize(o.optInt("mode", EqMode.GRAPHIC)),
-                bandCount = bandCount(o.optInt("n", 10)),
+                bandCount = normalizeBandCount(o.optInt("n", 10)),
                 bands = bands,
                 preampAuto = o.optBoolean("pa", true),
                 preampDb10 = o.optInt("pdb", -30).coerceIn(PREAMP_RANGE),
             )
         }
 
-        private fun bandCount(value: Int): Int =
+        // bandCount に BAND_COUNTS 以外を入れると fromJson がここで 10 に書き換えるので、
+        // アプリの encode とフックの再 encode が食い違って hash の往復が永久に壊れる。
+        // 値を作る側 (取り込み・バンド数の変更) は必ずここを通す。
+        // バンドの本数そのものは bands.size であって、この値ではない
+        // (パラメトリックのときは無関係な本数になる)。
+        fun normalizeBandCount(value: Int): Int =
             if (value in BAND_COUNTS) value else 10
     }
 }
