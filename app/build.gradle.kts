@@ -115,6 +115,15 @@ android {
         buildConfig = true
     }
 
+    // org.json は android.jar ではスタブなので、単体テストは Robolectric で実機の実装を載せる。
+    // isReturnDefaultValues は付けない — 付けると例外の代わりに全メソッドが 0 / null を返し、
+    // hash() の往復テストが「何も検証していないのに緑」になる。
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
+
     // 既存の指摘は lint-baseline.xml に記録済み。新しい指摘だけ落とす。
     lint {
         baseline = file("lint-baseline.xml")
@@ -139,4 +148,7 @@ dependencies {
     implementation(libs.compose.ui.graphics)
     implementation(libs.compose.material3)
     debugImplementation(libs.compose.ui.tooling.preview)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
 }
