@@ -67,6 +67,11 @@
     <string name="module_inactive_hint">Einstellungen lassen sich weiterhin bearbeiten und speichern. Sie greifen, sobald das Modul läuft.</string>
     <string name="msg_config_pushed">Einstellungen erneut gesendet</string>
 
+    <string name="eq_module_version_mismatch">Das Audiobearbeitungsmodul (%1$s) und die App (%2$s) haben unterschiedliche Versionen. Bringe beide auf dieselbe Version und starte das Telefon neu.</string>
+    <string name="eq_unavailable_not_registered">Audiobearbeitung ist nicht verfügbar: Das Audiobearbeitungsmodul ist nicht installiert, oder dieses Telefon hat es noch nicht geladen. Installiere es und starte das Telefon neu.</string>
+    <string name="eq_unavailable_offload">Audiobearbeitung ist nicht verfügbar, solange die Bluetooth-A2DP-Hardwareauslagerung aktiviert ist. Der Hinweis in der Geräteliste erklärt, wie du sie ausschaltest.</string>
+    <string name="eq_unavailable_hook_old">Audiobearbeitung ist nicht verfügbar: Im Bluetooth-Prozess läuft eine ältere Version des Moduls, die sie noch nicht kennt. Schalte Bluetooth aus und wieder ein.</string>
+
     <string name="tag_connected">Verbunden</string>
     <string name="tag_disconnected">Nicht verbunden</string>
     <string name="tag_active">Wiedergabe</string>

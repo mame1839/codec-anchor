@@ -66,6 +66,11 @@
     <string name="module_inactive_hint">이 상태에서도 설정을 편집하고 저장할 수 있습니다. 모듈이 동작하기 시작하면 반영됩니다.</string>
     <string name="msg_config_pushed">설정을 다시 보냈습니다</string>
 
+    <string name="eq_module_version_mismatch">음향 처리 모듈(%1$s)과 앱(%2$s)의 버전이 다릅니다. 두 가지를 같은 버전으로 업데이트한 다음 기기를 다시 시작해 주세요.</string>
+    <string name="eq_unavailable_not_registered">음향 처리를 사용할 수 없습니다. 음향 처리 모듈이 설치되지 않았거나, 이 기기가 아직 불러오지 않았습니다. 설치한 다음 기기를 다시 시작해 주세요.</string>
+    <string name="eq_unavailable_offload">블루투스 A2DP 하드웨어 오프로드가 켜져 있는 동안에는 음향 처리를 사용할 수 없습니다. 끄는 방법은 기기 목록의 안내에 있습니다.</string>
+    <string name="eq_unavailable_hook_old">음향 처리를 사용할 수 없습니다. 블루투스 프로세스에서 실행 중인 모듈이 음향 처리를 모르는 이전 버전입니다. 블루투스를 껐다가 다시 켜 주세요.</string>
+
     <string name="tag_connected">연결됨</string>
     <string name="tag_disconnected">연결 안 됨</string>
     <string name="tag_active">재생 중</string>

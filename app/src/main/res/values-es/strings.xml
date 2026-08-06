@@ -68,6 +68,11 @@
     <string name="module_inactive_hint">Aun así puedes editar y guardar los ajustes. Se aplicarán cuando el módulo empiece a funcionar.</string>
     <string name="msg_config_pushed">Ajustes enviados de nuevo</string>
 
+    <string name="eq_module_version_mismatch">El módulo de procesamiento de audio (%1$s) y la app (%2$s) tienen versiones distintas. Actualiza ambos a la misma versión y reinicia el teléfono.</string>
+    <string name="eq_unavailable_not_registered">El procesamiento de audio no está disponible: el módulo de procesamiento de audio no está instalado, o este teléfono aún no lo ha cargado. Instálalo y reinicia el teléfono.</string>
+    <string name="eq_unavailable_offload">El procesamiento de audio no está disponible mientras la descarga por hardware de Bluetooth A2DP esté activada. El aviso de la lista de dispositivos explica cómo desactivarla.</string>
+    <string name="eq_unavailable_hook_old">El procesamiento de audio no está disponible: el módulo que se ejecuta en el proceso de Bluetooth es de una versión anterior que no lo conoce. Desactiva el Bluetooth y vuelve a activarlo.</string>
+
     <string name="tag_connected">Conectado</string>
     <string name="tag_disconnected">Sin conexión</string>
     <string name="tag_active">Reproduciendo</string>

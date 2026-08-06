@@ -67,6 +67,11 @@
     <string name="module_inactive_hint">इस हालत में भी सेटिंग बदली और सहेजी जा सकती है। मॉड्यूल चलने पर वह लागू हो जाएगी।</string>
     <string name="msg_config_pushed">सेटिंग फिर भेज दी</string>
 
+    <string name="eq_module_version_mismatch">ऑडियो प्रोसेसिंग मॉड्यूल (%1$s) और ऐप (%2$s) के वर्शन अलग हैं। दोनों को एक ही वर्शन पर अपडेट करें, फिर फ़ोन को रीस्टार्ट करें।</string>
+    <string name="eq_unavailable_not_registered">ऑडियो प्रोसेसिंग उपलब्ध नहीं है: ऑडियो प्रोसेसिंग मॉड्यूल इंस्टॉल नहीं है, या इस फ़ोन ने उसे अभी तक लोड नहीं किया। उसे इंस्टॉल करें, फिर फ़ोन को रीस्टार्ट करें।</string>
+    <string name="eq_unavailable_offload">जब तक Bluetooth A2DP हार्डवेयर ऑफ़लोड चालू है, ऑडियो प्रोसेसिंग उपलब्ध नहीं है। उसे बंद करने का तरीक़ा डिवाइस सूची की सूचना में बताया गया है।</string>
+    <string name="eq_unavailable_hook_old">ऑडियो प्रोसेसिंग उपलब्ध नहीं है: Bluetooth प्रोसेस में चल रहा मॉड्यूल पुराने वर्शन का है और उसे नहीं जानता। Bluetooth बंद करके फिर चालू करें।</string>
+
     <string name="tag_connected">कनेक्ट है</string>
     <string name="tag_disconnected">कनेक्ट नहीं है</string>
     <string name="tag_active">चल रहा है</string>

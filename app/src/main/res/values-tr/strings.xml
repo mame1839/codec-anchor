@@ -67,6 +67,11 @@
     <string name="module_inactive_hint">Ayarları yine de düzenleyip kaydedebilirsiniz. Modül çalışmaya başladığında geçerli olurlar.</string>
     <string name="msg_config_pushed">Ayarlar yeniden gönderildi</string>
 
+    <string name="eq_module_version_mismatch">Ses işleme modülü (%1$s) ile uygulama (%2$s) farklı sürümlerde. İkisini de aynı sürüme güncelleyin, sonra telefonu yeniden başlatın.</string>
+    <string name="eq_unavailable_not_registered">Ses işleme kullanılamıyor: ses işleme modülü kurulu değil ya da bu telefon modülü henüz yüklemedi. Modülü kurun, sonra telefonu yeniden başlatın.</string>
+    <string name="eq_unavailable_offload">Bluetooth A2DP donanım boşaltma açıkken ses işleme kullanılamaz. Nasıl kapatılacağı cihaz listesindeki notta anlatılıyor.</string>
+    <string name="eq_unavailable_hook_old">Ses işleme kullanılamıyor: Bluetooth sürecinde çalışan modül, bunu bilmeyen eski bir sürüm. Bluetooth\'u kapatıp yeniden açın.</string>
+
     <string name="tag_connected">Bağlı</string>
     <string name="tag_disconnected">Bağlı değil</string>
     <string name="tag_active">Çalıyor</string>

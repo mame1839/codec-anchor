@@ -120,6 +120,9 @@ data class StatusReport(
     val configLoaded: Boolean = false,
     // 端末ごとの性質なので機器ではなく報告に載せる。有効だと LDAC の実効ビットレートが読めない端末がある。
     val a2dpOffloadEnabled: Boolean = false,
+    // フック側の音響処理の受け口の版。報告はフック → アプリの片方向なので hash の契約に縛られず、
+    // 足しても古い側は既定値 0 で吸収される。0 = 音響処理を知らない版。
+    val eqSchema: Int = 0,
     val devices: List<DeviceStatus> = emptyList(),
     val codecNames: Map<Int, String> = emptyMap(),
     val timestamp: Long = 0,
@@ -130,6 +133,7 @@ data class StatusReport(
         put("configHash", configHash)
         put("configLoaded", configLoaded)
         put("a2dpOffload", a2dpOffloadEnabled)
+        put("eqSchema", eqSchema)
         put("ts", timestamp)
         put("devices", JSONArray().also { a -> devices.forEach { a.put(it.toJson()) } })
         put("codecNames", JSONObject().also { obj -> codecNames.forEach { (k, v) -> obj.put(k.toString(), v) } })
@@ -161,6 +165,7 @@ data class StatusReport(
                 configHash = o.optInt("configHash", 0),
                 configLoaded = o.optBoolean("configLoaded", false),
                 a2dpOffloadEnabled = o.optBoolean("a2dpOffload", false),
+                eqSchema = o.optInt("eqSchema", 0),
                 devices = devices,
                 codecNames = names,
                 timestamp = o.optLong("ts", 0),

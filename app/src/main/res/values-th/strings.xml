@@ -66,6 +66,11 @@
     <string name="module_inactive_hint">คุณยังแก้ไขและบันทึกการตั้งค่าได้ ค่าจะมีผลเมื่อโมดูลเริ่มทำงาน</string>
     <string name="msg_config_pushed">ส่งการตั้งค่าอีกครั้งแล้ว</string>
 
+    <string name="eq_module_version_mismatch">โมดูลประมวลผลเสียง (%1$s) กับแอป (%2$s) เป็นคนละเวอร์ชัน โปรดอัปเดตทั้งสองให้เป็นเวอร์ชันเดียวกัน แล้วรีสตาร์ทเครื่อง</string>
+    <string name="eq_unavailable_not_registered">ใช้การประมวลผลเสียงไม่ได้ เพราะยังไม่ได้ติดตั้งโมดูลประมวลผลเสียง หรือเครื่องนี้ยังไม่ได้โหลดโมดูล โปรดติดตั้งแล้วรีสตาร์ทเครื่อง</string>
+    <string name="eq_unavailable_offload">ใช้การประมวลผลเสียงไม่ได้ขณะที่เปิด Bluetooth A2DP hardware offload อยู่ วิธีปิดอธิบายไว้ในหมายเหตุที่รายการอุปกรณ์</string>
+    <string name="eq_unavailable_hook_old">ใช้การประมวลผลเสียงไม่ได้ เพราะโมดูลที่ทำงานอยู่ในโปรเซส Bluetooth เป็นเวอร์ชันเก่าที่ยังไม่รู้จักการประมวลผลเสียง โปรดปิด Bluetooth แล้วเปิดอีกครั้ง</string>
+
     <string name="tag_connected">เชื่อมต่อแล้ว</string>
     <string name="tag_disconnected">ไม่ได้เชื่อมต่อ</string>
     <string name="tag_active">กำลังเล่น</string>

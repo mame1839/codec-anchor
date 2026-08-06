@@ -66,6 +66,11 @@
     <string name="module_inactive_hint">この状態でも設定の編集と保存はできます。モジュールが動き出したときに反映されます。</string>
     <string name="msg_config_pushed">設定を送り直しました</string>
 
+    <string name="eq_module_version_mismatch">音響処理モジュール (%1$s) とアプリ (%2$s) のバージョンが違います。両方を同じバージョンに更新してから、端末を再起動してください。</string>
+    <string name="eq_unavailable_not_registered">音響処理を使えません。音響処理モジュールが入っていないか、この端末がまだ読み込んでいません。導入してから端末を再起動してください。</string>
+    <string name="eq_unavailable_offload">Bluetooth A2DP ハードウェアオフロードが有効な間は音響処理を使えません。切り方は機器一覧の案内に書いてあります。</string>
+    <string name="eq_unavailable_hook_old">音響処理を使えません。Bluetooth プロセスで動いているモジュールが、音響処理を知らない古いバージョンです。Bluetooth をオフにして、もう一度オンにしてください。</string>
+
     <string name="tag_connected">接続中</string>
     <string name="tag_disconnected">未接続</string>
     <string name="tag_active">再生中</string>
