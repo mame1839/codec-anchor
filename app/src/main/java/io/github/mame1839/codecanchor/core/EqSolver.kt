@@ -237,17 +237,25 @@ object EqSolver {
         return 20.0 * log10(num / den)
     }
 
+    /**
+     * バンド 1 本の、指定周波数での応答 (dB)。
+     *
+     * 種別から式への振り分けはここ 1 箇所だけ。合成応答も画面の描画もこれを足して作るので、
+     * 種別が増えても両方が同時に追従する。
+     */
+    fun bandResponseDb(band: EqBand, atHz: Double, fs: Int = DEFAULT_FS): Double {
+        val gain = band.gainDb10.toDouble() / EqUnits.GAIN_SCALE
+        val q = band.q100.toDouble() / EqUnits.Q_SCALE
+        return when (band.type) {
+            EqBandType.LOW_SHELF -> shelfResponseDb(atHz, band.freqHz.toDouble(), q, gain, fs, false)
+            EqBandType.HIGH_SHELF -> shelfResponseDb(atHz, band.freqHz.toDouble(), q, gain, fs, true)
+            else -> peakingResponseDb(atHz, band.freqHz.toDouble(), q, gain, fs)
+        }
+    }
+
     /** バンド全部を重ねた応答の、指定周波数での値 (dB)。 */
     fun combinedResponseDb(bands: List<EqBand>, atHz: Double, fs: Int = DEFAULT_FS): Double =
-        bands.sumOf { band ->
-            val gain = band.gainDb10.toDouble() / EqUnits.GAIN_SCALE
-            val q = band.q100.toDouble() / EqUnits.Q_SCALE
-            when (band.type) {
-                EqBandType.LOW_SHELF -> shelfResponseDb(atHz, band.freqHz.toDouble(), q, gain, fs, false)
-                EqBandType.HIGH_SHELF -> shelfResponseDb(atHz, band.freqHz.toDouble(), q, gain, fs, true)
-                else -> peakingResponseDb(atHz, band.freqHz.toDouble(), q, gain, fs)
-            }
-        }
+        bands.sumOf { bandResponseDb(it, atHz, fs) }
 
     /**
      * 自動プリアンプ。合成応答のピークから必要なヘッドルームを求める。

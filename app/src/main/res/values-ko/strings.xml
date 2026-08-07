@@ -189,4 +189,5 @@
     <string name="eq_preset_delete_body">\"%1$s\"을(를) 삭제합니다. 이어폰에 이미 적용된 설정은 그대로 남습니다.</string>
     <string name="eq_autoeq_import">AutoEQ 가져오기</string>
     <string name="eq_autoeq_desc">AutoEQ의 ParametricEQ.txt 또는 GraphicEQ.txt를 읽어 위의 설정을 바꿉니다.</string>
+    <string name="eq_curve_desc">이 설정이 소리를 어떻게 바꾸는지 나타내는 곡선</string>
 </resources>

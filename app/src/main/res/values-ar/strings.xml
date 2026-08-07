@@ -194,4 +194,5 @@
     <string name="eq_preset_delete_body">يحذف \"%1$s\". ويبقى ما هو مضبوط على سماعاتك كما هو.</string>
     <string name="eq_autoeq_import">استيراد AutoEQ</string>
     <string name="eq_autoeq_desc">يقرأ ملف ParametricEQ.txt أو GraphicEQ.txt من AutoEQ ويستبدل به الإعدادات أعلاه.</string>
+    <string name="eq_curve_desc">منحنى يوضّح كيف تغيّر هذه الإعدادات الصوت</string>
 </resources>

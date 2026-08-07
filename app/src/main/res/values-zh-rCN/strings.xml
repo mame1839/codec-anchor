@@ -189,4 +189,5 @@
     <string name="eq_preset_delete_body">删除“%1$s”。耳机上已经设置的内容保持不变。</string>
     <string name="eq_autoeq_import">读取 AutoEQ</string>
     <string name="eq_autoeq_desc">读取 AutoEQ 的 ParametricEQ.txt 或 GraphicEQ.txt，并替换上面的设置。</string>
+    <string name="eq_curve_desc">显示这些设置如何改变声音的曲线</string>
 </resources>
