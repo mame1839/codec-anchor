@@ -190,4 +190,5 @@
     <string name="eq_preset_delete_body">Entfernt „%1$s“. Was bereits an Ihren Kopfhörern eingestellt ist, bleibt bestehen.</string>
     <string name="eq_autoeq_import">AutoEQ laden</string>
     <string name="eq_autoeq_desc">Liest eine ParametricEQ.txt oder GraphicEQ.txt von AutoEQ und ersetzt die Einstellungen oben.</string>
+    <string name="eq_curve_desc">Kurve: So verändern diese Einstellungen den Klang</string>
 </resources>

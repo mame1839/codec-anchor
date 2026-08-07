@@ -8,6 +8,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -75,6 +76,10 @@ sealed interface EqScale {
  * **ドラッグ中は [onCommit] を呼ばない。** `MainViewModel.commit()` にデバウンスが無く、
  * 1 回の変更ごとに「設定全体を encode → 保存 → Bluetooth の 2 パッケージへ送信」が
  * その場で同期に走るので、指を動かしている間ずっとそれを叩くことになる。
+ *
+ * [previewKey] を渡すと、ドラッグ中の値を [EqCurve] の絵にだけ流す。設定は書き換えないので
+ * 上の制約はそのまま。指を離してからでないと絵が動かないと、スライダーと絵の対応が
+ * 伝わらないので、絵の側だけ先に追いつかせている。
  */
 @Composable
 fun EqSliderRow(
@@ -85,10 +90,18 @@ fun EqSliderRow(
     onCommit: (Int) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    previewKey: EqPreviewTarget? = null,
 ) {
     var dragging by remember { mutableStateOf(false) }
     var local by remember(value) { mutableIntStateOf(value) }
     val shown = if (dragging) local else value
+    val preview = LocalEqPreview.current
+
+    // 指を離す前に行ごと消えることがある (バンドの削除、モードの切り替え)。
+    // 掛けっぱなしにすると、絵がドラッグ中の値のまま固まる。
+    if (previewKey != null && preview != null) {
+        DisposableEffect(previewKey) { onDispose { preview.clear(previewKey) } }
+    }
 
     Column(modifier = modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 4.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -110,9 +123,11 @@ fun EqSliderRow(
             onValueChange = { position ->
                 dragging = true
                 local = scale.fromPosition(position)
+                if (previewKey != null) preview?.show(previewKey, local)
             },
             onValueChangeFinished = {
                 dragging = false
+                if (previewKey != null) preview?.clear(previewKey)
                 if (local != value) onCommit(local)
             },
             enabled = enabled,
