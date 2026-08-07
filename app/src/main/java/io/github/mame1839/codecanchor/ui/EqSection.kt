@@ -34,7 +34,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import io.github.mame1839.codecanchor.R
 import io.github.mame1839.codecanchor.core.DeviceProfile
-import io.github.mame1839.codecanchor.core.EqAvailability
 import io.github.mame1839.codecanchor.core.EqBand
 import io.github.mame1839.codecanchor.core.EqBandType
 import io.github.mame1839.codecanchor.core.EqMode
@@ -61,16 +60,14 @@ private const val NEW_BAND_Q100 = 141
 /**
  * 詳細画面の「音響処理」。入口はここ 1 つで、`DeviceDetailScreen` から呼ぶ。
  *
- * **ここが扱うのは軽い操作だけ。** EQ のオン・オフと値の変更は共有メモリ越しなので音は切れない。
- * 「このイヤホンを登録する」(`audio_effects.xml` の書き換えと audioserver の再起動を伴い、
- * 再生中の音が一瞬切れる) は重い操作で、別の導線になる。**依頼の経路がまだ無いので、
- * この画面の設定は音に届かない。**経路ができたら、押す前に「音が一瞬途切れます」を出す
- * ボタンをここに足す。
+ * **重い操作は `EqRegisterRow` の 1 つだけ。**EQ のオン・オフと値の変更は共有メモリ越しなので
+ * 音は切れないが、登録 (`audio_effects.xml` の書き換えと audioserver の再起動) は再生中の音を
+ * 一瞬切る。だからそこにだけ確認とタイムアウトと結果表示が付いている。
  */
 @Composable
 fun EqSection(vm: MainViewModel, mac: String, profile: DeviceProfile) {
     val eq = profile.eq
-    val availability = vm.eqAvailability
+    val availability = vm.eqAvailability(mac)
     var presetsExpanded by rememberSaveable { mutableStateOf(false) }
     var confirmGraphic by rememberSaveable { mutableStateOf(false) }
 
@@ -83,6 +80,17 @@ fun EqSection(vm: MainViewModel, mac: String, profile: DeviceProfile) {
     val frequencyText: (Int) -> String = { eqFrequencyText(it, hzUnit, kiloHzUnit) }
 
     SettingsCard(title = stringResource(R.string.section_eq)) {
+        // 使えないときも項目は伸ばしたまま残して理由を出す。OK なら何も出ない。
+        // カードの先頭に置くのは、理由がセクション全体に掛かるため — 下の 2 つのトグルは
+        // 理由によって片方だけ押せなくなるので、どちらかの直後に付けるともう片方の説明が消える。
+        EqUnavailableNotice(availability)
+
+        // 登録が入口。EQ を作ってから登録する順にも、登録してから作る順にも進めるよう、
+        // ここは EQ が切れていても出す (どちらの順でも、音が切れる操作は 1 回で済む)。
+        EqRegisterRow(vm = vm, mac = mac, availability = availability)
+
+        RowDivider()
+
         SwitchRow(
             title = stringResource(R.string.eq_enabled),
             description = stringResource(R.string.eq_enabled_desc),
@@ -96,10 +104,8 @@ fun EqSection(vm: MainViewModel, mac: String, profile: DeviceProfile) {
             // 使えないときに新しく入れることはできないが、入っているものを切ることはできる。
             // 切れないと、あとから使えなくなった時点 (オフロードが入った・フックが古い) で
             // 設定が固定されてしまう。
-            enabled = availability == EqAvailability.OK || eq.enabled,
+            enabled = availability.allowsEditing || eq.enabled,
         )
-        // 使えないときも項目は伸ばしたまま残して理由を出す。OK なら何も出ない。
-        EqUnavailableNotice(availability)
         if (!eq.enabled) return@SettingsCard
 
         RowDivider()

@@ -74,6 +74,26 @@
     <string name="eq_unavailable_not_registered">El procesamiento de audio no está disponible: el módulo de procesamiento de audio no está instalado, o este teléfono aún no lo ha cargado. Instálalo y reinicia el teléfono.</string>
     <string name="eq_unavailable_offload">El procesamiento de audio no está disponible mientras la descarga por hardware de Bluetooth A2DP esté activada. El aviso de la lista de dispositivos explica cómo desactivarla.</string>
     <string name="eq_unavailable_hook_old">El procesamiento de audio no está disponible: el módulo que se ejecuta en el proceso de Bluetooth es de una versión anterior que no lo conoce. Desactiva el Bluetooth y vuelve a activarlo.</string>
+    <string name="eq_unavailable_device">Estos auriculares no están registrados para el procesamiento de audio, así que nada de lo que ajustes aquí llega al sonido.</string>
+
+    <string name="eq_device_register">Usar el procesamiento de audio con estos auriculares</string>
+    <string name="eq_device_register_desc">Añade estos auriculares a los ajustes de audio del teléfono. El sonido se interrumpe un momento mientras se aplica.</string>
+    <string name="eq_device_confirm_on_title">¿Activar el procesamiento de audio para estos auriculares?</string>
+    <string name="eq_device_confirm_off_title">¿Desactivar el procesamiento de audio para estos auriculares?</string>
+    <string name="eq_device_confirm_body">El servicio de audio del teléfono se reinicia, así que lo que esté sonando ahora se silencia unos segundos. El Bluetooth sigue conectado, y tus ajustes del ecualizador se conservan en cualquier caso.</string>
+    <string name="eq_device_running">Aplicando. El sonido vuelve en unos segundos.</string>
+    <string name="eq_device_result_on">Estos auriculares están registrados para el procesamiento de audio.</string>
+    <string name="eq_device_result_off">Estos auriculares ya no están registrados para el procesamiento de audio.</string>
+    <string name="eq_device_failed_no_module">No se ha cambiado nada: el módulo de procesamiento de audio no está instalado.</string>
+    <string name="eq_device_failed_root">No se ha cambiado nada: se denegó el acceso root, o este teléfono no tiene gestor de root. Permite Codec Anchor en tu gestor de root e inténtalo de nuevo.</string>
+    <string name="eq_device_failed_script">No se ha cambiado nada: el acceso root funcionó, pero el módulo de procesamiento de audio no se ejecutó. Sus archivos faltan o están dañados. Reinstala el módulo y luego reinicia el teléfono.</string>
+    <string name="eq_device_failed_timeout">No terminó a tiempo y se detuvo. Puede que el servicio de audio todavía se esté reiniciando. Comprueba de nuevo en un momento.</string>
+    <string name="eq_device_failed_input">No se ha cambiado nada: la app envió algo que el módulo no pudo leer. Este es un fallo de la app.</string>
+    <string name="eq_device_failed_no_state">No se ha cambiado nada: el módulo de procesamiento de audio no se ha iniciado. Reinicia el teléfono e inténtalo de nuevo.</string>
+    <string name="eq_device_failed_xml">No se pudo reconstruir el archivo de ajustes de audio del teléfono, así que no se ha cambiado nada.</string>
+    <string name="eq_device_failed_apply">No se pudieron aplicar los ajustes de audio reconstruidos, así que no se ha cambiado nada.</string>
+    <string name="eq_device_failed_audioserver">El servicio de audio no volvió a funcionar. Reinicia el teléfono.</string>
+    <string name="eq_device_failed_unknown">Ha fallado de una forma que esta versión de la app no reconoce (código %1$d).</string>
 
     <string name="tag_connected">Conectado</string>
     <string name="tag_disconnected">Sin conexión</string>

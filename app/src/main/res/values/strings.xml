@@ -78,6 +78,39 @@
     <string name="eq_unavailable_not_registered">Audio processing is unavailable: the audio processing module is not installed, or this phone has not loaded it. Install it, then restart the phone.</string>
     <string name="eq_unavailable_offload">Audio processing is unavailable while Bluetooth A2DP hardware offload is enabled. The note in the device list explains how to turn it off.</string>
     <string name="eq_unavailable_hook_old">Audio processing is unavailable: the module running in the Bluetooth process is an older version that does not know about it. Turn Bluetooth off, then on again.</string>
+    <string name="eq_unavailable_device">These earphones are not registered for audio processing, so nothing set here reaches the sound.</string>
+
+    <!-- Registering earphones. This writes their address into the audio settings of the phone and
+         restarts the audio service, so it is the one heavy action on the detail screen.
+
+         The wording below is the reference the 17 translations were made from. Two terms had no
+         existing translation anywhere in this file and were coined per language for these strings:
+
+           "root manager"   the app that grants root (Magisk / KernelSU / APatch)
+           "audio service"  audioserver
+
+         Reword either one here and the 17 locales drift without anything failing. There is no
+         check for this and there cannot be one, so: if you change these, go through the 17
+         values-*/strings.xml as well. ("audio processing module" is not in this set - it was
+         already fixed by the eq_unavailable_* strings above.) -->
+    <string name="eq_device_register">Use audio processing with these earphones</string>
+    <string name="eq_device_register_desc">Adds these earphones to the audio settings of the phone. The sound stops for a moment while it is applied.</string>
+    <string name="eq_device_confirm_on_title">Turn on audio processing for these earphones?</string>
+    <string name="eq_device_confirm_off_title">Turn off audio processing for these earphones?</string>
+    <string name="eq_device_confirm_body">The audio service of the phone restarts, so anything playing right now goes quiet for a few seconds. Bluetooth stays connected, and your equaliser settings are kept either way.</string>
+    <string name="eq_device_running">Applying. The sound comes back in a few seconds.</string>
+    <string name="eq_device_result_on">These earphones are registered for audio processing.</string>
+    <string name="eq_device_result_off">These earphones are no longer registered for audio processing.</string>
+    <string name="eq_device_failed_no_module">Nothing was changed: the audio processing module is not installed.</string>
+    <string name="eq_device_failed_root">Nothing was changed: root access was refused, or this phone has no root manager. Allow Codec Anchor in your root manager, then try again.</string>
+    <string name="eq_device_failed_script">Nothing was changed: root access worked, but the audio processing module did not run. Its files are missing or damaged. Install the module again, then restart the phone.</string>
+    <string name="eq_device_failed_timeout">It did not finish in time and was stopped. The audio service may still be restarting. Check again in a moment.</string>
+    <string name="eq_device_failed_input">Nothing was changed: the app sent something the module could not read. This is a fault in the app.</string>
+    <string name="eq_device_failed_no_state">Nothing was changed: the audio processing module has not started. Restart the phone, then try again.</string>
+    <string name="eq_device_failed_xml">The audio settings file of the phone could not be rebuilt, so nothing was changed.</string>
+    <string name="eq_device_failed_apply">The rebuilt audio settings could not be put in place, so nothing was changed.</string>
+    <string name="eq_device_failed_audioserver">The audio service did not come back. Restart the phone.</string>
+    <string name="eq_device_failed_unknown">It failed in a way this version of the app does not know about (code %1$d).</string>
 
     <string name="tag_connected">Connected</string>
     <string name="tag_disconnected">Not connected</string>

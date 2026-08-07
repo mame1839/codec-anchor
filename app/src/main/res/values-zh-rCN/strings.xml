@@ -72,6 +72,26 @@
     <string name="eq_unavailable_not_registered">无法使用音频处理：尚未安装音频处理模块，或本机还没有加载它。请先安装，然后重启手机。</string>
     <string name="eq_unavailable_offload">蓝牙 A2DP 硬件卸载开启期间无法使用音频处理。关闭方法见设备列表中的提示。</string>
     <string name="eq_unavailable_hook_old">无法使用音频处理：蓝牙进程中运行的模块是不认识音频处理的旧版本。请关闭蓝牙后再重新开启。</string>
+    <string name="eq_unavailable_device">这副耳机还没有注册音频处理，因此这里设置的任何内容都不会影响声音。</string>
+
+    <string name="eq_device_register">对这副耳机使用音频处理</string>
+    <string name="eq_device_register_desc">把这副耳机加入手机的音频设置。应用期间声音会中断片刻。</string>
+    <string name="eq_device_confirm_on_title">要为这副耳机开启音频处理吗</string>
+    <string name="eq_device_confirm_off_title">要为这副耳机关闭音频处理吗</string>
+    <string name="eq_device_confirm_body">手机的音频服务会重启，此刻正在播放的声音会中断几秒钟。蓝牙连接不受影响，均衡器设置无论如何都会保留。</string>
+    <string name="eq_device_running">正在应用，几秒后声音会恢复。</string>
+    <string name="eq_device_result_on">这副耳机已注册音频处理。</string>
+    <string name="eq_device_result_off">这副耳机已取消注册音频处理。</string>
+    <string name="eq_device_failed_no_module">未做任何更改：尚未安装音频处理模块。</string>
+    <string name="eq_device_failed_root">未做任何更改：root 权限被拒绝，或者本机没有 root 管理器。请在你的 root 管理器中允许 Codec Anchor，然后重试。</string>
+    <string name="eq_device_failed_script">未做任何更改：root 权限已通过，但音频处理模块没有运行。它的文件缺失或已损坏。请重新安装模块，然后重启手机。</string>
+    <string name="eq_device_failed_timeout">未能按时完成，已被中止。音频服务可能仍在重启。请稍后再次检查。</string>
+    <string name="eq_device_failed_input">未做任何更改：应用发送的内容模块无法读取。这是应用的问题。</string>
+    <string name="eq_device_failed_no_state">未做任何更改：音频处理模块尚未启动。请重启手机后重试。</string>
+    <string name="eq_device_failed_xml">无法重新生成手机的音频设置文件，因此未做任何更改。</string>
+    <string name="eq_device_failed_apply">无法应用重新生成的音频设置，因此未做任何更改。</string>
+    <string name="eq_device_failed_audioserver">音频服务未能恢复。请重启手机。</string>
+    <string name="eq_device_failed_unknown">失败原因是当前版本应用无法识别的情况（代码 %1$d）。</string>
 
     <string name="tag_connected">已连接</string>
     <string name="tag_disconnected">未连接</string>
