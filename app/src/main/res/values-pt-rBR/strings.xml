@@ -86,6 +86,7 @@
     <string name="eq_device_result_off">Estes fones não estão mais registrados para o processamento de áudio.</string>
     <string name="eq_device_failed_no_module">Nada foi alterado: o módulo de processamento de áudio não está instalado.</string>
     <string name="eq_device_failed_root">Nada foi alterado: o acesso root foi recusado, ou este aparelho não tem gerenciador de root. Permita o Codec Anchor no seu gerenciador de root e tente de novo.</string>
+    <string name="eq_device_failed_script">Nada foi alterado: o acesso root funcionou, mas o módulo de processamento de áudio não foi executado. Os arquivos dele estão ausentes ou corrompidos. Reinstale o módulo e reinicie o aparelho.</string>
     <string name="eq_device_failed_timeout">Não terminou a tempo e foi interrompido. O serviço de áudio ainda pode estar reiniciando. Verifique de novo em instantes.</string>
     <string name="eq_device_failed_input">Nada foi alterado: o app enviou algo que o módulo não conseguiu ler. Essa é uma falha do app.</string>
     <string name="eq_device_failed_no_state">Nada foi alterado: o módulo de processamento de áudio não foi iniciado. Reinicie o aparelho e tente de novo.</string>

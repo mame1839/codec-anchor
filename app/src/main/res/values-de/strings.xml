@@ -85,6 +85,7 @@
     <string name="eq_device_result_off">Diese Kopfhörer sind nicht mehr für die Audiobearbeitung registriert.</string>
     <string name="eq_device_failed_no_module">Nichts wurde geändert: Das Audiobearbeitungsmodul ist nicht installiert.</string>
     <string name="eq_device_failed_root">Nichts wurde geändert: Der Root-Zugriff wurde verweigert, oder dieses Telefon hat keinen Root-Manager. Erlauben Sie Codec Anchor in Ihrem Root-Manager und versuchen Sie es erneut.</string>
+    <string name="eq_device_failed_script">Nichts wurde geändert: Der Root-Zugriff hat funktioniert, aber das Audiobearbeitungsmodul wurde nicht ausgeführt. Seine Dateien fehlen oder sind beschädigt. Installieren Sie das Modul erneut und starten Sie dann das Telefon neu.</string>
     <string name="eq_device_failed_timeout">Es wurde nicht rechtzeitig abgeschlossen und daher gestoppt. Der Audiodienst startet möglicherweise noch neu. Prüfen Sie es gleich noch einmal.</string>
     <string name="eq_device_failed_input">Nichts wurde geändert: Die App hat etwas gesendet, was das Modul nicht lesen konnte. Das ist ein Fehler der App.</string>
     <string name="eq_device_failed_no_state">Nichts wurde geändert: Das Audiobearbeitungsmodul ist noch nicht gestartet. Starten Sie das Telefon neu und versuchen Sie es erneut.</string>

@@ -87,6 +87,7 @@
     <string name="eq_device_result_off">Te słuchawki nie są już zarejestrowane do przetwarzania dźwięku.</string>
     <string name="eq_device_failed_no_module">Nic nie zostało zmienione: moduł przetwarzania dźwięku nie jest zainstalowany.</string>
     <string name="eq_device_failed_root">Nic nie zostało zmienione: dostęp roota został odrzucony albo ten telefon nie ma menedżera roota. Zezwól na Codec Anchor w swoim menedżerze roota, a potem spróbuj ponownie.</string>
+    <string name="eq_device_failed_script">Nic nie zostało zmienione: dostęp roota zadziałał, ale moduł przetwarzania dźwięku nie zadziałał. Jego pliki są uszkodzone lub brakujące. Zainstaluj moduł ponownie, a potem uruchom telefon ponownie.</string>
     <string name="eq_device_failed_timeout">Nie zakończyło się na czas i zostało zatrzymane. Usługa audio może wciąż się uruchamiać ponownie. Sprawdź jeszcze raz za chwilę.</string>
     <string name="eq_device_failed_input">Nic nie zostało zmienione: aplikacja wysłała coś, czego moduł nie mógł odczytać. To błąd aplikacji.</string>
     <string name="eq_device_failed_no_state">Nic nie zostało zmienione: moduł przetwarzania dźwięku się nie uruchomił. Uruchom telefon ponownie, a potem spróbuj jeszcze raz.</string>

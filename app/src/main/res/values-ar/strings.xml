@@ -89,6 +89,7 @@
     <string name="eq_device_result_off">هذه السماعات لم تعد مسجَّلة لمعالجة الصوت.</string>
     <string name="eq_device_failed_no_module">لم يتغيّر شيء: وحدة معالجة الصوت غير مثبَّتة.</string>
     <string name="eq_device_failed_root">لم يتغيّر شيء: رُفض الوصول بصلاحيات root، أو لا يملك هذا الهاتف مدير صلاحيات root. اسمح لـ Codec Anchor في مدير صلاحيات root، ثم أعد المحاولة.</string>
+    <string name="eq_device_failed_script">لم يتغيّر شيء: نجح الوصول بصلاحيات root، لكن وحدة معالجة الصوت لم تعمل. ملفاتها مفقودة أو تالفة. ثبّت الوحدة من جديد، ثم أعد تشغيل الهاتف.</string>
     <string name="eq_device_failed_timeout">لم تكتمل العملية في الوقت المحدد فأُوقفت. قد تكون خدمة الصوت لا تزال تُعاد تشغيلها. تحقّق مرة أخرى بعد قليل.</string>
     <string name="eq_device_failed_input">لم يتغيّر شيء: أرسل التطبيق شيئًا تعذّر على الوحدة قراءته. هذا خطأ في التطبيق.</string>
     <string name="eq_device_failed_no_state">لم يتغيّر شيء: وحدة معالجة الصوت لم تبدأ العمل بعد. أعد تشغيل الهاتف، ثم أعد المحاولة.</string>

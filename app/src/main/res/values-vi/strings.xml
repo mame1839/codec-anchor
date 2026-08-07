@@ -84,6 +84,7 @@
     <string name="eq_device_result_off">Tai nghe này không còn được đăng ký để xử lý âm thanh.</string>
     <string name="eq_device_failed_no_module">Không có gì thay đổi: chưa cài mô-đun xử lý âm thanh.</string>
     <string name="eq_device_failed_root">Không có gì thay đổi: quyền root bị từ chối, hoặc máy này không có ứng dụng quản lý root. Hãy cho phép Codec Anchor trong ứng dụng quản lý root của bạn, rồi thử lại.</string>
+    <string name="eq_device_failed_script">Không có gì thay đổi: quyền root đã hoạt động, nhưng mô-đun xử lý âm thanh không chạy. Tệp của mô-đun bị thiếu hoặc hỏng. Hãy cài lại mô-đun, rồi khởi động lại điện thoại.</string>
     <string name="eq_device_failed_timeout">Không xong kịp thời gian nên đã bị dừng. Dịch vụ âm thanh có thể vẫn đang khởi động lại. Hãy kiểm tra lại sau một lát.</string>
     <string name="eq_device_failed_input">Không có gì thay đổi: ứng dụng đã gửi thứ mà mô-đun không đọc được. Đây là lỗi của ứng dụng.</string>
     <string name="eq_device_failed_no_state">Không có gì thay đổi: mô-đun xử lý âm thanh chưa khởi động. Hãy khởi động lại điện thoại rồi thử lại.</string>

@@ -86,6 +86,7 @@
     <string name="eq_device_result_off">Ces écouteurs ne sont plus enregistrés pour le traitement audio.</string>
     <string name="eq_device_failed_no_module">Rien n\'a été modifié : le module de traitement audio n\'est pas installé.</string>
     <string name="eq_device_failed_root">Rien n\'a été modifié : l\'accès root a été refusé, ou ce téléphone n\'a pas de gestionnaire root. Autorisez Codec Anchor dans votre gestionnaire root, puis réessayez.</string>
+    <string name="eq_device_failed_script">Rien n\'a été modifié : l\'accès root a fonctionné, mais le module de traitement audio ne s\'est pas exécuté. Ses fichiers sont manquants ou endommagés. Réinstallez le module, puis redémarrez le téléphone.</string>
     <string name="eq_device_failed_timeout">L\'opération n\'a pas fini à temps et a été arrêtée. Le service audio est peut-être encore en train de redémarrer. Vérifiez de nouveau dans un instant.</string>
     <string name="eq_device_failed_input">Rien n\'a été modifié : l\'application a envoyé quelque chose que le module n\'a pas pu lire. C\'est un défaut de l\'application.</string>
     <string name="eq_device_failed_no_state">Rien n\'a été modifié : le module de traitement audio n\'a pas démarré. Redémarrez le téléphone, puis réessayez.</string>

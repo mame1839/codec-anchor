@@ -84,6 +84,7 @@
     <string name="eq_device_result_off">이 이어폰은 더 이상 음향 처리에 등록되어 있지 않습니다.</string>
     <string name="eq_device_failed_no_module">아무것도 바뀌지 않았습니다. 음향 처리 모듈이 설치되어 있지 않습니다.</string>
     <string name="eq_device_failed_root">아무것도 바뀌지 않았습니다. 루트 권한 요청이 거부되었거나, 이 휴대전화에 루트 매니저가 없습니다. 루트 매니저에서 Codec Anchor를 허용한 다음 다시 시도해 주세요.</string>
+    <string name="eq_device_failed_script">아무것도 바뀌지 않았습니다. 루트 권한은 통과했지만 음향 처리 모듈이 실행되지 않았습니다. 모듈 파일이 없거나 손상되었습니다. 모듈을 다시 설치한 다음 휴대전화를 다시 시작해 주세요.</string>
     <string name="eq_device_failed_timeout">제시간에 끝나지 않아 중단되었습니다. 오디오 서비스가 아직 다시 시작되는 중일 수 있습니다. 잠시 후 다시 확인해 주세요.</string>
     <string name="eq_device_failed_input">아무것도 바뀌지 않았습니다. 앱이 모듈에서 읽을 수 없는 내용을 보냈습니다. 이는 앱의 결함입니다.</string>
     <string name="eq_device_failed_no_state">아무것도 바뀌지 않았습니다. 음향 처리 모듈이 시작되지 않았습니다. 휴대전화를 다시 시작한 다음 다시 시도해 주세요.</string>

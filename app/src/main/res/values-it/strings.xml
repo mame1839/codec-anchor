@@ -86,6 +86,7 @@
     <string name="eq_device_result_off">Questi auricolari non sono più registrati per l\'elaborazione audio.</string>
     <string name="eq_device_failed_no_module">Non è stato modificato nulla: il modulo di elaborazione audio non è installato.</string>
     <string name="eq_device_failed_root">Non è stato modificato nulla: l\'accesso root è stato rifiutato, oppure questo telefono non ha un gestore root. Consenti Codec Anchor nel tuo gestore root, poi riprova.</string>
+    <string name="eq_device_failed_script">Non è stato modificato nulla: l\'accesso root ha funzionato, ma il modulo di elaborazione audio non è stato eseguito. I suoi file mancano o sono danneggiati. Reinstalla il modulo, poi riavvia il telefono.</string>
     <string name="eq_device_failed_timeout">Non si è concluso in tempo ed è stato interrotto. Il servizio audio potrebbe essere ancora in fase di riavvio. Controlla di nuovo tra poco.</string>
     <string name="eq_device_failed_input">Non è stato modificato nulla: l\'app ha inviato qualcosa che il modulo non è riuscito a leggere. È un difetto dell\'app.</string>
     <string name="eq_device_failed_no_state">Non è stato modificato nulla: il modulo di elaborazione audio non è avviato. Riavvia il telefono, poi riprova.</string>

@@ -132,7 +132,9 @@ private fun registerMessage(report: EqRegisterReport): String = when (report.res
         stringResource(if (report.turnedOn) R.string.eq_device_result_on else R.string.eq_device_result_off)
 
     EqDevicesOutcome.NO_MODULE -> stringResource(R.string.eq_device_failed_no_module)
+    // root マネージャへ行かせるのはこの枝だけ。SCRIPT_MISSING でそこを開かせても原因が無い。
     EqDevicesOutcome.ROOT_DENIED -> stringResource(R.string.eq_device_failed_root)
+    EqDevicesOutcome.SCRIPT_MISSING -> stringResource(R.string.eq_device_failed_script)
     EqDevicesOutcome.TIMEOUT -> stringResource(R.string.eq_device_failed_timeout)
     EqDevicesOutcome.SCRIPT_FAILED -> when (report.result.exitCode) {
         EqDevices.EXIT_BAD_INPUT -> stringResource(R.string.eq_device_failed_input)

@@ -84,6 +84,7 @@
     <string name="eq_device_result_off">這副耳機已取消註冊音訊處理。</string>
     <string name="eq_device_failed_no_module">未做任何變更：尚未安裝音訊處理模組。</string>
     <string name="eq_device_failed_root">未做任何變更：root 權限遭拒，或本機沒有 root 管理程式。請在你的 root 管理程式中允許 Codec Anchor，然後重試。</string>
+    <string name="eq_device_failed_script">未做任何變更：root 權限已通過，但音訊處理模組沒有運作。它的檔案遺失或已損壞。請重新安裝模組，然後重新啟動手機。</string>
     <string name="eq_device_failed_timeout">未能如期完成，已被中止。音訊服務可能仍在重新啟動。請稍後再檢查一次。</string>
     <string name="eq_device_failed_input">未做任何變更：應用程式傳送的內容模組無法讀取。這是應用程式的問題。</string>
     <string name="eq_device_failed_no_state">未做任何變更：音訊處理模組尚未啟動。請重新啟動手機後重試。</string>

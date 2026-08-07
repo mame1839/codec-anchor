@@ -10,8 +10,12 @@ import java.util.concurrent.TimeUnit
  * 呼び、モジュール同梱のスクリプトに登録する MAC を渡す。**
  *
  * ```
- * su -c "sh '<module_dir>/eq_devices.sh' apply"     # stdin に MAC を 1 行 1 つ
+ * su -c "echo CA_SU_OK; sh '<module_dir>/eq_devices.sh' apply"   # stdin に MAC を 1 行 1 つ
  * ```
+ *
+ * **`echo` を前に置くのは、su が通ったこと自体を印にするため** (下の [SU_MARKER])。
+ * `echo` は stdin を読まないので MAC はそのままスクリプトへ流れ、`su` の終了コードは
+ * 最後のコマンド = スクリプトのものになる。**順序を入れ替えると両方壊れる。**
  *
  * **今トグルした 1 台ではなく、登録済みの全部を毎回流す。**root 側は受け取った一覧をそのまま真と
  * するので、アプリ側の記録が何であれ 1 回の成功で XML が記録に合う。空の入力 = 全解除で、これも正当。
@@ -28,8 +32,16 @@ object EqDevices {
     const val ARG_APPLY = "apply"
 
     /**
-     * スクリプトが**引数の検査より前に**出す印。「スクリプトが実際に走った」ことの唯一の証拠で、
-     * これが無ければ su そのものが通っていない。
+     * **su が通ったこと自体の印。**アプリが `-c` の先頭に置く `echo` が出す。
+     *
+     * これが無いと「su が拒否された」と「スクリプトが置かれていない」が同じ枝に落ちる —
+     * どちらも [BEGIN_MARKER] が出ないため。**ユーザを root マネージャへ行かせる文言は、
+     * この印が無いときだけ出す。**スクリプトが無いのに root マネージャを開かせても直らない。
+     */
+    const val SU_MARKER = "CA_SU_OK"
+
+    /**
+     * スクリプトが**引数の検査より前に**出す印。「スクリプトが実際に走った」ことの唯一の証拠。
      *
      * **位置は契約に含めない** — root マネージャが実行の前に自前の 1 行 (警告・MOTD) を出すことが
      * あり、「最初の行」に固定するとその端末で必ず誤判定する。
@@ -104,18 +116,24 @@ object EqDevices {
         outcome: EqDevicesOutcome,
     ): List<String> = if (outcome == EqDevicesOutcome.OK) sent else current
 
-    /** 印が 1 行でもあれば、スクリプトは走っている。行の**どれか**が印と完全一致すればよい。 */
-    fun ranScript(output: String): Boolean =
-        output.lineSequence().any { it.trim() == BEGIN_MARKER }
+    /** 印が 1 行でもあれば su は通っている。行の**どれか**が印と完全一致すればよい。 */
+    fun ranSu(output: String): Boolean = hasMarker(output, SU_MARKER)
+
+    /** 同じく、スクリプトが走ったかどうか。 */
+    fun ranScript(output: String): Boolean = hasMarker(output, BEGIN_MARKER)
+
+    private fun hasMarker(output: String, marker: String): Boolean =
+        output.lineSequence().any { it.trim() == marker }
 
     /**
-     * 走ったかどうかと終了コードから結果を決める。**3 分類の判定はここ 1 箇所。**
+     * 2 つの印と終了コードから結果を決める。**分類の判定はここ 1 箇所。**
      *
-     * 走っていないのに終了コードで判定すると、su が拒否したときの終了コード (実装ごとに違う) を
+     * 印を見ずに終了コードで判定すると、su が拒否したときの終了コード (実装ごとに違う) を
      * スクリプトの失敗として読んでしまう。
      */
     fun outcomeOf(output: String, exitCode: Int): EqDevicesOutcome = when {
-        !ranScript(output) -> EqDevicesOutcome.ROOT_DENIED
+        !ranSu(output) -> EqDevicesOutcome.ROOT_DENIED
+        !ranScript(output) -> EqDevicesOutcome.SCRIPT_MISSING
         exitCode == EXIT_OK -> EqDevicesOutcome.OK
         else -> EqDevicesOutcome.SCRIPT_FAILED
     }
@@ -137,7 +155,7 @@ object EqDevices {
     }
 
     private fun run(dir: String, macs: List<String>): EqDevicesResult {
-        val process = ProcessBuilder(SU, "-c", "sh '$dir/$SCRIPT_NAME' $ARG_APPLY")
+        val process = ProcessBuilder(SU, "-c", "echo $SU_MARKER; sh '$dir/$SCRIPT_NAME' $ARG_APPLY")
             // su の拒否理由は stderr に出ることが多い。診断に要るので混ぜて取る。
             .redirectErrorStream(true)
             .start()
@@ -187,20 +205,27 @@ object EqDevices {
 }
 
 /**
- * 失敗の 3 分類。**区別して出す。**
+ * 失敗の分類。**区別して出す。**印を 2 つ使うので、`su` の失敗とスクリプトの失敗が分かれる。
  *
- * | | 見分け方 |
- * |---|---|
- * | [NO_MODULE] | プロパティが空。**su を呼ぶ前に分かる** |
- * | [ROOT_DENIED] | プロセスは動いたが、印が 1 行も出てこない |
- * | [SCRIPT_FAILED] | 印が出たうえで終了コードが非 0 |
+ * | | 見分け方 | ユーザに促すこと |
+ * |---|---|---|
+ * | [NO_MODULE] | プロパティが空。**su を呼ぶ前に分かる** | モジュールの導入 |
+ * | [ROOT_DENIED] | 印が 1 つも出てこない | **root マネージャ** |
+ * | [SCRIPT_MISSING] | [EqDevices.SU_MARKER] は出たが [EqDevices.BEGIN_MARKER] が出ない | モジュールの入れ直し |
+ * | [SCRIPT_FAILED] | 印が両方出たうえで終了コードが非 0 | 終了コードごとに違う |
+ *
+ * **[ROOT_DENIED] と [SCRIPT_MISSING] を混ぜない。**混ぜると、スクリプトが置かれていないだけの
+ * ときにユーザを root マネージャへ行かせることになり、そこには原因が無い。
  */
 enum class EqDevicesOutcome {
     OK,
     NO_MODULE,
     ROOT_DENIED,
 
-    /** 時間内に終わらなかった。走ったかどうかも分からないので、記録は変えない。 */
+    /** root は通ったが、スクリプトが走っていない (置かれていない / 読めない / 壊れている)。 */
+    SCRIPT_MISSING,
+
+    /** 時間内に終わらなかった。走り切ったかどうかも分からないので、記録は変えない。 */
     TIMEOUT,
     SCRIPT_FAILED,
 }
@@ -214,11 +239,14 @@ data class EqDevicesResult(
     val exitCode: Int = -1,
     val output: String = "",
 ) {
-    /** 失敗の原因を示す行だけを拾う。全文はスクリプトの進行ログで埋まっていることがある。 */
+    /**
+     * 失敗の原因を示す行だけを拾う。全文はスクリプトの進行ログで埋まっていることがある。
+     * **印は判定に使ったもので、読ませる内容ではない**ので落とす。
+     */
     fun diagnostics(limit: Int = 3): String =
         output.lineSequence()
             .map { it.trim() }
-            .filter { it.isNotEmpty() && it != EqDevices.BEGIN_MARKER }
+            .filter { it.isNotEmpty() && it != EqDevices.BEGIN_MARKER && it != EqDevices.SU_MARKER }
             .toList()
             .takeLast(limit)
             .joinToString("\n")

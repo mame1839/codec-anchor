@@ -84,6 +84,7 @@
     <string name="eq_device_result_off">このイヤホンは音響処理の登録から外れました。</string>
     <string name="eq_device_failed_no_module">変更されていません。音響処理モジュールが入っていません。</string>
     <string name="eq_device_failed_root">変更されていません。root 権限の要求が拒否されたか、この端末に root 管理アプリがありません。root 管理アプリで Codec Anchor を許可してから、もう一度試してください。</string>
+    <string name="eq_device_failed_script">変更されていません。root 権限は通りましたが、音響処理モジュールが動作しませんでした。モジュールのファイルが欠けているか壊れています。モジュールを入れ直してから、端末を再起動してください。</string>
     <string name="eq_device_failed_timeout">時間内に終わらなかったため中断しました。音声サービスがまだ再起動中の可能性があります。少し時間を置いてから確認し直してください。</string>
     <string name="eq_device_failed_input">変更されていません。アプリがモジュールの読めない内容を送りました。これはアプリ側の不具合です。</string>
     <string name="eq_device_failed_no_state">変更されていません。音響処理モジュールが起動していません。端末を再起動してから、もう一度試してください。</string>

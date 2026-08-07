@@ -85,6 +85,7 @@
     <string name="eq_device_result_off">Bu kulaklık artık ses işleme için kayıtlı değil.</string>
     <string name="eq_device_failed_no_module">Hiçbir şey değişmedi: ses işleme modülü kurulu değil.</string>
     <string name="eq_device_failed_root">Hiçbir şey değişmedi: root erişimi reddedildi ya da bu telefonda root yöneticisi yok. Root yöneticinizde Codec Anchor\'a izin verin, sonra yeniden deneyin.</string>
+    <string name="eq_device_failed_script">Hiçbir şey değişmedi: root erişimi başarılı oldu, ama ses işleme modülü çalışmadı. Dosyaları eksik veya bozuk. Modülü yeniden kurun, sonra telefonu yeniden başlatın.</string>
     <string name="eq_device_failed_timeout">Zamanında bitmediği için durduruldu. Ses hizmeti hâlâ yeniden başlıyor olabilir. Birazdan yeniden kontrol edin.</string>
     <string name="eq_device_failed_input">Hiçbir şey değişmedi: uygulama, modülün okuyamadığı bir şey gönderdi. Bu, uygulamadaki bir hata.</string>
     <string name="eq_device_failed_no_state">Hiçbir şey değişmedi: ses işleme modülü başlamadı. Telefonu yeniden başlatın, sonra yeniden deneyin.</string>

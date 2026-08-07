@@ -84,6 +84,7 @@
     <string name="eq_device_result_off">Earphone ini tidak lagi terdaftar untuk pemrosesan audio.</string>
     <string name="eq_device_failed_no_module">Tidak ada yang diubah: modul pemrosesan audio belum terpasang.</string>
     <string name="eq_device_failed_root">Tidak ada yang diubah: akses root ditolak, atau ponsel ini tidak punya pengelola root. Izinkan Codec Anchor di pengelola root Anda, lalu coba lagi.</string>
+    <string name="eq_device_failed_script">Tidak ada yang diubah: akses root berhasil, tetapi modul pemrosesan audio gagal berjalan. Berkasnya hilang atau rusak. Pasang ulang modul, lalu mulai ulang ponsel.</string>
     <string name="eq_device_failed_timeout">Tidak selesai tepat waktu sehingga dihentikan. Layanan audio mungkin masih dimulai ulang. Periksa lagi sesaat lagi.</string>
     <string name="eq_device_failed_input">Tidak ada yang diubah: aplikasi mengirim sesuatu yang tidak dapat dibaca modul. Ini kesalahan pada aplikasi.</string>
     <string name="eq_device_failed_no_state">Tidak ada yang diubah: modul pemrosesan audio belum berjalan. Mulai ulang ponsel, lalu coba lagi.</string>

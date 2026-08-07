@@ -95,12 +95,29 @@ class EqDevicesTest {
         assertFalse(EqDevices.ranScript(""))
     }
 
+    // su の印が無ければ、終了コードが何であれ su が通っていない。
     @Test
-    fun outcomeSeparatesRootDenialFromScriptFailure() {
-        // 印が無ければ、終了コードが何であれ su が通っていない。
+    fun noMarkerAtAllMeansRootWasDenied() {
         assertEquals(EqDevicesOutcome.ROOT_DENIED, EqDevices.outcomeOf("permission denied\n", 1))
         assertEquals(EqDevicesOutcome.ROOT_DENIED, EqDevices.outcomeOf("", EqDevices.EXIT_OK))
-        assertEquals(EqDevicesOutcome.OK, EqDevices.outcomeOf(EqDevices.BEGIN_MARKER, EqDevices.EXIT_OK))
+        // スクリプトの印だけがあることは起こらないが、su を通った証拠にはしない。
+        assertEquals(EqDevicesOutcome.ROOT_DENIED, EqDevices.outcomeOf(EqDevices.BEGIN_MARKER, 0))
+    }
+
+    // ここを ROOT_DENIED と混ぜると、スクリプトが置かれていないだけのときに
+    // ユーザを root マネージャへ行かせることになる。そこには原因が無い。
+    @Test
+    fun suMarkerWithoutTheScriptMarkerMeansTheScriptNeverRan() {
+        val output = "${EqDevices.SU_MARKER}\nsh: can't open '/data/adb/modules/x/eq_devices.sh'\n"
+        assertEquals(EqDevicesOutcome.SCRIPT_MISSING, EqDevices.outcomeOf(output, 127))
+        // 終了コードが 0 でも、走っていないなら成功にしない。
+        assertEquals(EqDevicesOutcome.SCRIPT_MISSING, EqDevices.outcomeOf(EqDevices.SU_MARKER, 0))
+    }
+
+    @Test
+    fun bothMarkersAndZeroIsSuccess() {
+        val output = "${EqDevices.SU_MARKER}\n${EqDevices.BEGIN_MARKER}\n"
+        assertEquals(EqDevicesOutcome.OK, EqDevices.outcomeOf(output, EqDevices.EXIT_OK))
     }
 
     // 終了コードは 0 とも互いとも重ならないこと。重なると別の失敗が同じ文言になる。
@@ -129,25 +146,29 @@ class EqDevicesTest {
             EqDevices.EXIT_AUDIOSERVER_TIMEOUT,
             99,
         )
+        val output = "${EqDevices.SU_MARKER}\n${EqDevices.BEGIN_MARKER}\n"
         known.forEach { code ->
-            assertEquals(
-                "code $code",
-                EqDevicesOutcome.SCRIPT_FAILED,
-                EqDevices.outcomeOf("${EqDevices.BEGIN_MARKER}\n", code),
-            )
+            assertEquals("code $code", EqDevicesOutcome.SCRIPT_FAILED, EqDevices.outcomeOf(output, code))
         }
     }
 
-    // 診断は最後の数行。印は毎回出るので、それだけが残ると何も言っていないことになる。
+    // 診断は最後の数行。印は判定に使ったもので読ませる内容ではないので、残ると邪魔をする
+    // (スクリプトが 1 行も出さずに落ちると、印だけが「原因」として表示されてしまう)。
     @Test
-    fun diagnosticsKeepTheLastLinesWithoutTheMarker() {
+    fun diagnosticsKeepTheLastLinesWithoutTheMarkers() {
         val result = EqDevicesResult(
             outcome = EqDevicesOutcome.SCRIPT_FAILED,
             exitCode = EqDevices.EXIT_XML_FAILED,
-            output = "${EqDevices.BEGIN_MARKER}\nstep 1\n\nstep 2\nstep 3\nstep 4\n",
+            output = "${EqDevices.SU_MARKER}\n${EqDevices.BEGIN_MARKER}\nstep 1\n\nstep 2\nstep 3\nstep 4\n",
         )
         assertEquals("step 2\nstep 3\nstep 4", result.diagnostics())
         assertEquals("step 4", result.diagnostics(limit = 1))
         assertEquals("", EqDevicesResult(EqDevicesOutcome.NO_MODULE).diagnostics())
+        // 印しか出ていないなら、添える行は無い。
+        val bare = EqDevicesResult(
+            outcome = EqDevicesOutcome.SCRIPT_MISSING,
+            output = "${EqDevices.SU_MARKER}\n",
+        )
+        assertEquals("", bare.diagnostics())
     }
 }
