@@ -74,6 +74,26 @@
     <string name="eq_unavailable_not_registered">O processamento de áudio não está disponível: o módulo de processamento de áudio não está instalado, ou este aparelho ainda não o carregou. Instale-o e reinicie o aparelho.</string>
     <string name="eq_unavailable_offload">O processamento de áudio não está disponível enquanto a descarga por hardware do Bluetooth A2DP estiver ativada. O aviso na lista de dispositivos explica como desativá-la.</string>
     <string name="eq_unavailable_hook_old">O processamento de áudio não está disponível: o módulo que roda no processo do Bluetooth é de uma versão anterior que não o conhece. Desative o Bluetooth e ative de novo.</string>
+    <string name="eq_unavailable_device">Estes fones não estão registrados para o processamento de áudio, então nada do que for definido aqui chega ao som.</string>
+
+    <string name="eq_device_register">Usar processamento de áudio com estes fones</string>
+    <string name="eq_device_register_desc">Adiciona estes fones às configurações de áudio do aparelho. O som para por um instante enquanto é aplicado.</string>
+    <string name="eq_device_confirm_on_title">Ativar o processamento de áudio para estes fones?</string>
+    <string name="eq_device_confirm_off_title">Desativar o processamento de áudio para estes fones?</string>
+    <string name="eq_device_confirm_body">O serviço de áudio do aparelho reinicia, então o que estiver tocando agora fica mudo por alguns segundos. O Bluetooth continua conectado, e suas configurações do equalizador são mantidas de qualquer forma.</string>
+    <string name="eq_device_running">Aplicando. O som volta em alguns segundos.</string>
+    <string name="eq_device_result_on">Estes fones estão registrados para o processamento de áudio.</string>
+    <string name="eq_device_result_off">Estes fones não estão mais registrados para o processamento de áudio.</string>
+    <string name="eq_device_failed_no_module">Nada foi alterado: o módulo de processamento de áudio não está instalado.</string>
+    <string name="eq_device_failed_root">Nada foi alterado: o acesso root foi recusado, ou este aparelho não tem gerenciador de root. Permita o Codec Anchor no seu gerenciador de root e tente de novo.</string>
+    <string name="eq_device_failed_script">Nada foi alterado: o acesso root funcionou, mas o módulo de processamento de áudio não foi executado. Os arquivos dele estão ausentes ou corrompidos. Reinstale o módulo e reinicie o aparelho.</string>
+    <string name="eq_device_failed_timeout">Não terminou a tempo e foi interrompido. O serviço de áudio ainda pode estar reiniciando. Verifique de novo em instantes.</string>
+    <string name="eq_device_failed_input">Nada foi alterado: o app enviou algo que o módulo não conseguiu ler. Essa é uma falha do app.</string>
+    <string name="eq_device_failed_no_state">Nada foi alterado: o módulo de processamento de áudio não foi iniciado. Reinicie o aparelho e tente de novo.</string>
+    <string name="eq_device_failed_xml">Não foi possível reconstruir o arquivo de configurações de áudio do aparelho, então nada foi alterado.</string>
+    <string name="eq_device_failed_apply">Não foi possível aplicar as configurações de áudio reconstruídas, então nada foi alterado.</string>
+    <string name="eq_device_failed_audioserver">O serviço de áudio não voltou a funcionar. Reinicie o aparelho.</string>
+    <string name="eq_device_failed_unknown">Falhou de um jeito que esta versão do app não reconhece (código %1$d).</string>
 
     <string name="tag_connected">Conectado</string>
     <string name="tag_disconnected">Sem conexão</string>

@@ -72,6 +72,26 @@
     <string name="eq_unavailable_not_registered">音響処理を使えません。音響処理モジュールが入っていないか、この端末がまだ読み込んでいません。導入してから端末を再起動してください。</string>
     <string name="eq_unavailable_offload">Bluetooth A2DP ハードウェアオフロードが有効な間は音響処理を使えません。切り方は機器一覧の案内に書いてあります。</string>
     <string name="eq_unavailable_hook_old">音響処理を使えません。Bluetooth プロセスで動いているモジュールが、音響処理を知らない古いバージョンです。Bluetooth をオフにして、もう一度オンにしてください。</string>
+    <string name="eq_unavailable_device">このイヤホンは音響処理に登録されていないため、ここで設定した内容は音に反映されません。</string>
+
+    <string name="eq_device_register">このイヤホンで音響処理を使う</string>
+    <string name="eq_device_register_desc">このイヤホンを端末の音声設定に追加します。適用中は音が一瞬途切れます。</string>
+    <string name="eq_device_confirm_on_title">このイヤホンの音響処理をオンにしますか</string>
+    <string name="eq_device_confirm_off_title">このイヤホンの音響処理をオフにしますか</string>
+    <string name="eq_device_confirm_body">端末の音声サービスが再起動するため、いま再生中の音が数秒間途切れます。Bluetooth の接続は保たれ、イコライザーの設定もどちらの場合も保持されます。</string>
+    <string name="eq_device_running">適用しています。数秒で音が戻ります。</string>
+    <string name="eq_device_result_on">このイヤホンは音響処理に登録されました。</string>
+    <string name="eq_device_result_off">このイヤホンは音響処理の登録から外れました。</string>
+    <string name="eq_device_failed_no_module">変更されていません。音響処理モジュールが入っていません。</string>
+    <string name="eq_device_failed_root">変更されていません。root 権限の要求が拒否されたか、この端末に root 管理アプリがありません。root 管理アプリで Codec Anchor を許可してから、もう一度試してください。</string>
+    <string name="eq_device_failed_script">変更されていません。root 権限は通りましたが、音響処理モジュールが動作しませんでした。モジュールのファイルが欠けているか壊れています。モジュールを入れ直してから、端末を再起動してください。</string>
+    <string name="eq_device_failed_timeout">時間内に終わらなかったため中断しました。音声サービスがまだ再起動中の可能性があります。少し時間を置いてから確認し直してください。</string>
+    <string name="eq_device_failed_input">変更されていません。アプリがモジュールの読めない内容を送りました。これはアプリ側の不具合です。</string>
+    <string name="eq_device_failed_no_state">変更されていません。音響処理モジュールが起動していません。端末を再起動してから、もう一度試してください。</string>
+    <string name="eq_device_failed_xml">端末の音声設定ファイルを作り直せなかったため、変更されていません。</string>
+    <string name="eq_device_failed_apply">作り直した音声設定を反映できなかったため、変更されていません。</string>
+    <string name="eq_device_failed_audioserver">音声サービスが復帰しませんでした。端末を再起動してください。</string>
+    <string name="eq_device_failed_unknown">このバージョンのアプリが把握していない形で失敗しました (コード %1$d)。</string>
 
     <string name="tag_connected">接続中</string>
     <string name="tag_disconnected">未接続</string>

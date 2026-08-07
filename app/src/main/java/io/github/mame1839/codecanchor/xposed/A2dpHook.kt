@@ -30,6 +30,7 @@ import io.github.mame1839.codecanchor.core.CodecInfo
 import io.github.mame1839.codecanchor.core.CodecKeys
 import io.github.mame1839.codecanchor.core.DeviceProfile
 import io.github.mame1839.codecanchor.core.DeviceStatus
+import io.github.mame1839.codecanchor.core.EqSupport
 import io.github.mame1839.codecanchor.core.StatusReport
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
@@ -885,10 +886,39 @@ internal object A2dpHook {
         runCatching { buildAndSendReport(ctx, mac) }.onFailure { XLog.d("報告を送れない: ${it.message}") }
     }
 
+    /**
+     * 報告を組み立てる。**フックが自分の身元として押す欄 (`moduleVersion` / `eqSchema`) を
+     * 埋めるのはここ 1 箇所だけ。**残りは引数で受け取る — 単体テストから呼べるようにするため。
+     *
+     * `A2dpHook` の中に置いてあるのは、このオブジェクトが Bluetooth プロセスで既に読み込まれて
+     * いるから。トップレベル関数や companion にすると、そこだけのためにクラスが 1 つ増える。
+     */
+    internal fun buildReport(
+        hostPackage: String,
+        configHash: Int,
+        configLoaded: Boolean,
+        a2dpOffloadEnabled: Boolean,
+        devices: List<DeviceStatus>,
+        codecNames: Map<Int, String>,
+        timestamp: Long,
+    ): StatusReport = StatusReport(
+        moduleVersion = BuildConfig.VERSION_NAME,
+        hostPackage = hostPackage,
+        configHash = configHash,
+        configLoaded = configLoaded,
+        a2dpOffloadEnabled = a2dpOffloadEnabled,
+        // ⚠️ 渡し忘れると既定の 0 が乗り、アプリは「フックが古い」を出し続ける
+        // (0 < EqSupport.SCHEMA なので、全ビルドで必ずそうなる)。実際に一度そうなっていた。
+        // EqSupport.SCHEMA は const なのでリテラルに畳まれる。EqSupport のクラスロードは起きない。
+        eqSchema = EqSupport.SCHEMA,
+        devices = devices,
+        codecNames = codecNames,
+        timestamp = timestamp,
+    )
+
     private fun buildAndSendReport(ctx: Context, mac: String?) {
         val devices = if (mac == null) statuses.values.toList() else listOfNotNull(statuses[mac])
-        val report = StatusReport(
-            moduleVersion = BuildConfig.VERSION_NAME,
+        val report = buildReport(
             hostPackage = hostPackage,
             configHash = config.hash(),
             configLoaded = configLoaded,
