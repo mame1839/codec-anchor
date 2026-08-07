@@ -33,6 +33,7 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import io.github.mame1839.codecanchor.R
 import io.github.mame1839.codecanchor.core.EqBand
 import io.github.mame1839.codecanchor.core.EqMode
@@ -69,7 +70,10 @@ private val DOT_RADIUS_ACTIVE = 5.dp
 private val CURVE_WIDTH = 2.5.dp
 private val BAND_WIDTH = 1.dp
 private val COLUMN_WIDTH = 1.5.dp
-private val LABEL_MIN_GAP = 8.dp
+// ラベル同士の最小の隙間。**広げすぎると 10 バンドで間引きが始まる** —
+// 340 dp 幅なら 1 列 35 dp しかなく、"+10.5" が 27 dp を占める。
+// 既定の 10 バンドは全部出るのが正しい状態なので、ここは詰める。
+private val LABEL_MIN_GAP = 4.dp
 private val PLOT_INSET = 10.dp
 
 /** どの欄を動かしているか。ドラッグ中の値を絵へ運ぶために使う。 */
@@ -145,6 +149,9 @@ fun EqCurve(eq: EqSettings, modifier: Modifier = Modifier) {
         // 数値と単位が入れ替わるのは、段落の向きが RTL のときに数字が中立文字として
         // 流されるため。軸のラベルは常に左→右で読むものなので、向きを固定して切り離す。
         textDirection = TextDirection.Ltr,
+        // labelSmall の字間は本文向け。数字の並びでは幅を食うだけで、
+        // 1 列ぶんの幅が惜しい 31 バンドではそのまま間引きの本数に効く。
+        letterSpacing = 0.sp,
         color = colors.onSurfaceVariant,
     )
 
