@@ -128,6 +128,28 @@ fun eqFrequencyText(hz: Int, hzFormat: String, kiloFormat: String): String =
 // Q とバンド数は数字だけなので囲まない — 数字の並びは 1 つの塊のままで、入れ替わる相手がいない。
 // 単位を付けるなら、そのときに囲むこと。
 
+/**
+ * 曲線の上端に並べるゲイン。単位を付けない。
+ *
+ * 幅が惜しいのが第一だが、単位を外すと RTL で数値と単位が入れ替わる余地も同時に消える。
+ * 単位が要る軸のラベルは [eqGainTick] を使い、描画側で向きを固定する。
+ */
+fun eqGainNumber(db10: Int): String = decimal(db10 / 10.0, 1, 1, signed = db10 > 0)
+
+/** 目盛りの dB。整数で、正の値にだけ + を付ける。[format] を渡したときだけ単位を添える。 */
+fun eqGainTick(db: Int, format: String? = null): String {
+    val text = decimal(db.toDouble(), 0, 0, signed = db > 0)
+    return format?.format(Locale.getDefault(), text) ?: text
+}
+
+/** 軸に並べる周波数。単位を書かず、1 kHz 以上は "1k" のように詰める。 */
+fun eqFrequencyShort(hz: Int, kiloFormat: String): String =
+    if (hz >= 1_000) {
+        kiloFormat.format(Locale.getDefault(), decimal(hz / 1_000.0, 0, 2))
+    } else {
+        decimal(hz.toDouble(), 0, 0)
+    }
+
 /** Q は 0.01 単位。無次元なので単位を付けない。 */
 fun eqQText(q100: Int): String = decimal(q100 / 100.0, 2, 2)
 

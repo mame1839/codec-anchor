@@ -41,8 +41,8 @@ import io.github.mame1839.codecanchor.core.EqMode
 import io.github.mame1839.codecanchor.core.EqSettings
 import io.github.mame1839.codecanchor.core.EqSolver
 
-// ±12.0 dB を 0.5 dB 刻み。eq-spec.md の確定値。
-private val GAIN_SCALE = EqScale.Linear(-120..120, 5)
+// ±12.0 dB を 0.5 dB 刻み。範囲は EqCurve.kt が持つ (絵の縦軸と同じ値を見るため)。
+private val GAIN_SCALE = EqScale.Linear(EQ_GAIN_RANGE, EQ_GAIN_STEP)
 
 // プリアンプは下げる方向だけ。上げると解いたゲインの持ち上がりと足し合わさって歪む。
 private val PREAMP_SCALE = EqScale.Linear(-300..0, 5)
@@ -138,10 +138,14 @@ fun EqSection(vm: MainViewModel, mac: String, profile: DeviceProfile) {
 
         RowDivider()
 
-        if (eq.mode == EqMode.GRAPHIC) {
-            GraphicBands(vm = vm, mac = mac, eq = eq, gainText = gainText, frequencyText = frequencyText)
-        } else {
-            ParametricBands(vm = vm, mac = mac, eq = eq, gainText = gainText, frequencyText = frequencyText)
+        // 絵はスライダーと同じ EqPreviewHost の下に置く。ドラッグ中の値が絵にだけ流れる。
+        EqPreviewHost {
+            EqCurve(eq)
+            if (eq.mode == EqMode.GRAPHIC) {
+                GraphicBands(vm = vm, mac = mac, eq = eq, gainText = gainText, frequencyText = frequencyText)
+            } else {
+                ParametricBands(vm = vm, mac = mac, eq = eq, gainText = gainText, frequencyText = frequencyText)
+            }
         }
 
         RowDivider()
@@ -216,6 +220,7 @@ private fun GraphicBands(
             onCommit = { value ->
                 vm.updateEq(mac) { it.mapBand(index) { current -> current.copy(gainDb10 = value) } }
             },
+            previewKey = EqPreviewTarget(index, EqField.GAIN),
         )
     }
 }
@@ -283,6 +288,7 @@ internal fun ParametricBands(
                     onCommit = { value ->
                         vm.updateEq(mac) { it.mapBand(index) { current -> current.copy(freqHz = value) } }
                     },
+                    previewKey = EqPreviewTarget(index, EqField.FREQUENCY),
                 )
                 EqSliderRow(
                     label = stringResource(R.string.eq_band_q),
@@ -292,6 +298,7 @@ internal fun ParametricBands(
                     onCommit = { value ->
                         vm.updateEq(mac) { it.mapBand(index) { current -> current.copy(q100 = value) } }
                     },
+                    previewKey = EqPreviewTarget(index, EqField.Q),
                 )
                 EqSliderRow(
                     label = stringResource(R.string.eq_band_gain),
@@ -301,6 +308,7 @@ internal fun ParametricBands(
                     onCommit = { value ->
                         vm.updateEq(mac) { it.mapBand(index) { current -> current.copy(gainDb10 = value) } }
                     },
+                    previewKey = EqPreviewTarget(index, EqField.GAIN),
                 )
                 TextButton(
                     onClick = {

@@ -189,4 +189,5 @@
     <string name="eq_preset_delete_body">刪除「%1$s」。耳機上已經設定的內容維持不變。</string>
     <string name="eq_autoeq_import">讀取 AutoEQ</string>
     <string name="eq_autoeq_desc">讀取 AutoEQ 的 ParametricEQ.txt 或 GraphicEQ.txt，並取代上面的設定。</string>
+    <string name="eq_curve_desc">顯示這些設定如何改變聲音的曲線</string>
 </resources>

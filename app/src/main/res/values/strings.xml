@@ -163,6 +163,7 @@
     <string name="eq_enabled">Equaliser</string>
     <string name="eq_enabled_desc">Shapes the sound of these earphones</string>
     <string name="eq_latency_zero">Added delay: 0 ms</string>
+    <string name="eq_curve_desc">Curve of what these settings do to the sound</string>
     <string name="eq_mode">How to edit</string>
     <string name="eq_mode_desc">Graphic keeps every band on a fixed frequency. Parametric lets you put each band where you want it.</string>
     <string name="eq_mode_graphic">Graphic</string>
@@ -203,4 +204,5 @@
     <string name="eq_unit_db" translatable="false">%1$s dB</string>
     <string name="eq_unit_hz" translatable="false">%1$s Hz</string>
     <string name="eq_unit_khz" translatable="false">%1$s kHz</string>
+    <string name="eq_unit_khz_short" translatable="false">%1$sk</string>
 </resources>

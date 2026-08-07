@@ -190,4 +190,5 @@
     <string name="eq_preset_delete_body">“%1$s” silinir. Kulaklığınızda hâlihazırda ayarlı olan şeyler olduğu gibi kalır.</string>
     <string name="eq_autoeq_import">AutoEQ al</string>
     <string name="eq_autoeq_desc">AutoEQ\'nun ParametricEQ.txt veya GraphicEQ.txt dosyasını okur ve yukarıdaki ayarların yerine koyar.</string>
+    <string name="eq_curve_desc">Bu ayarların sesi nasıl değiştirdiğini gösteren eğri</string>
 </resources>
