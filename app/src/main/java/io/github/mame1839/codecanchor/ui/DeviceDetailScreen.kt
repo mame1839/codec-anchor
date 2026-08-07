@@ -246,7 +246,7 @@ private fun DeviceHeader(name: String, mac: String, status: DeviceStatus?, offlo
         Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
             Text(name, style = MaterialTheme.typography.titleMedium)
             Text(
-                text = mac,
+                text = bidiIsolate(mac),
                 style = MaterialTheme.typography.bodySmall,
                 fontFamily = FontFamily.Monospace,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -273,7 +273,10 @@ private fun DeviceHeader(name: String, mac: String, status: DeviceStatus?, offlo
             Spacer(Modifier.height(8.dp))
             val unknown = stringResource(R.string.value_unknown)
             Text(
-                text = stringResource(R.string.detail_current_codec, status?.current?.summary() ?: unknown),
+                text = stringResource(
+                    R.string.detail_current_codec,
+                    status?.current?.let { codecSummary(it) } ?: unknown,
+                ),
                 style = MaterialTheme.typography.bodyMedium,
             )
             // オフロード中はホスト側のエンコーダが動かないので、ダンプの数値は誰にも更新されず
@@ -287,10 +290,14 @@ private fun DeviceHeader(name: String, mac: String, status: DeviceStatus?, offlo
                     )
                 } else if (status.ldacBitrateKbps > 0) {
                     Text(
-                        text = stringResource(
-                            R.string.ldac_bitrate,
-                            status.ldacBitrateKbps,
-                            status.ldacQualityMode.ifBlank { unknown },
+                        // 書式 ("%1$d kbps (%2$s)") ごと囲む。数字と単位が離れているので、
+                        // 数字だけ囲んでも "kbps" が反対側へ回る。
+                        text = bidiIsolate(
+                            stringResource(
+                                R.string.ldac_bitrate,
+                                status.ldacBitrateKbps,
+                                status.ldacQualityMode.ifBlank { unknown },
+                            ),
                         ),
                         style = MaterialTheme.typography.bodyMedium,
                     )
@@ -414,14 +421,16 @@ private fun maskOptions(
 ): List<Pair<Int, String>> {
     val allowed = CodecKeys.options(table, capability).map { it.first }.toMutableSet()
     if (selected != CodecKeys.KEEP_MASK) allowed += selected
-    return listOf(CodecKeys.KEEP_MASK to keepLabel) + table.filter { it.first in allowed }
+    // "48 kHz" / "32 bit" は数字と単位の組。選択肢の一覧と選択中の表示の両方をここが作る。
+    return listOf(CodecKeys.KEEP_MASK to keepLabel) +
+        table.filter { it.first in allowed }.map { it.first to bidiIsolate(it.second) }
 }
 
 private fun ldacOptions(res: Resources, selected: Long, keepLabel: String): List<Pair<Long, String>> = buildList {
     add(CodecKeys.KEEP_LONG to keepLabel)
     CodecKeys.LDAC_QUALITIES.forEach { (value, label) -> add(value to ldacQualityLabel(res, value, label)) }
     if (selected != CodecKeys.KEEP_LONG && none { it.first == selected }) {
-        add(selected to CodecKeys.ldacQualityLabel(selected))
+        add(selected to ldacQualityText(selected))
     }
 }
 

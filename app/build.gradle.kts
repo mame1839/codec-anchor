@@ -156,4 +156,9 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)
+    // Compose のスロットの取り違えは、値ではなく画面を組み直したときにしか出ない。
+    // Robolectric の上で本物の composition を回して確かめる。
+    testImplementation(platform(libs.compose.bom))
+    testImplementation(libs.compose.ui.test.junit4)
+    debugImplementation(libs.compose.ui.test.manifest)
 }

@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -219,8 +220,9 @@ private fun GraphicBands(
     }
 }
 
+// private ではなく internal なのは、バンドを開き閉じする回帰テストから直接呼ぶため。
 @Composable
-private fun ParametricBands(
+internal fun ParametricBands(
     vm: MainViewModel,
     mac: String,
     eq: EqSettings,
@@ -243,62 +245,75 @@ private fun ParametricBands(
         )
     }
 
+    // **1 バンドぶんを key() で包み、開いたときの中身を if の本体に置く。**この 2 つで、
+    // 1 回のくり返しが吐くグループとスロットの並びが必ず一定になる。
+    //
+    // Compose のループはくり返しごとの目印を持たない — `forEachIndexed` 全体が 1 つの
+    // replaceGroup で、その中に全バンドのスロットが平らに並び、位置だけで前回と突き合わされる。
+    // ここで**末尾以外**のバンドを開くと、そのバンドが吐く量だけ後ろのバンドのスロットがずれ、
+    // 覚えてある値を別の型として読んで落ちる (`Integer cannot be cast to KFunction`)。
+    // 末尾なら後ろに兄弟がいないので露見しない。
+    //
+    // `return@forEachIndexed` での打ち切りは、この「量が変わる」ことを Compose の
+    // コンパイラから隠す — if の本体に composable が入っていないとグループが作られない。
     eq.bands.forEachIndexed { index, band ->
-        val typeLabel = typeLabels.firstOrNull { it.first == band.type }?.second.orEmpty()
-        val open = openIndex == index
-        ExpandableHeader(
-            title = listOf(frequencyText(band.freqHz), typeLabel, gainText(band.gainDb10))
-                .joinToString(" · "),
-            expanded = open,
-            onToggle = { openIndex = if (open) -1 else index },
-        )
-        if (!open) return@forEachIndexed
-
-        ChoiceRow(
-            title = stringResource(R.string.eq_band_type),
-            options = typeLabels,
-            selected = band.type,
-            onSelect = { value ->
-                vm.updateEq(mac) { it.mapBand(index) { current -> current.copy(type = value) } }
-            },
-        )
-        EqSliderRow(
-            label = stringResource(R.string.eq_band_frequency),
-            value = band.freqHz,
-            scale = FREQ_SCALE,
-            valueText = frequencyText,
-            onCommit = { value ->
-                vm.updateEq(mac) { it.mapBand(index) { current -> current.copy(freqHz = value) } }
-            },
-        )
-        EqSliderRow(
-            label = stringResource(R.string.eq_band_q),
-            value = band.q100,
-            scale = Q_SCALE,
-            valueText = ::eqQText,
-            onCommit = { value ->
-                vm.updateEq(mac) { it.mapBand(index) { current -> current.copy(q100 = value) } }
-            },
-        )
-        EqSliderRow(
-            label = stringResource(R.string.eq_band_gain),
-            value = band.gainDb10,
-            scale = GAIN_SCALE,
-            valueText = gainText,
-            onCommit = { value ->
-                vm.updateEq(mac) { it.mapBand(index) { current -> current.copy(gainDb10 = value) } }
-            },
-        )
-        TextButton(
-            onClick = {
-                openIndex = -1
-                vm.updateEq(mac) { it.copy(bands = it.bands.filterIndexed { i, _ -> i != index }) }
-            },
-            modifier = Modifier.padding(start = 8.dp),
-        ) {
-            Text(stringResource(R.string.eq_band_remove), color = MaterialTheme.colorScheme.error)
+        key(index) {
+            val typeLabel = typeLabels.firstOrNull { it.first == band.type }?.second.orEmpty()
+            val open = openIndex == index
+            ExpandableHeader(
+                title = listOf(frequencyText(band.freqHz), typeLabel, gainText(band.gainDb10))
+                    .joinToString(" · "),
+                expanded = open,
+                onToggle = { openIndex = if (open) -1 else index },
+            )
+            if (open) {
+                ChoiceRow(
+                    title = stringResource(R.string.eq_band_type),
+                    options = typeLabels,
+                    selected = band.type,
+                    onSelect = { value ->
+                        vm.updateEq(mac) { it.mapBand(index) { current -> current.copy(type = value) } }
+                    },
+                )
+                EqSliderRow(
+                    label = stringResource(R.string.eq_band_frequency),
+                    value = band.freqHz,
+                    scale = FREQ_SCALE,
+                    valueText = frequencyText,
+                    onCommit = { value ->
+                        vm.updateEq(mac) { it.mapBand(index) { current -> current.copy(freqHz = value) } }
+                    },
+                )
+                EqSliderRow(
+                    label = stringResource(R.string.eq_band_q),
+                    value = band.q100,
+                    scale = Q_SCALE,
+                    valueText = ::eqQText,
+                    onCommit = { value ->
+                        vm.updateEq(mac) { it.mapBand(index) { current -> current.copy(q100 = value) } }
+                    },
+                )
+                EqSliderRow(
+                    label = stringResource(R.string.eq_band_gain),
+                    value = band.gainDb10,
+                    scale = GAIN_SCALE,
+                    valueText = gainText,
+                    onCommit = { value ->
+                        vm.updateEq(mac) { it.mapBand(index) { current -> current.copy(gainDb10 = value) } }
+                    },
+                )
+                TextButton(
+                    onClick = {
+                        openIndex = -1
+                        vm.updateEq(mac) { it.copy(bands = it.bands.filterIndexed { i, _ -> i != index }) }
+                    },
+                    modifier = Modifier.padding(start = 8.dp),
+                ) {
+                    Text(stringResource(R.string.eq_band_remove), color = MaterialTheme.colorScheme.error)
+                }
+                RowDivider()
+            }
         }
-        RowDivider()
     }
 
     TextButton(
