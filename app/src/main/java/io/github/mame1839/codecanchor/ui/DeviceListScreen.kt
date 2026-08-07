@@ -236,8 +236,8 @@ fun DeviceListScreen(
                             icon = R.drawable.ic_info,
                             text = stringResource(
                                 R.string.eq_module_version_mismatch,
-                                vm.moduleSemver.ifBlank { unknownVersion },
-                                BuildConfig.VERSION_NAME,
+                                bidiIsolate(vm.moduleSemver.ifBlank { unknownVersion }),
+                                bidiIsolate(BuildConfig.VERSION_NAME),
                             ),
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
                         )
@@ -416,7 +416,7 @@ private fun ModuleCard(vm: MainViewModel, onPush: () -> Unit) {
                     Text(
                         text = stringResource(
                             R.string.module_meta,
-                            report?.moduleVersion.orEmpty().ifBlank { unknown },
+                            bidiIsolate(report?.moduleVersion.orEmpty().ifBlank { unknown }),
                         ),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -524,7 +524,7 @@ private fun DeviceCard(
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    text = row.mac,
+                    text = bidiIsolate(row.mac),
                     style = MaterialTheme.typography.bodySmall,
                     fontFamily = FontFamily.Monospace,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -575,7 +575,7 @@ private fun DeviceCard(
                 status?.current?.let { current ->
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        text = stringResource(R.string.device_current, current.summary()),
+                        text = stringResource(R.string.device_current, codecSummary(current)),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
