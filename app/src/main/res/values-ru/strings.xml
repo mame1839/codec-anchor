@@ -212,4 +212,5 @@
     <string name="eq_preset_delete_body">Удаляет «%1$s». То, что уже настроено на наушниках, остаётся как есть.</string>
     <string name="eq_autoeq_import">Загрузить AutoEQ</string>
     <string name="eq_autoeq_desc">Читает ParametricEQ.txt или GraphicEQ.txt из AutoEQ и заменяет настройки выше.</string>
+    <string name="eq_curve_desc">Кривая того, как эти настройки меняют звук</string>
 </resources>

@@ -212,4 +212,5 @@
     <string name="eq_preset_delete_body">Usuwa „%1$s”. To, co jest już ustawione w słuchawkach, zostaje bez zmian.</string>
     <string name="eq_autoeq_import">Wczytaj AutoEQ</string>
     <string name="eq_autoeq_desc">Czyta plik ParametricEQ.txt albo GraphicEQ.txt z AutoEQ i zastępuje ustawienia powyżej.</string>
+    <string name="eq_curve_desc">Krzywa pokazująca, jak te ustawienia zmieniają dźwięk</string>
 </resources>

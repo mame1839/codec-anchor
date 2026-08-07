@@ -209,4 +209,5 @@
     <string name="eq_preset_delete_body">Xóa “%1$s”. Những gì đã đặt trên tai nghe của bạn vẫn giữ nguyên.</string>
     <string name="eq_autoeq_import">Nhập AutoEQ</string>
     <string name="eq_autoeq_desc">Đọc tệp ParametricEQ.txt hoặc GraphicEQ.txt của AutoEQ và thay cho các thiết lập ở trên.</string>
+    <string name="eq_curve_desc">Đường cong cho biết các cài đặt này thay đổi âm thanh như thế nào</string>
 </resources>

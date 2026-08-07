@@ -211,4 +211,5 @@
     <string name="eq_preset_delete_body">Rimuove «%1$s». Quello che è già impostato sui tuoi auricolari resta com\'è.</string>
     <string name="eq_autoeq_import">Importa AutoEQ</string>
     <string name="eq_autoeq_desc">Legge un ParametricEQ.txt o GraphicEQ.txt di AutoEQ e sostituisce le impostazioni qui sopra.</string>
+    <string name="eq_curve_desc">Curva di come queste impostazioni cambiano il suono</string>
 </resources>

@@ -210,4 +210,5 @@
     <string name="eq_preset_delete_body">\"%1$s\" हटा देता है। आपके ईयरफ़ोन पर जो पहले से लगा है, वह वैसा ही रहता है।</string>
     <string name="eq_autoeq_import">AutoEQ पढ़वाएँ</string>
     <string name="eq_autoeq_desc">AutoEQ की ParametricEQ.txt या GraphicEQ.txt पढ़ता है और ऊपर की सेटिंग बदल देता है।</string>
+    <string name="eq_curve_desc">यह वक्र दिखाता है कि ये सेटिंग ध्वनि को कैसे बदलती हैं</string>
 </resources>

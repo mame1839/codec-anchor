@@ -211,4 +211,5 @@
     <string name="eq_preset_delete_body">Supprime « %1$s ». Ce qui est déjà réglé sur vos écouteurs ne change pas.</string>
     <string name="eq_autoeq_import">Importer AutoEQ</string>
     <string name="eq_autoeq_desc">Lit un fichier ParametricEQ.txt ou GraphicEQ.txt d\'AutoEQ et remplace les réglages ci-dessus.</string>
+    <string name="eq_curve_desc">Courbe de l\'effet de ces réglages sur le son</string>
 </resources>

@@ -209,4 +209,5 @@
     <string name="eq_preset_delete_body">Menghapus \"%1$s\". Yang sudah tersetel di earphone Anda tetap seperti apa adanya.</string>
     <string name="eq_autoeq_import">Impor AutoEQ</string>
     <string name="eq_autoeq_desc">Membaca ParametricEQ.txt atau GraphicEQ.txt dari AutoEQ dan menggantikan setelan di atas.</string>
+    <string name="eq_curve_desc">Kurva yang menunjukkan cara setelan ini mengubah suara</string>
 </resources>

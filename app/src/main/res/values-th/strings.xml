@@ -209,4 +209,5 @@
     <string name="eq_preset_delete_body">ลบ \"%1$s\" ส่วนที่ตั้งไว้กับหูฟังแล้วยังคงอยู่เหมือนเดิม</string>
     <string name="eq_autoeq_import">นำเข้า AutoEQ</string>
     <string name="eq_autoeq_desc">อ่านไฟล์ ParametricEQ.txt หรือ GraphicEQ.txt ของ AutoEQ แล้วแทนที่การตั้งค่าด้านบน</string>
+    <string name="eq_curve_desc">เส้นโค้งแสดงว่าการตั้งค่านี้เปลี่ยนเสียงอย่างไร</string>
 </resources>

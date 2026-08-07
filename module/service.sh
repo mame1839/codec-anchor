@@ -30,32 +30,58 @@ fi
 [ "$(grep -c 'name="ca_eq"' "$CA_SRC_XML" 2>/dev/null)" = "2" ] || fail="$fail XML の 2 行が見えない"
 
 # 2. エフェクトを読み込むプロセスが実際に .so を map しているか。
-#    これが「リンカと SELinux を抜けて読み込まれた」ことの直接の証拠。
+#    map されていれば「リンカと SELinux を抜けて読み込まれた」ことの直接の証拠になる。
 #    post-fs-data の dlopen セルフテストは root のドメインでの ABI 検査でしかないので、
 #    vendor プロセスから読めることの確認はここでしかできない。
 #
 #    プロセス名で引かないこと。この実機は android.hardware.audio.service.mediatek だが、
 #    HAL の名前は SoC とベンダーで変わり、audioserver 自身が読む構成もある。
-#    名前で引くと MediaTek 以外の端末で必ず「map していない」に落ちて自分を無効化する。
+#    名前で引くと MediaTek 以外の端末で必ず「map していない」に落ちる。
+#
+#    ⚠️ map が無くても disable は置かない。<postprocess> への登録は既定でオフなので、
+#    エフェクトのインスタンスは「登録済みのイヤホンが接続されている」ときにしか立たない。
+#    service.sh は起動の 10 秒後に走るので、イヤホンが繋がっていなければ
+#    登録の有無にかかわらずインスタンスは 0 件になる (登録済み・未接続でも 0 件。
+#    hold-process.md §2.7 の 3 段階)。「登録が 1 台以上なら map を要求する」では救えない。
+#
+#    ライブラリ自体はエフェクトファクトリが descriptor を列挙するために dlopen する、
+#    というのが我々の読みだが **未確認**。外れていると、初回インストールのユーザ全員が
+#    1 回目の起動で自分を無効化することになる。しかも無効化して直るものが 1 つも無い —
+#    bind mount は生きていてベンダーの soundfx も無傷なので端末に害は無く、
+#    ユーザから見ると「入れたのに消えた」だけが残る。
+#
+#    それでも「.so が vendor プロセスから読めない」を見逃さないために、3 つを区別して残す。
+#    他の soundfx が map されているのに我々のものだけ無い状態が、いちばん疑わしい。
 mapper=""
 for m in /proc/[0-9]*/maps; do
     grep -q libcaeq.so "$m" 2>/dev/null || continue
     p=${m#/proc/}; mapper="$mapper ${p%/maps}"
 done
+other=""
+for m in /proc/[0-9]*/maps; do
+    grep -q soundfx "$m" 2>/dev/null || continue
+    p=${m#/proc/}; other="$other ${p%/maps}"
+done
 
 if [ -n "$mapper" ]; then
+    ca_log ".so の読み込み: 確認"
     for p in $mapper; do
-        ca_log "libcaeq.so を map しているプロセス: pid $p ($(cat "/proc/$p/cmdline" 2>/dev/null | tr '\0' ' '))"
+        ca_log "  libcaeq.so を map しているプロセス: pid $p ($(cat "/proc/$p/cmdline" 2>/dev/null | tr '\0' ' '))"
     done
+elif [ -z "$other" ]; then
+    # soundfx を開いているプロセスが 1 つも無い = エフェクトファクトリがまだ何も
+    # 読んでいない。我々の .so が読めるかどうかは、この時点では分からない。
+    ca_log ".so の読み込み: 未確定 (soundfx を map しているプロセスが 1 つも無い)"
 else
-    fail="$fail .so を map しているプロセスが 1 つも無い"
+    ca_log "⚠️ .so の読み込み: 要調査 — 他の soundfx は map されているのに libcaeq.so だけ無い"
+    ca_log "   (ファクトリが遅延読み込みなら正常。descriptor の列挙で開くなら異常)"
+fi
+if [ -z "$mapper" ]; then
     ca_log "--- 参考: soundfx を map しているプロセス ---"
-    for m in /proc/[0-9]*/maps; do
-        grep -q soundfx "$m" 2>/dev/null || continue
-        p=${m#/proc/}; p=${p%/maps}
+    for p in $other; do
         {
             echo "pid $p ($(cat "/proc/$p/cmdline" 2>/dev/null | tr '\0' ' '))"
-            grep soundfx "$m"
+            grep soundfx "/proc/$p/maps" 2>/dev/null
         } >> "$CA_LOG"
     done
 fi

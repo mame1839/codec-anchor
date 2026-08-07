@@ -211,4 +211,5 @@
     <string name="eq_preset_delete_body">Remove “%1$s”. O que já está ajustado nos seus fones continua como está.</string>
     <string name="eq_autoeq_import">Importar AutoEQ</string>
     <string name="eq_autoeq_desc">Lê um ParametricEQ.txt ou GraphicEQ.txt do AutoEQ e substitui os ajustes acima.</string>
+    <string name="eq_curve_desc">Curva de como estas configurações mudam o som</string>
 </resources>
