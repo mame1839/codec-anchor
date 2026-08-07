@@ -173,6 +173,14 @@
     <string name="msg_autoeq_no_bands">Esse arquivo do AutoEQ não tem filtros</string>
 
     <string name="section_eq">Processamento de som</string>
+    <string name="eq_summary_on">Ativado</string>
+    <string name="eq_summary_off">Desativado</string>
+    <plurals name="eq_summary_bands">
+        <item quantity="one">%1$d banda</item>
+        <item quantity="many">%1$d bandas</item>
+        <item quantity="other">%1$d bandas</item>
+    </plurals>
+    <string name="eq_summary_unavailable">No momento não dá para usar. Abra para ver o motivo.</string>
     <string name="eq_enabled">Equalizador</string>
     <string name="eq_enabled_desc">Ajusta o som destes fones</string>
     <string name="eq_latency_zero">Atraso adicionado: 0 ms</string>

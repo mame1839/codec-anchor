@@ -171,6 +171,12 @@
     <string name="msg_autoeq_no_bands">Berkas AutoEQ itu tidak punya filter</string>
 
     <string name="section_eq">Pengolahan suara</string>
+    <string name="eq_summary_on">Aktif</string>
+    <string name="eq_summary_off">Nonaktif</string>
+    <plurals name="eq_summary_bands">
+        <item quantity="other">%1$d pita</item>
+    </plurals>
+    <string name="eq_summary_unavailable">Belum bisa dipakai sekarang. Buka untuk melihat alasannya.</string>
     <string name="eq_enabled">Ekualiser</string>
     <string name="eq_enabled_desc">Membentuk suara earphone ini</string>
     <string name="eq_latency_zero">Tundaan tambahan: 0 ms</string>

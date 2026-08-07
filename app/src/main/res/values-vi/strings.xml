@@ -171,6 +171,12 @@
     <string name="msg_autoeq_no_bands">Tệp AutoEQ đó không có bộ lọc nào</string>
 
     <string name="section_eq">Xử lý âm thanh</string>
+    <string name="eq_summary_on">Bật</string>
+    <string name="eq_summary_off">Tắt</string>
+    <plurals name="eq_summary_bands">
+        <item quantity="other">%1$d dải</item>
+    </plurals>
+    <string name="eq_summary_unavailable">Hiện chưa dùng được. Mở ra để xem lý do.</string>
     <string name="eq_enabled">Bộ chỉnh âm</string>
     <string name="eq_enabled_desc">Chỉnh chất âm của tai nghe này</string>
     <string name="eq_latency_zero">Độ trễ thêm vào: 0 ms</string>

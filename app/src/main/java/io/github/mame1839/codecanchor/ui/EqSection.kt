@@ -57,8 +57,12 @@ private val Q_SCALE = EqScale.Log(10..1_000)
 private const val NEW_BAND_HZ = 1_000
 private const val NEW_BAND_Q100 = 141
 
+// パラメトリックを何も無いところから始めるときの並び。低・中・高に 1 本ずつ (1 桁ごと)。
+// 自由に足したり消したりできるので、最初から埋めておく理由が無い。
+private val PARAMETRIC_START_HZ = listOf(100, 1_000, 10_000)
+
 /**
- * 詳細画面の「音響処理」。入口はここ 1 つで、`DeviceDetailScreen` から呼ぶ。
+ * 音響処理の中身。入口はここ 1 つで、[EqScreen] から呼ぶ。
  *
  * **重い操作は `EqRegisterRow` の 1 つだけ。**EQ のオン・オフと値の変更は共有メモリ越しなので
  * 音は切れないが、登録 (`audio_effects.xml` の書き換えと audioserver の再起動) は再生中の音を
@@ -79,7 +83,8 @@ fun EqSection(vm: MainViewModel, mac: String, profile: DeviceProfile) {
     val gainText: (Int) -> String = { eqGainText(it, dbUnit) }
     val frequencyText: (Int) -> String = { eqFrequencyText(it, hzUnit, kiloHzUnit) }
 
-    SettingsCard(title = stringResource(R.string.section_eq)) {
+    // 見出しは画面の上 (TopAppBar) が持っているので、カードには付けない。
+    SettingsCard {
         // 使えないときも項目は伸ばしたまま残して理由を出す。OK なら何も出ない。
         // カードの先頭に置くのは、理由がセクション全体に掛かるため — 下の 2 つのトグルは
         // 理由によって片方だけ押せなくなるので、どちらかの直後に付けるともう片方の説明が消える。
@@ -98,7 +103,7 @@ fun EqSection(vm: MainViewModel, mac: String, profile: DeviceProfile) {
             onChange = { value ->
                 vm.updateEq(mac) { current ->
                     val next = current.copy(enabled = value)
-                    if (value) withGraphicGrid(next) else next
+                    if (value) withStartingBands(next) else next
                 }
             },
             // 使えないときに新しく入れることはできないが、入っているものを切ることはできる。
@@ -125,9 +130,7 @@ fun EqSection(vm: MainViewModel, mac: String, profile: DeviceProfile) {
                     // グラフィックへ移ると fc と Q が固定値へ丸められる。戻せないので一度だけ確認する。
                     value == EqMode.GRAPHIC && !vm.eqRoundingConfirmed -> confirmGraphic = true
                     value == EqMode.GRAPHIC -> vm.updateEq(mac) { toGraphic(it) }
-                    // 逆向きは値を一切変えない。グラフィックの並びはパラメトリックとして
-                    // そのまま読めるので、丸めも解き直しも起きない。
-                    else -> vm.updateEq(mac) { it.copy(mode = EqMode.PARAMETRIC) }
+                    else -> vm.updateEq(mac) { toParametric(it) }
                 }
             },
         )
@@ -548,6 +551,39 @@ internal fun reband(settings: EqSettings, bandCount: Int): EqSettings {
 
 private fun toGraphic(settings: EqSettings): EqSettings =
     reband(settings.copy(mode = EqMode.GRAPHIC), settings.bandCount)
+
+/**
+ * パラメトリックへ移る。**曲線があるならそのまま引き継ぐ** — グラフィックの並びは
+ * パラメトリックとしてそのまま読めるので、丸めも解き直しも起きない。
+ *
+ * **例外は「まだ何も無いとき」だけ。**グラフィックでユーザが決められるのは**ゲインだけ**で、
+ * 並びも Q もアプリが作ったもの。全部 0 dB なら曲線は平らで、引き継ぐ情報が 1 つも無い。
+ * そこに 0 dB のバンドが 10 本並んでいても操作の邪魔にしかならないので、[PARAMETRIC_START_HZ]
+ * の 3 本から始める。
+ *
+ * **オンにするとき ([withStartingBands]) は同じ条件にしない。**あちらは「1 本も無いとき」だけ。
+ * パラメトリックでは fc と Q をユーザが決めるので、**「置いたがゲインはまだ 0」**という状態が
+ * 実在する。そこで「平ら」を条件にすると、EQ を切って入れ直しただけでその作業が消える。
+ */
+internal fun toParametric(settings: EqSettings): EqSettings {
+    val next = settings.copy(mode = EqMode.PARAMETRIC)
+    return if (next.bands.all { it.gainDb10 == 0 }) next.copy(bands = startingBands()) else next
+}
+
+/**
+ * EQ をオンにしたときに、バンドが 1 本も出ない状態を避ける。
+ *
+ * グラフィックは並びが中心周波数と一致している必要があるので [withGraphicGrid] へ、
+ * パラメトリックは**空のときだけ** 3 本を置く (値のあるバンドには触らない)。
+ */
+internal fun withStartingBands(settings: EqSettings): EqSettings = when {
+    settings.mode == EqMode.GRAPHIC -> withGraphicGrid(settings)
+    settings.bands.isEmpty() -> settings.copy(bands = startingBands())
+    else -> settings
+}
+
+private fun startingBands(): List<EqBand> =
+    PARAMETRIC_START_HZ.map { EqBand(freqHz = it, q100 = NEW_BAND_Q100, gainDb10 = 0) }
 
 /**
  * グラフィックなのに並びが中心周波数と食い違っていたら作り直す。

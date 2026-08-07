@@ -55,6 +55,7 @@ private fun CodecAnchorApp(vm: MainViewModel = viewModel()) {
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     var selectedMac by rememberSaveable { mutableStateOf<String?>(null) }
+    var eqOpen by rememberSaveable { mutableStateOf(false) }
 
     // 報告の送信元が Bluetooth プロセス (別 uid) なので EXPORTED で登録する。
     DisposableEffect(context) {
@@ -120,9 +121,12 @@ private fun CodecAnchorApp(vm: MainViewModel = viewModel()) {
         }
     }
 
+    // 画面の切り替えはここ 1 箇所で持つ。画面の中に持つと BackHandler が入れ子になり、
+    // どちらが先に呼ばれるかが composition の深さで決まる — 画面を足すたびに黙って変わる。
+    // 平らに持てば、有効な BackHandler は常に 1 つだけになる。
     val mac = selectedMac
-    if (mac == null) {
-        DeviceListScreen(
+    when {
+        mac == null -> DeviceListScreen(
             vm = vm,
             snackbarHostState = snackbarHostState,
             onOpenDevice = { target ->
@@ -132,14 +136,27 @@ private fun CodecAnchorApp(vm: MainViewModel = viewModel()) {
             onRequestPermission = { permissionLauncher.launch(Manifest.permission.BLUETOOTH_CONNECT) },
             onNotify = notify,
         )
-    } else {
-        BackHandler { selectedMac = null }
-        DeviceDetailScreen(
-            vm = vm,
-            mac = mac,
-            snackbarHostState = snackbarHostState,
-            onBack = { selectedMac = null },
-            onNotify = notify,
-        )
+
+        eqOpen -> {
+            BackHandler { eqOpen = false }
+            EqScreen(
+                vm = vm,
+                mac = mac,
+                snackbarHostState = snackbarHostState,
+                onBack = { eqOpen = false },
+            )
+        }
+
+        else -> {
+            BackHandler { selectedMac = null }
+            DeviceDetailScreen(
+                vm = vm,
+                mac = mac,
+                snackbarHostState = snackbarHostState,
+                onBack = { selectedMac = null },
+                onOpenEq = { eqOpen = true },
+                onNotify = notify,
+            )
+        }
     }
 }

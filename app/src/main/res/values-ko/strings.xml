@@ -171,6 +171,12 @@
     <string name="msg_autoeq_no_bands">이 AutoEQ 파일에는 필터가 없습니다</string>
 
     <string name="section_eq">음향 처리</string>
+    <string name="eq_summary_on">켜짐</string>
+    <string name="eq_summary_off">꺼짐</string>
+    <plurals name="eq_summary_bands">
+        <item quantity="other">%1$d개 밴드</item>
+    </plurals>
+    <string name="eq_summary_unavailable">지금은 사용할 수 없습니다. 이유는 열어서 확인하세요.</string>
     <string name="eq_enabled">이퀄라이저</string>
     <string name="eq_enabled_desc">이 이어폰의 소리를 다듬습니다</string>
     <string name="eq_latency_zero">추가 지연: 0 ms</string>

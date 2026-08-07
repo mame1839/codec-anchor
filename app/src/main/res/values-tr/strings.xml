@@ -172,6 +172,13 @@
     <string name="msg_autoeq_no_bands">Bu AutoEQ dosyasında filtre yok</string>
 
     <string name="section_eq">Ses işleme</string>
+    <string name="eq_summary_on">Açık</string>
+    <string name="eq_summary_off">Kapalı</string>
+    <plurals name="eq_summary_bands">
+        <item quantity="one">%1$d bant</item>
+        <item quantity="other">%1$d bant</item>
+    </plurals>
+    <string name="eq_summary_unavailable">Şu anda kullanılamıyor. Nedenini görmek için açın.</string>
     <string name="eq_enabled">Ekolayzır</string>
     <string name="eq_enabled_desc">Bu kulaklığın sesini biçimlendirir</string>
     <string name="eq_latency_zero">Eklenen gecikme: 0 ms</string>

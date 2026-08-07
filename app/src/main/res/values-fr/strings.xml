@@ -173,6 +173,14 @@
     <string name="msg_autoeq_no_bands">Ce fichier AutoEQ ne contient aucun filtre</string>
 
     <string name="section_eq">Traitement du son</string>
+    <string name="eq_summary_on">Activé</string>
+    <string name="eq_summary_off">Désactivé</string>
+    <plurals name="eq_summary_bands">
+        <item quantity="one">%1$d bande</item>
+        <item quantity="many">%1$d bandes</item>
+        <item quantity="other">%1$d bandes</item>
+    </plurals>
+    <string name="eq_summary_unavailable">Inutilisable pour le moment. Ouvrez pour en voir la raison.</string>
     <string name="eq_enabled">Égaliseur</string>
     <string name="eq_enabled_desc">Ajuste le son de ces écouteurs</string>
     <string name="eq_latency_zero">Retard ajouté : 0 ms</string>

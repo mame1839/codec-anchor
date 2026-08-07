@@ -173,6 +173,14 @@
     <string name="msg_autoeq_no_bands">Ese archivo de AutoEQ no tiene filtros</string>
 
     <string name="section_eq">Procesamiento de sonido</string>
+    <string name="eq_summary_on">Activado</string>
+    <string name="eq_summary_off">Desactivado</string>
+    <plurals name="eq_summary_bands">
+        <item quantity="one">%1$d banda</item>
+        <item quantity="many">%1$d bandas</item>
+        <item quantity="other">%1$d bandas</item>
+    </plurals>
+    <string name="eq_summary_unavailable">Ahora mismo no se puede usar. Abre para ver el motivo.</string>
     <string name="eq_enabled">Ecualizador</string>
     <string name="eq_enabled_desc">Ajusta el sonido de estos auriculares</string>
     <string name="eq_latency_zero">Retardo añadido: 0 ms</string>

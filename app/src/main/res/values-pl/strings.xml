@@ -174,6 +174,15 @@
     <string name="msg_autoeq_no_bands">Ten plik AutoEQ nie zawiera filtrów</string>
 
     <string name="section_eq">Obróbka dźwięku</string>
+    <string name="eq_summary_on">Włączona</string>
+    <string name="eq_summary_off">Wyłączona</string>
+    <plurals name="eq_summary_bands">
+        <item quantity="one">%1$d pasmo</item>
+        <item quantity="few">%1$d pasma</item>
+        <item quantity="many">%1$d pasm</item>
+        <item quantity="other">%1$d pasma</item>
+    </plurals>
+    <string name="eq_summary_unavailable">Na razie nie działa. Otwórz, aby zobaczyć dlaczego.</string>
     <string name="eq_enabled">Korektor</string>
     <string name="eq_enabled_desc">Kształtuje brzmienie tych słuchawek</string>
     <string name="eq_latency_zero">Dodane opóźnienie: 0 ms</string>

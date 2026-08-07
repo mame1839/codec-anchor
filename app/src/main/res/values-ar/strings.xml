@@ -176,6 +176,17 @@
     <string name="msg_autoeq_no_bands">لا يحتوي ملف AutoEQ هذا على أي مرشحات</string>
 
     <string name="section_eq">معالجة الصوت</string>
+    <string name="eq_summary_on">مُفعَّلة</string>
+    <string name="eq_summary_off">مُعطَّلة</string>
+    <plurals name="eq_summary_bands">
+        <item quantity="zero">%1$d نطاق</item>
+        <item quantity="one">%1$d نطاق</item>
+        <item quantity="two">%1$d نطاقان</item>
+        <item quantity="few">%1$d نطاقات</item>
+        <item quantity="many">%1$d نطاقًا</item>
+        <item quantity="other">%1$d نطاق</item>
+    </plurals>
+    <string name="eq_summary_unavailable">غير متاحة الآن. افتحها لمعرفة السبب.</string>
     <string name="eq_enabled">المُعادل</string>
     <string name="eq_enabled_desc">يضبط طابع صوت هذه السماعات</string>
     <string name="eq_latency_zero">التأخير المُضاف: 0 مللي ثانية</string>
