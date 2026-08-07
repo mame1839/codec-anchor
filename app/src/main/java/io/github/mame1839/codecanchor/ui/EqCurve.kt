@@ -44,6 +44,7 @@ import kotlin.math.abs
 import kotlin.math.exp
 import kotlin.math.ln
 import kotlin.math.max
+import kotlin.math.min
 
 // ±12.0 dB を 0.5 dB 刻み。eq-spec.md の確定値。
 // 絵の縦軸と EqSection のスライダーが同じ値を見る。2 箇所に書くと、片方だけ動かしたときに
@@ -75,6 +76,9 @@ private val COLUMN_WIDTH = 1.5.dp
 // 既定の 10 バンドは全部出るのが正しい状態なので、ここは詰める。
 private val LABEL_MIN_GAP = 4.dp
 private val PLOT_INSET = 10.dp
+
+// 0 dB の基準線の濃さ。グラフィックとパラメトリックで同じ値を使う。
+private const val ZERO_LINE_ALPHA = 0.28f
 
 /** どの欄を動かしているか。ドラッグ中の値を絵へ運ぶために使う。 */
 enum class EqField { FREQUENCY, Q, GAIN }
@@ -143,7 +147,9 @@ fun EqCurve(eq: EqSettings, modifier: Modifier = Modifier) {
     val active = preview?.target?.bandIndex ?: -1
 
     val description = stringResource(R.string.eq_curve_desc)
-    val measurer = rememberTextMeasurer()
+    // **既定のキャッシュは 8 件しかない。**31 バンドはラベルが 62 枚あるので、
+    // 既定のままだと毎フレーム全部が測り直しになる (ドラッグ中に変わる文字列は 1 枚だけなのに)。
+    val measurer = rememberTextMeasurer(cacheSize = 80)
     val colors = MaterialTheme.colorScheme
     val labelStyle = MaterialTheme.typography.labelSmall.copy(
         // 数値と単位が入れ替わるのは、段落の向きが RTL のときに数字が中立文字として
@@ -241,7 +247,15 @@ private fun GraphicPlot(
 
         // 0 dB の位置。目盛りではなく基準線 1 本だけ。無いと、下端から伸びる縦線の長さが
         // 上げているのか下げているのか読めない (数値は間引きで消えることがある)。
-        drawLine(muted.copy(alpha = 0.18f), Offset(plot.left, yOf(0.0)), Offset(plot.right, yOf(0.0)), 1.dp.toPx())
+        // 濃さはパラメトリックの 0 dB の線と同じにする。同じものなので同じ重みで描く
+        // (0.18 だと明るいテーマで沈む。実機で両方見て決めた)。
+        drawLine(muted.copy(alpha = ZERO_LINE_ALPHA), Offset(plot.left, yOf(0.0)), Offset(plot.right, yOf(0.0)), 1.dp.toPx())
+
+        // 点の大きさは列の間隔で頭を押さえる。31 バンドだと間隔が 11 dp しかなく、
+        // 既定の半径のままでは 0 dB に並んだ点がつながって 1 本の帯に見える。
+        val pitch = if (xs.size > 1) xs[1] - xs[0] else plot.width
+        val dotR = min(DOT_RADIUS.toPx(), pitch * 0.22f)
+        val dotRActive = min(DOT_RADIUS_ACTIVE.toPx(), pitch * 0.32f)
 
         bands.forEachIndexed { i, band ->
             val x = xs[i]
@@ -250,7 +264,7 @@ private fun GraphicPlot(
             // 上は薄く、点から下は濃く。値の大きさが線の長さで分かる。
             drawLine(muted.copy(alpha = 0.20f), Offset(x, plot.top), Offset(x, y), COLUMN_WIDTH.toPx())
             drawLine(accent.copy(alpha = if (hot) 0.85f else 0.45f), Offset(x, y), Offset(x, plot.bottom), COLUMN_WIDTH.toPx())
-            drawCircle(accent, (if (hot) DOT_RADIUS_ACTIVE else DOT_RADIUS).toPx(), Offset(x, y))
+            drawCircle(accent, if (hot) dotRActive else dotR, Offset(x, y))
         }
 
         drawPath(curve, accent, style = Stroke(width = CURVE_WIDTH.toPx()))
@@ -317,7 +331,7 @@ private fun ParametricPlot(
 
         gridLabels.forEach { (db, layout) ->
             val y = yOf(db)
-            drawLine(muted.copy(alpha = if (db == 0.0) 0.28f else 0.14f), Offset(plot.left, y), Offset(plot.right, y), 1.dp.toPx())
+            drawLine(muted.copy(alpha = if (db == 0.0) ZERO_LINE_ALPHA else 0.14f), Offset(plot.left, y), Offset(plot.right, y), 1.dp.toPx())
             drawText(layout, topLeft = Offset(plot.left - LABEL_GAP.toPx() - layout.size.width, y - layout.size.height / 2f))
         }
 
