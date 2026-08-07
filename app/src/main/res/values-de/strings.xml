@@ -152,6 +152,13 @@
     <string name="msg_autoeq_no_bands">Diese AutoEQ-Datei enthält keine Filter</string>
 
     <string name="section_eq">Klangbearbeitung</string>
+    <string name="eq_summary_on">Ein</string>
+    <string name="eq_summary_off">Aus</string>
+    <plurals name="eq_summary_bands">
+        <item quantity="one">%1$d Band</item>
+        <item quantity="other">%1$d Bänder</item>
+    </plurals>
+    <string name="eq_summary_unavailable">Zurzeit nicht nutzbar. Öffnen Sie sie, um den Grund zu sehen.</string>
     <string name="eq_enabled">Equalizer</string>
     <string name="eq_enabled_desc">Passt den Klang dieser Kopfhörer an</string>
     <string name="eq_latency_zero">Zusätzliche Verzögerung: 0 ms</string>

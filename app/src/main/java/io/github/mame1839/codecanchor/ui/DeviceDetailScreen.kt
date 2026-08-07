@@ -40,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
@@ -49,6 +50,9 @@ import io.github.mame1839.codecanchor.core.ApplyOutcome
 import io.github.mame1839.codecanchor.core.CodecKeys
 import io.github.mame1839.codecanchor.core.DeviceProfile
 import io.github.mame1839.codecanchor.core.DeviceStatus
+import io.github.mame1839.codecanchor.core.EqAvailability
+import io.github.mame1839.codecanchor.core.EqMode
+import io.github.mame1839.codecanchor.core.EqSettings
 
 private val DELAY_STEPS = listOf(0, 500, 1000, 1500, 2000, 3000, 5000, 8000)
 private val RETRY_STEPS = listOf(1, 2, 3, 4, 5, 8, 10)
@@ -71,6 +75,7 @@ fun DeviceDetailScreen(
     mac: String,
     snackbarHostState: SnackbarHostState,
     onBack: () -> Unit,
+    onOpenEq: () -> Unit,
     onNotify: (String) -> Unit,
 ) {
     val profile = vm.config.profileFor(mac)
@@ -138,7 +143,7 @@ fun DeviceDetailScreen(
 
             TargetCard(vm = vm, mac = mac, profile = profile, status = status)
 
-            EqSection(vm = vm, mac = mac, profile = profile)
+            EqSummaryCard(eq = profile.eq, availability = vm.eqAvailability, onOpen = onOpenEq)
 
             SettingsCard {
                 ExpandableHeader(
@@ -329,6 +334,48 @@ private fun DeviceHeader(name: String, mac: String, status: DeviceStatus?, offlo
                 )
             }
         }
+    }
+}
+
+/**
+ * 詳細画面の「音響処理」。**押すと `EqScreen` が開く行 1 つだけ**を置く。
+ *
+ * 中身をここに広げると、トグル・編集の方法・バンド数・曲線・バンドのスライダー・プリアンプ・
+ * プリセットで画面が縦に伸びすぎる。
+ *
+ * **要約は必ず出す。**開かないと状態が分からない行にすると、見に行く必要があるかを押す前に
+ * 判断できない。使えない理由 (未登録 / オフロード / フックが古い) のほうは開いた先の
+ * `EqUnavailableNotice` が出す — **ここは「使えない」ことだけを 1 行で言う。**
+ * 3 種類の説明をここに並べると、この行を作った目的と逆になる。
+ *
+ * private ではなく internal なのは、要約が出ることを見るテストから直接呼ぶため。
+ */
+@Composable
+internal fun EqSummaryCard(eq: EqSettings, availability: EqAvailability, onOpen: () -> Unit) {
+    val summary = if (!eq.enabled) {
+        stringResource(R.string.eq_summary_off)
+    } else {
+        listOf(
+            stringResource(R.string.eq_summary_on),
+            stringResource(
+                if (eq.mode == EqMode.GRAPHIC) R.string.eq_mode_graphic else R.string.eq_mode_parametric,
+            ),
+            // 数字と訳語の組。"·" を挟んで訳語が並ぶ行なので、囲まないと RTL で数字だけが
+            // 隣の項目の側へ回る。
+            bidiIsolate(pluralStringResource(R.plurals.eq_summary_bands, eq.bands.size, eq.bands.size)),
+        ).joinToString(" · ")
+    }
+    SettingsCard {
+        NavigationRow(
+            title = stringResource(R.string.section_eq),
+            value = summary,
+            description = if (availability == EqAvailability.OK) {
+                null
+            } else {
+                stringResource(R.string.eq_summary_unavailable)
+            },
+            onClick = onOpen,
+        )
     }
 }
 

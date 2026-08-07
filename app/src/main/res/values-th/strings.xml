@@ -151,6 +151,12 @@
     <string name="msg_autoeq_no_bands">ไฟล์ AutoEQ นี้ไม่มีฟิลเตอร์</string>
 
     <string name="section_eq">การประมวลผลเสียง</string>
+    <string name="eq_summary_on">เปิด</string>
+    <string name="eq_summary_off">ปิด</string>
+    <plurals name="eq_summary_bands">
+        <item quantity="other">%1$d แบนด์</item>
+    </plurals>
+    <string name="eq_summary_unavailable">ตอนนี้ยังใช้ไม่ได้ เปิดดูเพื่อทราบเหตุผล</string>
     <string name="eq_enabled">อีควอไลเซอร์</string>
     <string name="eq_enabled_desc">ปรับแต่งเสียงของหูฟังคู่นี้</string>
     <string name="eq_latency_zero">ดีเลย์ที่เพิ่มขึ้น: 0 มิลลิวินาที</string>

@@ -151,6 +151,12 @@
     <string name="msg_autoeq_no_bands">這個 AutoEQ 檔案沒有濾波器</string>
 
     <string name="section_eq">音訊處理</string>
+    <string name="eq_summary_on">已開啟</string>
+    <string name="eq_summary_off">已關閉</string>
+    <plurals name="eq_summary_bands">
+        <item quantity="other">%1$d 個頻段</item>
+    </plurals>
+    <string name="eq_summary_unavailable">目前無法使用。開啟後可查看原因。</string>
     <string name="eq_enabled">等化器</string>
     <string name="eq_enabled_desc">調整這副耳機的聲音</string>
     <string name="eq_latency_zero">額外延遲：0 ms</string>

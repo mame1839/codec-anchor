@@ -6,7 +6,9 @@ import io.github.mame1839.codecanchor.core.EqSettings
 import io.github.mame1839.codecanchor.core.EqSolver
 import io.github.mame1839.codecanchor.ui.EqScale
 import io.github.mame1839.codecanchor.ui.reband
+import io.github.mame1839.codecanchor.ui.toParametric
 import io.github.mame1839.codecanchor.ui.withGraphicGrid
+import io.github.mame1839.codecanchor.ui.withStartingBands
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
@@ -150,6 +152,65 @@ class EqSectionTest {
             bands = listOf(EqBand(105, 70, -65), EqBand(3_150, 141, 25)),
         )
         assertEquals(settings, withGraphicGrid(settings))
+    }
+
+    // 作った曲線はパラメトリックへ移っても 1 つも変えない。丸めも解き直しも起きない経路。
+    @Test
+    fun toParametricKeepsACurveAsItIs() {
+        val settings = EqSettings(
+            enabled = true,
+            bandCount = 10,
+            bands = EqSolver.centerFrequencies(10).mapIndexed { i, hz ->
+                EqBand(freqHz = hz, q100 = 100, gainDb10 = if (i < 5) 60 else -40)
+            },
+        )
+        val after = toParametric(settings)
+        assertEquals(EqMode.PARAMETRIC, after.mode)
+        assertEquals(settings.bands, after.bands)
+    }
+
+    // 1 本でも動いていれば曲線。3 本に減らすと作った音が変わる。
+    @Test
+    fun toParametricKeepsEveryBandWhenOneIsMoved() {
+        val bands = EqSolver.centerFrequencies(10).mapIndexed { i, hz ->
+            EqBand(freqHz = hz, q100 = 100, gainDb10 = if (i == 3) -5 else 0)
+        }
+        val after = toParametric(EqSettings(enabled = true, bandCount = 10, bands = bands))
+        assertEquals(bands, after.bands)
+    }
+
+    // 平らなグラフィックは「まだ何も無い」。グラフィックでユーザが決められるのはゲインだけなので、
+    // 全部 0 dB なら引き継ぐ情報が 1 つも無い。0 dB の 10 本を並べずに 3 本から始める。
+    @Test
+    fun toParametricStartsFromThreeBandsWhenNothingWasMade() {
+        val flat = withStartingBands(EqSettings(enabled = true, bandCount = 10))
+        val after = toParametric(flat)
+        assertEquals(listOf(100, 1_000, 10_000), after.bands.map { it.freqHz })
+        assertTrue(after.bands.all { it.gainDb10 == 0 })
+    }
+
+    @Test
+    fun startingBandsFillAnEmptyParametric() {
+        val filled = withStartingBands(EqSettings(enabled = true, mode = EqMode.PARAMETRIC))
+        assertEquals(listOf(100, 1_000, 10_000), filled.bands.map { it.freqHz })
+    }
+
+    // 「fc と Q は置いたが、ゲインはまだ 0」は実在する状態。ここを平らで判定すると、
+    // EQ を切って入れ直しただけでその作業が消える。
+    @Test
+    fun startingBandsLeaveSilentParametricBandsAlone() {
+        val settings = EqSettings(
+            enabled = true,
+            mode = EqMode.PARAMETRIC,
+            bands = listOf(EqBand(105, 70, 0), EqBand(3_150, 141, 0)),
+        )
+        assertEquals(settings, withStartingBands(settings))
+    }
+
+    @Test
+    fun startingBandsBuildTheGraphicGrid() {
+        val filled = withStartingBands(EqSettings(enabled = true, bandCount = 15))
+        assertEquals(EqSolver.centerFrequencies(15), filled.bands.map { it.freqHz })
     }
 
     // バンド数が違えば並びも違う。そのままだと 31 本の設定に 10 本のスライダーが出る。

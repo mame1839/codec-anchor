@@ -152,6 +152,13 @@
     <string name="msg_autoeq_no_bands">इस AutoEQ फ़ाइल में कोई फ़िल्टर नहीं है</string>
 
     <string name="section_eq">ध्वनि प्रसंस्करण</string>
+    <string name="eq_summary_on">चालू</string>
+    <string name="eq_summary_off">बंद</string>
+    <plurals name="eq_summary_bands">
+        <item quantity="one">%1$d बैंड</item>
+        <item quantity="other">%1$d बैंड</item>
+    </plurals>
+    <string name="eq_summary_unavailable">अभी इस्तेमाल नहीं हो सकता। कारण देखने के लिए खोलें।</string>
     <string name="eq_enabled">इक्वलाइज़र</string>
     <string name="eq_enabled_desc">इन ईयरफ़ोन की आवाज़ को ढालता है</string>
     <string name="eq_latency_zero">अतिरिक्त विलंब: 0 ms</string>

@@ -153,6 +153,14 @@
     <string name="msg_autoeq_no_bands">Questo file AutoEQ non contiene filtri</string>
 
     <string name="section_eq">Elaborazione del suono</string>
+    <string name="eq_summary_on">Attivata</string>
+    <string name="eq_summary_off">Disattivata</string>
+    <plurals name="eq_summary_bands">
+        <item quantity="one">%1$d banda</item>
+        <item quantity="many">%1$d bande</item>
+        <item quantity="other">%1$d bande</item>
+    </plurals>
+    <string name="eq_summary_unavailable">Al momento non è utilizzabile. Apri per vedere il motivo.</string>
     <string name="eq_enabled">Equalizzatore</string>
     <string name="eq_enabled_desc">Modella il suono di questi auricolari</string>
     <string name="eq_latency_zero">Ritardo aggiunto: 0 ms</string>

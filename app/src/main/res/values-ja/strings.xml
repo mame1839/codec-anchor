@@ -151,6 +151,12 @@
     <string name="msg_autoeq_no_bands">この AutoEQ ファイルにはフィルタがありません</string>
 
     <string name="section_eq">音響処理</string>
+    <string name="eq_summary_on">オン</string>
+    <string name="eq_summary_off">オフ</string>
+    <plurals name="eq_summary_bands">
+        <item quantity="other">%1$d バンド</item>
+    </plurals>
+    <string name="eq_summary_unavailable">いまは使えません。理由は開いた先に出ます。</string>
     <string name="eq_enabled">イコライザー</string>
     <string name="eq_enabled_desc">このイヤホンの音を調整します</string>
     <string name="eq_latency_zero">追加の遅延: 0 ms</string>
