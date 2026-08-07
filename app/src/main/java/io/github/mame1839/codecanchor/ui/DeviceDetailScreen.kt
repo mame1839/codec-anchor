@@ -143,7 +143,7 @@ fun DeviceDetailScreen(
 
             TargetCard(vm = vm, mac = mac, profile = profile, status = status)
 
-            EqSummaryCard(eq = profile.eq, availability = vm.eqAvailability, onOpen = onOpenEq)
+            EqSummaryCard(eq = profile.eq, availability = vm.eqAvailability(mac), onOpen = onOpenEq)
 
             SettingsCard {
                 ExpandableHeader(
@@ -344,9 +344,14 @@ private fun DeviceHeader(name: String, mac: String, status: DeviceStatus?, offlo
  * プリセットで画面が縦に伸びすぎる。
  *
  * **要約は必ず出す。**開かないと状態が分からない行にすると、見に行く必要があるかを押す前に
- * 判断できない。使えない理由 (未登録 / オフロード / フックが古い) のほうは開いた先の
- * `EqUnavailableNotice` が出す — **ここは「使えない」ことだけを 1 行で言う。**
- * 3 種類の説明をここに並べると、この行を作った目的と逆になる。
+ * 判断できない。使えない理由 (エフェクトが未登録 / この機器が未登録 / オフロード /
+ * フックが古い) のほうは開いた先の `EqUnavailableNotice` が出す —
+ * **ここは「使えない」ことだけを 1 行で言う。**4 種類の説明をここに並べると、
+ * この行を作った目的と逆になる。
+ *
+ * 判定に `EqAvailability.allowsEditing` は使わない。あれは**編集させてよいか**で、
+ * ここが言うのは**音に効いているか。**この機器が未登録のときは編集はできるが音には届かないので、
+ * 行は「使えない」と言い、開いた先の登録のトグルへ送る。
  *
  * private ではなく internal なのは、要約が出ることを見るテストから直接呼ぶため。
  */

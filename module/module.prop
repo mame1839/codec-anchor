@@ -1,6 +1,6 @@
 id=codecanchor_eq
-name=Codec Anchor EQ (spike)
+name=Codec Anchor EQ
 version=0.0.0
 versionCode=1
 author=mame1839
-description=AUDIO_SESSION_DEVICE に自前の POST_PROC エフェクトを登録する実証用モジュール。bind mount のみで /vendor の実ファイルは変更しない。
+description=Codec Anchor のイヤホンごとの音響処理を動かすためのモジュール。エフェクトの .so と audio_effects.xml を bind mount で差し替えるだけで、/vendor の実ファイルは変更しない。

@@ -10,9 +10,64 @@
 #   - 前回の bind mount が生きていることがある (消す前に外さないとベンダーの soundfx が空になる)
 #   - audioserver と audio HAL が元の XML と元の soundfx を読み終えている (作り直させないと効かない)
 
+# 作業領域。/dev は tmpfs で、どの名前空間から見ても同じ inode になる。
+# 登録済みイヤホンの一覧は再起動をまたぐので /data 側に置く。
+# eq_devices.sh と uninstall.sh はここを見る (service.sh だけは setup.sh を
+# 読み込まないので自分で持っている)。
+# 上書きできるのはホストでテストを走らせるため。実機では常に既定値。
+CA_WORK=${CA_WORK:-/dev/caeq}
+CA_DEVICES=${CA_DEVICES:-/data/adb/codecanchor_eq_devices}
+
 # init の名前空間でコマンドを走らせるための接頭辞。使えなければ空 = 自分の名前空間。
 # 展開時に単語分割させたいので $CA_NS は引用しない。
 CA_NS=""
+
+# <postprocess> にも登録するか。**既定はオフ。**
+#
+# <postprocess> の <stream type="music"> に載せると、エフェクトは stream type 単位で挿さる —
+# つまり**スピーカーと spatializer の出力にも載る** (実測 io 69 / 12ch)。
+# イヤホン用に測った補正曲線をスピーカーに当てるのは単に間違いで、ユーザから見ると
+# 「スピーカーの音がおかしくなった」になる。
+# これは DEVICE (<deviceEffects>) が通らない端末のための退路であって製品の経路ではない。
+# DEVICE は実機で通っているので、既定を退路側に置く理由が無い。
+#
+# 退路が要る端末では $MODDIR/use_postprocess を置く。
+# post-fs-data と eq_devices.sh で答えが違うと、作り直した XML が起動時のものとずれるので、
+# 判断はこの 1 箇所でだけ行う。
+ca_want_pp() {
+    [ -f "$MODDIR/use_postprocess" ] && echo 1 || echo 0
+}
+
+# audioserver を作り直す。XML は起動時に 1 回しか読まれず再読込の API が無いので、
+# 登録するイヤホンを増減したらこれしか手が無い。引き換えに再生中の音は切れ、
+# 他のエフェクト (Dolby DAP など) も作り直しになる (audioserver.rc の
+# onrestart restart vendor.audio-hal*)。audioserver.rc に critical / oneshot / disabled が
+# 無いので init が即座に作り直す。
+#   0 = 新しい pid で戻ってきた / 1 = 戻ってこない / 2 = そもそも居ない
+ca_restart_audioserver() {
+    ca_as_old=$(pidof audioserver)
+    if [ -z "$ca_as_old" ]; then
+        ca_log "警告: audioserver が居ない"
+        return 2
+    fi
+    ca_log "audioserver を作り直す (音が一瞬切れる)。旧 pid $ca_as_old"
+    # pidof は複数返しうるので引用しない。
+    kill $ca_as_old 2>>"$CA_LOG"
+    # 先に寝てから見る。kill は非同期なので、直後の pidof はまだ死にかけの旧 pid を返す。
+    # pid が変わったことを戻ってきた証拠にする。
+    ca_as_i=0
+    while [ $ca_as_i -lt 10 ]; do
+        sleep 1
+        ca_as_new=$(pidof audioserver)
+        if [ -n "$ca_as_new" ] && [ "$ca_as_new" != "$ca_as_old" ]; then
+            ca_log "audioserver を作り直した (新 pid $ca_as_new)"
+            return 0
+        fi
+        ca_as_i=$((ca_as_i+1))
+    done
+    ca_log "警告: audioserver を落としたが戻ってこない"
+    return 1
+}
 
 # init の名前空間に入る手段を決める。
 # 同じ XML を 2 プロセスが別々に読む (vendor HAL が <libraries>/<effects>、
@@ -64,7 +119,7 @@ ca_setup() {
     CA_STAGE="$1"
     ca_log "===== $CA_STAGE 開始 (runtime=${KSU_RUNTIME_MODE:-?} late_load=${KSU_LATE_LOAD:-0}) ====="
 
-    WORK=/dev/caeq
+    WORK="$CA_WORK"
 
     # --- 0. init の名前空間に入る手段を決める --------------------------------
     ca_pick_ns
@@ -122,13 +177,30 @@ ca_setup() {
     fi
 
     # --- 6. XML に行を足す ---------------------------------------------------
-    # <postprocess> に載せると framework が自動でエフェクトを挿すので、
-    # ユーザの再生に即座に掛かる。止めたいときにモジュールごと外さずに済むよう、
-    # 空ファイル 1 つで切れるようにしておく (touch $MODDIR/no_postprocess で無効)。
-    CA_PP=1
-    [ -f "$MODDIR/no_postprocess" ] && CA_PP=0
+    # patch 前の原本を取っておく。ここはまだ bind mount する前なので $CA_SRC_XML は無傷。
+    # eq_devices.sh は登録を変えるたびに毎回ここから作り直す —
+    # patch 済みを patch し直す形にすると、消し漏れが積み上がる。
+    # 名前を .orig にしないこと。ca_patch_xml が <出力>.orig を作業に使う。
+    CA_PRISTINE_XML="$WORK/etc/audio_effects.xml.pristine"
+    cp "$CA_SRC_XML" "$CA_PRISTINE_XML" || ca_die "patch 前の原本を取っておけない"
+
+    # 登録済みのイヤホン。再起動をまたぐので /data 側にある。
+    # 壊れていても起動は止めない — <deviceEffects> を書かないだけにする
+    # (ここで ca_die すると、一覧の 1 行の壊れがモジュール全体の無効化になる)。
+    CA_DEVLIST="$WORK/devices"
+    : > "$CA_DEVLIST"
+    if [ -f "$CA_DEVICES" ]; then
+        if ca_canon_devices "$CA_DEVICES" "$CA_DEVLIST" 2>>"$CA_LOG"; then
+            ca_log "登録済みのイヤホン: $(awk 'END { print NR }' "$CA_DEVLIST") 件"
+        else
+            : > "$CA_DEVLIST"
+            ca_log "警告: $CA_DEVICES が壊れている。<deviceEffects> は書かない"
+        fi
+    fi
+
+    CA_PP=$(ca_want_pp)
     ca_log "postprocess への登録: $CA_PP"
-    if ! ca_patch_xml "$CA_SRC_XML" "$WORK/etc/audio_effects.xml" "$CA_PP" 2>>"$CA_LOG"; then
+    if ! ca_patch_xml "$CA_PRISTINE_XML" "$WORK/etc/audio_effects.xml" "$CA_PP" "$CA_DEVLIST" 2>>"$CA_LOG"; then
         ca_die "XML の patch に失敗"
     fi
     chmod 644 "$WORK/etc/audio_effects.xml"
@@ -195,38 +267,15 @@ ca_setup() {
         echo "CA_STAGE=$CA_STAGE"
         echo "CA_SRC_XML=$CA_SRC_XML"
         echo "CA_LIBDIR=$CA_LIBDIR"
+        echo "CA_PRISTINE_XML=$CA_PRISTINE_XML"
     } > "$WORK/paths" || ca_die "paths を書けない"
 
     # --- 12. late-load なら audioserver を作り直させる -----------------------
     # 起動後に走るこの段では、audioserver も audio HAL も元の XML と元の soundfx を
     # 読み終えている。bind mount しただけでは何も起きず、service.sh の自己検証も落ちて
-    # 自分を無効化してしまう。audioserver.rc に critical / oneshot / disabled が無いので
-    # init が即座に作り直し、onrestart で vendor.audio-hal* も一緒に立ち上がる。
-    # 引き換えに再生中の音は切れ、他のエフェクト (Dolby DAP など) も作り直しになる。
+    # 自分を無効化してしまう。
     if [ "$CA_STAGE" = "late-load" ]; then
-        pid=$(pidof audioserver)
-        if [ -n "$pid" ]; then
-            ca_log "late-load モードなので audioserver を作り直す (音が一瞬切れる)。旧 pid $pid"
-            # pidof は複数返しうるので引用しない。
-            kill $pid 2>>"$CA_LOG"
-            # 先に寝てから見る。kill は非同期なので、直後の pidof はまだ死にかけの
-            # 旧 pid を返す。pid が変わったことを戻ってきた証拠にする。
-            i=0
-            newpid=""
-            while [ $i -lt 10 ]; do
-                sleep 1
-                newpid=$(pidof audioserver)
-                if [ -n "$newpid" ] && [ "$newpid" != "$pid" ]; then break; fi
-                i=$((i+1))
-            done
-            if [ -n "$newpid" ] && [ "$newpid" != "$pid" ]; then
-                ca_log "late-load モードなので audioserver を作り直した (新 pid $newpid)"
-            else
-                ca_log "警告: audioserver を落としたが戻ってこない"
-            fi
-        else
-            ca_log "警告: late-load モードだが audioserver が居ない。反映は次の再起動から"
-        fi
+        ca_restart_audioserver || ca_log "late-load モードだが audioserver を作り直せない。反映は次の再起動から"
     fi
 
     ca_log "$CA_STAGE 完了"

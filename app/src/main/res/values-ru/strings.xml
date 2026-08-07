@@ -75,6 +75,26 @@
     <string name="eq_unavailable_not_registered">Обработка звука недоступна: модуль обработки звука не установлен или телефон ещё не загрузил его. Установите его и перезагрузите телефон.</string>
     <string name="eq_unavailable_offload">Обработка звука недоступна, пока включена аппаратная разгрузка Bluetooth A2DP. Как её отключить, написано в примечании в списке устройств.</string>
     <string name="eq_unavailable_hook_old">Обработка звука недоступна: в процессе Bluetooth работает более старая версия модуля, которая о ней не знает. Выключите Bluetooth и включите снова.</string>
+    <string name="eq_unavailable_device">Эти наушники не зарегистрированы для обработки звука, поэтому ничего из настроенного здесь не доходит до звука.</string>
+
+    <string name="eq_device_register">Использовать обработку звука с этими наушниками</string>
+    <string name="eq_device_register_desc">Добавляет эти наушники в звуковые настройки телефона. Во время применения звук на мгновение пропадает.</string>
+    <string name="eq_device_confirm_on_title">Включить обработку звука для этих наушников?</string>
+    <string name="eq_device_confirm_off_title">Выключить обработку звука для этих наушников?</string>
+    <string name="eq_device_confirm_body">Звуковая служба телефона перезапускается, поэтому то, что сейчас играет, на несколько секунд затихнет. Bluetooth останется подключён, а настройки эквалайзера в любом случае сохранятся.</string>
+    <string name="eq_device_running">Применение. Звук вернётся через несколько секунд.</string>
+    <string name="eq_device_result_on">Эти наушники зарегистрированы для обработки звука.</string>
+    <string name="eq_device_result_off">Эти наушники больше не зарегистрированы для обработки звука.</string>
+    <string name="eq_device_failed_no_module">Ничего не изменено: модуль обработки звука не установлен.</string>
+    <string name="eq_device_failed_root">Ничего не изменено: в доступе root было отказано, либо на этом телефоне нет root-менеджера. Разрешите Codec Anchor в своём root-менеджере и попробуйте снова.</string>
+    <string name="eq_device_failed_script">Ничего не изменено: доступ root сработал, но модуль обработки звука не сработал. Его файлы отсутствуют или повреждены. Установите модуль заново, затем перезагрузите телефон.</string>
+    <string name="eq_device_failed_timeout">Не завершилось вовремя и было остановлено. Звуковая служба, возможно, ещё перезапускается. Проверьте ещё раз через некоторое время.</string>
+    <string name="eq_device_failed_input">Ничего не изменено: приложение отправило то, что модуль не смог прочитать. Это ошибка приложения.</string>
+    <string name="eq_device_failed_no_state">Ничего не изменено: модуль обработки звука не запущен. Перезагрузите телефон и попробуйте снова.</string>
+    <string name="eq_device_failed_xml">Не удалось пересобрать файл звуковых настроек телефона, поэтому ничего не изменено.</string>
+    <string name="eq_device_failed_apply">Не удалось применить пересобранные звуковые настройки, поэтому ничего не изменено.</string>
+    <string name="eq_device_failed_audioserver">Звуковая служба не восстановилась. Перезагрузите телефон.</string>
+    <string name="eq_device_failed_unknown">Произошла ошибка, которую эта версия приложения не распознаёт (код %1$d).</string>
 
     <string name="tag_connected">Подключено</string>
     <string name="tag_disconnected">Не подключено</string>

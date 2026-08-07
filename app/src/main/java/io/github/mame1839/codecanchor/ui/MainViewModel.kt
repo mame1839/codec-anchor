@@ -18,6 +18,7 @@ import androidx.lifecycle.viewModelScope
 import io.github.mame1839.codecanchor.BuildConfig
 import io.github.mame1839.codecanchor.R
 import io.github.mame1839.codecanchor.bridge.BridgeClient
+import io.github.mame1839.codecanchor.bridge.EqDeviceStore
 import io.github.mame1839.codecanchor.bridge.PresetStore
 import io.github.mame1839.codecanchor.bridge.SettingsStore
 import io.github.mame1839.codecanchor.core.AppConfig
@@ -27,6 +28,8 @@ import io.github.mame1839.codecanchor.core.CodecKeys
 import io.github.mame1839.codecanchor.core.DeviceProfile
 import io.github.mame1839.codecanchor.core.DeviceStatus
 import io.github.mame1839.codecanchor.core.EqAvailability
+import io.github.mame1839.codecanchor.core.EqDevices
+import io.github.mame1839.codecanchor.core.EqDevicesResult
 import io.github.mame1839.codecanchor.core.EqPreset
 import io.github.mame1839.codecanchor.core.EqSettings
 import io.github.mame1839.codecanchor.core.EqSupport
@@ -49,14 +52,41 @@ data class DeviceRow(
     val bonded: Boolean,
 )
 
+/**
+ * 直近の登録操作の結果。**どの機器の、どちら向きの操作だったか**を一緒に持つ —
+ * 詳細画面を開き直したときに、別の機器の結果が残って見えないようにするため。
+ */
+data class EqRegisterReport(
+    val mac: String,
+    val turnedOn: Boolean,
+    val result: EqDevicesResult,
+)
+
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val context: Context = application.applicationContext
     private val store = SettingsStore(context)
     private val stored = store.load()
     private val presetStore = PresetStore(context)
+    private val eqDeviceStore = EqDeviceStore(context)
 
     var presets by mutableStateOf(presetStore.load())
+        private set
+
+    /** `audio_effects.xml` に登録済みのイヤホン。成功した登録操作でしか動かない。 */
+    var eqRegisteredMacs by mutableStateOf(eqDeviceStore.load())
+        private set
+
+    /**
+     * 走っている登録操作の対象。null なら走っていない。
+     *
+     * **1 度に 1 つだけ** — 同時に走らせると、あとから終わったほうの一覧で XML が上書きされる。
+     */
+    var eqRegisterRunning by mutableStateOf<String?>(null)
+        private set
+
+    /** 直近の登録操作の結果。成功も失敗も必ず出す。 */
+    var eqRegisterReport by mutableStateOf<EqRegisterReport?>(null)
         private set
 
     // パラメトリックからグラフィックへ移ると fc と Q が固定値へ丸められる。一度だけ確認し、
@@ -136,21 +166,57 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // 表示の判断はここ 1 箇所。順序は「アプリから確実に分かるもの」から。
     // 版の判定だけは報告が要るので、1 通も来ていないうちは判定しない — フックが動いていないことは
     // 一覧のカードが既に出しているし、起動直後の数秒だけ「古い版です」が出て消えるのは嘘に近い。
-    val eqAvailability: EqAvailability
-        get() = when {
-            !effectRegistered -> EqAvailability.EFFECT_NOT_REGISTERED
-            a2dpOffloadEnabled -> EqAvailability.OFFLOAD_ENABLED
-            report?.let { it.eqSchema < EqSupport.SCHEMA } == true -> EqAvailability.HOOK_TOO_OLD
-            else -> EqAvailability.OK
+    //
+    // 未登録をオフロードより後に置くのは、オフロード中の登録が音を切るだけで何も変えないため。
+    // 先に未登録を出すと、無駄な重い操作へ誘導することになる。
+    fun eqAvailability(mac: String): EqAvailability = when {
+        !effectRegistered -> EqAvailability.EFFECT_NOT_REGISTERED
+        a2dpOffloadEnabled -> EqAvailability.OFFLOAD_ENABLED
+        !eqRegistered(mac) -> EqAvailability.DEVICE_NOT_REGISTERED
+        report?.let { it.eqSchema < EqSupport.SCHEMA } == true -> EqAvailability.HOOK_TOO_OLD
+        else -> EqAvailability.OK
+    }
+
+    fun eqRegistered(mac: String): Boolean = EqDevices.normalizeMac(mac) in eqRegisteredMacs
+
+    /**
+     * このイヤホンで音響処理を使う / やめる。
+     *
+     * **重い操作。**`audio_effects.xml` を作り直して audioserver を再起動するので、再生中の音が
+     * 一瞬切れる。UI を止めないよう別スレッドで走らせ、[EqDevices.TIMEOUT_MS] で打ち切る。
+     *
+     * **成功したときだけ記録を更新する。**失敗して記録を進めると、XML に無いものを「登録済み」と
+     * 出すことになる。途中でプロセスが死んで記録だけ遅れた場合は、次の操作で一覧を丸ごと送り直す
+     * ので直る (root 側は受け取った一覧をそのまま真とする)。
+     */
+    fun setEqRegistered(mac: String, registered: Boolean) {
+        if (eqRegisterRunning != null) return
+        val key = EqDevices.normalizeMac(mac) ?: return
+        val next = EqDevices.withDevice(eqRegisteredMacs, key, registered)
+        eqRegisterRunning = key
+        eqRegisterReport = null
+        viewModelScope.launch {
+            val result = withContext(Dispatchers.IO) { EqDevices.apply(next) }
+            val record = EqDevices.recordAfter(eqRegisteredMacs, next, result.outcome)
+            if (record != eqRegisteredMacs) {
+                eqDeviceStore.save(record)
+                eqRegisteredMacs = record
+            }
+            eqRegisterReport = EqRegisterReport(mac = key, turnedOn = registered, result = result)
+            eqRegisterRunning = null
         }
+    }
 
     // ボンド済みに出てこない MAC (ペアリングを解除した) も設定を残しておく。
     // 権限が無い / Bluetooth がオフのときは一覧そのものが読めないので、ボンド済みに無いことを根拠にできない。
+    //
+    // 登録済みの MAC も混ぜる。設定を消したうえでペアリングも解除された機器は、そうしないと
+    // 画面のどこからも開けなくなり、XML に残った登録を解除する手立てが無くなる。
     val orphanRows: List<DeviceRow>
         get() {
             if (!connectGranted || !bluetoothOn) return emptyList()
             val known = bondedRows.map { it.mac }.toSet()
-            return (config.profiles.keys + statuses.keys).filterNot { it in known }
+            return (config.profiles.keys + statuses.keys + eqRegisteredMacs).filterNot { it in known }
                 .map { DeviceRow(it, nameOf(it), audio = true, bonded = false) }
                 .sortedBy { it.name }
         }

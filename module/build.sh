@@ -16,7 +16,7 @@ OUT=module/build/staging
 rm -rf module/build; mkdir -p "$OUT/common"
 
 cp module/post-fs-data.sh module/late-load.sh module/service.sh module/uninstall.sh \
-   module/sepolicy.rule "$OUT/"
+   module/eq_devices.sh module/sepolicy.rule "$OUT/"
 cp module/common/log.sh module/common/patch_xml.sh module/common/setup.sh "$OUT/common/"
 
 # 版は module.prop に literal で持たない。タグが唯一の出どころ。
@@ -38,6 +38,13 @@ unzip -p "$APK" lib/arm64-v8a/libdlopen_check.so > "$OUT/dlopen_check"
 # Windows の info-zip は FAT 属性しか記録しないので、この chmod は zip に残らない。
 # 実行ビットは post-fs-data.sh が実機側で立て直すので、ここは Linux で作ったときのため。
 chmod 755 "$OUT/caeqstat" "$OUT/dlopen_check"
+
+# staging に実物が landed したか。eq_devices.sh はアプリが名前で呼ぶ唯一のファイルで、
+# これだけが欠けると、アプリからは su を拒否されたのと区別が付かない
+# (印の行が出ないので「root を拒否された」と表示される)。
+for f in eq_devices.sh module.prop system.prop libcaeq.so caeqstat dlopen_check; do
+    [ -s "$OUT/$f" ] || { echo "staging に $f が無い" >&2; exit 1; }
+done
 
 # 改行は LF。CRLF が混ざると /system/bin/sh が読めない。
 # grep で CR を探さないこと (Windows の grep は行末の CR を落としてから照合する)。

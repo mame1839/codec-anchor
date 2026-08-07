@@ -6,9 +6,18 @@
 #define CA_SHM_PATH   "/data/vendor/audio/ca_eq_stats.bin"
 #define CA_SHM_MAGIC  0x51454143u   /* 'CAEQ' (little endian で 43 41 45 51) */
 /* 版 2 でパラメータの領域が付いた。**ファイルが版 1 の大きさのままだと、後ろを触った
- * 瞬間に SIGBUS で vendor の audio HAL ごと落ちる。**読む側は必ず大きさを確かめること。 */
-#define CA_SHM_VERSION 2u
+ * 瞬間に SIGBUS で vendor の audio HAL ごと落ちる。**読む側は必ず大きさを確かめること。
+ *
+ * 版 3 で ca_slot_t の末尾の pad が session_id になった。**大きさは変わっていない**ので
+ * SIGBUS にはならないが、版 2 の .so は pad をゼロのまま残すので、読む側には
+ * 「DEVICE の枠が 1 つも無い」= 「イヤホンが繋がっていない」に見える。**嘘の理由が出る形で
+ * 壊れる**ので、書き手はこの版を必ず突き合わせること (caeqset は版が違えば専用の終了コードで落ちる)。 */
+#define CA_SHM_VERSION 3u
 #define CA_SHM_SLOTS  8
+
+/* audio_session_t の AUDIO_SESSION_DEVICE。**<deviceEffects> 経由で作られたインスタンス
+ * (= イヤホンに挿さっている側) にだけ渡る値。**<postprocess> 経由のインスタンスは別の値になる。 */
+#define CA_AUDIO_SESSION_DEVICE  (-2)
 
 /* このヘッダは .so とリーダの両方が読む。片方だけレイアウトが変わると、リーダが別の場所を
  * 読んで気づかないまま嘘の数字を出す。サイズはコンパイル時に固定する。 */
@@ -54,8 +63,14 @@ typedef struct ca_slot_s {
     uint32_t param_slot;
     uint32_t param_gen;       /* 最後に適用した generation。0 = まだ何も適用していない */
     uint32_t param_rejected;  /* 検査に落ちて丸ごと捨てた回数 */
-    /* uint32/int32 が 17 本 (68 B) + uint64 が 6 本 (48 B) + float が 2 本 (8 B) = 124 B。 */
-    uint8_t  pad[128 - (17 * 4) - (6 * 8) - (2 * 4)];
+    /* create_effect に渡された sessionId。**書き手が「イヤホン側の枠」を選ぶ唯一の手掛かり。**
+     * CA_AUDIO_SESSION_DEVICE なら <deviceEffects> 経由 = A2DP のスレッド。
+     * <postprocess> 経由のインスタンスは別の値で**同時に居るのが通常の構成**なので、
+     * 「使用中の枠が 2 つある = イヤホンが 2 台」と読むと必ず誤判定する。 */
+    int32_t  session_id;
+    /* uint32/int32 が 18 本 (72 B) + uint64 が 6 本 (48 B) + float が 2 本 (8 B) = 128 B。
+     * **ちょうど埋まっていて pad は無い。**次にフィールドを足すときは 128 バイトに収まらないので、
+     * CA_SHM_BYTES と module/common/setup.sh の bs= を両方直すことになる。 */
 } ca_slot_t;
 
 #define CA_PARAM_SLOT_NONE  0xFFFFFFFFu
