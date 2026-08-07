@@ -389,6 +389,21 @@ private fun DrawScope.drawCentered(layout: TextLayoutResult, centerX: Float, top
 internal fun evenColumns(count: Int, left: Float, right: Float): FloatArray =
     FloatArray(count) { if (count == 1) (left + right) / 2f else left + (right - left) * it / (count - 1f) }
 
+/*
+ * 応答は毎フレーム全部を計算し直している。**これは意図した形。**
+ * 走るのは呼び出し側が remember を外すドラッグ中だけで、ホストの JVM で
+ * 5 バンド 126 us / 31 バンド 810 us (バンド数 x 標本数に線形)。
+ *
+ * バンドごとの応答を持っておけば、ドラッグ中に動くのは 1 本なので 31 バンドで 1/31 になる。
+ * **実機で要ると分かるまで入れない** — 速くできることと速くする必要があることは別で、
+ * 確かめずに持つと要らない状態を抱えるだけになる。
+ *
+ * **⚠️ もし持たせるなら、無効化の鍵に fc / Q / 種別 / ゲイン / バンド数 / 標本の格子と
+ * モードが全部要る。**1 つ落とすと古い曲線が残り、**もっともらしい絵なので誰も気づかない。**
+ * 「ドラッグ中に変わるのは 1 本だけ」という前提自体も鍵の一部で、
+ * モードの切り替えとバンドの追加・削除で崩れる。
+ */
+
 /**
  * バンド中心が等間隔に並ぶ軸の上での、実際に鳴る特性。
  *
