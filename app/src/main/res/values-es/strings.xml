@@ -100,6 +100,17 @@
     <string name="eq_device_failed_audioserver">El servicio de audio no volvió a funcionar. Reinicia el teléfono.</string>
     <string name="eq_device_failed_unknown">Ha fallado de una forma que esta versión de la app no reconoce (código %1$d).</string>
 
+    <string name="eq_delivery_other">Ahora mismo hay otros auriculares conectados, así que lo que cambies aquí todavía no llega al sonido. Conecta estos auriculares y se aplicará.</string>
+    <string name="eq_delivery_ambiguous">Hay más de un efecto de auriculares en marcha y la app no puede saber cuál corresponde a estos auriculares, así que no se ha enviado nada. Desconecta los otros auriculares y luego vuelve a cambiar algo aquí.</string>
+    <string name="eq_delivery_not_live">Estos ajustes todavía no han llegado al sonido. Reproduce algo en estos auriculares, o vuelve a abrir esta app.</string>
+    <string name="eq_delivery_failed_root">Estos ajustes no han llegado al sonido: se denegó el acceso root, o este teléfono no tiene gestor de root. Permite Codec Anchor en tu gestor de root.</string>
+    <string name="eq_delivery_failed_shm">Estos ajustes no han llegado al sonido: el módulo de procesamiento de audio no está en marcha. Reinicia el teléfono.</string>
+    <string name="eq_delivery_failed_version">Estos ajustes no han llegado al sonido: la app y el módulo de procesamiento de audio tienen versiones distintas. Actualiza ambos a la misma versión y reinicia el teléfono.</string>
+    <string name="eq_delivery_failed_rejected">Estos ajustes se rechazaron por estar fuera de rango, así que el sonido no ha cambiado. Baja la ganancia de las bandas.</string>
+    <string name="eq_delivery_failed_timeout">El envío de estos ajustes no terminó a tiempo y se detuvo.</string>
+    <string name="eq_delivery_failed_input">Estos ajustes no han llegado al sonido: la app construyó mal la petición. Este es un fallo de la app.</string>
+    <string name="eq_delivery_failed_unknown">El envío de estos ajustes ha fallado de una forma que esta versión de la app no reconoce (código %1$d).</string>
+
     <string name="tag_connected">Conectado</string>
     <string name="tag_disconnected">Sin conexión</string>
     <string name="tag_active">Reproduciendo</string>
