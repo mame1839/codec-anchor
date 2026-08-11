@@ -114,6 +114,56 @@ class EqSectionTest {
         }
     }
 
+    /**
+     * **摘みの値はバンド数をどう切り替えても保たれること。**
+     *
+     * 全バンド +12 でバンド数を切り替えるのはユーザ本人の試し方 (2026-08-12 の
+     * スクリーンショット 3 枚)。reband が「真の合成応答を新しい中心でサンプル」だと、
+     * 解の残差 (中心間の谷) を新しい目標に焼き込む — 旧実装の 5→10 は
+     * [7.8, 12.0, 12.4, 12.0, ...] になっていた。摘みの値 (目標) の折れ線を読めば、
+     * どの並びでも同値のまま渡る。
+     */
+    @Test
+    fun flatKnobsSurviveEveryBandCountSwitch() {
+        var s = EqSettings(
+            enabled = true,
+            bandCount = 10,
+            bands = EqSolver.solveBands(DoubleArray(10) { 12.0 }, EqSolver.centerFrequencies(10), EqSolver.defaultQ(10)),
+        )
+        for (count in listOf(5, 10, 31, 15, 5, 31, 10)) {
+            s = reband(s, count)
+            val knobs = EqSolver.graphicTargetsDb10(s.bands)
+            assertTrue(
+                "$count バンドへ切り替えたら摘みが ${knobs.toList()}",
+                knobs.all { it == 120 },
+            )
+        }
+    }
+
+    /**
+     * **パラメトリック→グラフィックは真の曲線を読むこと。**折れ線 (摘みの値の補間) に
+     * 通すとシェルフで壊れる — シェルフの fc での応答はゲインの約半分 (+6 dB なら +3) で、
+     * fc より上の実体 (+6) が折れ線のどの点にも現れない。
+     */
+    @Test
+    fun parametricShapesAreReadFromTheTrueCurve() {
+        val shelf = EqBand(freqHz = 1_000, q100 = 70, gainDb10 = 60, type = EqBandType.HIGH_SHELF)
+        val before = EqSettings(enabled = true, mode = EqMode.GRAPHIC, bandCount = 10, bands = listOf(shelf))
+        val after = reband(before, 10)
+        for (hz in EqSolver.centerFrequencies(10)) {
+            val original = EqSolver.combinedResponseDb(listOf(shelf), hz.toDouble())
+            val rebanded = EqSolver.combinedResponseDb(after.bands, hz.toDouble())
+            // 許容 0.15: 目標は 0.1 dB に丸めてから解かれる (±0.05) + 整数の詰めの遊び (±0.05)。
+            // 見分けたい相手 (折れ線化の取り違え) は 3 dB 級なので、これで十分に締まっている。
+            assertEquals("$hz Hz", original, rebanded, 0.15)
+        }
+        // 折れ線に通されたときに落ちる側: fc (+3) しか見えなければ高域が +3 に潰れる。
+        assertTrue(
+            "シェルフの高域が消えた: ${EqSolver.combinedResponseDb(after.bands, 16_000.0)}",
+            EqSolver.combinedResponseDb(after.bands, 16_000.0) > 5.0,
+        )
+    }
+
     // 選択肢に無いバンド数は EqSettings.fromJson が 10 に書き換えるので、
     // ここで通してしまうと hash の往復が壊れる。
     @Test

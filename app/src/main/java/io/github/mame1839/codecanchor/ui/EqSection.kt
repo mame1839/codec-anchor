@@ -33,6 +33,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import io.github.mame1839.codecanchor.R
+import io.github.mame1839.codecanchor.core.AutoEqParser
 import io.github.mame1839.codecanchor.core.DeviceProfile
 import io.github.mame1839.codecanchor.core.EqBand
 import io.github.mame1839.codecanchor.core.EqBandType
@@ -565,13 +566,24 @@ private fun EqSettings.mapBand(index: Int, transform: (EqBand) -> EqBand): EqSet
 
 /**
  * グラフィックの並びに合わせる。**バンド数を変えたときも、パラメトリックから移ってきたときも
- * 同じ 1 本を通す。**
+ * 同じ 1 本を通す。**目標の読み方だけが 2 通りある:
  *
- * 今の合成応答を新しい中心周波数で測り直してから解くので、作り込んだ曲線の形が残る。
+ * - **いまの並びがグラフィックのグリッドなら、摘みの値 (目標) の折れ線を新しい中心で読む**
+ *   (対数周波数上の線形補間・範囲外は端の値。[AutoEqParser.interpolate] と同じ規約)。
+ *   摘みの値こそが状態 (eq-spec.md §7。bands から復元できる唯一のユーザ入力) なので、
+ *   切り替えで運ぶのはそれ。真の合成応答をサンプルすると**解の残差 (中心間の谷) を
+ *   次の目標に焼き込む** — 全バンド +12 のまま 5→10 と切り替えると摘みが
+ *   [7.8, 12.0, 12.4, ...] になっていた (2026-08-12 のユーザの試し方そのもの)。
+ *   折れ線なら全 +12 はどの並びでも全 +12 のまま渡る
+ *   (EqSectionTest.flatKnobsSurviveEveryBandCountSwitch)。
+ * - **それ以外 (パラメトリック由来・手書きのプリセット) は真の合成応答を読む。**
+ *   fc が自由でシェルフも混ざる並びでは、バンド中心の値の折れ線は曲線を表さない —
+ *   シェルフは fc でゲインの約半分にしかならず、fc より上の実体が点に現れない。
+ *
  * 捨てて 0 にすると、バンド数を変えただけで音が消える。
  *
  * **解けなくても拒まない。** `EqSolver.solve()` が Q を上げて解き直し、それでも収まらなければ
- * 素朴な値 (古い曲線を新しい中心で評価しただけ) に戻る。素朴な値は必ず計算できるので、
+ * 素朴な値 (目標をそのままゲインにしただけ) に戻る。素朴な値は必ず計算できるので、
  * ここで必ず止まる。1〜3 dB ずれるだけで形はおおむね保たれるし、
  * ユーザがバンド数を変えると言っているのに拒むほうが悪い。**通知も出さない** —
  * 操作のたびに消せない警告が出る画面になる。
@@ -582,13 +594,36 @@ private fun EqSettings.mapBand(index: Int, transform: (EqBand) -> EqBand): EqSet
 internal fun reband(settings: EqSettings, bandCount: Int): EqSettings {
     val count = EqSettings.normalizeBandCount(bandCount)
     val freqs = EqSolver.centerFrequencies(count)
-    val target = DoubleArray(freqs.size) {
-        EqSolver.combinedResponseDb(settings.bands, freqs[it].toDouble())
+    val target = if (matchesGraphicGrid(settings)) {
+        val knobs = EqSolver.graphicTargetsDb10(settings.bands)
+        val points = settings.bands.mapIndexed { i, band ->
+            band.freqHz.toDouble() to knobs[i].toDouble() / 10.0
+        }
+        DoubleArray(freqs.size) { AutoEqParser.interpolate(points, freqs[it].toDouble()) }
+    } else {
+        DoubleArray(freqs.size) {
+            EqSolver.combinedResponseDb(settings.bands, freqs[it].toDouble())
+        }
     }
     return settings.copy(
         bandCount = count,
         bands = EqSolver.solveBands(target, freqs, EqSolver.defaultQ(count)),
     )
+}
+
+/**
+ * いまの並びが (いまのバンド数の) グラフィックのグリッドか。
+ *
+ * 種別も見る — グリッドと同じ並びにシェルフを書いたプリセットでは、摘みの値の折れ線が
+ * 曲線を表さないので、真の応答を読む側 ([reband] の else) に倒す。
+ * [withGraphicGrid] の一致判定に種別が無いのは目的が違うため — あちらは「作り直すと
+ * 値がわずかに動くから、スライダーを出せる並びなら触らない」の判定。
+ */
+private fun matchesGraphicGrid(settings: EqSettings): Boolean {
+    val freqs = EqSolver.centerFrequencies(settings.bandCount)
+    return settings.bands.size == freqs.size &&
+        settings.bands.indices.all { settings.bands[it].freqHz == freqs[it] } &&
+        settings.bands.all { it.type == EqBandType.PEAKING }
 }
 
 private fun toGraphic(settings: EqSettings): EqSettings =
