@@ -36,12 +36,18 @@ private val EQ_TITLE_BAR_PADDING = 36.dp
 /**
  * 題を 2 行 (音響処理 + イヤホン名) にしたときのバーの高さ。
  *
+ * **自前で 2 行積んでいるのは、Material3 1.4.0 の `subtitle` 付き `TopAppBar` が internal で
+ * 呼べないから。**(JVM の署名は public に見えるので、バイトコードだけ見ると使えると誤読する。)
  * **既定の 64.dp は 1 行ぶんしか無く、2 行を積むと下の行が切れる。**
  *
  * **⚠️ dp の定数で決めてはいけない。**バーの高さは dp、中身の行の高さは sp なので、
  * 端末の文字サイズを上げると**必ずどこかで 2 行目がはみ出す** (76.dp 固定にしていたときは
  * 文字サイズ 200% で 2dp はみ出していた)。だから**いまの行の高さから毎回組み立てる。**
  * `lineHeight` は sp なので、`toDp()` が端末の文字サイズを織り込んでくれる。
+ *
+ * **⚠️ `Theme.kt` で Typography を差し替えるなら、`lineHeight` を sp のままにすること。**
+ * `TextUnit.toDp()` は sp 以外で例外を投げるので、`em` で書くと**この画面を開いた瞬間に落ちる。**
+ * いまは M3 の既定 (sp) をそのまま使っているので起きない。
  *
  * `EqScreenTitleTest` が文字サイズ 100% / 130% / 200% で実際に測って固定している。
  */
@@ -105,13 +111,7 @@ fun EqScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                // どのイヤホンを編集しているかは、ここにしか出ない (下は EQ の値だけ)。
-                //
-                // **⚠️ Material3 1.4.0 の `subtitle` 付き `TopAppBar` は internal なので使えない。**
-                // (JVM の署名は public に見えるが Kotlin の可視性が internal。バイトコードだけ見ると
-                // 使えると誤読する。) 自前で積むしかないので、**高さを明示して詰まりを防ぐ。**
-                // 既定の 64.dp は 1 行ぶんで、2 行だと下が切れる。
-                // 値は `EqScreenTitleTest` が測って固定している。
+                // 題を自前で 2 行積んでいる理由と、高さを渡す理由は eqTitleBarHeight にある。
                 title = { EqScreenTitle(vm.nameOf(mac)) },
                 expandedHeight = eqTitleBarHeight,
                 navigationIcon = {
