@@ -222,16 +222,19 @@ private fun GraphicBands(
     gainText: (Int) -> String,
     frequencyText: (Int) -> String,
 ) {
+    // 摘みが表すのは「そのバンド中心で実際に鳴る音量」であって、フィルタに渡すゲインではない。
+    // 目標値は保存していない — 保存中のバンドから復元する (EqSolver.graphicTargetsDb10)。
+    val targets = remember(eq.bands) { EqSolver.graphicTargetsDb10(eq.bands) }
     eq.bands.forEachIndexed { index, band ->
         EqSliderRow(
             label = frequencyText(band.freqHz),
-            value = band.gainDb10,
+            value = targets.getOrElse(index) { band.gainDb10 },
             scale = GAIN_SCALE,
             valueText = gainText,
             onCommit = { value ->
-                vm.updateEq(mac) { it.mapBand(index) { current -> current.copy(gainDb10 = value) } }
+                vm.updateEq(mac) { it.copy(bands = EqSolver.withGraphicTarget(it.bands, index, value)) }
             },
-            previewKey = EqPreviewTarget(index, EqField.GAIN),
+            previewKey = EqPreviewTarget(index, EqField.GRAPHIC_GAIN),
         )
     }
 }
