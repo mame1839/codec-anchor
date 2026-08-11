@@ -95,6 +95,17 @@
     <string name="eq_device_failed_audioserver">Le service audio n\'est pas revenu. Redémarrez le téléphone.</string>
     <string name="eq_device_failed_unknown">L\'échec s\'est produit d\'une manière que cette version de l\'application ne connaît pas (code %1$d).</string>
 
+    <string name="eq_delivery_other">D\'autres écouteurs sont connectés en ce moment, donc ce que vous modifiez ici n\'agit pas encore sur le son. Connectez ces écouteurs et le réglage sera appliqué.</string>
+    <string name="eq_delivery_ambiguous">Plusieurs effets d\'écouteurs sont actifs, et l\'application ne peut pas déterminer lequel appartient à ces écouteurs : rien n\'a donc été envoyé. Déconnectez les autres écouteurs, puis modifiez de nouveau quelque chose ici.</string>
+    <string name="eq_delivery_not_live">Ces réglages n\'agissent pas encore sur le son. Lancez une lecture sur ces écouteurs, ou rouvrez cette application.</string>
+    <string name="eq_delivery_failed_root">Ces réglages n\'ont pas agi sur le son : l\'accès root a été refusé, ou ce téléphone n\'a pas de gestionnaire root. Autorisez Codec Anchor dans votre gestionnaire root.</string>
+    <string name="eq_delivery_failed_shm">Ces réglages n\'ont pas agi sur le son : le module de traitement audio ne tourne pas. Redémarrez le téléphone.</string>
+    <string name="eq_delivery_failed_version">Ces réglages n\'ont pas agi sur le son : l\'application et le module de traitement audio sont dans des versions différentes. Mettez les deux à la même version, puis redémarrez le téléphone.</string>
+    <string name="eq_delivery_failed_rejected">Ces réglages ont été refusés car hors limites, le son est donc inchangé. Baissez le gain des bandes.</string>
+    <string name="eq_delivery_failed_timeout">L\'envoi de ces réglages n\'a pas fini à temps et a été arrêté.</string>
+    <string name="eq_delivery_failed_input">Ces réglages n\'ont pas agi sur le son : l\'application a mal construit la requête. C\'est un défaut de l\'application.</string>
+    <string name="eq_delivery_failed_unknown">L\'envoi de ces réglages a échoué d\'une manière que cette version de l\'application ne connaît pas (code %1$d).</string>
+
     <string name="tag_connected">Connecté</string>
     <string name="tag_disconnected">Non connecté</string>
     <string name="tag_active">En lecture</string>

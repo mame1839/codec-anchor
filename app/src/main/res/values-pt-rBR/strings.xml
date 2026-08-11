@@ -95,6 +95,17 @@
     <string name="eq_device_failed_audioserver">O serviço de áudio não voltou a funcionar. Reinicie o aparelho.</string>
     <string name="eq_device_failed_unknown">Falhou de um jeito que esta versão do app não reconhece (código %1$d).</string>
 
+    <string name="eq_delivery_other">No momento há outros fones conectados, então o que você mudar aqui ainda não chega ao som. Conecte estes fones e será aplicado.</string>
+    <string name="eq_delivery_ambiguous">Há mais de um efeito de fones em execução e o app não consegue saber qual pertence a estes fones, então nada foi enviado. Desconecte os outros fones e mude algo aqui de novo.</string>
+    <string name="eq_delivery_not_live">Estas configurações ainda não chegaram ao som. Reproduza algo nestes fones, ou abra este app de novo.</string>
+    <string name="eq_delivery_failed_root">Estas configurações não chegaram ao som: o acesso root foi recusado, ou este aparelho não tem gerenciador de root. Permita o Codec Anchor no seu gerenciador de root.</string>
+    <string name="eq_delivery_failed_shm">Estas configurações não chegaram ao som: o módulo de processamento de áudio não está em execução. Reinicie o aparelho.</string>
+    <string name="eq_delivery_failed_version">Estas configurações não chegaram ao som: o app e o módulo de processamento de áudio estão em versões diferentes. Atualize os dois para a mesma versão e reinicie o aparelho.</string>
+    <string name="eq_delivery_failed_rejected">Estas configurações foram recusadas por estarem fora do intervalo, então o som não mudou. Diminua o ganho das bandas.</string>
+    <string name="eq_delivery_failed_timeout">O envio destas configurações não terminou a tempo e foi interrompido.</string>
+    <string name="eq_delivery_failed_input">Estas configurações não chegaram ao som: o app montou a solicitação de forma errada. Essa é uma falha do app.</string>
+    <string name="eq_delivery_failed_unknown">O envio destas configurações falhou de um jeito que esta versão do app não reconhece (código %1$d).</string>
+
     <string name="tag_connected">Conectado</string>
     <string name="tag_disconnected">Sem conexão</string>
     <string name="tag_active">Tocando</string>

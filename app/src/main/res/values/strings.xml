@@ -112,6 +112,21 @@
     <string name="eq_device_failed_audioserver">The audio service did not come back. Restart the phone.</string>
     <string name="eq_device_failed_unknown">It failed in a way this version of the app does not know about (code %1$d).</string>
 
+    <!-- Whether what is set here is reaching the sound right now. This is a different question from
+         the eq_unavailable_* set above: those say the feature cannot be used at all, these say it
+         can, but not at this moment. Keep "audio processing module" and "root manager" spelled the
+         same as above (see the note there). -->
+    <string name="eq_delivery_other">Different earphones are connected right now, so what you change here does not reach the sound yet. Connect these earphones and it is applied.</string>
+    <string name="eq_delivery_ambiguous">More than one set of earphone effects is running, and the app cannot tell which one belongs to these earphones, so nothing was sent. Disconnect the other earphones, then change something here again.</string>
+    <string name="eq_delivery_not_live">These settings have not reached the sound yet. Play something on these earphones, or open this app again.</string>
+    <string name="eq_delivery_failed_root">These settings did not reach the sound: root access was refused, or this phone has no root manager. Allow Codec Anchor in your root manager.</string>
+    <string name="eq_delivery_failed_shm">These settings did not reach the sound: the audio processing module is not running. Restart the phone.</string>
+    <string name="eq_delivery_failed_version">These settings did not reach the sound: the app and the audio processing module are different versions. Update both to the same version, then restart the phone.</string>
+    <string name="eq_delivery_failed_rejected">These settings were refused as out of range, so the sound is unchanged. Lower the gain of the bands.</string>
+    <string name="eq_delivery_failed_timeout">Sending these settings did not finish in time and was stopped.</string>
+    <string name="eq_delivery_failed_input">These settings did not reach the sound: the app built the request wrongly. This is a fault in the app.</string>
+    <string name="eq_delivery_failed_unknown">Sending these settings failed in a way this version of the app does not know about (code %1$d).</string>
+
     <string name="tag_connected">Connected</string>
     <string name="tag_disconnected">Not connected</string>
     <string name="tag_active">Playing</string>

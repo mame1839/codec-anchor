@@ -93,6 +93,17 @@
     <string name="eq_device_failed_audioserver">音频服务未能恢复。请重启手机。</string>
     <string name="eq_device_failed_unknown">失败原因是当前版本应用无法识别的情况（代码 %1$d）。</string>
 
+    <string name="eq_delivery_other">现在连接的是另一副耳机，所以这里的改动还不会影响声音。连接这副耳机后即可生效。</string>
+    <string name="eq_delivery_ambiguous">有多个耳机音效正在运行，应用无法分辨哪一个属于这副耳机，因此没有发送任何内容。请断开另一副耳机，然后在这里重新改动一次。</string>
+    <string name="eq_delivery_not_live">这些设置还没有影响声音。请用这副耳机播放一些内容，或者重新打开本应用。</string>
+    <string name="eq_delivery_failed_root">这些设置没有影响声音：root 权限被拒绝，或者本机没有 root 管理器。请在你的 root 管理器中允许 Codec Anchor。</string>
+    <string name="eq_delivery_failed_shm">这些设置没有影响声音：音频处理模块没有在运行。请重启手机。</string>
+    <string name="eq_delivery_failed_version">这些设置没有影响声音：应用与音频处理模块的版本不一致。请把两者更新到同一版本，然后重启手机。</string>
+    <string name="eq_delivery_failed_rejected">这些设置因超出范围被拒绝，声音没有变化。请调低各频段的增益。</string>
+    <string name="eq_delivery_failed_timeout">发送这些设置未能按时完成，已被中止。</string>
+    <string name="eq_delivery_failed_input">这些设置没有影响声音：应用构建请求时出错。这是应用的问题。</string>
+    <string name="eq_delivery_failed_unknown">发送这些设置时失败，原因是当前版本应用无法识别的情况（代码 %1$d）。</string>
+
     <string name="tag_connected">已连接</string>
     <string name="tag_disconnected">未连接</string>
     <string name="tag_active">正在播放</string>

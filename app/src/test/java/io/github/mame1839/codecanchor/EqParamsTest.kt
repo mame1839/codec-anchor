@@ -254,28 +254,58 @@ class EqParamsTest {
     }
 
     /**
-     * `app/build.gradle.kts` を探す。単体テストの作業ディレクトリは Gradle の設定で
+     * **バンド数の上限が Kotlin と C++ で一致していること。**
+     *
+     * ⚠️ **同じ値が 2 箇所にある。**`EqSettings.MAX_BANDS` と `ca_eq_shm.h` の `CA_EQ_MAX_BANDS` で、
+     * **git は片方だけの変更を衝突と報告しない。**
+     *
+     * Kotlin 側が大きいと `caeqset` が「バンドが多すぎる」で 10 を返し、画面には
+     * **「アプリ側の不具合です」**が出る (原因は上限の食い違いなので、そこを見ても何も分からない)。
+     * C++ 側が大きいと、ユーザは払った容量を使えないまま気づかない。**どちらも無言で壊れる。**
+     */
+    @Test
+    fun theBandLimitMatchesTheNativeHeader() {
+        val header = repoFile("app/src/main/cpp/ca_eq_shm.h")
+        val native = Regex("""#define\s+CA_EQ_MAX_BANDS\s+(\d+)""")
+            .find(header.readText())
+            ?.groupValues
+            ?.get(1)
+            ?.toInt()
+        assertEquals(
+            "${header.absolutePath} の CA_EQ_MAX_BANDS を読めなかった。" +
+                "書き方を変えたなら、この検査の読み方も直すこと",
+            true,
+            native != null,
+        )
+        assertEquals(
+            "EqSettings.MAX_BANDS と CA_EQ_MAX_BANDS が違う。caeqset が 10 (使い方が不正) を返し、" +
+                "画面には「アプリ側の不具合」が出る",
+            native,
+            EqSettings.MAX_BANDS,
+        )
+    }
+
+    /**
+     * リポジトリ内のファイルを探す。単体テストの作業ディレクトリは Gradle の設定で
      * `app/` にもリポジトリ直下にもなる。
      *
      * **見つからなければ失敗させる。**「読めなかったので一致とみなす」にすると、
      * 配置が変わった日に上の検査が黙って何も見なくなる。
      */
-    private fun appBuildFile(): File {
+    private fun repoFile(relative: String): File {
         var dir: File? = File("").absoluteFile
         while (dir != null) {
-            val nested = File(dir, "app/build.gradle.kts")
-            if (nested.isFile) return nested
-            if (dir.name == "app") {
-                val here = File(dir, "build.gradle.kts")
-                if (here.isFile) return here
-            }
+            val here = File(dir, relative)
+            if (here.isFile) return here
             dir = dir.parentFile
         }
         throw AssertionError(
-            "app/build.gradle.kts が見つからない (作業ディレクトリ ${File("").absolutePath})。" +
+            "$relative が見つからない (作業ディレクトリ ${File("").absolutePath})。" +
                 "移動したなら、この検査の探し方も直すこと",
         )
     }
+
+    private fun appBuildFile(): File = repoFile("app/build.gradle.kts")
 
     private fun List<String>.bandTokens(): List<String> =
         mapIndexedNotNull { i, arg -> if (i > 0 && this[i - 1] == "--band") arg else null }

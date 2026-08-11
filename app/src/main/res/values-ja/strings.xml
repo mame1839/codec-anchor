@@ -93,6 +93,17 @@
     <string name="eq_device_failed_audioserver">音声サービスが復帰しませんでした。端末を再起動してください。</string>
     <string name="eq_device_failed_unknown">このバージョンのアプリが把握していない形で失敗しました (コード %1$d)。</string>
 
+    <string name="eq_delivery_other">いま別のイヤホンが接続されているため、ここでの変更はまだ音に反映されません。このイヤホンを接続すれば反映されます。</string>
+    <string name="eq_delivery_ambiguous">イヤホン用のエフェクトが複数動いていて、どれがこのイヤホンのものかアプリには判別できないため、何も送っていません。もう一方のイヤホンの接続を切ってから、ここでもう一度何か変更してください。</string>
+    <string name="eq_delivery_not_live">この設定はまだ音に反映されていません。このイヤホンで何か再生するか、このアプリを開き直してください。</string>
+    <string name="eq_delivery_failed_root">この設定は音に反映されませんでした。root 権限の要求が拒否されたか、この端末に root 管理アプリがありません。root 管理アプリで Codec Anchor を許可してください。</string>
+    <string name="eq_delivery_failed_shm">この設定は音に反映されませんでした。音響処理モジュールが動いていません。端末を再起動してください。</string>
+    <string name="eq_delivery_failed_version">この設定は音に反映されませんでした。アプリと音響処理モジュールのバージョンが違います。両方を同じバージョンに更新してから、端末を再起動してください。</string>
+    <string name="eq_delivery_failed_rejected">この設定は範囲外として拒否されたため、音は変わっていません。バンドのゲインを下げてください。</string>
+    <string name="eq_delivery_failed_timeout">この設定の送信が時間内に終わらなかったため中断しました。</string>
+    <string name="eq_delivery_failed_input">この設定は音に反映されませんでした。アプリが要求を正しく組み立てられませんでした。これはアプリ側の不具合です。</string>
+    <string name="eq_delivery_failed_unknown">この設定の送信が、このバージョンのアプリが把握していない形で失敗しました (コード %1$d)。</string>
+
     <string name="tag_connected">接続中</string>
     <string name="tag_disconnected">未接続</string>
     <string name="tag_active">再生中</string>

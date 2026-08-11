@@ -89,6 +89,8 @@ fun EqSection(vm: MainViewModel, mac: String, profile: DeviceProfile) {
         // カードの先頭に置くのは、理由がセクション全体に掛かるため — 下の 2 つのトグルは
         // 理由によって片方だけ押せなくなるので、どちらかの直後に付けるともう片方の説明が消える。
         EqUnavailableNotice(availability)
+        // 値がいま音に届いているか。使えるかどうか (上) とは別の軸なので行を分けてある。
+        EqDeliveryNotice(vm = vm, mac = mac, availability = availability)
 
         // 登録が入口。EQ を作ってから登録する順にも、登録してから作る順にも進めるよう、
         // ここは EQ が切れていても出す (どちらの順でも、音が切れる操作は 1 回で済む)。
