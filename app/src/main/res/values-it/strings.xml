@@ -32,6 +32,11 @@
     <string name="state_expanded">Espanso</string>
     <string name="state_collapsed">Compresso</string>
 
+    <string name="tab_devices">Dispositivi</string>
+    <string name="tab_settings">Impostazioni</string>
+    <string name="tab_status">Stato</string>
+    <string name="cd_needs_attention">Richiede attenzione</string>
+
     <string name="section_general">Generali</string>
     <string name="toggle_auto_apply">Applica le impostazioni automaticamente</string>
     <string name="toggle_auto_apply_desc">Quando è disattivato, non viene modificato nulla su nessun dispositivo</string>

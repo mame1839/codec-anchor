@@ -30,6 +30,11 @@
     <string name="state_expanded">확장됨</string>
     <string name="state_collapsed">축소됨</string>
 
+    <string name="tab_devices">기기</string>
+    <string name="tab_settings">설정</string>
+    <string name="tab_status">상태</string>
+    <string name="cd_needs_attention">확인이 필요함</string>
+
     <string name="section_general">전체 설정</string>
     <string name="toggle_auto_apply">자동으로 적용</string>
     <string name="toggle_auto_apply_desc">끄면 어떤 기기도 변경하지 않습니다</string>

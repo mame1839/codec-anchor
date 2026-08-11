@@ -30,6 +30,11 @@
     <string name="state_expanded">展開中</string>
     <string name="state_collapsed">折りたたみ中</string>
 
+    <string name="tab_devices">機器</string>
+    <string name="tab_settings">設定</string>
+    <string name="tab_status">状態</string>
+    <string name="cd_needs_attention">確認が必要</string>
+
     <string name="section_general">全体設定</string>
     <string name="toggle_auto_apply">自動適用を有効にする</string>
     <string name="toggle_auto_apply_desc">オフにすると、すべての機器で何もしません</string>
