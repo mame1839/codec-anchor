@@ -86,7 +86,13 @@ private const val GRID_LINE_ALPHA = 0.14f
 private const val COLUMN_GUIDE_ALPHA = 0.10f
 
 /** どの欄を動かしているか。ドラッグ中の値を絵へ運ぶために使う。 */
-enum class EqField { FREQUENCY, Q, GAIN }
+/**
+ * [GAIN] はパラメトリック用で、値がそのバンドのフィルタのゲイン。
+ * [GRAPHIC_GAIN] はグラフィック用で、値は**そのバンド中心で鳴る音量 (目標値)**。
+ * 分けているのは、ドラッグ中の絵を指を離した後と同じ形にするため — グラフィックで
+ * 目標値をそのままゲインとして描くと、離した瞬間に曲線が干渉補正の分だけ跳ぶ。
+ */
+enum class EqField { FREQUENCY, Q, GAIN, GRAPHIC_GAIN }
 
 /** ドラッグ中の値の宛先。 */
 data class EqPreviewTarget(val bandIndex: Int, val field: EqField)
@@ -205,7 +211,6 @@ private fun GraphicPlot(
     val response = remember(bands) { graphicResponse(bands) }
     val range = rememberPlotRange(response, bands, dragging = active >= 0)
     val ticks = rememberDbTicks(range, measurer, labelStyle)
-    val gutter = ticks.maxOf { it.second.size.width }
 
     Canvas(
         modifier
@@ -214,69 +219,96 @@ private fun GraphicPlot(
             .padding(horizontal = 16.dp)
             .semantics { contentDescription = description },
     ) {
-        val labelPx = rowHeight.toFloat()
-        val gapPx = LABEL_GAP.toPx()
-        val plot = Rect(gutter + gapPx, labelPx + gapPx, size.width, size.height - labelPx - gapPx)
-        val inset = PLOT_INSET.toPx()
-        val xs = evenColumns(bands.size, plot.left + inset, plot.right - inset)
-        val yOf = { db: Double -> plot.top + plotFraction(db, range) * plot.height }
-        val zero = yOf(0.0)
-
-        // ドラッグ中のバンドは、間引きの対象でも必ず出す。「いま何を触っているか」が主目的。
-        val shown = pickLabels(
-            xs,
-            FloatArray(bands.size) { max(gainLabels[it].size.width, freqLabels[it].size.width).toFloat() },
-            LABEL_MIN_GAP.toPx(),
-            active,
+        drawGraphicPlot(
+            bands, active, response, range, ticks,
+            gainLabels, freqLabels, rowHeight.toFloat(), accent, muted,
         )
+    }
+}
 
-        val curve = Path()
-        for (i in response.indices) {
-            val x = plot.left + inset + (plot.width - inset * 2) * i / (response.size - 1f)
-            val y = yOf(response[i])
-            if (i == 0) curve.moveTo(x, y) else curve.lineTo(x, y)
-        }
+/**
+ * グラフィックの絵。**描くのはここだけで、composable 側は測って渡すだけ。**
+ *
+ * 分けてあるのは試験のため。ビットマップへ同じ関数を流せば、目盛りが出ているか・
+ * 塗りがどこに閉じているかを画素で確かめられる (`EqCurveTest`)。
+ * **Canvas のラムダの中に書くと、この 2 つはどんな試験からも見えない** —
+ * 実際、目盛りが 1 本も無い状態と塗りが下端に閉じた状態が、緑のまま実機まで出ている。
+ */
+@Suppress("LongParameterList")
+internal fun DrawScope.drawGraphicPlot(
+    bands: List<EqBand>,
+    active: Int,
+    response: DoubleArray,
+    range: Double,
+    ticks: List<Pair<Double, TextLayoutResult>>,
+    gainLabels: List<TextLayoutResult>,
+    freqLabels: List<TextLayoutResult>,
+    rowHeight: Float,
+    accent: Color,
+    muted: Color,
+) {
+    val gapPx = LABEL_GAP.toPx()
+    val gutter = ticks.maxOf { it.second.size.width }
+    val plot = Rect(gutter + gapPx, rowHeight + gapPx, size.width, size.height - rowHeight - gapPx)
+    val inset = PLOT_INSET.toPx()
+    val xs = evenColumns(bands.size, plot.left + inset, plot.right - inset)
+    val yOf = { db: Double -> plot.top + plotFraction(db, range) * plot.height }
+    val zero = yOf(0.0)
 
-        // 曲線と 0 dB のあいだを塗る。**下端ではなく 0 dB に閉じる** — パラメトリックと同じ。
-        // 下端に閉じていたときは、塗りの面積が「値」ではなく「値 + 軸の幅」になっていて、
-        // -12 dB のバンドの下にも枠の 1/4 の塗りが残っていた。摘みを上下対称に振っても
-        // 絵は上に偏ったままになり、線の形そのものが歪んで見える原因になっていた。
-        val fill = Path().apply {
-            addPath(curve)
-            lineTo(plot.right - inset, zero)
-            lineTo(plot.left + inset, zero)
-            close()
-        }
-        drawPath(fill, accent.copy(alpha = 0.16f))
+    // ドラッグ中のバンドは、間引きの対象でも必ず出す。「いま何を触っているか」が主目的。
+    val shown = pickLabels(
+        xs,
+        FloatArray(bands.size) { max(gainLabels[it].size.width, freqLabels[it].size.width).toFloat() },
+        LABEL_MIN_GAP.toPx(),
+        active,
+    )
 
-        // 目盛り。0 dB は基準線として濃く引く (どれが 0 かが読めないと上げ下げが分からない)。
-        drawDbTicks(ticks, plot, muted, yOf)
+    val curve = Path()
+    for (i in response.indices) {
+        val x = plot.left + inset + (plot.width - inset * 2) * i / (response.size - 1f)
+        val y = yOf(response[i])
+        if (i == 0) curve.moveTo(x, y) else curve.lineTo(x, y)
+    }
 
-        // 点の大きさは列の間隔で頭を押さえる。31 バンドだと間隔が 11 dp しかなく、
-        // 既定の半径のままでは 0 dB に並んだ点がつながって 1 本の帯に見える。
-        val pitch = if (xs.size > 1) xs[1] - xs[0] else plot.width
-        val dotR = min(DOT_RADIUS.toPx(), pitch * 0.22f)
-        val dotRActive = min(DOT_RADIUS_ACTIVE.toPx(), pitch * 0.32f)
+    // 曲線と 0 dB のあいだを塗る。**下端ではなく 0 dB に閉じる** — パラメトリックと同じ。
+    // 下端に閉じていたときは、塗りの面積が「値」ではなく「値 + 軸の幅」になっていて、
+    // -12 dB のバンドの下にも枠の 1/4 の塗りが残っていた。摘みを上下対称に振っても
+    // 絵は上に偏ったままになり、線の形そのものが歪んで見える原因になっていた。
+    val fill = Path().apply {
+        addPath(curve)
+        lineTo(plot.right - inset, zero)
+        lineTo(plot.left + inset, zero)
+        close()
+    }
+    drawPath(fill, accent.copy(alpha = 0.16f))
 
-        bands.forEachIndexed { i, band ->
-            val x = xs[i]
-            val y = yOf(band.gainDb10.toDouble() / EqUnits.GAIN_SCALE)
-            val hot = i == active
-            // 枠いっぱいの案内線を薄く引いてから、**0 dB と点のあいだ**だけを濃くする。
-            // 濃い側を下端まで伸ばすと長さが値を表さない — -12 dB のバンドが枠の 2/3 の
-            // 長さの棒になり、+12 dB との差が 3 倍ではなく 1.5 倍にしか見えなかった。
-            drawLine(muted.copy(alpha = COLUMN_GUIDE_ALPHA), Offset(x, plot.top), Offset(x, plot.bottom), COLUMN_WIDTH.toPx())
-            drawLine(accent.copy(alpha = if (hot) 0.85f else 0.45f), Offset(x, y), Offset(x, zero), COLUMN_WIDTH.toPx())
-            drawCircle(accent, if (hot) dotRActive else dotR, Offset(x, y))
-        }
+    // 目盛り。0 dB は基準線として濃く引く (どれが 0 かが読めないと上げ下げが分からない)。
+    drawDbTicks(ticks, plot, muted, yOf)
 
-        drawPath(curve, accent, style = Stroke(width = CURVE_WIDTH.toPx()))
+    // 点の大きさは列の間隔で頭を押さえる。31 バンドだと間隔が 11 dp しかなく、
+    // 既定の半径のままでは 0 dB に並んだ点がつながって 1 本の帯に見える。
+    val pitch = if (xs.size > 1) xs[1] - xs[0] else plot.width
+    val dotR = min(DOT_RADIUS.toPx(), pitch * 0.22f)
+    val dotRActive = min(DOT_RADIUS_ACTIVE.toPx(), pitch * 0.32f)
 
-        bands.indices.forEach { i ->
-            if (!shown[i]) return@forEach
-            drawCentered(gainLabels[i], xs[i], 0f)
-            drawCentered(freqLabels[i], xs[i], size.height - labelPx)
-        }
+    bands.forEachIndexed { i, band ->
+        val x = xs[i]
+        val y = yOf(band.gainDb10.toDouble() / EqUnits.GAIN_SCALE)
+        val hot = i == active
+        // 枠いっぱいの案内線を薄く引いてから、**0 dB と点のあいだ**だけを濃くする。
+        // 濃い側を下端まで伸ばすと長さが値を表さない — -12 dB のバンドが枠の 2/3 の
+        // 長さの棒になり、+12 dB との差が 3 倍ではなく 1.5 倍にしか見えなかった。
+        drawLine(muted.copy(alpha = COLUMN_GUIDE_ALPHA), Offset(x, plot.top), Offset(x, plot.bottom), COLUMN_WIDTH.toPx())
+        drawLine(accent.copy(alpha = if (hot) 0.85f else 0.45f), Offset(x, y), Offset(x, zero), COLUMN_WIDTH.toPx())
+        drawCircle(accent, if (hot) dotRActive else dotR, Offset(x, y))
+    }
+
+    drawPath(curve, accent, style = Stroke(width = CURVE_WIDTH.toPx()))
+
+    bands.indices.forEach { i ->
+        if (!shown[i]) return@forEach
+        drawCentered(gainLabels[i], xs[i], 0f)
+        drawCentered(freqLabels[i], xs[i], size.height - rowHeight)
     }
 }
 
@@ -306,7 +338,6 @@ private fun ParametricPlot(
         AXIS_TICKS_HZ.map { measurer.measure(eqFrequencyShort(it, kiloShort), labelStyle) }
     }
     val rowHeight = tickLabels.maxOf { it.size.height }
-    val gutter = ticks.maxOf { it.second.size.width }
 
     val density = LocalDensity.current
     // 上下の目盛りのラベルは枠線の高さに中央合わせで置くので、半分ずつはみ出す。
@@ -320,65 +351,84 @@ private fun ParametricPlot(
             .padding(horizontal = 16.dp)
             .semantics { contentDescription = description },
     ) {
-        val labelPx = rowHeight.toFloat()
-        val gutterPx = gutter + LABEL_GAP.toPx()
-        val plot = Rect(gutterPx, labelPx / 2f, size.width, size.height - labelPx * 1.5f - LABEL_GAP.toPx())
-        val yOf = { db: Double -> plot.top + plotFraction(db, range) * plot.height }
-        val xAt = { i: Int -> plot.left + plot.width * i / (SAMPLES - 1f) }
-
-        drawDbTicks(ticks, plot, muted, yOf)
-
-        val zero = yOf(0.0)
-        val curve = Path()
-        for (i in composite.indices) {
-            val x = xAt(i)
-            val y = yOf(composite[i])
-            if (i == 0) curve.moveTo(x, y) else curve.lineTo(x, y)
-        }
-        // 曲線と 0 dB のあいだを塗る。上に出れば持ち上げ、下に落ちれば削り。
-        // 0 dB をまたぐと自己交差するが、NonZero なのでどちらの側も塗られる。
-        val fill = Path().apply {
-            addPath(curve)
-            lineTo(plot.right, zero)
-            lineTo(plot.left, zero)
-            close()
-        }
-        drawPath(fill, accent.copy(alpha = 0.16f))
-
-        // バンドごとの寄与。主役を埋めないよう細く薄く。触っているものだけ濃くする。
-        perBand.forEachIndexed { b, series ->
-            val hot = b == active
-            val path = Path()
-            for (i in series.indices) {
-                val x = xAt(i)
-                val y = yOf(series[i])
-                if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
-            }
-            drawPath(
-                path,
-                if (hot) accent.copy(alpha = 0.9f) else muted.copy(alpha = 0.38f),
-                style = Stroke(width = (if (hot) CURVE_WIDTH / 2 else BAND_WIDTH).toPx()),
-            )
-        }
-
-        drawPath(curve, accent, style = Stroke(width = CURVE_WIDTH.toPx()))
-
-        // 点はそのバンド自身の応答の上に置く。シェルフは fc でゲインの約半分なので、
-        // (fc, gain) に置くと自分の曲線から浮く。
-        bands.forEachIndexed { b, band ->
-            val hz = band.freqHz.toDouble()
-            if (hz < AXIS_LO_HZ || hz > AXIS_HI_HZ) return@forEachIndexed
-            val x = plot.left + (ln(hz / AXIS_LO_HZ) / ln(AXIS_HI_HZ / AXIS_LO_HZ)).toFloat() * plot.width
-            val y = yOf(EqSolver.bandResponseDb(band, hz))
-            drawCircle(accent, (if (b == active) DOT_RADIUS_ACTIVE else DOT_RADIUS).toPx(), Offset(x, y))
-        }
-
-        val xs = FloatArray(AXIS_TICKS_HZ.size) {
-            plot.left + (ln(AXIS_TICKS_HZ[it] / AXIS_LO_HZ) / ln(AXIS_HI_HZ / AXIS_LO_HZ)).toFloat() * plot.width
-        }
-        val shown = pickLabels(xs, FloatArray(xs.size) { tickLabels[it].size.width.toFloat() }, LABEL_MIN_GAP.toPx(), -1)
-        xs.indices.forEach { if (shown[it]) drawCentered(tickLabels[it], xs[it], size.height - labelPx) }
+        drawParametricPlot(
+            bands, active, perBand, composite, range, ticks,
+            tickLabels, rowHeight.toFloat(), accent, muted,
+        )
     }
+}
+
+/** パラメトリックの絵。分けてある理由は [drawGraphicPlot] と同じ。 */
+@Suppress("LongParameterList")
+internal fun DrawScope.drawParametricPlot(
+    bands: List<EqBand>,
+    active: Int,
+    perBand: List<DoubleArray>,
+    composite: DoubleArray,
+    range: Double,
+    ticks: List<Pair<Double, TextLayoutResult>>,
+    tickLabels: List<TextLayoutResult>,
+    rowHeight: Float,
+    accent: Color,
+    muted: Color,
+) {
+    val gutterPx = ticks.maxOf { it.second.size.width } + LABEL_GAP.toPx()
+    val plot = Rect(gutterPx, rowHeight / 2f, size.width, size.height - rowHeight * 1.5f - LABEL_GAP.toPx())
+    val yOf = { db: Double -> plot.top + plotFraction(db, range) * plot.height }
+    val xAt = { i: Int -> plot.left + plot.width * i / (SAMPLES - 1f) }
+
+    drawDbTicks(ticks, plot, muted, yOf)
+
+    val zero = yOf(0.0)
+    val curve = Path()
+    for (i in composite.indices) {
+        val x = xAt(i)
+        val y = yOf(composite[i])
+        if (i == 0) curve.moveTo(x, y) else curve.lineTo(x, y)
+    }
+    // 曲線と 0 dB のあいだを塗る。上に出れば持ち上げ、下に落ちれば削り。
+    // 0 dB をまたぐと自己交差するが、NonZero なのでどちらの側も塗られる。
+    val fill = Path().apply {
+        addPath(curve)
+        lineTo(plot.right, zero)
+        lineTo(plot.left, zero)
+        close()
+    }
+    drawPath(fill, accent.copy(alpha = 0.16f))
+
+    // バンドごとの寄与。主役を埋めないよう細く薄く。触っているものだけ濃くする。
+    perBand.forEachIndexed { b, series ->
+        val hot = b == active
+        val path = Path()
+        for (i in series.indices) {
+            val x = xAt(i)
+            val y = yOf(series[i])
+            if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+        }
+        drawPath(
+            path,
+            if (hot) accent.copy(alpha = 0.9f) else muted.copy(alpha = 0.38f),
+            style = Stroke(width = (if (hot) CURVE_WIDTH / 2 else BAND_WIDTH).toPx()),
+        )
+    }
+
+    drawPath(curve, accent, style = Stroke(width = CURVE_WIDTH.toPx()))
+
+    // 点はそのバンド自身の応答の上に置く。シェルフは fc でゲインの約半分なので、
+    // (fc, gain) に置くと自分の曲線から浮く。
+    bands.forEachIndexed { b, band ->
+        val hz = band.freqHz.toDouble()
+        if (hz < AXIS_LO_HZ || hz > AXIS_HI_HZ) return@forEachIndexed
+        val x = plot.left + (ln(hz / AXIS_LO_HZ) / ln(AXIS_HI_HZ / AXIS_LO_HZ)).toFloat() * plot.width
+        val y = yOf(EqSolver.bandResponseDb(band, hz))
+        drawCircle(accent, (if (b == active) DOT_RADIUS_ACTIVE else DOT_RADIUS).toPx(), Offset(x, y))
+    }
+
+    val xs = FloatArray(AXIS_TICKS_HZ.size) {
+        plot.left + (ln(AXIS_TICKS_HZ[it] / AXIS_LO_HZ) / ln(AXIS_HI_HZ / AXIS_LO_HZ)).toFloat() * plot.width
+    }
+    val shown = pickLabels(xs, FloatArray(xs.size) { tickLabels[it].size.width.toFloat() }, LABEL_MIN_GAP.toPx(), -1)
+    xs.indices.forEach { if (shown[it]) drawCentered(tickLabels[it], xs[it], size.height - rowHeight) }
 }
 
 // ---------------------------------------------------------------------------
@@ -440,16 +490,35 @@ internal fun plotFraction(db: Double, range: Double): Float = ((1.0 - db / range
  * ドラッグ中は段を下げない。
  *
  * 段は曲線のピークで決まるので、**摘みを下げると段も下がることがある。**段が下がると
- * 絵全体が拡大するので、**指を下げているのに線と点が上へ動く。**実機で 10 バンドの
- * 125 Hz を +12.0 → +11.0 に下げたとき、段が 24 → 18 dB に落ちて点が 22 px 上へ飛んだ。
+ * 絵全体が拡大するので、**指を下げているのに線と点が上へ動く。**
+ *
+ * ホストで確かめた再現 (`EqCurveTest.theAxisIsHeldWhileAKnobIsMoving`。製品の Q=1.0):
+ *
+ * ```
+ * 10 バンド Q=1.0、125 Hz と 250 Hz だけ +9.0 dB (他は 0 dB)
+ *   合成のピーク 12.154 dB          → 段 18 dB
+ *   125 Hz を +8.5 dB へ下げる
+ *   合成のピーク 11.956 dB          → 段 12 dB
+ *   点の縦位置 0.250 → 0.146 = 枠の 10.4% ぶん上へ (132 dp の絵で 14 dp)
+ * ```
+ *
+ * **よく出るのは 18 → 12。**段 12 dB は摘みの可動域 (±12 dB) が下から支えているので、
+ * 合成のピークが 12 を割った瞬間に必ず一段落ちる。無作為な 10 バンドの状態から 1 本を
+ * 0.5 dB 下げる試行を 20 万回まわすと、段が落ちるのが 1401 件、**そのうち 1187 件 (85%) で
+ * 点が指と逆に動いた。**
  *
  * 上げるほうは止めない — 止めると曲線が枠から出る。指を離した時点で本来の段へ戻す。
  */
 internal fun holdRange(computed: Double, held: Double, dragging: Boolean): Double =
     if (dragging) max(computed, held) else computed
 
+/**
+ * ⚠️ `internal` なのは試験のため。**固定が効くかどうかは再構成をまたいで初めて決まる**ので、
+ * [holdRange] 単体では見張れない ([remember] に鍵を付けると毎フレーム忘れて素通しになるが、
+ * 絵はもっともらしいまま)。`EqAxisHoldTest` が本物の composition で回している。
+ */
 @Composable
-private fun rememberPlotRange(response: DoubleArray, bands: List<EqBand>, dragging: Boolean): Double {
+internal fun rememberPlotRange(response: DoubleArray, bands: List<EqBand>, dragging: Boolean): Double {
     val computed = plotRange(response, bands)
     // **観測される状態にしない。**構成の中で書き戻すので、mutableStateOf だと書いた時点で
     // 再構成が予約されて回り続ける。段を変える再構成はドラッグの値そのものが起こすので、
@@ -562,6 +631,9 @@ internal fun pickLabels(centers: FloatArray, widths: FloatArray, gap: Float, for
 /** ドラッグ中の値を重ねた並び。設定そのものは変えない。 */
 internal fun List<EqBand>.withPreview(target: EqPreviewTarget?, value: Int?): List<EqBand> {
     if (target == null || value == null || target.bandIndex !in indices) return this
+    if (target.field == EqField.GRAPHIC_GAIN) {
+        return EqSolver.withGraphicTarget(this, target.bandIndex, value)
+    }
     return mapIndexed { i, band ->
         if (i != target.bandIndex) {
             band
@@ -570,6 +642,7 @@ internal fun List<EqBand>.withPreview(target: EqPreviewTarget?, value: Int?): Li
                 EqField.FREQUENCY -> band.copy(freqHz = value)
                 EqField.Q -> band.copy(q100 = value)
                 EqField.GAIN -> band.copy(gainDb10 = value)
+                EqField.GRAPHIC_GAIN -> band // 上で返している
             }
         }
     }
