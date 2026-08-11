@@ -30,6 +30,11 @@
     <string name="state_expanded">Diperluas</string>
     <string name="state_collapsed">Diciutkan</string>
 
+    <string name="tab_devices">Perangkat</string>
+    <string name="tab_settings">Setelan</string>
+    <string name="tab_status">Status</string>
+    <string name="cd_needs_attention">Perlu perhatian</string>
+
     <string name="section_general">Setelan umum</string>
     <string name="toggle_auto_apply">Terapkan setelan otomatis</string>
     <string name="toggle_auto_apply_desc">Saat nonaktif, tidak ada perangkat yang diubah</string>

@@ -31,6 +31,11 @@
     <string name="state_expanded">फैला हुआ</string>
     <string name="state_collapsed">समेटा हुआ</string>
 
+    <string name="tab_devices">डिवाइस</string>
+    <string name="tab_settings">सेटिंग</string>
+    <string name="tab_status">स्थिति</string>
+    <string name="cd_needs_attention">ध्यान देने की आवश्यकता है</string>
+
     <string name="section_general">सामान्य सेटिंग</string>
     <string name="toggle_auto_apply">सेटिंग अपने आप लागू करें</string>
     <string name="toggle_auto_apply_desc">बंद रहने पर किसी भी डिवाइस पर कुछ नहीं बदला जाता</string>

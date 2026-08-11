@@ -38,4 +38,37 @@ object AudioOutputs {
             .mapNotNull { EqDevices.normalizeMac(it.address) }
             .toSet()
     }.getOrDefault(emptySet())
+
+    /**
+     * 音楽が流れうる Bluetooth の出口があるか。**[QuietSwitch] が「押さえる必要があるか」と
+     * 「戻ったか」を決める材料。**
+     *
+     * [a2dp] と違って **MAC を読まない。**`BLUETOOTH_CONNECT` が無くても `type` は読めるので、
+     * 権限の有無で判定が変わらない。**押さえは権限を持たないユーザにも効かせたい。**
+     *
+     * **A2DP に絞らない。**登録できるのは A2DP だけだが、**音が漏れるのは再生中の出口が
+     * 消えたときで、そこは LE Audio のイヤホンでも補聴器でも同じ。**
+     *
+     * 読めなかったときは「無い」に倒す。作り直しの直後は audioserver がまだ binder に
+     * 出ていないので、**失敗するのはまさに「戻っていない」瞬間。**
+     */
+    fun anyBluetooth(manager: AudioManager?): Boolean = runCatching {
+        manager?.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+            .orEmpty()
+            .any { it.type in BLUETOOTH_TYPES }
+    }.getOrDefault(false)
+
+    /**
+     * 通話用の SCO と `TYPE_BLE_BROADCAST` は入れない。**イヤホンで音楽を聴いている状態を
+     * 表さない**ので、入れると「押さえる必要がある」の判定が緩くなる。
+     *
+     * ⚠️ SCO は A2DP と**同じ MAC で別の口として出る。**MAC で引くと掴んでしまうが、
+     * ここは `type` で引いているので混ざらない。
+     */
+    private val BLUETOOTH_TYPES = setOf(
+        AudioDeviceInfo.TYPE_BLUETOOTH_A2DP,
+        AudioDeviceInfo.TYPE_BLE_HEADSET,
+        AudioDeviceInfo.TYPE_BLE_SPEAKER,
+        AudioDeviceInfo.TYPE_HEARING_AID,
+    )
 }

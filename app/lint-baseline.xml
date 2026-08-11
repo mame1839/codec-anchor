@@ -62,8 +62,8 @@
         errorLine1="    val resources = LocalContext.current.resources"
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/io/github/mame1839/codecanchor/ui/DeviceListScreen.kt"
-            line="443"
+            file="src/main/java/io/github/mame1839/codecanchor/ui/DeviceListTab.kt"
+            line="173"
             column="21"/>
     </issue>
 

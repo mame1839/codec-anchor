@@ -32,6 +32,11 @@
     <string name="state_expanded">Expandido</string>
     <string name="state_collapsed">Contraído</string>
 
+    <string name="tab_devices">Dispositivos</string>
+    <string name="tab_settings">Ajustes</string>
+    <string name="tab_status">Estado</string>
+    <string name="cd_needs_attention">Requiere atención</string>
+
     <string name="section_general">Ajustes generales</string>
     <string name="toggle_auto_apply">Aplicar los ajustes automáticamente</string>
     <string name="toggle_auto_apply_desc">Mientras esté desactivado, no se cambia nada en ningún dispositivo</string>

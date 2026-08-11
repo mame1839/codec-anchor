@@ -30,6 +30,11 @@
     <string name="state_expanded">ขยายอยู่</string>
     <string name="state_collapsed">ยุบอยู่</string>
 
+    <string name="tab_devices">อุปกรณ์</string>
+    <string name="tab_settings">การตั้งค่า</string>
+    <string name="tab_status">สถานะ</string>
+    <string name="cd_needs_attention">ต้องตรวจสอบ</string>
+
     <string name="section_general">การตั้งค่าทั่วไป</string>
     <string name="toggle_auto_apply">ใช้การตั้งค่าโดยอัตโนมัติ</string>
     <string name="toggle_auto_apply_desc">เมื่อปิด จะไม่มีการเปลี่ยนแปลงกับอุปกรณ์ใด</string>

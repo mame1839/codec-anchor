@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -38,7 +36,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -120,14 +117,11 @@ fun DeviceDetailScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { inner ->
-        val layoutDirection = LocalLayoutDirection.current
         Column(
-            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(
-                start = inner.calculateStartPadding(layoutDirection) + 16.dp,
-                end = inner.calculateEndPadding(layoutDirection) + 16.dp,
-                top = inner.calculateTopPadding() + 8.dp,
-                bottom = inner.calculateBottomPadding() + 24.dp,
-            ),
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(screenPadding(inner)),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             DeviceHeader(name = name, mac = mac, status = status, offloadEnabled = vm.a2dpOffloadEnabled)

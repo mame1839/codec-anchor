@@ -44,6 +44,13 @@ ca_want_pp() {
 # onrestart restart vendor.audio-hal*)。audioserver.rc に critical / oneshot / disabled が
 # 無いので init が即座に作り直す。
 #   0 = 新しい pid で戻ってきた / 1 = 戻ってこない / 2 = そもそも居ない
+#
+# ⚠️ **pid が変わるまで戻らないこと。この待ちを外すとアプリ側の押さえが黙って効かなくなる。**
+# アプリは apply が戻ってから「Bluetooth の出口が戻るまで」音を押さえる (QuietSwitch)。
+# 出口の一覧は audioserver から引くので、**まだ作り直しが始まっていないうちに聞けば、
+# 前の audioserver が「出口はある」と答える。**押さえはその 1 回で解け、直後に来る
+# 本当の作り直しは何にも守られない。**症状は元のまま・テストは緑・ログも正常**という
+# 形で外れるので、短くしたくなったらここを読むこと。
 ca_restart_audioserver() {
     ca_as_old=$(pidof audioserver)
     if [ -z "$ca_as_old" ]; then
@@ -274,6 +281,12 @@ ca_setup() {
     # 起動後に走るこの段では、audioserver も audio HAL も元の XML と元の soundfx を
     # 読み終えている。bind mount しただけでは何も起きず、service.sh の自己検証も落ちて
     # 自分を無効化してしまう。
+    # ⚠️ **この経路には音の押さえが無い。**アプリからの登録 (eq_devices.sh) は QuietSwitch が
+    # 音声フォーカスを取ってから作り直すが、ここはモジュールを読み込む側から走るので、
+    # フォーカスを取れるアプリのプロセスがそもそも居ない。**このとき音楽が鳴っていれば、
+    # 数百 ms だけ本体スピーカーから出る。**
+    # モジュールを入れた直後の 1 回だけなので、シェルから他人の再生を止めにいく
+    # (media_session を叩く) 危険と釣り合わないと判断して、そのままにしてある。
     if [ "$CA_STAGE" = "late-load" ]; then
         ca_restart_audioserver || ca_log "late-load モードだが audioserver を作り直せない。反映は次の再起動から"
     fi

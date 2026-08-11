@@ -31,6 +31,11 @@
     <string name="state_expanded">Ausgeklappt</string>
     <string name="state_collapsed">Eingeklappt</string>
 
+    <string name="tab_devices">Geräte</string>
+    <string name="tab_settings">Einstellungen</string>
+    <string name="tab_status">Status</string>
+    <string name="cd_needs_attention">Erfordert Aufmerksamkeit</string>
+
     <string name="section_general">Allgemein</string>
     <string name="toggle_auto_apply">Einstellungen automatisch anwenden</string>
     <string name="toggle_auto_apply_desc">Solange dies aus ist, wird an keinem Gerät etwas geändert</string>

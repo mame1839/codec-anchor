@@ -54,8 +54,6 @@ private fun CodecAnchorApp(vm: MainViewModel = viewModel()) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
-    var selectedMac by rememberSaveable { mutableStateOf<String?>(null) }
-    var eqOpen by rememberSaveable { mutableStateOf(false) }
 
     // 報告の送信元が Bluetooth プロセス (別 uid) なので EXPORTED で登録する。
     DisposableEffect(context) {
@@ -121,21 +119,64 @@ private fun CodecAnchorApp(vm: MainViewModel = viewModel()) {
         }
     }
 
-    // 画面の切り替えはここ 1 箇所で持つ。画面の中に持つと BackHandler が入れ子になり、
-    // どちらが先に呼ばれるかが composition の深さで決まる — 画面を足すたびに黙って変わる。
-    // 平らに持てば、有効な BackHandler は常に 1 つだけになる。
+    AppNavigation(
+        vm = vm,
+        snackbarHostState = snackbarHostState,
+        onRequestPermission = { permissionLauncher.launch(Manifest.permission.BLUETOOTH_CONNECT) },
+        onNotify = notify,
+    )
+}
+
+/**
+ * 画面の位置と「戻る」。**`BackHandler` を置いてよいのはこの関数の中だけ。**
+ *
+ * 画面の切り替えはここ 1 箇所で平らに持つ。画面の中に持つと `BackHandler` が入れ子になり、
+ * どちらが先に呼ばれるかが composition の深さで決まる — 画面を足すたびに黙って変わる。
+ * 平らに持てば、**`when` の枝は同時に 1 つしか組まれない**ので、有効な `BackHandler` は常に 1 つになる。
+ *
+ * **タブも同じ理由でここに持つ。**下部ナビは [HomeScreen] が描くが、選ばれているタブを持つのは
+ * ここ。`HomeScreen` の中に持って中で `BackHandler` を足すと、詳細画面を開いている間も
+ * 生き残って 2 つになる。
+ *
+ * 戻るの筋道は 4 段:
+ * `音響処理 → 機器の詳細 → 設定 / 状態タブ → 機器タブ → アプリを抜ける`
+ *
+ * 最後の段は `enabled = false` で系へ渡す (アプリが終わる)。**消してしまわないこと** —
+ * `BackHandler { }` を無条件に置くと、機器タブで戻るが効かないアプリになる。
+ *
+ * private ではなく internal なのは、この筋道を見張るテスト (`AppNavigationTest`) から
+ * 直接組むため。`CodecAnchorApp` 側は放送の受信と権限の要求を持っていて、
+ * どちらもこの筋道とは関係が無い。
+ */
+@Composable
+internal fun AppNavigation(
+    vm: MainViewModel,
+    snackbarHostState: SnackbarHostState,
+    onRequestPermission: () -> Unit,
+    onNotify: (String) -> Unit,
+) {
+    var tab by rememberSaveable { mutableStateOf(HomeTab.DEVICES) }
+    var selectedMac by rememberSaveable { mutableStateOf<String?>(null) }
+    var eqOpen by rememberSaveable { mutableStateOf(false) }
+
     val mac = selectedMac
     when {
-        mac == null -> DeviceListScreen(
-            vm = vm,
-            snackbarHostState = snackbarHostState,
-            onOpenDevice = { target ->
-                vm.ensureProfile(target)
-                selectedMac = target
-            },
-            onRequestPermission = { permissionLauncher.launch(Manifest.permission.BLUETOOTH_CONNECT) },
-            onNotify = notify,
-        )
+        mac == null -> {
+            // 先頭のタブに居るときは無効にして系へ渡す。押すとアプリが終わる。
+            BackHandler(enabled = tab != HomeTab.DEVICES) { tab = HomeTab.DEVICES }
+            HomeScreen(
+                vm = vm,
+                tab = tab,
+                onSelectTab = { tab = it },
+                snackbarHostState = snackbarHostState,
+                onOpenDevice = { target ->
+                    vm.ensureProfile(target)
+                    selectedMac = target
+                },
+                onRequestPermission = onRequestPermission,
+                onNotify = onNotify,
+            )
+        }
 
         eqOpen -> {
             BackHandler { eqOpen = false }
@@ -155,7 +196,7 @@ private fun CodecAnchorApp(vm: MainViewModel = viewModel()) {
                 snackbarHostState = snackbarHostState,
                 onBack = { selectedMac = null },
                 onOpenEq = { eqOpen = true },
-                onNotify = notify,
+                onNotify = onNotify,
             )
         }
     }

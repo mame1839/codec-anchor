@@ -30,6 +30,11 @@
     <string name="state_expanded">已展開</string>
     <string name="state_collapsed">已收合</string>
 
+    <string name="tab_devices">裝置</string>
+    <string name="tab_settings">設定</string>
+    <string name="tab_status">狀態</string>
+    <string name="cd_needs_attention">需要處理</string>
+
     <string name="section_general">一般設定</string>
     <string name="toggle_auto_apply">自動套用設定</string>
     <string name="toggle_auto_apply_desc">關閉時不會變更任何裝置</string>
