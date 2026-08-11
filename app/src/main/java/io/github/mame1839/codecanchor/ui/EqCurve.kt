@@ -195,8 +195,16 @@ private fun GraphicPlot(
     modifier: Modifier,
 ) {
     val kiloShort = stringResource(R.string.eq_unit_khz_short)
+
+    // 実際に鳴る特性を、バンド中心が等間隔に並ぶ軸の上で測る。
+    // 中心と中心のあいだは対数周波数で補間するので、目盛りは歪むが曲線は本物のまま。
+    val response = remember(bands) { graphicResponse(bands) }
+
+    // 数値ラベルは摘みと同じ「その中心で実際に鳴る音量」([centreGainsDb10])。
+    // `gainDb10` (フィルタのゲイン) を出すと、全バンド +12.0 の摘みの上に解いたゲイン
+    // (+6.3〜+10.7) が並び、直したはずの「摘みと絵の不一致」がグラフの中に残る。
     val gainLabels = remember(bands, labelStyle) {
-        bands.map { measurer.measure(eqGainNumber(it.gainDb10), labelStyle) }
+        centreGainsDb10(response, bands.size).map { measurer.measure(eqGainNumber(it), labelStyle) }
     }
     val freqLabels = remember(bands, labelStyle, kiloShort) {
         bands.map { measurer.measure(eqFrequencyShort(it.freqHz, kiloShort), labelStyle) }
@@ -206,9 +214,6 @@ private fun GraphicPlot(
     val density = LocalDensity.current
     val totalHeight = PLOT_HEIGHT + LABEL_GAP * 2 + with(density) { (rowHeight * 2).toDp() }
 
-    // 実際に鳴る特性を、バンド中心が等間隔に並ぶ軸の上で測る。
-    // 中心と中心のあいだは対数周波数で補間するので、目盛りは歪むが曲線は本物のまま。
-    val response = remember(bands) { graphicResponse(bands) }
     val range = rememberPlotRange(response, bands, dragging = active >= 0)
     val ticks = rememberDbTicks(range, measurer, labelStyle)
 
@@ -291,9 +296,14 @@ internal fun DrawScope.drawGraphicPlot(
     val dotR = min(DOT_RADIUS.toPx(), pitch * 0.22f)
     val dotRActive = min(DOT_RADIUS_ACTIVE.toPx(), pitch * 0.32f)
 
-    bands.forEachIndexed { i, band ->
+    // 点は「その中心で実際に鳴る音量」= 摘みの値の高さに置く。曲線は中心を必ず通るので
+    // (`samplesLandExactlyOnBandCentres`)、点は曲線の上に乗る。`gainDb10` (フィルタのゲイン)
+    // に置くと、全バンド +12 の平らな曲線の下に解いたゲインの点が散らばって、摘みと絵が
+    // 食い違う。丸める前の値なのは点を曲線から 1 px も浮かさないため (ラベルは丸めた値)。
+    val step = if (bands.size > 1) (response.size - 1) / (bands.size - 1) else 0
+    bands.indices.forEach { i ->
         val x = xs[i]
-        val y = yOf(band.gainDb10.toDouble() / EqUnits.GAIN_SCALE)
+        val y = yOf(response[i * step])
         val hot = i == active
         // 枠いっぱいの案内線を薄く引いてから、**0 dB と点のあいだ**だけを濃くする。
         // 濃い側を下端まで伸ばすと長さが値を表さない — -12 dB のバンドが枠の 2/3 の
@@ -572,6 +582,19 @@ internal fun graphicResponse(bands: List<EqBand>): DoubleArray {
         val t = (s - i * perBand).toDouble() / perBand
         EqSolver.combinedResponseDb(bands, exp(freqs[i] * (1 - t) + freqs[i + 1] * t))
     }
+}
+
+/**
+ * バンド中心での実際の応答 (dB10、表示の刻みに丸め)。**グラフィックの点と数値ラベルの
+ * 共通の出どころ。**摘みの値もこれ (eq-spec.md §7 の「その中心で実際に鳴る音量」)。
+ *
+ * 丸めは求解側 (`EqSolver.withGraphicTarget`) と同じ `Math.round`。求解が
+ * 「丸めた応答 = 目標」まで詰めるので、目標どおりに解けた並びではラベルが
+ * スライダーの表示と桁まで一致する。
+ */
+internal fun centreGainsDb10(response: DoubleArray, bandCount: Int): IntArray {
+    val step = if (bandCount > 1) (response.size - 1) / (bandCount - 1) else 0
+    return IntArray(bandCount) { Math.round(response[it * step] * EqUnits.GAIN_SCALE).toInt() }
 }
 
 /** バンドごとの応答を対数の周波数軸で標本化する。合成はこれを足して作る。 */

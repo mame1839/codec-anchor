@@ -26,6 +26,7 @@ import io.github.mame1839.codecanchor.ui.EqField
 import io.github.mame1839.codecanchor.ui.EqPreviewTarget
 import io.github.mame1839.codecanchor.ui.PLOT_RANGES_DB
 import io.github.mame1839.codecanchor.ui.SAMPLES
+import io.github.mame1839.codecanchor.ui.centreGainsDb10
 import io.github.mame1839.codecanchor.ui.drawGraphicPlot
 import io.github.mame1839.codecanchor.ui.drawParametricPlot
 import io.github.mame1839.codecanchor.ui.eqFrequencyShort
@@ -523,22 +524,38 @@ class EqCurveTest {
         db to measurer.measure(eqGainTick(db.toInt()), TextStyle(fontSize = 10.sp, color = tickText))
     }
 
-    private fun paintGraphic(bands: List<EqBand>): Painted {
-        val style = TextStyle(fontSize = 10.sp, color = bandText)
-        val gains = bands.map { measurer.measure(eqGainNumber(it.gainDb10), style) }
-        val freqs = bands.map { measurer.measure(eqFrequencyShort(it.freqHz, "%s k"), style) }
-        val rowHeight = (gains + freqs).maxOf { it.size.height }.toFloat()
+    /**
+     * グラフィックの絵と、検査に要る幾何 (枠と列の位置)。ラベルの作り方は composable と、
+     * 幾何は `drawGraphicPlot` と同じ式で組む。定数はあちらの private 定数の写し
+     * (LABEL_GAP 6dp / PLOT_INSET 10dp / 絵 132dp)。あちらを変えるとここの検査が
+     * 枠を外れて落ちるので、そのとき合わせる。
+     */
+    private inner class GraphicScene(bands: List<EqBand>) {
         val response = graphicResponse(bands)
         val range = plotRange(response, bands)
-        // 幅と高さは composable の組み方に合わせる (絵 132 dp + 隙間 6 dp x 2 + 文字 2 行)。
-        val height = (132f + 6f * 2f) * density.density + rowHeight * 2f
-        return Painted(984, height.toInt()) {
-            drawGraphicPlot(
-                bands, -1, response, range, ticksFor(range),
-                gains, freqs, rowHeight, accent, muted,
-            )
+        private val ticks = ticksFor(range)
+        private val style = TextStyle(fontSize = 10.sp, color = bandText)
+        private val gains = centreGainsDb10(response, bands.size).map { measurer.measure(eqGainNumber(it), style) }
+        private val freqs = bands.map { measurer.measure(eqFrequencyShort(it.freqHz, "%s k"), style) }
+        private val rowHeight = (gains + freqs).maxOf { it.size.height }.toFloat()
+
+        private val gap = 6f * density.density
+        private val inset = 10f * density.density
+        val width = 984
+        val height = ((132f + 6f * 2f) * density.density + rowHeight * 2f).toInt()
+        val plotTop = rowHeight + gap
+        val plotBottom = height - rowHeight - gap
+        val plotLeft = ticks.maxOf { it.second.size.width } + gap
+        val xs = evenColumns(bands.size, plotLeft + inset, width - inset)
+
+        val painted = Painted(width, height) {
+            drawGraphicPlot(bands, -1, response, range, ticks, gains, freqs, rowHeight, accent, muted)
         }
+
+        fun yOf(db: Double): Float = plotTop + plotFraction(db, range) * (plotBottom - plotTop)
     }
+
+    private fun paintGraphic(bands: List<EqBand>): Painted = GraphicScene(bands).painted
 
     private fun paintParametric(bands: List<EqBand>): Painted {
         val style = TextStyle(fontSize = 10.sp, color = bandText)
@@ -622,6 +639,77 @@ class EqCurveTest {
             down.count(0 until downZero.first - 2, ::isAccent),
         )
         assertTrue("0 dB より下に絵が無い", down.count(downZero.last + 3 until down.height, ::isAccent) > 0)
+    }
+
+    // ---------------------------------------------------------------------
+    // 点とラベル — 摘みと同じ「その中心で実際に鳴る音量」を指す
+    // ---------------------------------------------------------------------
+
+    /**
+     * 数値ラベルの値は摘みと同じ「その中心で実際に鳴る音量」。
+     *
+     * 目標どおりに解けた並びなら全ラベルが目標そのものになる (求解が「丸めた応答 = 目標」まで
+     * 詰めるため)。フィルタのゲインを出すと、全部 +12.0 の摘みの上に解いたゲイン
+     * (+6.3〜+10.7) が並び、摘みと絵の不一致がグラフの中に残る。
+     */
+    @Test
+    fun centreLabelsShowTheKnobValueNotTheFilterGain() {
+        val freqs = EqSolver.centerFrequencies(10)
+        val solved = EqSolver.solveBands(DoubleArray(freqs.size) { 12.0 }, freqs, EqSolver.defaultQ(10))
+        val labels = centreGainsDb10(graphicResponse(solved), solved.size)
+        assertTrue("ラベルが目標 +12.0 に一致しない: ${labels.toList()}", labels.all { it == 120 })
+        assertNotEquals("フィルタのゲインをそのまま出している", solved.map { it.gainDb10 }, labels.toList())
+
+        // 丸めの検算。フィルタゲイン直置きの flat +6 では、中心の応答 (上の参照値) を丸めた値。
+        assertEquals(
+            listOf(85, 104, 108, 109, 109, 108, 106, 101, 88, 70),
+            centreGainsDb10(graphicResponse(flatBands(10, 60)), 10).toList(),
+        )
+    }
+
+    /**
+     * 点は曲線の上 (= その中心で実際に鳴る音量) にあり、フィルタのゲインの高さには無い。
+     *
+     * 目標 +12 で解いた並びでは曲線が各中心で +12 を通り、解いたゲインはそれより下に
+     * 散らばる。点をゲインに置く古い描き方だと、平らな曲線の下に点がばらばらに浮く。
+     */
+    @Test
+    fun theDotsSitOnTheCurveNotAtTheFilterGains() {
+        val freqs = EqSolver.centerFrequencies(10)
+        val bands = EqSolver.solveBands(DoubleArray(freqs.size) { 12.0 }, freqs, EqSolver.defaultQ(10))
+        val scene = GraphicScene(bands)
+        val step = (scene.response.size - 1) / (bands.size - 1)
+        val dotR = 3.5f * density.density
+
+        var checked = 0
+        bands.forEachIndexed { i, band ->
+            val x = scene.xs[i].toInt()
+            val centreY = scene.yOf(scene.response[i * step])
+            assertTrue("バンド $i の中心 (曲線の上) に点が無い", hasOpaqueAccent(scene.painted, x, centreY, dotR + 2f))
+
+            // 曲線や点の直径と重なる近さでは「無い」を言えない。離れているバンドだけ見る。
+            val gainY = scene.yOf(band.gainDb10 / 10.0)
+            if (abs(gainY - centreY) < dotR * 2 + 8f) return@forEachIndexed
+            checked++
+            assertFalse(
+                "バンド $i: フィルタのゲイン (${band.gainDb10 / 10.0} dB) の高さに点がある",
+                hasOpaqueAccent(scene.painted, x, gainY, 4f),
+            )
+        }
+        assertTrue("ゲインと中心が離れたバンドが少なすぎて、何も確かめていない: $checked", checked >= 5)
+    }
+
+    /** 点 (不透明の accent) の有無。案内線 (45%) や塗り (16%) は重なっても不透明にならない。 */
+    private fun hasOpaqueAccent(p: Painted, x: Int, centerY: Float, halfWindow: Float): Boolean {
+        val lo = (centerY - halfWindow).toInt().coerceAtLeast(0)
+        val hi = (centerY + halfWindow).toInt().coerceAtMost(p.height - 1)
+        for (y in lo..hi) {
+            for (xx in (x - 2).coerceAtLeast(0)..(x + 2).coerceAtMost(p.width - 1)) {
+                val c = p.at(xx, y)
+                if (c.alpha > 0.9f && c.red > 0.5f && c.green < 0.1f && c.blue < 0.1f) return true
+            }
+        }
+        return false
     }
 
     private fun assertArrayEquals(expected: FloatArray, actual: FloatArray) {
