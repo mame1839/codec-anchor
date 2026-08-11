@@ -96,6 +96,17 @@
     <string name="eq_device_failed_audioserver">Usługa audio nie wróciła do działania. Uruchom telefon ponownie.</string>
     <string name="eq_device_failed_unknown">Wystąpił błąd, którego ta wersja aplikacji nie rozpoznaje (kod %1$d).</string>
 
+    <string name="eq_delivery_other">Teraz połączone są inne słuchawki, więc to, co tu zmienisz, jeszcze nie dociera do dźwięku. Połącz te słuchawki, a ustawienia zostaną zastosowane.</string>
+    <string name="eq_delivery_ambiguous">Działa więcej niż jeden efekt słuchawkowy, a aplikacja nie potrafi rozpoznać, który należy do tych słuchawek, więc nic nie zostało wysłane. Rozłącz pozostałe słuchawki, a potem zmień tutaj coś jeszcze raz.</string>
+    <string name="eq_delivery_not_live">Te ustawienia jeszcze nie dotarły do dźwięku. Odtwórz coś na tych słuchawkach albo otwórz tę aplikację ponownie.</string>
+    <string name="eq_delivery_failed_root">Te ustawienia nie dotarły do dźwięku: dostęp roota został odrzucony albo ten telefon nie ma menedżera roota. Zezwól na Codec Anchor w swoim menedżerze roota.</string>
+    <string name="eq_delivery_failed_shm">Te ustawienia nie dotarły do dźwięku: moduł przetwarzania dźwięku nie działa. Uruchom telefon ponownie.</string>
+    <string name="eq_delivery_failed_version">Te ustawienia nie dotarły do dźwięku: aplikacja i moduł przetwarzania dźwięku mają różne wersje. Zaktualizuj oba do tej samej wersji, a potem uruchom telefon ponownie.</string>
+    <string name="eq_delivery_failed_rejected">Te ustawienia zostały odrzucone jako spoza zakresu, więc dźwięk się nie zmienił. Zmniejsz wzmocnienie pasm.</string>
+    <string name="eq_delivery_failed_timeout">Wysyłanie tych ustawień nie zakończyło się na czas i zostało zatrzymane.</string>
+    <string name="eq_delivery_failed_input">Te ustawienia nie dotarły do dźwięku: aplikacja błędnie zbudowała żądanie. To błąd aplikacji.</string>
+    <string name="eq_delivery_failed_unknown">Wysyłanie tych ustawień nie powiodło się w sposób, którego ta wersja aplikacji nie rozpoznaje (kod %1$d).</string>
+
     <string name="tag_connected">Połączone</string>
     <string name="tag_disconnected">Brak połączenia</string>
     <string name="tag_active">Odtwarzanie</string>

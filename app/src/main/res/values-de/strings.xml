@@ -94,6 +94,17 @@
     <string name="eq_device_failed_audioserver">Der Audiodienst ist nicht wieder gestartet. Starten Sie das Telefon neu.</string>
     <string name="eq_device_failed_unknown">Es ist auf eine Weise fehlgeschlagen, die diese Version der App nicht kennt (Code %1$d).</string>
 
+    <string name="eq_delivery_other">Zurzeit sind andere Kopfhörer verbunden, daher wirkt sich das, was Sie hier ändern, noch nicht auf den Klang aus. Verbinden Sie diese Kopfhörer, dann wird es angewendet.</string>
+    <string name="eq_delivery_ambiguous">Es laufen mehrere Kopfhörer-Effekte, und die App kann nicht erkennen, welcher zu diesen Kopfhörern gehört, daher wurde nichts gesendet. Trennen Sie die anderen Kopfhörer, und ändern Sie hier dann noch einmal etwas.</string>
+    <string name="eq_delivery_not_live">Diese Einstellungen wirken sich noch nicht auf den Klang aus. Spielen Sie etwas über diese Kopfhörer ab, oder öffnen Sie diese App erneut.</string>
+    <string name="eq_delivery_failed_root">Diese Einstellungen wirken sich nicht auf den Klang aus: Der Root-Zugriff wurde verweigert, oder dieses Telefon hat keinen Root-Manager. Erlauben Sie Codec Anchor in Ihrem Root-Manager.</string>
+    <string name="eq_delivery_failed_shm">Diese Einstellungen wirken sich nicht auf den Klang aus: Das Audiobearbeitungsmodul läuft nicht. Starten Sie das Telefon neu.</string>
+    <string name="eq_delivery_failed_version">Diese Einstellungen wirken sich nicht auf den Klang aus: Die App und das Audiobearbeitungsmodul haben unterschiedliche Versionen. Bringen Sie beide auf dieselbe Version und starten Sie dann das Telefon neu.</string>
+    <string name="eq_delivery_failed_rejected">Diese Einstellungen wurden als außerhalb des zulässigen Bereichs abgelehnt, der Klang bleibt daher unverändert. Verringern Sie die Verstärkung der Bänder.</string>
+    <string name="eq_delivery_failed_timeout">Das Senden dieser Einstellungen wurde nicht rechtzeitig abgeschlossen und daher gestoppt.</string>
+    <string name="eq_delivery_failed_input">Diese Einstellungen wirken sich nicht auf den Klang aus: Die App hat die Anfrage falsch aufgebaut. Das ist ein Fehler der App.</string>
+    <string name="eq_delivery_failed_unknown">Das Senden dieser Einstellungen ist auf eine Weise fehlgeschlagen, die diese Version der App nicht kennt (Code %1$d).</string>
+
     <string name="tag_connected">Verbunden</string>
     <string name="tag_disconnected">Nicht verbunden</string>
     <string name="tag_active">Wiedergabe</string>
