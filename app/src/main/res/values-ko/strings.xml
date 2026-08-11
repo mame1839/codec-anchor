@@ -218,6 +218,9 @@
     <string name="eq_round_title">그래픽으로 바꿀까요?</string>
     <string name="eq_round_body">모든 밴드가 그래픽 이퀄라이저의 고정 주파수 가운데 하나로 옮겨지고 Q도 거기에 맞춰집니다. 곡선의 모양은 최대한 유지되지만 지금의 주파수와 Q 값은 사라집니다.</string>
     <string name="eq_round_quiet">다시 묻지 않기</string>
+    <string name="eq_reset">모두 0으로 되돌리기</string>
+    <string name="eq_reset_title">모두 0으로 되돌릴까요?</string>
+    <string name="eq_reset_body">모든 게인과 수동 프리앰프가 0 dB로 돌아가고, 이퀄라이저는 더 이상 소리를 바꾸지 않습니다. 밴드는 제자리에 남지만, 지금의 곡선은 프리셋으로 저장해 두지 않았다면 되돌릴 수 없습니다.</string>
 
     <string name="eq_presets">프리셋</string>
     <string name="eq_preset_empty">아직 저장한 것이 없습니다</string>

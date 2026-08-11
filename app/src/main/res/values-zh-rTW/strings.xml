@@ -218,6 +218,9 @@
     <string name="eq_round_title">要切換到圖示等化器嗎</string>
     <string name="eq_round_body">每個頻段都會移到圖示等化器的固定頻率上，Q 值也會跟著調整。曲線的形狀會盡量保留，但目前的頻率和 Q 值會消失。</string>
     <string name="eq_round_quiet">不再提示</string>
+    <string name="eq_reset">全部歸零</string>
+    <string name="eq_reset_title">要全部歸零嗎</string>
+    <string name="eq_reset_body">所有增益和手動前級增益都會回到 0 dB，等化器不再改變聲音。頻段會留在原處，但如果沒有存成預設組合，目前的曲線將無法找回。</string>
 
     <string name="eq_presets">預設組合</string>
     <string name="eq_preset_empty">還沒有儲存任何預設組合</string>

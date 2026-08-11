@@ -35,7 +35,7 @@ sealed interface EqScale {
 
     fun fromPosition(position: Float): Int
 
-    /** 等間隔。ゲインとプリアンプ。[step] は値の刻み (ゲインなら 5 = 0.5 dB)。 */
+    /** 等間隔。ゲインとプリアンプ。[step] は値の刻み (ゲインなら 1 = 0.1 dB)。 */
     class Linear(private val range: IntRange, private val step: Int) : EqScale {
         override fun toPosition(value: Int): Float =
             ((value - range.first).toFloat() / (range.last - range.first)).coerceIn(0f, 1f)
@@ -116,7 +116,7 @@ fun EqSliderRow(
                 color = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        // 目盛り (steps) は付けない。0.5 dB 刻みだと目盛りが 47 本並んで帯にしか見えない。
+        // 目盛り (steps) は付けない。0.1 dB 刻みだと目盛りが 239 本並んで帯にしか見えない。
         // 値の丸めは fromPosition が持っているので、刻みの粒度は変わらない。
         Slider(
             value = scale.toPosition(shown),

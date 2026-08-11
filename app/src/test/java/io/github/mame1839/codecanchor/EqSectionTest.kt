@@ -4,8 +4,12 @@ import io.github.mame1839.codecanchor.core.EqBand
 import io.github.mame1839.codecanchor.core.EqMode
 import io.github.mame1839.codecanchor.core.EqSettings
 import io.github.mame1839.codecanchor.core.EqSolver
+import io.github.mame1839.codecanchor.core.EqBandType
 import io.github.mame1839.codecanchor.ui.EqScale
+import io.github.mame1839.codecanchor.ui.GAIN_SCALE
+import io.github.mame1839.codecanchor.ui.PREAMP_SCALE
 import io.github.mame1839.codecanchor.ui.reband
+import io.github.mame1839.codecanchor.ui.resetToZero
 import io.github.mame1839.codecanchor.ui.toParametric
 import io.github.mame1839.codecanchor.ui.withGraphicGrid
 import io.github.mame1839.codecanchor.ui.withStartingBands
@@ -18,11 +22,14 @@ import kotlin.math.abs
 /** 画面側のロジックのうち、Composable を通さずに確かめられるもの。 */
 class EqSectionTest {
 
-    private val gain = EqScale.Linear(-120..120, 5)
-    private val preamp = EqScale.Linear(-300..0, 5)
+    // 画面が実際に使うスケールをそのまま見る。写しを作ると、実物だけ変わったときに
+    // ここが古い値のまま通り続ける。
+    private val gain = GAIN_SCALE
+    private val preamp = PREAMP_SCALE
     private val frequency = EqScale.Log(20..20_000)
     private val q = EqScale.Log(10..1_000)
 
+    // 両端の literal は仕様の固定 (±12 dB / プリアンプは -30〜0 dB)。実物が動いたらここで気づく。
     @Test
     fun linearScaleHitsBothEnds() {
         assertEquals(-120, gain.fromPosition(0f))
@@ -33,14 +40,13 @@ class EqSectionTest {
         assertEquals(0, preamp.fromPosition(1f))
     }
 
-    // 刻みから外れた値を返すと、保存されるゲインが 0.5 dB 単位でなくなる。
+    // 保存は最初から 0.1 dB 単位 (gainDb10)。摘みも同じ粒度なので、どの保存値も摘みに乗せて
+    // そのまま返ること。刻みが粗いと (0.5 dB のままだと)、AutoEQ 由来などの 5 の倍数でない
+    // 保存値が、摘みに触れた瞬間に隣の値へ跳ぶ。
     @Test
-    fun linearScaleSnapsToTheStep() {
-        for (i in 0..200) {
-            val value = gain.fromPosition(i / 200f)
-            assertEquals("位置 ${i / 200f} で $value", 0, value % 5)
-            assertTrue(value in -120..120)
-        }
+    fun gainSlidersRoundTripEveryStoredValue() {
+        for (v in -120..120) assertEquals(v, gain.fromPosition(gain.toPosition(v)))
+        for (v in -300..0) assertEquals(v, preamp.fromPosition(preamp.toPosition(v)))
     }
 
     @Test
@@ -224,5 +230,59 @@ class EqSectionTest {
         val fixed = withGraphicGrid(settings)
         assertNotEquals(settings, fixed)
         assertEquals(EqSolver.centerFrequencies(31), fixed.bands.map { it.freqHz })
+    }
+
+    // リセット後のグラフィックは「オンにした直後」と同じ平らなグリッド。solve() が Q を
+    // 上げていても、その跡ごと作り直す。摘み (その周波数で実際に鳴る音量) も全部 0.0 になる。
+    @Test
+    fun resetRebuildsAFlatGraphicGrid() {
+        val curved = reband(
+            EqSettings(enabled = true, bandCount = 10, preampAuto = false, preampDb10 = -45),
+            10,
+        ).let { it.copy(bands = EqSolver.withGraphicTarget(it.bands, 3, -80)) }
+        val after = resetToZero(curved)
+        assertEquals(withStartingBands(EqSettings(enabled = true, bandCount = 10)).bands, after.bands)
+        assertTrue(EqSolver.graphicTargetsDb10(after.bands).all { it == 0 })
+        assertEquals(0, after.preampDb10)
+        assertEquals(false, after.preampAuto)
+    }
+
+    // パラメトリックのリセットはゲインだけ。fc・Q・種別はユーザが置いたものなので消えない。
+    @Test
+    fun resetKeepsParametricBandsWhereTheyAre() {
+        val before = EqSettings(
+            enabled = true,
+            mode = EqMode.PARAMETRIC,
+            bands = listOf(
+                EqBand(105, 70, -65, EqBandType.LOW_SHELF),
+                EqBand(3_150, 141, 25),
+            ),
+            preampAuto = false,
+            preampDb10 = -120,
+        )
+        val after = resetToZero(before)
+        assertEquals(EqMode.PARAMETRIC, after.mode)
+        assertTrue(after.bands.all { it.gainDb10 == 0 })
+        assertEquals(before.bands.map { it.copy(gainDb10 = 0) }, after.bands)
+        assertEquals(0, after.preampDb10)
+        assertEquals(false, after.preampAuto)
+    }
+
+    // 手動プリアンプはリセットの対象 (0 に戻さないと、平らなのに音量だけ下がった状態が残る)。
+    // 自動のスイッチは方式の選択なので触らない。自動側は平らな曲線から 0 dB を導く。
+    @Test
+    fun resetZeroesTheManualPreampAndDerivesZeroForAuto() {
+        val after = resetToZero(
+            EqSettings(
+                enabled = true,
+                mode = EqMode.PARAMETRIC,
+                bands = listOf(EqBand(1_000, 100, 80)),
+                preampAuto = true,
+                preampDb10 = -95,
+            ),
+        )
+        assertEquals(true, after.preampAuto)
+        assertEquals(0, after.preampDb10)
+        assertEquals(0, EqSolver.autoPreampDb10(after.bands))
     }
 }

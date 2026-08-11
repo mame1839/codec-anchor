@@ -224,6 +224,9 @@
     <string name="eq_round_title">Przełączyć na graficzny?</string>
     <string name="eq_round_body">Każde pasmo przejdzie na jedną ze stałych częstotliwości korektora graficznego, a jego Q zostanie do niej dopasowane. Kształt krzywej zostanie zachowany na tyle, na ile to możliwe, ale obecne częstotliwości i wartości Q przepadną.</string>
     <string name="eq_round_quiet">Nie pytaj więcej</string>
+    <string name="eq_reset">Wyzeruj wszystko</string>
+    <string name="eq_reset_title">Wyzerować wszystko?</string>
+    <string name="eq_reset_body">Każde wzmocnienie i ręczny przedwzmacniacz wracają do 0 dB, a korektor przestaje zmieniać dźwięk. Pasma zostają na swoich miejscach, ale obecna krzywa przepadnie, jeśli nie została zapisana w ustawieniach własnych.</string>
 
     <string name="eq_presets">Ustawienia własne</string>
     <string name="eq_preset_empty">Nic jeszcze nie zapisano</string>

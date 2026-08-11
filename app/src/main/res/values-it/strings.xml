@@ -222,6 +222,9 @@
     <string name="eq_round_title">Passare al grafico?</string>
     <string name="eq_round_body">Ogni banda si sposta su una delle frequenze fisse dell\'equalizzatore grafico e il suo Q viene adattato. La forma della curva viene mantenuta il più possibile, ma le frequenze e i valori di Q attuali vanno persi.</string>
     <string name="eq_round_quiet">Non chiedere più</string>
+    <string name="eq_reset">Riporta tutto a zero</string>
+    <string name="eq_reset_title">Riportare tutto a zero?</string>
+    <string name="eq_reset_body">Tutti i guadagni e il preamplificatore manuale tornano a 0 dB e l\'equalizzatore smette di cambiare il suono. Le bande restano dove sono, ma la curva attuale va persa se non è stata salvata come preimpostazione.</string>
 
     <string name="eq_presets">Preimpostazioni</string>
     <string name="eq_preset_empty">Non hai ancora salvato nulla</string>

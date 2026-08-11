@@ -218,6 +218,9 @@
     <string name="eq_round_title">要切换到图示均衡器吗</string>
     <string name="eq_round_body">每个频段都会移到图示均衡器的固定频率上，Q 值也会随之调整。曲线的形状会尽量保留，但现在的频率和 Q 值会丢失。</string>
     <string name="eq_round_quiet">不再提示</string>
+    <string name="eq_reset">全部归零</string>
+    <string name="eq_reset_title">要全部归零吗</string>
+    <string name="eq_reset_body">所有增益和手动前级增益都会回到 0 dB，均衡器不再改变声音。频段会留在原处，但如果没有存成预设，现在的曲线将无法找回。</string>
 
     <string name="eq_presets">预设</string>
     <string name="eq_preset_empty">还没有保存任何预设</string>

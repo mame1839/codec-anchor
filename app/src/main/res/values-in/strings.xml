@@ -218,6 +218,9 @@
     <string name="eq_round_title">Beralih ke grafis?</string>
     <string name="eq_round_body">Setiap pita pindah ke salah satu frekuensi tetap milik ekualiser grafis dan nilai Q-nya disesuaikan. Bentuk kurva dipertahankan sebisa mungkin, tetapi frekuensi dan nilai Q yang sekarang akan hilang.</string>
     <string name="eq_round_quiet">Jangan tanya lagi</string>
+    <string name="eq_reset">Nolkan semuanya</string>
+    <string name="eq_reset_title">Nolkan semuanya?</string>
+    <string name="eq_reset_body">Semua penguatan dan preamp manual kembali ke 0 dB, dan ekualiser berhenti mengubah suara. Pita tetap di tempatnya, tetapi kurva yang sekarang akan hilang jika belum disimpan sebagai prasetel.</string>
 
     <string name="eq_presets">Prasetel</string>
     <string name="eq_preset_empty">Belum ada yang disimpan</string>

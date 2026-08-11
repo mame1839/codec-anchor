@@ -220,6 +220,9 @@
     <string name="eq_round_title">Grafiğe geçilsin mi?</string>
     <string name="eq_round_body">Her bant grafik ekolayzırın sabit frekanslarından birine taşınır ve Q değeri ona göre ayarlanır. Eğrinin biçimi olabildiğince korunur ama şu anki frekanslar ve Q değerleri kaybolur.</string>
     <string name="eq_round_quiet">Bir daha sorma</string>
+    <string name="eq_reset">Tümünü sıfırla</string>
+    <string name="eq_reset_title">Tümü sıfırlansın mı?</string>
+    <string name="eq_reset_body">Tüm kazançlar ve elle ayarlanan ön yükseltme 0 dB\'ye döner, ekolayzır artık sesi değiştirmez. Bantlar yerlerinde kalır ama şu anki eğri, hazır ayar olarak kaydedilmediyse geri gelmez.</string>
 
     <string name="eq_presets">Hazır ayarlar</string>
     <string name="eq_preset_empty">Henüz kaydedilmiş bir şey yok</string>

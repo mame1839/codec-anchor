@@ -45,11 +45,11 @@ import kotlin.math.ln
 import kotlin.math.max
 import kotlin.math.min
 
-// ±12.0 dB を 0.5 dB 刻み。eq-spec.md の確定値。
+// ±12.0 dB を 0.1 dB 刻み。eq-spec.md の確定値。
 // 絵の縦軸と EqSection のスライダーが同じ値を見る。2 箇所に書くと、片方だけ動かしたときに
 // 摘みの可動域と絵の目盛りが黙ってずれる。
 val EQ_GAIN_RANGE = -120..120
-const val EQ_GAIN_STEP = 5
+const val EQ_GAIN_STEP = 1
 
 // 縦軸の候補。**連続に伸ばさない** — ドラッグのあいだ軸が毎フレーム動くと、
 // 触っていないバンドの点まで揺れて、何が変わったのか読めなくなる。

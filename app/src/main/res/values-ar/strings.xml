@@ -228,6 +228,9 @@
     <string name="eq_round_title">التبديل إلى الوضع الرسومي؟</string>
     <string name="eq_round_body">سينتقل كل نطاق إلى أحد الترددات الثابتة للمعادل الرسومي وسيُضبط معامل Q الخاص به تبعًا لذلك. سيُحافظ على شكل المنحنى قدر الإمكان، لكن الترددات وقيم Q الحالية ستُفقد.</string>
     <string name="eq_round_quiet">عدم السؤال مرة أخرى</string>
+    <string name="eq_reset">إعادة كل شيء إلى الصفر</string>
+    <string name="eq_reset_title">إعادة كل شيء إلى الصفر؟</string>
+    <string name="eq_reset_body">يعود كل كسب والتضخيم المسبق اليدوي إلى 0 ديسيبل، فيتوقف المعادل عن تغيير الصوت. تبقى النطاقات في أماكنها، لكن المنحنى الحالي سيُفقد ما لم يُحفظ ضمن الإعدادات المحفوظة.</string>
 
     <string name="eq_presets">الإعدادات المحفوظة</string>
     <string name="eq_preset_empty">لم يُحفظ أي شيء بعد</string>

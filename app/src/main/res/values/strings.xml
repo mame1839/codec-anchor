@@ -250,6 +250,9 @@
     <string name="eq_round_title">Switch to graphic?</string>
     <string name="eq_round_body">Every band moves to one of the fixed frequencies of the graphic equaliser and its Q is set to match. The shape of the curve is kept as closely as it can be, but the frequencies and Q values you have now are lost.</string>
     <string name="eq_round_quiet">Do not ask again</string>
+    <string name="eq_reset">Set everything to zero</string>
+    <string name="eq_reset_title">Set everything to zero?</string>
+    <string name="eq_reset_body">Every gain and the manual preamp go back to 0 dB, so the equaliser stops changing the sound. The bands stay where they are, but the curve you have now is lost unless it has been saved as a preset.</string>
 
     <string name="eq_presets">Presets</string>
     <string name="eq_preset_empty">Nothing saved yet</string>

@@ -220,6 +220,9 @@
     <string name="eq_round_title">ग्राफ़िक पर जाएँ?</string>
     <string name="eq_round_body">हर बैंड ग्राफ़िक इक्वलाइज़र की तय आवृत्तियों में से एक पर चला जाएगा और उसका Q भी उसी के अनुसार बैठ जाएगा। वक्र का आकार जितना बन सके उतना बचाया जाएगा, पर अभी की आवृत्तियाँ और Q मान चले जाएँगे।</string>
     <string name="eq_round_quiet">दोबारा न पूछें</string>
+    <string name="eq_reset">सब कुछ शून्य पर लौटाएँ</string>
+    <string name="eq_reset_title">सब कुछ शून्य पर लौटाएँ?</string>
+    <string name="eq_reset_body">हर गेन और हाथ से तय किया गया प्रीऐम्प 0 dB पर लौट जाएगा, और इक्वलाइज़र ध्वनि को बदलना बंद कर देगा। बैंड अपनी जगह बने रहेंगे, पर अभी का वक्र प्रीसेट के रूप में सहेजा न हो तो वापस नहीं मिलेगा।</string>
 
     <string name="eq_presets">प्रीसेट</string>
     <string name="eq_preset_empty">अभी कुछ भी सहेजा नहीं गया</string>
