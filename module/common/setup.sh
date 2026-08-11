@@ -281,6 +281,12 @@ ca_setup() {
     # 起動後に走るこの段では、audioserver も audio HAL も元の XML と元の soundfx を
     # 読み終えている。bind mount しただけでは何も起きず、service.sh の自己検証も落ちて
     # 自分を無効化してしまう。
+    # ⚠️ **この経路には音の押さえが無い。**アプリからの登録 (eq_devices.sh) は QuietSwitch が
+    # 音声フォーカスを取ってから作り直すが、ここはモジュールを読み込む側から走るので、
+    # フォーカスを取れるアプリのプロセスがそもそも居ない。**このとき音楽が鳴っていれば、
+    # 数百 ms だけ本体スピーカーから出る。**
+    # モジュールを入れた直後の 1 回だけなので、シェルから他人の再生を止めにいく
+    # (media_session を叩く) 危険と釣り合わないと判断して、そのままにしてある。
     if [ "$CA_STAGE" = "late-load" ]; then
         ca_restart_audioserver || ca_log "late-load モードだが audioserver を作り直せない。反映は次の再起動から"
     fi
