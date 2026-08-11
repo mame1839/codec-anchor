@@ -17,7 +17,6 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -79,6 +78,12 @@ private val PLOT_INSET = 10.dp
 
 // 0 dB の基準線の濃さ。グラフィックとパラメトリックで同じ値を使う。
 private const val ZERO_LINE_ALPHA = 0.28f
+
+// 0 dB 以外の目盛り線。基準線より必ず薄くする (どれが 0 かが読めなくなる)。
+private const val GRID_LINE_ALPHA = 0.14f
+
+// バンドの縦線のうち、点より外側 (値を持たない側) の濃さ。
+private const val COLUMN_GUIDE_ALPHA = 0.10f
 
 /** どの欄を動かしているか。ドラッグ中の値を絵へ運ぶために使う。 */
 enum class EqField { FREQUENCY, Q, GAIN }
@@ -198,7 +203,9 @@ private fun GraphicPlot(
     // 実際に鳴る特性を、バンド中心が等間隔に並ぶ軸の上で測る。
     // 中心と中心のあいだは対数周波数で補間するので、目盛りは歪むが曲線は本物のまま。
     val response = remember(bands) { graphicResponse(bands) }
-    val range = plotRange(response, bands)
+    val range = rememberPlotRange(response, bands, dragging = active >= 0)
+    val ticks = rememberDbTicks(range, measurer, labelStyle)
+    val gutter = ticks.maxOf { it.second.size.width }
 
     Canvas(
         modifier
@@ -209,10 +216,11 @@ private fun GraphicPlot(
     ) {
         val labelPx = rowHeight.toFloat()
         val gapPx = LABEL_GAP.toPx()
-        val plot = Rect(0f, labelPx + gapPx, size.width, size.height - labelPx - gapPx)
+        val plot = Rect(gutter + gapPx, labelPx + gapPx, size.width, size.height - labelPx - gapPx)
         val inset = PLOT_INSET.toPx()
         val xs = evenColumns(bands.size, plot.left + inset, plot.right - inset)
-        val yOf = { db: Double -> plot.bottom - ((db / range + 1.0) / 2.0).toFloat() * plot.height }
+        val yOf = { db: Double -> plot.top + plotFraction(db, range) * plot.height }
+        val zero = yOf(0.0)
 
         // ドラッグ中のバンドは、間引きの対象でも必ず出す。「いま何を触っているか」が主目的。
         val shown = pickLabels(
@@ -229,27 +237,20 @@ private fun GraphicPlot(
             if (i == 0) curve.moveTo(x, y) else curve.lineTo(x, y)
         }
 
-        // 曲線と下端のあいだを、下へ向かって薄くなるグラデーションで塗る。
+        // 曲線と 0 dB のあいだを塗る。**下端ではなく 0 dB に閉じる** — パラメトリックと同じ。
+        // 下端に閉じていたときは、塗りの面積が「値」ではなく「値 + 軸の幅」になっていて、
+        // -12 dB のバンドの下にも枠の 1/4 の塗りが残っていた。摘みを上下対称に振っても
+        // 絵は上に偏ったままになり、線の形そのものが歪んで見える原因になっていた。
         val fill = Path().apply {
             addPath(curve)
-            lineTo(plot.right - inset, plot.bottom)
-            lineTo(plot.left + inset, plot.bottom)
+            lineTo(plot.right - inset, zero)
+            lineTo(plot.left + inset, zero)
             close()
         }
-        drawPath(
-            fill,
-            Brush.verticalGradient(
-                colors = listOf(accent.copy(alpha = 0.30f), accent.copy(alpha = 0f)),
-                startY = plot.top,
-                endY = plot.bottom,
-            ),
-        )
+        drawPath(fill, accent.copy(alpha = 0.16f))
 
-        // 0 dB の位置。目盛りではなく基準線 1 本だけ。無いと、下端から伸びる縦線の長さが
-        // 上げているのか下げているのか読めない (数値は間引きで消えることがある)。
-        // 濃さはパラメトリックの 0 dB の線と同じにする。同じものなので同じ重みで描く
-        // (0.18 だと明るいテーマで沈む。実機で両方見て決めた)。
-        drawLine(muted.copy(alpha = ZERO_LINE_ALPHA), Offset(plot.left, yOf(0.0)), Offset(plot.right, yOf(0.0)), 1.dp.toPx())
+        // 目盛り。0 dB は基準線として濃く引く (どれが 0 かが読めないと上げ下げが分からない)。
+        drawDbTicks(ticks, plot, muted, yOf)
 
         // 点の大きさは列の間隔で頭を押さえる。31 バンドだと間隔が 11 dp しかなく、
         // 既定の半径のままでは 0 dB に並んだ点がつながって 1 本の帯に見える。
@@ -261,9 +262,11 @@ private fun GraphicPlot(
             val x = xs[i]
             val y = yOf(band.gainDb10.toDouble() / EqUnits.GAIN_SCALE)
             val hot = i == active
-            // 上は薄く、点から下は濃く。値の大きさが線の長さで分かる。
-            drawLine(muted.copy(alpha = 0.20f), Offset(x, plot.top), Offset(x, y), COLUMN_WIDTH.toPx())
-            drawLine(accent.copy(alpha = if (hot) 0.85f else 0.45f), Offset(x, y), Offset(x, plot.bottom), COLUMN_WIDTH.toPx())
+            // 枠いっぱいの案内線を薄く引いてから、**0 dB と点のあいだ**だけを濃くする。
+            // 濃い側を下端まで伸ばすと長さが値を表さない — -12 dB のバンドが枠の 2/3 の
+            // 長さの棒になり、+12 dB との差が 3 倍ではなく 1.5 倍にしか見えなかった。
+            drawLine(muted.copy(alpha = COLUMN_GUIDE_ALPHA), Offset(x, plot.top), Offset(x, plot.bottom), COLUMN_WIDTH.toPx())
+            drawLine(accent.copy(alpha = if (hot) 0.85f else 0.45f), Offset(x, y), Offset(x, zero), COLUMN_WIDTH.toPx())
             drawCircle(accent, if (hot) dotRActive else dotR, Offset(x, y))
         }
 
@@ -292,24 +295,18 @@ private fun ParametricPlot(
     description: String,
     modifier: Modifier,
 ) {
-    val dbUnit = stringResource(R.string.eq_unit_db)
     val kiloShort = stringResource(R.string.eq_unit_khz_short)
 
     val perBand = remember(bands) { parametricResponse(bands) }
     val composite = remember(perBand) { sumColumns(perBand) }
-    val range = plotRange(composite, bands)
+    val range = rememberPlotRange(composite, bands, dragging = active >= 0)
 
-    val gridLabels = remember(range, labelStyle, dbUnit) {
-        // 単位は一番上の 1 本だけ。5 本すべてに付けると左の余白が広がって絵が痩せる。
-        gridValues(range).map { db ->
-            db to measurer.measure(eqGainTick(db.toInt(), if (db == range) dbUnit else null), labelStyle)
-        }
-    }
+    val ticks = rememberDbTicks(range, measurer, labelStyle)
     val tickLabels = remember(labelStyle, kiloShort) {
         AXIS_TICKS_HZ.map { measurer.measure(eqFrequencyShort(it, kiloShort), labelStyle) }
     }
     val rowHeight = tickLabels.maxOf { it.size.height }
-    val gutter = gridLabels.maxOf { it.second.size.width }
+    val gutter = ticks.maxOf { it.second.size.width }
 
     val density = LocalDensity.current
     // 上下の目盛りのラベルは枠線の高さに中央合わせで置くので、半分ずつはみ出す。
@@ -326,14 +323,10 @@ private fun ParametricPlot(
         val labelPx = rowHeight.toFloat()
         val gutterPx = gutter + LABEL_GAP.toPx()
         val plot = Rect(gutterPx, labelPx / 2f, size.width, size.height - labelPx * 1.5f - LABEL_GAP.toPx())
-        val yOf = { db: Double -> plot.bottom - ((db / range + 1.0) / 2.0).toFloat() * plot.height }
+        val yOf = { db: Double -> plot.top + plotFraction(db, range) * plot.height }
         val xAt = { i: Int -> plot.left + plot.width * i / (SAMPLES - 1f) }
 
-        gridLabels.forEach { (db, layout) ->
-            val y = yOf(db)
-            drawLine(muted.copy(alpha = if (db == 0.0) ZERO_LINE_ALPHA else 0.14f), Offset(plot.left, y), Offset(plot.right, y), 1.dp.toPx())
-            drawText(layout, topLeft = Offset(plot.left - LABEL_GAP.toPx() - layout.size.width, y - layout.size.height / 2f))
-        }
+        drawDbTicks(ticks, plot, muted, yOf)
 
         val zero = yOf(0.0)
         val curve = Path()
@@ -391,6 +384,79 @@ private fun ParametricPlot(
 // ---------------------------------------------------------------------------
 
 private val AXIS_TICKS_HZ = listOf(20, 50, 100, 200, 500, 1_000, 2_000, 5_000, 10_000, 20_000)
+
+/**
+ * 縦軸の目盛り。**グラフィックとパラメトリックで同じものを出す。**
+ *
+ * 段 ([plotRange]) は設定によって 12 / 18 / 24 / 40 dB と変わる。**数字が無いと、
+ * 段が変わったことと線の形が変わったことが画面上で区別できない** — 摘みを ±12 dB まで
+ * 振り切っても、軸が ±24 dB なら点は上半分の真ん中までしか来ない。
+ * 以前はグラフィックだけ 0 dB の線 1 本で、絵が縦に潰れて見える原因になっていた。
+ */
+@Composable
+private fun rememberDbTicks(
+    range: Double,
+    measurer: TextMeasurer,
+    style: TextStyle,
+): List<Pair<Double, TextLayoutResult>> {
+    // 単位は一番上の 1 本だけ。5 本すべてに付けると左の余白が広がって絵が痩せる。
+    val dbUnit = stringResource(R.string.eq_unit_db)
+    return remember(range, style, dbUnit) {
+        gridValues(range).map { db ->
+            db to measurer.measure(eqGainTick(db.toInt(), if (db == range) dbUnit else null), style)
+        }
+    }
+}
+
+/** 目盛り線と、左の余白に置く数字。線は枠の全幅に引く。 */
+private fun DrawScope.drawDbTicks(
+    ticks: List<Pair<Double, TextLayoutResult>>,
+    plot: Rect,
+    muted: Color,
+    yOf: (Double) -> Float,
+) {
+    val gap = LABEL_GAP.toPx()
+    ticks.forEach { (db, layout) ->
+        val y = yOf(db)
+        drawLine(
+            muted.copy(alpha = if (db == 0.0) ZERO_LINE_ALPHA else GRID_LINE_ALPHA),
+            Offset(plot.left, y),
+            Offset(plot.right, y),
+            1.dp.toPx(),
+        )
+        drawText(layout, topLeft = Offset(plot.left - gap - layout.size.width, y - layout.size.height / 2f))
+    }
+}
+
+/**
+ * dB を枠の中の縦位置に直す。0 が上端、1 が下端。
+ *
+ * **2 つの絵と試験がこれ 1 つを見る。**式を写して置くと、片方だけ直したときに
+ * 目盛りと曲線が別の軸で描かれる (見た目はもっともらしいままなので気づけない)。
+ */
+internal fun plotFraction(db: Double, range: Double): Float = ((1.0 - db / range) / 2.0).toFloat()
+
+/**
+ * ドラッグ中は段を下げない。
+ *
+ * 段は曲線のピークで決まるので、**摘みを下げると段も下がることがある。**段が下がると
+ * 絵全体が拡大するので、**指を下げているのに線と点が上へ動く。**実機で 10 バンドの
+ * 125 Hz を +12.0 → +11.0 に下げたとき、段が 24 → 18 dB に落ちて点が 22 px 上へ飛んだ。
+ *
+ * 上げるほうは止めない — 止めると曲線が枠から出る。指を離した時点で本来の段へ戻す。
+ */
+internal fun holdRange(computed: Double, held: Double, dragging: Boolean): Double =
+    if (dragging) max(computed, held) else computed
+
+@Composable
+private fun rememberPlotRange(response: DoubleArray, bands: List<EqBand>, dragging: Boolean): Double {
+    val computed = plotRange(response, bands)
+    // **観測される状態にしない。**構成の中で書き戻すので、mutableStateOf だと書いた時点で
+    // 再構成が予約されて回り続ける。段を変える再構成はドラッグの値そのものが起こすので、
+    // ここは前回の値を覚えておくだけでよい。
+    val held = remember { DoubleArray(1) { computed } }
+    return holdRange(computed, held[0], dragging).also { held[0] = it }
+}
 
 private fun DrawScope.drawCentered(layout: TextLayoutResult, centerX: Float, top: Float) {
     // 端のラベルは中央合わせのままだと画面の外へ出る。幅より狭い canvas でも
