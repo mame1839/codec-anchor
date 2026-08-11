@@ -57,7 +57,7 @@ import io.github.mame1839.codecanchor.R
  * **左右は足す前に落とさない。**切り欠き・丸い角・折り畳みのぶんが [inner] に入ってくるので、
  * 16.dp を直接書くと端の機種で文字が欠ける。
  *
- * 5 つの画面で同じ式を書いていたものを 1 箇所にまとめたもの。
+ * 3 つの画面 (一覧 / 機器の詳細 / 音響処理) に同じ式が書かれていたものを 1 箇所にまとめたもの。
  */
 @Composable
 fun screenPadding(inner: PaddingValues): PaddingValues {

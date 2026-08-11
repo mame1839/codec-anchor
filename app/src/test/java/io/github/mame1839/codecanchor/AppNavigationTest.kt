@@ -140,6 +140,10 @@ class AppNavigationTest {
         restoration.emulateSavedInstanceStateRestore()
         compose.waitForIdle()
         // タブ名そのものは題と下部ナビの両方に出るので、**状態タブの中身にしかない行**で見る。
+        //
+        // この行が出るのは `AppNavigation` が `vm.refresh()` を呼ばず moduleState が CHECKING の
+        // ままだから。**取り直しを `AppNavigation` 側へ移すとここが別の行に変わって落ちる** —
+        // 落ちること自体は正しいので、そのときは見る行を差し替える。
         assertShowing(R.string.module_checking)
 
         // 機器のほうも同じ持ち方なので、一緒に確かめる。

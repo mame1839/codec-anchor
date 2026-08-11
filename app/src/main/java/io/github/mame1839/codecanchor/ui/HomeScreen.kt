@@ -34,6 +34,26 @@ import io.github.mame1839.codecanchor.R
 enum class HomeTab { DEVICES, SETTINGS, STATUS }
 
 /**
+ * タブの名前と絵。**下部ナビと上の題の両方がここを読む。**
+ *
+ * `when` を 2 つ書くと、enum の枝の抜けはコンパイラが見てくれるが
+ * **どの文言をどのタブに当てたかは見てくれない。**片方だけ直すと黙って食い違う。
+ */
+private val HomeTab.labelRes: Int
+    get() = when (this) {
+        HomeTab.DEVICES -> R.string.tab_devices
+        HomeTab.SETTINGS -> R.string.tab_settings
+        HomeTab.STATUS -> R.string.tab_status
+    }
+
+private val HomeTab.iconRes: Int
+    get() = when (this) {
+        HomeTab.DEVICES -> R.drawable.ic_headphones
+        HomeTab.SETTINGS -> R.drawable.ic_settings
+        HomeTab.STATUS -> R.drawable.ic_monitor_heart
+    }
+
+/**
  * 状態タブに印を出す条件。
  *
  * **説明の実体は状態タブに 1 つだけ置き、ここは印だけを上げる。**両方に文言を置くと、
@@ -75,17 +95,14 @@ fun HomeScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        text = when (tab) {
-                            HomeTab.DEVICES -> stringResource(R.string.app_name)
-                            HomeTab.SETTINGS -> stringResource(R.string.tab_settings)
-                            HomeTab.STATUS -> stringResource(R.string.tab_status)
-                        },
-                        maxLines = 1,
-                    )
+                    // 先頭のタブだけアプリの名前にする。最初に開く画面なので、
+                    // ここに「機器」と出してもタブの名前をなぞるだけになる。
+                    val title = if (tab == HomeTab.DEVICES) R.string.app_name else tab.labelRes
+                    Text(stringResource(title), maxLines = 1)
                 },
                 actions = {
-                    // 取り直しが目に見えるのは機器タブだけ。状態タブは自前の「再確認」を持っている。
+                    // 取り直しが目に見えるのは機器タブだけ。状態タブの「再確認」はモジュールが
+                    // 無効なときにしか出ないので、こちらを消してよい理由にはならない。
                     if (tab == HomeTab.DEVICES) {
                         IconButton(
                             onClick = { vm.refresh() },
@@ -130,18 +147,8 @@ private fun HomeNavigationBar(vm: MainViewModel, tab: HomeTab, onSelectTab: (Hom
 
     NavigationBar {
         HomeTab.entries.forEach { entry ->
-            val label = stringResource(
-                when (entry) {
-                    HomeTab.DEVICES -> R.string.tab_devices
-                    HomeTab.SETTINGS -> R.string.tab_settings
-                    HomeTab.STATUS -> R.string.tab_status
-                },
-            )
-            val icon = when (entry) {
-                HomeTab.DEVICES -> R.drawable.ic_headphones
-                HomeTab.SETTINGS -> R.drawable.ic_settings
-                HomeTab.STATUS -> R.drawable.ic_monitor_heart
-            }
+            val label = stringResource(entry.labelRes)
+            val icon = entry.iconRes
             NavigationBarItem(
                 selected = tab == entry,
                 onClick = { onSelectTab(entry) },
