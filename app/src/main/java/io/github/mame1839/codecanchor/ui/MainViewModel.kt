@@ -311,6 +311,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 // 分からず、ログにも画面にも痕跡が残らない。ここだけが手掛かりになるので残す。
                 // sawOutputGone=false は「見に行く前に戻っていた」と「出口の一覧が
                 // audioserver の生死を映していない (待ちが素通り)」の両方を意味しうる。
+                // HyperOS はアプリの Log を既定で抑制する (開発者向け設定で許可しないと
+                // logcat に出ない)。この行が見つからないときは、コードより先に端末を疑う。
                 Log.i(
                     XLog.TAG,
                     "QuietSwitch: hold=${quiet.outcome} restored=${quiet.restored} " +
