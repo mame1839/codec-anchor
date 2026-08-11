@@ -1,14 +1,10 @@
 package io.github.mame1839.codecanchor.ui
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -16,472 +12,152 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import io.github.mame1839.codecanchor.BuildConfig
 import io.github.mame1839.codecanchor.R
 import io.github.mame1839.codecanchor.core.DeviceProfile
 import io.github.mame1839.codecanchor.core.DeviceStatus
-import io.github.mame1839.codecanchor.core.ModuleVersionState
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * 機器タブ。**イヤホンの一覧と、一覧が使えない理由だけ**を置く。
+ *
+ * 権限と Bluetooth の注意をここに残しているのは、どちらも**一覧が空である理由そのもの**だから。
+ * 状態タブへ移すと、空の一覧だけを見せて理由は別のタブ、という形になる。
+ *
+ * アプリ全体の設定は [SettingsTab]、端末側の事情は [StatusTab] が持つ。
+ */
 @Composable
-fun DeviceListScreen(
+fun DeviceListTab(
     vm: MainViewModel,
-    snackbarHostState: SnackbarHostState,
+    contentPadding: PaddingValues,
     onOpenDevice: (String) -> Unit,
     onRequestPermission: () -> Unit,
-    onNotify: (String) -> Unit,
 ) {
     val audioRows = vm.bondedRows.filter { it.audio }
     val otherRows = vm.bondedRows.filterNot { it.audio }
     val orphanRows = vm.orphanRows
     var othersExpanded by rememberSaveable { mutableStateOf(false) }
-    val pushedMessage = stringResource(R.string.msg_config_pushed)
-    val refreshLabel = stringResource(R.string.cd_refresh_status)
-    val unknownVersion = stringResource(R.string.value_unknown)
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.app_name)) },
-                actions = {
-                    IconButton(
-                        onClick = { vm.refresh() },
-                        enabled = !vm.probing,
-                        modifier = Modifier.semantics { contentDescription = refreshLabel },
-                    ) {
-                        if (vm.probing) {
-                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                        } else {
-                            Icon(painter = painterResource(R.drawable.ic_refresh), contentDescription = null)
-                        }
-                    }
-                },
-            )
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-    ) { inner ->
-        val layoutDirection = LocalLayoutDirection.current
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = inner.calculateStartPadding(layoutDirection) + 16.dp,
-                end = inner.calculateEndPadding(layoutDirection) + 16.dp,
-                top = inner.calculateTopPadding() + 8.dp,
-                bottom = inner.calculateBottomPadding() + 24.dp,
-            ),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = screenPadding(contentPadding),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        if (!vm.connectGranted) {
             item {
-                ModuleCard(
-                    vm = vm,
-                    onPush = {
-                        vm.pushConfig()
-                        onNotify(pushedMessage)
-                    },
-                )
-            }
-
-            if (vm.configBroken) {
-                item {
-                    SettingsCard(container = MaterialTheme.colorScheme.errorContainer) {
-                        NoticeRow(
-                            icon = R.drawable.ic_warning,
-                            text = stringResource(R.string.config_broken),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
-                        )
-                    }
-                }
-            }
-
-            item {
-                SettingsCard(title = stringResource(R.string.section_general)) {
-                    SwitchRow(
-                        title = stringResource(R.string.toggle_auto_apply),
-                        description = stringResource(R.string.toggle_auto_apply_desc),
-                        checked = vm.config.enabled,
-                        onChange = { value -> vm.update { it.copy(enabled = value) } },
-                    )
-                    SwitchRow(
-                        title = stringResource(R.string.toggle_enforce),
-                        description = stringResource(R.string.toggle_enforce_desc),
-                        checked = vm.config.enforce,
-                        onChange = { value -> vm.update { it.copy(enforce = value) } },
-                        enabled = vm.config.enabled,
-                    )
-                    SwitchRow(
-                        title = stringResource(R.string.toggle_notify),
-                        description = stringResource(R.string.toggle_notify_desc),
-                        checked = vm.config.notifyChanges,
-                        onChange = { value -> vm.update { it.copy(notifyChanges = value) } },
-                    )
-                    SwitchRow(
-                        title = stringResource(R.string.toggle_verbose),
-                        description = stringResource(R.string.toggle_verbose_desc),
-                        checked = vm.config.verbose,
-                        onChange = { value -> vm.update { it.copy(verbose = value) } },
-                    )
-                }
-            }
-
-            if (!vm.connectGranted) {
-                item {
-                    SettingsCard(container = MaterialTheme.colorScheme.tertiaryContainer) {
-                        Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                            Text(
-                                text = stringResource(R.string.permission_title),
-                                style = MaterialTheme.typography.titleSmall,
-                            )
-                            Spacer(Modifier.height(4.dp))
-                            Text(
-                                text = stringResource(R.string.permission_body),
-                                style = MaterialTheme.typography.bodyMedium,
-                            )
-                            Spacer(Modifier.height(10.dp))
-                            Button(onClick = onRequestPermission) {
-                                Text(stringResource(R.string.action_grant))
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (!vm.bluetoothOn) {
-                item {
-                    SettingsCard(container = MaterialTheme.colorScheme.surfaceContainerHighest) {
-                        NoticeRow(
-                            icon = R.drawable.ic_bluetooth,
-                            text = stringResource(R.string.bluetooth_off),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
-                        )
-                    }
-                }
-            }
-
-            // オフロードは端末全体の設定なので、機器ごとの詳細ではなく一覧に出す。報告が届いて
-            // いなければ offloadEnabled は false になるので、モジュールが動いていない間は出ない。
-            if (vm.a2dpOffloadEnabled) {
-                item {
-                    val needsScope = !vm.settingsHooked
-                    SettingsCard(container = MaterialTheme.colorScheme.surfaceContainerHighest) {
-                        NoticeRow(
-                            icon = R.drawable.ic_bolt,
-                            text = stringResource(R.string.offload_hint),
-                            contentPadding = PaddingValues(
-                                start = 16.dp,
-                                end = 16.dp,
-                                top = 10.dp,
-                                bottom = if (needsScope) 6.dp else 10.dp,
-                            ),
-                        )
-                        // トグルが塞がれているかは端末側からは読めない。設定アプリに入ったフックが
-                        // 名乗ってきたかどうかで代える — 名乗りが無いのは「スコープ未追加」か
-                        // 「設定アプリをまだ開いていない」のどちらかで、どちらでもこの案内が当たる。
-                        if (needsScope) {
-                            Text(
-                                text = stringResource(R.string.offload_hint_scope),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(start = 46.dp, end = 16.dp, bottom = 10.dp),
-                            )
-                        }
-                    }
-                }
-            }
-
-            // 音響処理モジュールとアプリは別々に更新されるので、片方だけ古い状態が普通に起きる。
-            // 端末全体の話なので機器ごとの詳細ではなく一覧に出す。
-            // UNKNOWN (プロパティが空 = モジュールが入っていないか、版を出さない古いモジュール) では
-            // 何も出さない — 音響処理が使えない理由と二重になるため。
-            if (vm.moduleVersionState == ModuleVersionState.MISMATCHED) {
-                item {
-                    SettingsCard(container = MaterialTheme.colorScheme.surfaceContainerHighest) {
-                        NoticeRow(
-                            icon = R.drawable.ic_info,
-                            text = stringResource(
-                                R.string.eq_module_version_mismatch,
-                                bidiIsolate(vm.moduleSemver.ifBlank { unknownVersion }),
-                                bidiIsolate(BuildConfig.VERSION_NAME),
-                            ),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
-                        )
-                    }
-                }
-            }
-
-            item { SectionHeader(stringResource(R.string.section_audio_devices)) }
-
-            if (audioRows.isEmpty()) {
-                item {
-                    SettingsCard {
+                SettingsCard(container = MaterialTheme.colorScheme.tertiaryContainer) {
+                    Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                         Text(
-                            text = when {
-                                !vm.connectGranted -> stringResource(R.string.devices_no_permission)
-                                !vm.bluetoothOn -> stringResource(R.string.devices_bluetooth_off)
-                                else -> stringResource(R.string.devices_empty)
-                            },
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                        )
-                    }
-                }
-            } else {
-                items(audioRows, key = { it.mac }) { row ->
-                    DeviceCard(
-                        row = row,
-                        profile = vm.config.profileFor(row.mac),
-                        status = vm.statusOf(row.mac),
-                        codecNames = vm.codecNames,
-                        onClick = { onOpenDevice(row.mac) },
-                    )
-                }
-            }
-
-            if (otherRows.isNotEmpty()) {
-                item {
-                    SettingsCard {
-                        ExpandableHeader(
-                            title = stringResource(R.string.section_other_devices, otherRows.size),
-                            expanded = othersExpanded,
-                            onToggle = { othersExpanded = !othersExpanded },
-                        )
-                    }
-                }
-                if (othersExpanded) {
-                    items(otherRows, key = { it.mac }) { row ->
-                        DeviceCard(
-                            row = row,
-                            profile = vm.config.profileFor(row.mac),
-                            status = vm.statusOf(row.mac),
-                            codecNames = vm.codecNames,
-                            onClick = { onOpenDevice(row.mac) },
-                        )
-                    }
-                }
-            }
-
-            if (orphanRows.isNotEmpty()) {
-                item { SectionHeader(stringResource(R.string.section_orphan_profiles)) }
-                items(orphanRows, key = { it.mac }) { row ->
-                    DeviceCard(
-                        row = row,
-                        profile = vm.config.profileFor(row.mac),
-                        status = vm.statusOf(row.mac),
-                        codecNames = vm.codecNames,
-                        onClick = { onOpenDevice(row.mac) },
-                    )
-                }
-            }
-
-            item { BackupCard(vm = vm) }
-        }
-    }
-}
-
-@Composable
-private fun BackupCard(vm: MainViewModel) {
-    var confirmImport by rememberSaveable { mutableStateOf(false) }
-
-    val exportLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.CreateDocument("application/json"),
-    ) { uri ->
-        uri?.let(vm::exportConfig)
-    }
-
-    val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        uri?.let(vm::importConfig)
-    }
-
-    val stamp = remember { SimpleDateFormat("yyyyMMdd-HHmm", Locale.US).format(Date()) }
-    val fileName = stringResource(R.string.backup_filename, stamp)
-
-    SettingsCard(title = stringResource(R.string.section_backup)) {
-        Text(
-            text = stringResource(R.string.backup_body),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Button(onClick = { exportLauncher.launch(fileName) }, modifier = Modifier.weight(1f)) {
-                Text(stringResource(R.string.backup_export))
-            }
-            OutlinedButton(onClick = { confirmImport = true }, modifier = Modifier.weight(1f)) {
-                Text(stringResource(R.string.backup_import))
-            }
-        }
-    }
-
-    if (confirmImport) {
-        AlertDialog(
-            onDismissRequest = { confirmImport = false },
-            title = { Text(stringResource(R.string.backup_confirm_title)) },
-            text = { Text(stringResource(R.string.backup_confirm_body)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        confirmImport = false
-                        importLauncher.launch(arrayOf("*/*"))
-                    },
-                ) {
-                    Text(stringResource(R.string.backup_confirm_action))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { confirmImport = false }) {
-                    Text(stringResource(R.string.action_cancel))
-                }
-            },
-        )
-    }
-}
-
-@Composable
-private fun ModuleCard(vm: MainViewModel, onPush: () -> Unit) {
-    val report = vm.report
-    val container = when (vm.moduleState) {
-        ModuleState.INACTIVE -> MaterialTheme.colorScheme.errorContainer
-        else -> MaterialTheme.colorScheme.surfaceContainerLow
-    }
-    val unknown = stringResource(R.string.value_unknown)
-    SettingsCard(container = container) {
-        Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-            when (vm.moduleState) {
-                ModuleState.CHECKING -> {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                        Spacer(Modifier.size(12.dp))
-                        Text(
-                            text = stringResource(R.string.module_checking),
+                            text = stringResource(R.string.permission_title),
                             style = MaterialTheme.typography.titleSmall,
                         )
-                    }
-                }
-
-                ModuleState.ACTIVE -> {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_check_circle),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp),
-                        )
-                        Spacer(Modifier.size(10.dp))
+                        Spacer(Modifier.height(4.dp))
                         Text(
-                            text = stringResource(R.string.module_active),
-                            style = MaterialTheme.typography.titleMedium,
+                            text = stringResource(R.string.permission_body),
+                            style = MaterialTheme.typography.bodyMedium,
                         )
-                    }
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        text = stringResource(
-                            R.string.module_meta,
-                            bidiIsolate(report?.moduleVersion.orEmpty().ifBlank { unknown }),
-                        ),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    // 届いているときは何も出さない。異常だけを知らせる。
-                    when {
-                        report?.configLoaded != true -> {
-                            Spacer(Modifier.height(8.dp))
-                            SyncLine(stringResource(R.string.module_config_pending), onPush)
+                        Spacer(Modifier.height(10.dp))
+                        Button(onClick = onRequestPermission) {
+                            Text(stringResource(R.string.action_grant))
                         }
-
-                        !vm.configSynced -> {
-                            Spacer(Modifier.height(8.dp))
-                            SyncLine(stringResource(R.string.module_config_stale), onPush)
-                        }
-                    }
-                }
-
-                ModuleState.INACTIVE -> {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_warning),
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp),
-                        )
-                        Spacer(Modifier.size(10.dp))
-                        Text(
-                            text = stringResource(R.string.module_inactive),
-                            style = MaterialTheme.typography.titleMedium,
-                        )
-                    }
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        text = stringResource(R.string.module_inactive_body),
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                    Spacer(Modifier.height(6.dp))
-                    listOf(R.string.module_step_1, R.string.module_step_2, R.string.module_step_3).forEach { step ->
-                        Text(stringResource(step), style = MaterialTheme.typography.bodyMedium)
-                    }
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        text = stringResource(R.string.module_inactive_hint),
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                    Spacer(Modifier.height(6.dp))
-                    TextButton(onClick = { vm.requestStatus() }, contentPadding = PaddingValues(horizontal = 8.dp)) {
-                        Text(stringResource(R.string.action_recheck))
                     }
                 }
             }
         }
-    }
-}
 
-@Composable
-private fun SyncLine(message: String, onPush: () -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.weight(1f),
-        )
-        TextButton(onClick = onPush, contentPadding = PaddingValues(horizontal = 8.dp)) {
-            Text(stringResource(R.string.action_resend))
+        if (!vm.bluetoothOn) {
+            item {
+                SettingsCard(container = MaterialTheme.colorScheme.surfaceContainerHighest) {
+                    NoticeRow(
+                        icon = R.drawable.ic_bluetooth,
+                        text = stringResource(R.string.bluetooth_off),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
+                    )
+                }
+            }
+        }
+
+        item { SectionHeader(stringResource(R.string.section_audio_devices)) }
+
+        if (audioRows.isEmpty()) {
+            item {
+                SettingsCard {
+                    Text(
+                        text = when {
+                            !vm.connectGranted -> stringResource(R.string.devices_no_permission)
+                            !vm.bluetoothOn -> stringResource(R.string.devices_bluetooth_off)
+                            else -> stringResource(R.string.devices_empty)
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                    )
+                }
+            }
+        } else {
+            items(audioRows, key = { it.mac }) { row ->
+                DeviceCard(
+                    row = row,
+                    profile = vm.config.profileFor(row.mac),
+                    status = vm.statusOf(row.mac),
+                    codecNames = vm.codecNames,
+                    onClick = { onOpenDevice(row.mac) },
+                )
+            }
+        }
+
+        if (otherRows.isNotEmpty()) {
+            item {
+                SettingsCard {
+                    ExpandableHeader(
+                        title = stringResource(R.string.section_other_devices, otherRows.size),
+                        expanded = othersExpanded,
+                        onToggle = { othersExpanded = !othersExpanded },
+                    )
+                }
+            }
+            if (othersExpanded) {
+                items(otherRows, key = { it.mac }) { row ->
+                    DeviceCard(
+                        row = row,
+                        profile = vm.config.profileFor(row.mac),
+                        status = vm.statusOf(row.mac),
+                        codecNames = vm.codecNames,
+                        onClick = { onOpenDevice(row.mac) },
+                    )
+                }
+            }
+        }
+
+        if (orphanRows.isNotEmpty()) {
+            item { SectionHeader(stringResource(R.string.section_orphan_profiles)) }
+            items(orphanRows, key = { it.mac }) { row ->
+                DeviceCard(
+                    row = row,
+                    profile = vm.config.profileFor(row.mac),
+                    status = vm.statusOf(row.mac),
+                    codecNames = vm.codecNames,
+                    onClick = { onOpenDevice(row.mac) },
+                )
+            }
         }
     }
 }

@@ -31,6 +31,11 @@
     <string name="state_expanded">Genişletildi</string>
     <string name="state_collapsed">Daraltıldı</string>
 
+    <string name="tab_devices">Cihazlar</string>
+    <string name="tab_settings">Ayarlar</string>
+    <string name="tab_status">Durum</string>
+    <string name="cd_needs_attention">Dikkat gerekiyor</string>
+
     <string name="section_general">Genel ayarlar</string>
     <string name="toggle_auto_apply">Ayarları otomatik uygula</string>
     <string name="toggle_auto_apply_desc">Kapalıyken hiçbir cihazda bir şey değiştirilmez</string>

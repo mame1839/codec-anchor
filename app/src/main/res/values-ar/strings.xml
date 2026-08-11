@@ -35,6 +35,11 @@
     <string name="state_expanded">موسّع</string>
     <string name="state_collapsed">مطوي</string>
 
+    <string name="tab_devices">الأجهزة</string>
+    <string name="tab_settings">الإعدادات</string>
+    <string name="tab_status">الحالة</string>
+    <string name="cd_needs_attention">يحتاج إلى انتباه</string>
+
     <string name="section_general">إعدادات عامة</string>
     <string name="toggle_auto_apply">تطبيق الإعدادات تلقائيًا</string>
     <string name="toggle_auto_apply_desc">عند إيقافه لا يُغيَّر أي شيء على أي جهاز</string>

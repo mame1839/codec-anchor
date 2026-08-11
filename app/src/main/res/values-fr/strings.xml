@@ -32,6 +32,11 @@
     <string name="state_expanded">Développé</string>
     <string name="state_collapsed">Réduit</string>
 
+    <string name="tab_devices">Appareils</string>
+    <string name="tab_settings">Réglages</string>
+    <string name="tab_status">État</string>
+    <string name="cd_needs_attention">Nécessite votre attention</string>
+
     <string name="section_general">Général</string>
     <string name="toggle_auto_apply">Appliquer les réglages automatiquement</string>
     <string name="toggle_auto_apply_desc">Tant que c\'est désactivé, rien n\'est modifié sur aucun appareil</string>

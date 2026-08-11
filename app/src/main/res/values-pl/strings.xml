@@ -33,6 +33,11 @@
     <string name="state_expanded">Rozwinięte</string>
     <string name="state_collapsed">Zwinięte</string>
 
+    <string name="tab_devices">Urządzenia</string>
+    <string name="tab_settings">Ustawienia</string>
+    <string name="tab_status">Stan</string>
+    <string name="cd_needs_attention">Wymaga uwagi</string>
+
     <string name="section_general">Ustawienia ogólne</string>
     <string name="toggle_auto_apply">Stosuj ustawienia automatycznie</string>
     <string name="toggle_auto_apply_desc">Gdy wyłączone, na żadnym urządzeniu nic się nie zmienia</string>

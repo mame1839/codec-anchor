@@ -33,6 +33,11 @@
     <string name="state_expanded">Развёрнуто</string>
     <string name="state_collapsed">Свёрнуто</string>
 
+    <string name="tab_devices">Устройства</string>
+    <string name="tab_settings">Настройки</string>
+    <string name="tab_status">Состояние</string>
+    <string name="cd_needs_attention">Требует внимания</string>
+
     <string name="section_general">Общие настройки</string>
     <string name="toggle_auto_apply">Применять настройки автоматически</string>
     <string name="toggle_auto_apply_desc">Пока выключено, ни на одном устройстве ничего не меняется</string>

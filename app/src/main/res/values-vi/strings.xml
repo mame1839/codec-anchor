@@ -30,6 +30,11 @@
     <string name="state_expanded">Đã mở rộng</string>
     <string name="state_collapsed">Đã thu gọn</string>
 
+    <string name="tab_devices">Thiết bị</string>
+    <string name="tab_settings">Cài đặt</string>
+    <string name="tab_status">Trạng thái</string>
+    <string name="cd_needs_attention">Cần chú ý</string>
+
     <string name="section_general">Cài đặt chung</string>
     <string name="toggle_auto_apply">Tự động áp dụng cài đặt</string>
     <string name="toggle_auto_apply_desc">Khi tắt, không thiết bị nào bị thay đổi</string>

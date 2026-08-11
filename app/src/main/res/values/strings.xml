@@ -33,6 +33,11 @@
     <string name="state_expanded">Expanded</string>
     <string name="state_collapsed">Collapsed</string>
 
+    <string name="tab_devices">Devices</string>
+    <string name="tab_settings">Settings</string>
+    <string name="tab_status">Status</string>
+    <string name="cd_needs_attention">Needs attention</string>
+
     <string name="section_general">General</string>
     <string name="toggle_auto_apply">Apply settings automatically</string>
     <string name="toggle_auto_apply_desc">While off, nothing is changed on any device</string>

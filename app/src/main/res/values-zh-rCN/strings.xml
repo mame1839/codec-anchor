@@ -30,6 +30,11 @@
     <string name="state_expanded">已展开</string>
     <string name="state_collapsed">已收起</string>
 
+    <string name="tab_devices">设备</string>
+    <string name="tab_settings">设置</string>
+    <string name="tab_status">状态</string>
+    <string name="cd_needs_attention">需要处理</string>
+
     <string name="section_general">通用设置</string>
     <string name="toggle_auto_apply">自动应用设置</string>
     <string name="toggle_auto_apply_desc">关闭后，任何设备都不会被修改</string>

@@ -32,6 +32,11 @@
     <string name="state_expanded">Expandido</string>
     <string name="state_collapsed">Recolhido</string>
 
+    <string name="tab_devices">Dispositivos</string>
+    <string name="tab_settings">Configurações</string>
+    <string name="tab_status">Status</string>
+    <string name="cd_needs_attention">Requer atenção</string>
+
     <string name="section_general">Configurações gerais</string>
     <string name="toggle_auto_apply">Aplicar as configurações automaticamente</string>
     <string name="toggle_auto_apply_desc">Enquanto estiver desativado, nada é alterado em nenhum dispositivo</string>
