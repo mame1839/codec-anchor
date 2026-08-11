@@ -44,7 +44,9 @@ import io.github.mame1839.codecanchor.core.EqSettings
 import io.github.mame1839.codecanchor.core.EqSupport
 import io.github.mame1839.codecanchor.core.ModuleVersion
 import io.github.mame1839.codecanchor.core.ModuleVersionState
+import io.github.mame1839.codecanchor.core.QuietSwitch
 import io.github.mame1839.codecanchor.core.StatusReport
+import io.github.mame1839.codecanchor.core.SystemQuietBackend
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -293,21 +295,39 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         eqRegisterRunning = key
         eqRegisterReport = null
         viewModelScope.launch {
-            val result = withContext(Dispatchers.IO) { EqDevices.apply(next) }
-            val record = EqDevices.recordAfter(eqRegisteredMacs, next, result.outcome)
-            if (record != eqRegisteredMacs) {
-                eqDeviceStore.save(record)
-                eqRegisteredMacs = record
+            // 作り直しのあいだ音を押さえる。**取るのは apply の前** — 後だと、押さえる前に
+            // audioserver が落ちる。
+            val quiet = withContext(Dispatchers.IO) {
+                QuietSwitch.open(SystemQuietBackend(audioManager))
             }
-            eqRegisterReport = EqRegisterReport(mac = key, turnedOn = registered, result = result)
-            eqRegisterRunning = null
-            // ⚠️ **登録が変わったら必ず押し直す。**audioserver を作り直すので、生きている
-            // インスタンスの顔ぶれが変わり、枠の添字が変わる。**`params[]` はインスタンスの死を
-            // 越えて残る**ので、押し直さないと新しいインスタンスが**前の機器の曲線を拾う** —
-            // B の登録を外した後、A が B の添字に載ると A に B のカーブが掛かったまま鳴る。
-            if (result.outcome == EqDevicesOutcome.OK) {
-                refreshAudioOutputs()
-                pushEqParams()
+            try {
+                val result = withContext(Dispatchers.IO) { EqDevices.apply(next) }
+                // **audioserver が戻っても、イヤホンが経路に戻るのはその後。**ここで押さえを
+                // 解くと、まさに音がスピーカーへ落ちる瞬間に解くことになる。
+                withContext(Dispatchers.IO) { quiet.awaitOutputRestored() }
+                val record = EqDevices.recordAfter(eqRegisteredMacs, next, result.outcome)
+                if (record != eqRegisteredMacs) {
+                    eqDeviceStore.save(record)
+                    eqRegisteredMacs = record
+                }
+                eqRegisterReport = EqRegisterReport(mac = key, turnedOn = registered, result = result)
+                eqRegisterRunning = null
+                // ⚠️ **登録が変わったら必ず押し直す。**audioserver を作り直すので、生きている
+                // インスタンスの顔ぶれが変わり、枠の添字が変わる。**`params[]` はインスタンスの死を
+                // 越えて残る**ので、押し直さないと新しいインスタンスが**前の機器の曲線を拾う** —
+                // B の登録を外した後、A が B の添字に載ると A に B のカーブが掛かったまま鳴る。
+                if (result.outcome == EqDevicesOutcome.OK) {
+                    refreshAudioOutputs()
+                    pushEqParams()
+                }
+                // **押し直しが載るまで音を戻さない。**pushEqParams() は投げっぱなしなので、
+                // join しないと前の機器の曲線が掛かったまま鳴る瞬間がそのまま聞こえる。
+                // 押していなければ即座に返る。
+                eqPushJob?.join()
+            } finally {
+                // キャンセルされても必ず解く。**ここで suspend を挟むと走らない** —
+                // 音楽を止めたまま戻らなくなる。
+                quiet.close()
             }
         }
     }

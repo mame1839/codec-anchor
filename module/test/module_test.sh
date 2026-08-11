@@ -377,6 +377,24 @@ else
     ng "audioserver の作り直しは 1 箇所 (late-load と eq_devices.sh の両方から呼んでいない)"
 fi
 
+# 27b. 作り直しは「pid が変わるまで」戻らない。
+#      アプリは apply が戻ってから「Bluetooth の出口が戻るまで」音を押さえる (QuietSwitch)。
+#      出口の一覧は audioserver から引くので、**作り直しが始まる前に戻ると、前の
+#      audioserver が「出口はある」と答えて押さえがその 1 回で解ける。**直後に来る本当の
+#      作り直しは何にも守られず、**症状は元のまま・テストは緑・ログも正常**という形で外れる。
+n_pid=$(printf '%s\n' "$fnbody" | grep -c 'pidof audioserver')
+if ! printf '%s\n' "$fnbody" | grep -q 'while'; then
+    ng "作り直しは pid が変わるまで戻らない (待つループが無い)"
+elif [ "$n_pid" -lt 2 ]; then
+    ng "作り直しは pid が変わるまで戻らない (pidof audioserver が $n_pid 回。旧と新で 2 回要る)"
+elif ! printf '%s\n' "$fnbody" | grep -q '!='; then
+    ng "作り直しは pid が変わるまで戻らない (新旧の pid を比べていない)"
+elif [ "$(printf '%s\n' "$fnbody" | awk '/while/ { exit } /return 0/ { n++ } END { print n+0 }')" != 0 ]; then
+    ng "作り直しは pid が変わるまで戻らない (待つループより前に成功で返している)"
+else
+    ok "作り直しは pid が変わるまで戻らない"
+fi
+
 # 28. 一覧の置き場は 1 箇所で決め、uninstall で消す。
 n_d=$(grep -c '/data/adb/codecanchor_eq_devices' "$TMP/ship.code")
 if [ "$n_d" != 1 ]; then
