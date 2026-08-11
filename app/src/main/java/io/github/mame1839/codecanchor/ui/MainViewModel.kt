@@ -12,6 +12,7 @@ import android.media.AudioDeviceCallback
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import android.net.Uri
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -47,6 +48,7 @@ import io.github.mame1839.codecanchor.core.ModuleVersionState
 import io.github.mame1839.codecanchor.core.QuietSwitch
 import io.github.mame1839.codecanchor.core.StatusReport
 import io.github.mame1839.codecanchor.core.SystemQuietBackend
+import io.github.mame1839.codecanchor.xposed.XLog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -305,6 +307,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 // **audioserver が戻っても、イヤホンが経路に戻るのはその後。**ここで押さえを
                 // 解くと、まさに音がスピーカーへ落ちる瞬間に解くことになる。
                 withContext(Dispatchers.IO) { quiet.awaitOutputRestored() }
+                // **押さえは効かなくても何も出ない** — 音が漏れたことは端末の持ち主にしか
+                // 分からず、ログにも画面にも痕跡が残らない。ここだけが手掛かりになるので残す。
+                // sawOutputGone=false は「見に行く前に戻っていた」と「出口の一覧が
+                // audioserver の生死を映していない (待ちが素通り)」の両方を意味しうる。
+                Log.i(
+                    XLog.TAG,
+                    "QuietSwitch: hold=${quiet.outcome} restored=${quiet.restored} " +
+                        "sawOutputGone=${quiet.sawOutputGone}",
+                )
                 val record = EqDevices.recordAfter(eqRegisteredMacs, next, result.outcome)
                 if (record != eqRegisteredMacs) {
                     eqDeviceStore.save(record)
