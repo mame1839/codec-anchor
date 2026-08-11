@@ -78,7 +78,21 @@ data class EqParamsResult(
     val exitCode: Int,
     val stdout: String,
     val stderr: String,
-)
+) {
+    /**
+     * 失敗の理由を示す行だけを拾う。**`su` が拒否した理由はここにしか出ない。**
+     *
+     * `caeqset` は理由を stderr に書き、`su` 自身の拒否も stderr に出る。stdout は成功の内訳
+     * (書いた枠とバンド) なので、失敗の説明には要らない。**印は判定に使ったもので読ませる内容では
+     * ない**ので落とす。
+     */
+    fun diagnostics(limit: Int = 3): String =
+        (stderr.lineSequence() + stdout.lineSequence())
+            .map { it.trim() }
+            .filter { it.isNotEmpty() && it != EqParams.BEGIN_MARKER }
+            .take(limit)
+            .joinToString("\n")
+}
 
 /**
  * EQ の値を共有メモリのパラメータ枠へ書く経路。
