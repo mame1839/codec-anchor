@@ -8,6 +8,9 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.pm.PackageManager
+import android.media.AudioDeviceCallback
+import android.media.AudioDeviceInfo
+import android.media.AudioManager
 import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,15 +25,21 @@ import io.github.mame1839.codecanchor.bridge.EqDeviceStore
 import io.github.mame1839.codecanchor.bridge.PresetStore
 import io.github.mame1839.codecanchor.bridge.SettingsStore
 import io.github.mame1839.codecanchor.core.AppConfig
+import io.github.mame1839.codecanchor.core.AudioOutputs
 import io.github.mame1839.codecanchor.core.AutoEqParser
 import io.github.mame1839.codecanchor.core.AutoEqResult
 import io.github.mame1839.codecanchor.core.CodecKeys
 import io.github.mame1839.codecanchor.core.DeviceProfile
 import io.github.mame1839.codecanchor.core.DeviceStatus
 import io.github.mame1839.codecanchor.core.EqAvailability
+import io.github.mame1839.codecanchor.core.EqDelivery
 import io.github.mame1839.codecanchor.core.EqDevices
+import io.github.mame1839.codecanchor.core.EqDevicesOutcome
 import io.github.mame1839.codecanchor.core.EqDevicesResult
+import io.github.mame1839.codecanchor.core.EqParams
+import io.github.mame1839.codecanchor.core.EqParamsResult
 import io.github.mame1839.codecanchor.core.EqPreset
+import io.github.mame1839.codecanchor.core.EqRoute
 import io.github.mame1839.codecanchor.core.EqSettings
 import io.github.mame1839.codecanchor.core.EqSupport
 import io.github.mame1839.codecanchor.core.ModuleVersion
@@ -62,6 +71,15 @@ data class EqRegisterReport(
     val result: EqDevicesResult,
 )
 
+/**
+ * 直近で EQ の値を書きに行った結果。**どの機器へ書いたか**を一緒に持つ — 枠の持ち主は
+ * 画面で開いている機器とは限らないので、これが無いと別の機器の結果を出すことになる。
+ */
+data class EqParamsReport(
+    val mac: String,
+    val result: EqParamsResult,
+)
+
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val context: Context = application.applicationContext
@@ -69,6 +87,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val stored = store.load()
     private val presetStore = PresetStore(context)
     private val eqDeviceStore = EqDeviceStore(context)
+
+    // ⚠️ a2dpOutputs の初期化より前に置くこと (プロパティの初期化は宣言順に走る)。
+    private val audioManager: AudioManager? =
+        runCatching { context.getSystemService(AudioManager::class.java) }.getOrNull()
+
+    /** `su -c` に渡す実行ファイルの置き場。プロセスの生存中に変わらない。 */
+    private val nativeLibraryDir: String = context.applicationInfo.nativeLibraryDir.orEmpty()
 
     var presets by mutableStateOf(presetStore.load())
         private set
@@ -87,6 +112,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     /** 直近の登録操作の結果。成功も失敗も必ず出す。 */
     var eqRegisterReport by mutableStateOf<EqRegisterReport?>(null)
+        private set
+
+    /**
+     * いま音の出口になっている A2DP 機器。**枠の持ち主を決める材料** (`EqRoute` の KDoc)。
+     *
+     * `AudioDeviceCallback` で追う。**「アプリを開く → イヤホンを着ける」は普通の順序**で、
+     * そのとき ON_RESUME はもう過ぎている — 前面に来たときだけ見ていると、その回が丸ごと落ちる。
+     */
+    var a2dpOutputs by mutableStateOf(AudioOutputs.a2dp(audioManager))
+        private set
+
+    /**
+     * 直近で値を書きに行った結果。**失敗を黙らせないための唯一の置き場。**
+     *
+     * 成功のときも入れる (画面側が「前の失敗が残って見える」を避けられる)。出すかどうかは画面の判断。
+     */
+    var eqParamsReport by mutableStateOf<EqParamsReport?>(null)
         private set
 
     // パラメトリックからグラフィックへ移ると fc と Q が固定値へ丸められる。一度だけ確認し、
@@ -143,6 +185,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var watch: Job? = null
     private var syncWait: Job? = null
 
+    // 値の書き込みは 1 本ずつ。走っている間に来た依頼はこの旗 1 つに畳む (最後の 1 つだけが流れる)。
+    // viewModelScope は Main.immediate なので、旗の読み書きは全部同じスレッドで直列に起きる。
+    private var eqPushJob: Job? = null
+    private var eqPushQueued = false
+
     // 一覧のカードが recomposition ごとに読むので、設定を変えたときだけ計算する (hash は JSON を組み直す)。
     private var configHash = config.hash()
 
@@ -180,6 +227,56 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun eqRegistered(mac: String): Boolean = EqDevices.normalizeMac(mac) in eqRegisteredMacs
 
     /**
+     * 共有メモリの枠の持ち主。**値を書く相手はここでしか決めない。**
+     *
+     * `eqAvailability` とは別の軸なので混ぜない — あちらは「音響処理が使えるか」、こちらは
+     * 「いまこの瞬間どの機器の音になるか」。混ぜると、繋いでいないあいだ一覧の全機器が
+     * 「使えません」になる。
+     */
+    val eqOwner: String?
+        get() = EqRoute.owner(a2dpOutputs, eqRegisteredMacs)
+
+    fun eqDelivery(mac: String): EqDelivery = EqRoute.deliveryOf(mac, a2dpOutputs, eqRegisteredMacs)
+
+    fun refreshAudioOutputs() {
+        a2dpOutputs = AudioOutputs.a2dp(audioManager)
+    }
+
+    /**
+     * 枠の持ち主の設定を共有メモリへ書く。**開いている画面とは無関係** — 共有メモリは常に
+     * 「いま鳴っている機器」の設定を映す。
+     *
+     * **持ち主が決まらないときは何もしない。**推測で 1 つ選ぶと、片方のイヤホンにもう片方の
+     * 曲線が掛かる。終了コードもログも正常なので、原因に辿り着く手掛かりが 1 つも残らない。
+     *
+     * ⚠️ **同時に 2 本走らせない。**`caeqset` は seqlock で書くが、プロセスをまたぐ排他は無いので
+     * 2 本が同じ枠に重なると壊れる。走っている間に来た依頼は「最後の 1 つ」だけを後で流す
+     * (溜めると古い値が後から着地する)。
+     */
+    fun pushEqParams() {
+        // 登録の実行中は audioserver が落ちていて枠が無い。終わったら setEqRegistered が押し直す。
+        if (eqRegisterRunning != null) return
+        if (eqOwner == null) return
+        if (eqPushJob?.isActive == true) {
+            eqPushQueued = true
+            return
+        }
+        eqPushJob = viewModelScope.launch {
+            do {
+                // 走る直前に読み直す。待っている間に持ち主が変わっていることがある。
+                eqPushQueued = false
+                val target = eqOwner ?: break
+                // 設定を作っていない機器にも書く。共有メモリには前の機器の値が残っているので、
+                // 「何もしない」は「前の曲線が掛かったまま」を意味する (params[] はインスタンスの
+                // 死を越えて残る)。既定は EQ オフなので、書けば素通しに戻る。
+                val settings = config.profileFor(target)?.eq ?: EqSettings()
+                val result = withContext(Dispatchers.IO) { EqParams.apply(nativeLibraryDir, settings) }
+                eqParamsReport = EqParamsReport(mac = target, result = result)
+            } while (eqPushQueued)
+        }
+    }
+
+    /**
      * このイヤホンで音響処理を使う / やめる。
      *
      * **重い操作。**`audio_effects.xml` を作り直して audioserver を再起動するので、再生中の音が
@@ -204,6 +301,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
             eqRegisterReport = EqRegisterReport(mac = key, turnedOn = registered, result = result)
             eqRegisterRunning = null
+            // ⚠️ **登録が変わったら必ず押し直す。**audioserver を作り直すので、生きている
+            // インスタンスの顔ぶれが変わり、枠の添字が変わる。**`params[]` はインスタンスの死を
+            // 越えて残る**ので、押し直さないと新しいインスタンスが**前の機器の曲線を拾う** —
+            // B の登録を外した後、A が B の添字に載ると A に B のカーブが掛かったまま鳴る。
+            if (result.outcome == EqDevicesOutcome.OK) {
+                refreshAudioOutputs()
+                pushEqParams()
+            }
         }
     }
 
@@ -243,6 +348,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         // モジュールを入れた直後は audioserver の作り直しで登録が変わる。手動の更新でだけ取り直す。
         effectRegistered = EqSupport.effectRegistered()
         refreshDevices()
+        refreshAudioOutputs()
+        // 前面に来たら押し直す。**端末を再起動すると共有メモリが作り直されて `generation` が 0 に
+        // 戻る**ので、押し直さないと「再起動したら EQ が効かなくなった」になる。
+        // 押した結果そのものが「効いているか」の答えになるので、問い合わせの経路は要らない。
+        pushEqParams()
         requestStatus()
     }
 
@@ -361,8 +471,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         current.withProfile(transform(base))
     }
 
-    fun updateEq(mac: String, transform: (EqSettings) -> EqSettings) =
+    /**
+     * EQ の設定を変える。**入口はここ 1 つ** (スライダー・プリセット・AutoEQ の取り込みが全部通る)。
+     *
+     * ここで共有メモリへ書く。**ドラッグ中は呼ばれない** — スライダーは `onValueChangeFinished` で
+     * しか確定しないので、値が確定したときだけ `su` が走る。
+     *
+     * **書くのは [mac] がいまの枠の持ち主のときだけ。**繋がっていない機器の設定を書くと、
+     * 鳴っているほうの機器にその曲線が掛かる。**`--off` も同じ門を通す** — オフは無害に見えるが、
+     * 通すと鳴っている別のイヤホンの EQ を消す。
+     */
+    fun updateEq(mac: String, transform: (EqSettings) -> EqSettings) {
         updateProfile(mac) { it.copy(eq = transform(it.eq)) }
+        if (EqDevices.normalizeMac(mac) == eqOwner) pushEqParams()
+    }
 
     // プリセットは設定とは別のファイルに持つ。同じ名前で保存し直したら差し替える。
     fun savePreset(name: String, settings: EqSettings) {
@@ -513,6 +635,38 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             cls.hasService(BluetoothClass.Service.AUDIO) ||
             cls.hasService(BluetoothClass.Service.RENDER)
     }.getOrDefault(false)
+
+    /**
+     * 出口が変わったら押し直す。**前面に来たときだけでは足りない** — 「アプリを開く →
+     * イヤホンを着ける」は普通の順序で、そのとき ON_RESUME はもう過ぎている。
+     *
+     * **断ったときの回収経路でもある。**繋がっていない機器を編集していて書かなかった分は、
+     * その機器を繋いだこのコールバックで初めて届く。**断りと回収は 1 対**で、片方だけだと
+     * 「設定したのに効かない」に戻る。
+     *
+     * 常駐は増えない (アプリのプロセスが生きている間だけの登録)。
+     */
+    private val audioDevices = object : AudioDeviceCallback() {
+        override fun onAudioDevicesAdded(addedDevices: Array<out AudioDeviceInfo>?) = onOutputsChanged()
+
+        override fun onAudioDevicesRemoved(removedDevices: Array<out AudioDeviceInfo>?) = onOutputsChanged()
+    }
+
+    private fun onOutputsChanged() {
+        refreshAudioOutputs()
+        pushEqParams()
+    }
+
+    // ⚠️ 上のプロパティが全部そろってから登録する。registerAudioDeviceCallback は登録した時点の
+    // 一覧でコールバックを 1 回呼ぶので、宣言順を入れ替えると初期化前の値を読む。
+    init {
+        runCatching { audioManager?.registerAudioDeviceCallback(audioDevices, null) }
+    }
+
+    // super.onCleared() は呼ばない。@EmptySuper が付いていて lint が落とす。
+    override fun onCleared() {
+        runCatching { audioManager?.unregisterAudioDeviceCallback(audioDevices) }
+    }
 
     private companion object {
         const val REPORT_TIMEOUT_MS = 5_000L

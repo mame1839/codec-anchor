@@ -95,6 +95,17 @@
     <string name="eq_device_failed_audioserver">Il servizio audio non è tornato attivo. Riavvia il telefono.</string>
     <string name="eq_device_failed_unknown">È fallito in un modo che questa versione dell\'app non riconosce (codice %1$d).</string>
 
+    <string name="eq_delivery_other">In questo momento sono connessi altri auricolari, quindi ciò che cambi qui non arriva ancora al suono. Connetti questi auricolari e verrà applicato.</string>
+    <string name="eq_delivery_ambiguous">Sono in esecuzione più effetti per auricolari e l\'app non riesce a capire quale appartiene a questi auricolari, quindi non è stato inviato nulla. Disconnetti gli altri auricolari, poi cambia di nuovo qualcosa qui.</string>
+    <string name="eq_delivery_not_live">Queste impostazioni non sono ancora arrivate al suono. Riproduci qualcosa su questi auricolari, oppure riapri questa app.</string>
+    <string name="eq_delivery_failed_root">Queste impostazioni non sono arrivate al suono: l\'accesso root è stato rifiutato, oppure questo telefono non ha un gestore root. Consenti Codec Anchor nel tuo gestore root.</string>
+    <string name="eq_delivery_failed_shm">Queste impostazioni non sono arrivate al suono: il modulo di elaborazione audio non è in esecuzione. Riavvia il telefono.</string>
+    <string name="eq_delivery_failed_version">Queste impostazioni non sono arrivate al suono: l\'app e il modulo di elaborazione audio hanno versioni diverse. Aggiorna entrambi alla stessa versione, poi riavvia il telefono.</string>
+    <string name="eq_delivery_failed_rejected">Queste impostazioni sono state rifiutate perché fuori intervallo, quindi il suono non è cambiato. Abbassa il guadagno delle bande.</string>
+    <string name="eq_delivery_failed_timeout">L\'invio di queste impostazioni non si è concluso in tempo ed è stato interrotto.</string>
+    <string name="eq_delivery_failed_input">Queste impostazioni non sono arrivate al suono: l\'app ha costruito male la richiesta. È un difetto dell\'app.</string>
+    <string name="eq_delivery_failed_unknown">L\'invio di queste impostazioni è fallito in un modo che questa versione dell\'app non riconosce (codice %1$d).</string>
+
     <string name="tag_connected">Connesso</string>
     <string name="tag_disconnected">Non connesso</string>
     <string name="tag_active">In riproduzione</string>
