@@ -85,7 +85,7 @@ class EqCurveTest {
      *
      * `bands[].gainDb10` はフィルタに渡すゲインで、曲線はその合成応答を描く。
      * フィルタのゲインを 10 バンド全部 +6.0 dB にすると、合成は +6.0 dB ではなく
-     * +10.86 dB になる (Q=1.0 の隣どうしの重なり)。
+     * +17.31 dB になる (Q=0.5 の隣どうしの重なり)。
      *
      * 曲線がバンドのゲインをなぞっているだけなら、ここは 6.0 に落ちる。
      */
@@ -93,14 +93,14 @@ class EqCurveTest {
     fun curveShowsWhatIsHeardNotWhatWasTyped() {
         val bands = flatBands(10, 60)
         val peak = graphicResponse(bands).max()
-        assertTrue("期待は約 10.86 dB、実際は $peak", peak in 10.0..11.5)
+        assertTrue("期待は約 17.31 dB、実際は $peak", peak in 16.8..17.8)
         assertNotEquals("バンドのゲインをそのまま描いている", 6.0, peak, 0.5)
     }
 
     /**
      * 曲線の値そのものを固定する。参照は独立実装 (numpy、`tools/eq/05_geq_gain_solve_10band.py` の
-     * `rbj_peak` / `rdb` と同式) をアプリの中心周波数 (32〜16k)・製品の Q=1.0・fs=48000 で回したもの。
-     * 検算: 同じ実装を Q=1.41 で回すと旧参照値 (8.8492 / 7.4956 / 8.6500) がそのまま再現される
+     * `rbj_peak` / `rdb` と同式) をアプリの中心周波数 (32〜16k)・製品の Q=0.5・fs=48000 で回したもの。
+     * 検算: 同じ実装を Q=1.0 で回すと旧参照値 (8.5392 / 10.4372 / ...) がそのまま再現される
      * ことを確認済み — 新旧の参照値は同じ系統から出ている。
      *
      * **固定しているのは「バンドのゲイン (`gainDb10`) → 曲線」の計算で、そこは仕様変更の前後で
@@ -115,10 +115,11 @@ class EqCurveTest {
 
         val flat = flatBands(10, 60)
         val flatExpected = doubleArrayOf(
-            8.5392, 10.4372, 10.8052, 10.8595, 10.8573, 10.8020, 10.6203, 10.1039, 8.8388, 6.9864,
+            11.8561, 15.6468, 16.9741, 17.2894, 17.3096, 17.1641, 16.7186, 15.6155, 13.2752, 8.9665,
         )
         assertCurveAt(flat, freqs, flatExpected)
-        assertEquals("帯域内のピーク", 10.8595, graphicResponse(flat).max(), 1e-3)
+        // ピークは中心の間 (450 Hz 付近、17.3137 dB)。標本間隔のぶんだけ下に外れうるので許容は粗め。
+        assertEquals("帯域内のピーク", 17.3137, graphicResponse(flat).max(), 5e-3)
 
         val sliders = intArrayOf(80, 70, 50, 30, 10, 0, -20, -40, -60, -60)
         val mixed = freqs.mapIndexed { i, hz -> EqBand(freqHz = hz, q100 = 100, gainDb10 = sliders[i]) }
@@ -650,7 +651,7 @@ class EqCurveTest {
      *
      * 目標どおりに解けた並びなら全ラベルが目標そのものになる (求解が「丸めた応答 = 目標」まで
      * 詰めるため)。フィルタのゲインを出すと、全部 +12.0 の摘みの上に解いたゲイン
-     * (+6.3〜+10.7) が並び、摘みと絵の不一致がグラフの中に残る。
+     * (Q=0.5 で +3.7〜+9.7) が並び、摘みと絵の不一致がグラフの中に残る。
      */
     @Test
     fun centreLabelsShowTheKnobValueNotTheFilterGain() {
@@ -662,7 +663,7 @@ class EqCurveTest {
 
         // 丸めの検算。フィルタゲイン直置きの flat +6 では、中心の応答 (上の参照値) を丸めた値。
         assertEquals(
-            listOf(85, 104, 108, 109, 109, 108, 106, 101, 88, 70),
+            listOf(119, 156, 170, 173, 173, 172, 167, 156, 133, 90),
             centreGainsDb10(graphicResponse(flatBands(10, 60)), 10).toList(),
         )
     }
