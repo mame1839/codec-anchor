@@ -216,16 +216,22 @@ object EqSolver {
         if (index !in bands.indices) return bands
         if (bands.size == 1) return listOf(bands[0].copy(gainDb10 = targetDb10.coerceIn(EqBand.GAIN_RANGE)))
         val freqs = bands.map { it.freqHz }
-        val q = bands[index].q100.toDouble() / EqUnits.Q_SCALE
+        // 読み取りは保存されている Q で。いま実際に鳴っている応答は保存中のバンドが決める。
+        val storedQ = bands[index].q100.toDouble() / EqUnits.Q_SCALE
         // ドラッグ 1 コマごとに走るので、読み取りも速い経路で。値は graphicTargetsDb10 と一致する
         // (EqSolverTest の theFastCentreGridAgreesWithTheReferenceFormula が突き合わせている)。
-        val grid = CentreGrid(freqs, q, fs)
+        val grid = CentreGrid(freqs, storedQ, fs)
         val gains = DoubleArray(bands.size) { bands[it].gainDb10.toDouble() / EqUnits.GAIN_SCALE }
         val targets = DoubleArray(bands.size) {
             Math.round(grid.combinedAt(it, gains) * EqUnits.GAIN_SCALE).toDouble() / EqUnits.GAIN_SCALE
         }
         targets[index] = targetDb10.toDouble() / EqUnits.GAIN_SCALE
-        return solveBands(targets, freqs, q, fs)
+        // 解く種は保存されている Q ではなく、毎回既定 Q から取り直す。保存値を種にすると、
+        // スパイク状の目標で一度エスカレートした Q が平らに戻しても残り続け (下げる経路が無い)、
+        // その後の全バンド +12 が Q 4.5 の櫛で鳴る (2026-08-12 の実機で発生)。
+        // エスカレーションは solve() がその目標のためだけに毎回やり直す。バンド数を変えたときに
+        // reband() が既定 Q へ戻るのと同じ規則 (EqSolverTest.escalatedQAnnealsBack... が見張る)。
+        return solveBands(targets, freqs, defaultQ(bands.size), fs)
     }
 
     /**

@@ -91,6 +91,29 @@ class EqSolverTest {
         assertTrue("補正なしのうねりが ${rippleDb(naive, 125.0, 8_000.0)} dB しかない", rippleDb(naive, 125.0, 8_000.0) > 3.0)
     }
 
+    /**
+     * **エスカレートした Q は、目標が穏やかに戻ったら既定へ戻ること。**
+     *
+     * [EqSolver.withGraphicTarget] が解く種を保存済みの q100 から取ると、スパイクで一度
+     * 上がった Q が**戻す操作をしても残り続ける** (全 +12 が細い Q の櫛で鳴る —
+     * 2026-08-12 の実機のスクリーンショットの再現条件)。種は毎回 [EqSolver.defaultQ] から
+     * 取り直し、エスカレーションは solve() がその目標のためだけに毎回やり直す。
+     */
+    @Test
+    fun escalatedQAnnealsBackWhenTheTargetCalmsDown() {
+        val n = 31
+        val defaultQ100 = (EqSolver.defaultQ(n) * 100).toInt()
+        var bands = EqSolver.solveBands(DoubleArray(n) { 0.0 }, EqSolver.centerFrequencies(n), EqSolver.defaultQ(n))
+        bands = EqSolver.withGraphicTarget(bands, 15, 120)
+        // 前提: スパイク 1 本は既定 Q では 20 dB に収まらず、エスカレーションが要る。
+        assertTrue("前提が崩れた: スパイクで Q が上がっていない", bands.first().q100 > defaultQ100)
+        assertEquals(120, EqSolver.graphicTargetsDb10(bands)[15])
+
+        bands = EqSolver.withGraphicTarget(bands, 15, 0)
+        assertEquals("平らに戻したのに Q が残っている", defaultQ100, bands.first().q100)
+        assertTrue(EqSolver.graphicTargetsDb10(bands).all { it == 0 })
+    }
+
     private fun rippleDb(bands: List<EqBand>, loHz: Double, hiHz: Double): Double {
         var lo = Double.MAX_VALUE
         var hi = -Double.MAX_VALUE
