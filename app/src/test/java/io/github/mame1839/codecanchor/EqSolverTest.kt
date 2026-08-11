@@ -13,8 +13,8 @@ class EqSolverTest {
     // 素朴なカスケードは 10 バンド全部 +6 dB でピーク +8.85 dB になる。
     //
     // ここの q100 = 141 は 05_*.py の条件をそのまま再現するための値で、
-    // defaultQ(10) (= 1.0) とは別物。参照値と対で決まっているので defaultQ に置き換えない。
-    // 製品の Q=1.0 での同じピークは +10.86 dB (EqCurveTest が固定している)。
+    // defaultQ(10) (= 0.5) とは別物。参照値と対で決まっているので defaultQ に置き換えない。
+    // 製品の Q=0.5 での同じピークは +17.31 dB (EqCurveTest が固定している)。
     // 8.85 を製品の数字として読まないこと。
     @Test
     fun naiveCascadeOvershoots() {
@@ -73,7 +73,8 @@ class EqSolverTest {
      *
      * 2026-08-11 の報告「全部 12 dB にしたら波々になってる」。原因は干渉補正が
      * スライダー操作で走っていなかったこと。素のカスケードだと中央部 (125 Hz〜8 kHz) に
-     * **4.9 dB** のうねりが出る。補正を通すと 1.1 dB に収まる。
+     * **4.9 dB** (Q=1.0) のうねりが出る。補正 + 平ら目標で選んだ Q なら 0.2 dB 以下。
+     * バンド数ごとの上限は [flatTargetsStayFlatBetweenTheCentres] が締めている。
      *
      * 全域ではなく 125 Hz〜8 kHz を見るのは、両端のバンド (32 Hz / 16 kHz) の外側が
      * 必ず垂れるため。そこは補正の対象ではない (目標点が片側にしか無い)。
@@ -89,6 +90,68 @@ class EqSolverTest {
         // この行が落ちたら「補正が要らなくなった」のではなく、比較の前提が崩れている。
         val naive = freqs.map { EqBand(freqHz = it, q100 = 100, gainDb10 = 120) }
         assertTrue("補正なしのうねりが ${rippleDb(naive, 125.0, 8_000.0)} dB しかない", rippleDb(naive, 125.0, 8_000.0) > 3.0)
+    }
+
+    /**
+     * **全バンドを同じ値にしたら、中心と中心の間も同じ値に留まること。**バンド数ごとに固定する。
+     *
+     * 2026-08-12 の報告「32 から 16K までどの位置でとってもプラス 12 じゃないとおかしくない?」。
+     * 摘み (バンド中心) は解けば必ず合うので、見張る対象は**中心間の谷**のほう。
+     * 谷の深さは既定 Q でほぼ決まる — Q を上げるほど深くなる (V&R 2016 Fig.8)。
+     * この上限は既定 Q の実測 + 余裕で、**Q の表を上げ直すとここが落ちる。**
+     *
+     * 31 バンドだけ上限が緩いのは、最上バンド (20 kHz) が fs=48k の Nyquist で潰れて
+     * 16k–20k の 1 区間に谷が残るため (実測 2.9 dB)。**可聴域 (16 kHz まで) は別に締める。**
+     */
+    @Test
+    fun flatTargetsStayFlatBetweenTheCentres() {
+        // 実測 (solveBands 込み): 5 -> 0.94 / 10 -> 0.45 / 15 -> 0.36 / 31 -> 2.88。
+        // 10/15 の最悪点は谷ではなく低域端の山 (41 Hz / 30 Hz の +0.4 dB)。
+        val limits = mapOf(5 to 1.2, 10 to 0.6, 15 to 0.6, 31 to 3.3)
+        for ((n, limit) in limits) {
+            val freqs = EqSolver.centerFrequencies(n)
+            val bands = EqSolver.solveBands(DoubleArray(n) { 12.0 }, freqs, EqSolver.defaultQ(n))
+            val whole = maxDeviationDb(bands, freqs.first().toDouble(), freqs.last().toDouble(), 12.0)
+            assertTrue("n=$n の中心間のずれが $whole dB (上限 $limit)", whole <= limit)
+        }
+        // 31 バンドの可聴域。ユーザの訴えの範囲 (〜16 kHz) では 1 dB 未満であること。
+        val freqs = EqSolver.centerFrequencies(31)
+        val bands = EqSolver.solveBands(DoubleArray(31) { 12.0 }, freqs, EqSolver.defaultQ(31))
+        val audible = maxDeviationDb(bands, 20.0, 16_000.0, 12.0)
+        assertTrue("31 バンドの 16 kHz までのずれが $audible dB (上限 1.0)", audible <= 1.0)
+    }
+
+    private fun maxDeviationDb(bands: List<EqBand>, loHz: Double, hiHz: Double, targetDb: Double): Double {
+        var worst = 0.0
+        for (i in 0..2000) {
+            val hz = loHz * Math.pow(hiHz / loHz, i / 2000.0)
+            val d = abs(EqSolver.combinedResponseDb(bands, hz) - targetDb)
+            if (d > worst) worst = d
+        }
+        return worst
+    }
+
+    /**
+     * **エスカレートした Q は、目標が穏やかに戻ったら既定へ戻ること。**
+     *
+     * [EqSolver.withGraphicTarget] が解く種を保存済みの q100 から取ると、スパイクで一度
+     * 上がった Q が**戻す操作をしても残り続ける** (全 +12 が細い Q の櫛で鳴る —
+     * 2026-08-12 の実機のスクリーンショットの再現条件)。種は毎回 [EqSolver.defaultQ] から
+     * 取り直し、エスカレーションは solve() がその目標のためだけに毎回やり直す。
+     */
+    @Test
+    fun escalatedQAnnealsBackWhenTheTargetCalmsDown() {
+        val n = 31
+        val defaultQ100 = (EqSolver.defaultQ(n) * 100).toInt()
+        var bands = EqSolver.solveBands(DoubleArray(n) { 0.0 }, EqSolver.centerFrequencies(n), EqSolver.defaultQ(n))
+        bands = EqSolver.withGraphicTarget(bands, 15, 120)
+        // 前提: スパイク 1 本は既定 Q では 20 dB に収まらず、エスカレーションが要る。
+        assertTrue("前提が崩れた: スパイクで Q が上がっていない", bands.first().q100 > defaultQ100)
+        assertEquals(120, EqSolver.graphicTargetsDb10(bands)[15])
+
+        bands = EqSolver.withGraphicTarget(bands, 15, 0)
+        assertEquals("平らに戻したのに Q が残っている", defaultQ100, bands.first().q100)
+        assertTrue(EqSolver.graphicTargetsDb10(bands).all { it == 0 })
     }
 
     private fun rippleDb(bands: List<EqBand>, loHz: Double, hiHz: Double): Double {
@@ -191,7 +254,7 @@ class EqSolverTest {
     fun theFastCentreGridAgreesWithTheReferenceFormula() {
         for (n in listOf(5, 10, 15, 31)) {
             val freqs = EqSolver.centerFrequencies(n)
-            for (q in listOf(0.7, 1.0, 1.41, 2.0, 3.0)) {
+            for (q in listOf(0.4, 0.5, 0.7, 1.0, 1.41, 2.0, 3.0)) {
                 val grid = EqSolver.CentreGrid(freqs, q, EqSolver.DEFAULT_FS)
                 for (i in freqs.indices) {
                     for (j in freqs.indices) {
@@ -268,7 +331,7 @@ class EqSolverTest {
     }
 
     // プリアンプは合成応答のピークから。個々のゲインの合計ではない。
-    // q100 = 141 は上と同じく 05_*.py の条件の再現 (製品の Q=1.0 ならピークは +10.86 dB)。
+    // q100 = 141 は上と同じく 05_*.py の条件の再現 (製品の Q=0.5 ならピークは +17.31 dB)。
     @Test
     fun autoPreampUsesCombinedPeakNotSum() {
         val freqs = EqSolver.centerFrequencies(10)

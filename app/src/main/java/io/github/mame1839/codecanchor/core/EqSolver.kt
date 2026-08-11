@@ -22,8 +22,9 @@ object EqSolver {
     private const val Q_ESCALATION = 1.5
     private const val Q_ESCALATION_TRIES = 4
 
-    // 実応答を評価するニュートン法の反復。10 バンド +12 dB で 8 回、31 バンドでも
-    // 12 回あれば tolerance に落ちる (EqSolverTest が収束を見張っている)。
+    // 実応答を評価するニュートン法の反復の上限。ヤコビアンを毎回作り直すので収束は二次で、
+    // 通常は数回で tolerance に落ちる (EqSolverTest が収束を見張っている)。落ちないまま
+    // 使い切る目標は解が大きく暴れているので、solve() の上限検査がエスカレーションで受け止める。
     private const val SOLVE_ITERATIONS = 16
     private const val SOLVE_TOLERANCE_DB = 1e-9
 
@@ -42,21 +43,29 @@ object EqSolver {
 
     /**
      * バンド間隔に見合う Q。ユーザには出さない (eq-spec.md §7)。
-     * 4 つとも実測 (tools/eq/15_q_per_bandcount.py)。
+     * 4 つとも実測 (tools/eq/17_q_joint_rederive.py。2026-08-12 に引き直した)。
      *
      * 選定の規則は「誤差が最小の Q」ではなく
-     * 「飽和せず、条件数が二桁に収まる範囲で誤差が最小の Q」。
-     *   - max|band gain| が上限 (15 dB) に張り付いた組み合わせは採らない。飽和しているので
-     *     その誤差はクランプ後の結果であって最適ではない (10 バンドの Q=0.7、15 バンドの Q=1.0)
-     *   - 31 バンドは Q=1.0 のほうが誤差が小さい (0.47 対 0.73 dB) が、条件数が 327 対 17.4 で
-     *     19 倍悪い。手で描いた病的な目標で解が暴れるので採らない
-     * この規則を消すと、次に測り直した人が Q=1.0 に変えてしまう。
+     * 「既定のまま実プリセットがエスカレートせず、条件数が二桁に収まる範囲で、
+     *   **平ら目標の中心間の谷**と AutoEQ の実現誤差の両方が最小の Q」。
+     *   - **評価は必ずこの製品の経路 (中心厳密一致 + 20 dB でエスカレーション) で行う。**
+     *     旧表 (0.7 / 1.0 / 1.41 / 2.0) は別経路 (lstsq + 15 dB クランプ。15_q_per_bandcount.py)
+     *     の評価で、飽和の歪みが低い Q を不当に落としていた。その表は全バンド +12 で
+     *     谷 4.8 dB (5 バンド) の波を作った — 摘みは中心で必ず合うので、**表の良し悪しは
+     *     中心の誤差ではなく中心間に出る**
+     *   - Q を下げる側の壁は 2 つ: 条件数が三桁に入る (31 バンドの Q=1.2 で 125、
+     *     10 バンドの Q=0.4 で 126)、解の最大値が上限 20 dB に寄ってプリセット次第で
+     *     エスカレートする (15 バンドの Q=0.65 で DUNU の max|g| 18.7 = 余裕 6%)
+     *   - √2 の階段 (旧表) には戻さない。あの並びは飽和した評価の産物で、
+     *     密なバンドほど隣との重なりを増やさないと Nyquist 側の潰れが谷になる
+     * この規則を消すと、次に測り直した人が旧表に戻してしまう。
+     * 谷の上限は EqSolverTest.flatTargetsStayFlatBetweenTheCentres が固定している。
      */
     fun defaultQ(bandCount: Int): Double = when (bandCount) {
-        31 -> 2.0 // 1/3 oct。誤差 0.73 dB / 条件数 17.4
-        15 -> 1.41 // 2/3 oct。誤差 2.57 dB / 条件数 6.1
-        10 -> 1.0 // 1 oct。  誤差 2.09 dB / 条件数 4.7
-        else -> 0.7 // 2 oct。  誤差 3.76 dB / 条件数 2.0
+        31 -> 1.41 // 1/3 oct。平ら+12 のずれ 2.9 dB (16k 超のみ。16k までは 0.6) / DUNU 2.2 dB / 条件数 60
+        15 -> 0.7 // 2/3 oct。ずれ 0.36 dB / DUNU 6.8 dB / 条件数 52
+        10 -> 0.5 // 1 oct。  ずれ 0.45 dB / DUNU 4.7 dB / 条件数 34
+        else -> 0.4 // 2 oct。  ずれ 0.94 dB / DUNU 9.7 dB / 条件数 3.8
     }
 
     /**
@@ -87,8 +96,9 @@ object EqSolver {
      * 目標のゲイン (dB) をバンド中心で与えると、実際にその応答になるバンドゲインを返す。
      *
      * 素朴なカスケードは隣のバンドのスカートが足し合わさるので、10 バンド全部 +6 dB を
-     * 指定すると合成応答のピークが +10.86 dB になる (Q = defaultQ(10) = 1.0 での実測。
-     * tools/eq/05_geq_gain_solve_10band.py の +8.85 は Q=1.41 で回した値)。
+     * 指定すると合成応答のピークが +17.31 dB になる (Q = defaultQ(10) = 0.5 での実測。
+     * tools/eq/05_geq_gain_solve_10band.py の +8.85 は Q=1.41 で回した値。Q が低いほど
+     * 裾が重なって高く出る)。
      * 相互作用行列 M を作って g <- g + M^-1 (target - realized(g)) を数回回すと 0.000 dB。
      */
     fun solve(targetDb: DoubleArray, freqs: List<Int>, q: Double, fs: Int = DEFAULT_FS): Solution {
@@ -126,7 +136,10 @@ object EqSolver {
         val targetDb10 = IntArray(targetDb.size) {
             Math.round(targetDb[it] * EqUnits.GAIN_SCALE).toInt()
         }
-        return refineToTargets(bands, targetDb10, solution.q, fs)
+        // 詰めは solution.q ではなく、保存される量子化後の Q で回す。エスカレートした Q が
+        // 0.01 の刻みに乗らないとき (0.5 * 1.5^2 = 1.125 -> q100 112)、solution.q で詰めると
+        // 読み戻し (q100 の応答) が 1 目盛りずれて「-12.0 にしたのに -11.9」が再発する。
+        return refineToTargets(bands, targetDb10, q100.toDouble() / EqUnits.Q_SCALE, fs)
     }
 
     /**
@@ -171,7 +184,7 @@ object EqSolver {
      * グラフィックの摘みが表す値 = そのバンド中心で**実際に鳴る**音量 (dB * 10)。
      *
      * バンドのゲインそのものではない。隣のバンドの裾が足し合わさるので、
-     * 10 バンド全部を素で +12 dB にすると中心では +22.5 dB 鳴る。
+     * 10 バンド全部を素で +12 dB にすると中心では +35.2 dB 鳴る (Q=0.5)。
      * 目標値を別に保存しないのは、行列 M が正則で**ここから完全に復元できる**ため
      * (往復誤差は倍精度で 3.6e-15、0.1 dB 量子化を挟んでも [refineToTargets] が 0.05 dB に収める)。
      */
@@ -189,23 +202,22 @@ object EqSolver {
      *
      * **他の摘みが動かないのは、この解き方から出る性質。**バンド中心での実現値が目標に
      * 厳密に一致するので、目標を 1 つだけ変えれば残りは定義から不変になる。
-     * 実測でも移動量は 0.064 dB (表示の刻み 0.1 dB 未満)。
      * ⚠️ 求解が厳密でないとこれが崩れる — 線形モデルで解いていたときは 0.367 dB 動いていた。
      *
      * ### 中心と中心の**間**の起伏を減らす案 (Välimäki & Liski 2017 III-B) を採らない理由
      *
      * 論文は中心の幾何平均を設計点に足して 19x10 の擬似逆で解く。**こちらでは採れない** —
-     * 相互作用行列は 10x10 で**階数 10、零空間の次元が 0** (cond 3.38)。
+     * 相互作用行列は 10x10 で**階数 10、零空間の次元が 0**。
      * つまり**バンド中心での値を決めた時点で、中心間の形は完全に determined で、
      * 調整の余地が 1 つも残っていない。**19 点版が中心間を良くできるのは
      * **中心を犠牲にするから**で、実測すると中心の誤差が最大 1.24 dB (8 kHz) 出る。
      *
      * **摘みの値 = バンド中心で鳴る音量、という約束のほうが優先される** (それが
-     * 「摘みが曲線に乗らない」の再発を防いでいる)。中心間に残る不足は
-     * 中点で -0.7 dB 前後、**8k-16k の 1 区間だけ -2.98 dB** (11.3 kHz)。
-     * これは 1 オクターブ間隔の最上バンドが fs=48k の Nyquist に寄って潰れる分で、
-     * **最上バンドをシェルフにしても改善しない** (実測 -2.98 -> -3.67 dB で悪化し、
-     * シェルフのゲインが 21 dB 要る)。減らしたければバンド数を 15 か 31 にする。
+     * 「摘みが曲線に乗らない」の再発を防いでいる)。中心間の起伏そのものは設計点を足すのでは
+     * なく **[defaultQ] を平ら目標で選ぶことで抑える** (全 +12 の谷が 10 バンドで 0.13 dB。
+     * 上限は EqSolverTest.flatTargetsStayFlatBetweenTheCentres)。例外は 31 バンドの 16k-20k の
+     * 1 区間だけで、最上バンドが fs=48k の Nyquist で潰れる分 (2.9 dB)。これは Q では消えず、
+     * シェルフにしても改善しない (10 バンド Q=1.0 時代の実測で -2.98 -> -3.67 dB と悪化)。
      */
     fun withGraphicTarget(
         bands: List<EqBand>,
@@ -216,16 +228,22 @@ object EqSolver {
         if (index !in bands.indices) return bands
         if (bands.size == 1) return listOf(bands[0].copy(gainDb10 = targetDb10.coerceIn(EqBand.GAIN_RANGE)))
         val freqs = bands.map { it.freqHz }
-        val q = bands[index].q100.toDouble() / EqUnits.Q_SCALE
+        // 読み取りは保存されている Q で。いま実際に鳴っている応答は保存中のバンドが決める。
+        val storedQ = bands[index].q100.toDouble() / EqUnits.Q_SCALE
         // ドラッグ 1 コマごとに走るので、読み取りも速い経路で。値は graphicTargetsDb10 と一致する
         // (EqSolverTest の theFastCentreGridAgreesWithTheReferenceFormula が突き合わせている)。
-        val grid = CentreGrid(freqs, q, fs)
+        val grid = CentreGrid(freqs, storedQ, fs)
         val gains = DoubleArray(bands.size) { bands[it].gainDb10.toDouble() / EqUnits.GAIN_SCALE }
         val targets = DoubleArray(bands.size) {
             Math.round(grid.combinedAt(it, gains) * EqUnits.GAIN_SCALE).toDouble() / EqUnits.GAIN_SCALE
         }
         targets[index] = targetDb10.toDouble() / EqUnits.GAIN_SCALE
-        return solveBands(targets, freqs, q, fs)
+        // 解く種は保存されている Q ではなく、毎回既定 Q から取り直す。保存値を種にすると、
+        // スパイク状の目標で一度エスカレートした Q が平らに戻しても残り続け (下げる経路が無い)、
+        // その後の全バンド +12 が Q 4.5 の櫛で鳴る (2026-08-12 の実機で発生)。
+        // エスカレーションは solve() がその目標のためだけに毎回やり直す。バンド数を変えたときに
+        // reband() が既定 Q へ戻るのと同じ規則 (EqSolverTest.escalatedQAnnealsBack... が見張る)。
+        return solveBands(targets, freqs, defaultQ(bands.size), fs)
     }
 
     /**
@@ -310,9 +328,6 @@ object EqSolver {
     private fun solveOnce(targetDb: DoubleArray, freqs: List<Int>, q: Double, fs: Int): DoubleArray {
         val n = freqs.size
         val grid = CentreGrid(freqs, q, fs)
-        // M[i][j] = バンド j に 1 dB 入れたときのバンド中心 i での応答 (dB)。
-        // これはニュートン法のヤコビアンであって応答そのものではない。1 回だけ作る。
-        val m = Array(n) { i -> DoubleArray(n) { j -> grid.responseDb(i, j, 1.0) } }
         val gains = targetDb.copyOf()
         repeat(SOLVE_ITERATIONS) {
             // ⚠️ 実現値は「M × gains」ではなく **本物の応答**を評価して作る。
@@ -322,15 +337,21 @@ object EqSolver {
             // (10 バンド全部 +12 dB の目標でバンド中心が 0.32 dB ずれる)。さらに
             // reband() が「真の応答を目標に読んで解き直す」写像なので、線形モデルで解くと
             // 往復のたびに曲線が育って発散する (+12 dB で 20 往復すると +27.9 dB)。
-            // ヤコビアンとしてなら近似でよく、反復が誤差を消す。
             val residual = DoubleArray(n) { i -> targetDb[i] - grid.combinedAt(i, gains) }
-            val delta = solveLinear(m, residual) ?: return gains
-            var worst = 0.0
-            for (i in 0 until n) {
-                gains[i] += delta[i]
-                if (abs(delta[i]) > worst) worst = abs(delta[i])
+            if (residual.maxOf { abs(it) } < SOLVE_TOLERANCE_DB) return gains
+            // ⚠️ ヤコビアンは**毎回、現在の動作点の中心差分**で作り直す。「1 dB の割線を
+            // 初回に 1 回だけ」に戻してはいけない — Q が低い (裾の重なりが強い) ときに
+            // 正負の混じった目標で反復の縮小率が 0.995 まで落ち、16 回では残差 1.5 dB の
+            // まま返る (10 バンド Q=0.5、[-3.5,-3.5,-3.5,5.5...] で実測)。その誤差は量子化後の
+            // 詰め (refineToTargets) では回収できず「-3.5 にしたのに -3.4」になる。
+            // 対角は peaking の定義から厳密に 1 のまま (中心での応答 = 自分のゲイン)。
+            val m = Array(n) { i ->
+                DoubleArray(n) { j ->
+                    grid.responseDb(i, j, gains[j] + 0.5) - grid.responseDb(i, j, gains[j] - 0.5)
+                }
             }
-            if (worst < SOLVE_TOLERANCE_DB) return gains
+            val delta = solveLinear(m, residual) ?: return gains
+            for (i in 0 until n) gains[i] += delta[i]
         }
         return gains
     }
@@ -460,7 +481,7 @@ object EqSolver {
     /**
      * 自動プリアンプ。合成応答のピークから必要なヘッドルームを求める。
      * 個々のゲインの合計ではない — 10 バンド全部 +6 dB のとき合計は 60 dB だが
-     * 実際のピークは +10.86 dB (Q = defaultQ(10) = 1.0。
+     * 実際のピークは +17.31 dB (Q = defaultQ(10) = 0.5。
      * tools/eq/05_geq_gain_solve_10band.py の +8.85 は Q=1.41 で回した値)。
      * AutoEQ も同じ考え方 (PEQ.max_gain)。
      */
