@@ -218,6 +218,9 @@
     <string name="eq_round_title">Chuyển sang đồ họa?</string>
     <string name="eq_round_body">Mỗi dải sẽ dời về một trong các tần số cố định của bộ chỉnh âm đồ họa và Q của nó được đặt cho khớp. Hình dạng đường cong được giữ lại nhiều nhất có thể, nhưng tần số và các giá trị Q hiện nay sẽ mất.</string>
     <string name="eq_round_quiet">Đừng hỏi lại</string>
+    <string name="eq_reset">Đưa tất cả về 0</string>
+    <string name="eq_reset_title">Đưa tất cả về 0?</string>
+    <string name="eq_reset_body">Mọi độ lợi và tiền khuếch đại chỉnh tay sẽ trở về 0 dB, bộ chỉnh âm không còn thay đổi âm thanh nữa. Các dải vẫn ở nguyên chỗ, nhưng đường cong hiện tại sẽ mất nếu chưa được lưu thành thiết lập sẵn.</string>
 
     <string name="eq_presets">Thiết lập sẵn</string>
     <string name="eq_preset_empty">Chưa lưu gì cả</string>

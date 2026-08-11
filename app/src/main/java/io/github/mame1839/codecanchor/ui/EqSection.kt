@@ -40,11 +40,13 @@ import io.github.mame1839.codecanchor.core.EqMode
 import io.github.mame1839.codecanchor.core.EqSettings
 import io.github.mame1839.codecanchor.core.EqSolver
 
-// ±12.0 dB を 0.5 dB 刻み。範囲は EqCurve.kt が持つ (絵の縦軸と同じ値を見るため)。
-private val GAIN_SCALE = EqScale.Linear(EQ_GAIN_RANGE, EQ_GAIN_STEP)
+// ±12.0 dB を 0.1 dB 刻み。範囲は EqCurve.kt が持つ (絵の縦軸と同じ値を見るため)。
+// private ではなく internal なのは、単体テストが写しではなく実物の刻みを見るため。
+internal val GAIN_SCALE = EqScale.Linear(EQ_GAIN_RANGE, EQ_GAIN_STEP)
 
 // プリアンプは下げる方向だけ。上げると解いたゲインの持ち上がりと足し合わさって歪む。
-private val PREAMP_SCALE = EqScale.Linear(-300..0, 5)
+// 刻みは dB のスライダーで揃えて 0.1 dB。
+internal val PREAMP_SCALE = EqScale.Linear(-300..0, 1)
 
 // 可聴帯域。AutoEQ が出す fc もこの中に収まる。
 private val FREQ_SCALE = EqScale.Log(20..20_000)
@@ -74,6 +76,7 @@ fun EqSection(vm: MainViewModel, mac: String, profile: DeviceProfile) {
     val availability = vm.eqAvailability(mac)
     var presetsExpanded by rememberSaveable { mutableStateOf(false) }
     var confirmGraphic by rememberSaveable { mutableStateOf(false) }
+    var confirmReset by rememberSaveable { mutableStateOf(false) }
 
     // 書式は stringResource で取ってから数字を流し込む。新しいファイルで
     // LocalContext.current.resources を書くと lint の LocalContextResourcesRead で落ちる。
@@ -159,6 +162,17 @@ fun EqSection(vm: MainViewModel, mac: String, profile: DeviceProfile) {
             }
         }
 
+        // バンド列の末尾に置く。戻す対象 (上のバンドと下のプリアンプ) の両方に掛かる操作なので、
+        // その境目が置き場所として読み取りやすい。既に全部 0 なら押せない — 押しても何も
+        // 起きないのに確認だけ出るのを避ける。
+        TextButton(
+            onClick = { confirmReset = true },
+            enabled = eq.bands.any { it.gainDb10 != 0 } || eq.preampDb10 != 0,
+            modifier = Modifier.padding(start = 8.dp),
+        ) {
+            Text(stringResource(R.string.eq_reset))
+        }
+
         RowDivider()
 
         // 自動のときも値を出す。出さないと何 dB 引かれているのか分からない。
@@ -209,6 +223,29 @@ fun EqSection(vm: MainViewModel, mac: String, profile: DeviceProfile) {
                 confirmGraphic = false
                 if (quiet) vm.confirmEqRounding()
                 vm.updateEq(mac) { toGraphic(it) }
+            },
+        )
+    }
+
+    // undo が無いので確認を挟む (プリセット削除と同じ作法)。手で作った曲線が誤タップ 1 回で
+    // 消えるのを防ぐ。よく使う操作ではないので「次から聞かない」は付けない。
+    if (confirmReset) {
+        AlertDialog(
+            onDismissRequest = { confirmReset = false },
+            title = { Text(stringResource(R.string.eq_reset_title)) },
+            text = { Text(stringResource(R.string.eq_reset_body)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmReset = false
+                        vm.updateEq(mac) { resetToZero(it) }
+                    },
+                ) {
+                    Text(stringResource(R.string.action_continue))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmReset = false }) { Text(stringResource(R.string.action_cancel)) }
             },
         )
     }
@@ -573,6 +610,24 @@ private fun toGraphic(settings: EqSettings): EqSettings =
 internal fun toParametric(settings: EqSettings): EqSettings {
     val next = settings.copy(mode = EqMode.PARAMETRIC)
     return if (next.bands.all { it.gainDb10 == 0 }) next.copy(bands = startingBands()) else next
+}
+
+/**
+ * 全部 0 に戻す。戻した直後は素通し (全ゲイン 0 dB・手動プリアンプ 0 dB) になる。
+ *
+ * - グラフィックは平らなグリッドを [reband] で作り直す。ゲインだけ 0 にしないのは、
+ *   solve() が Q を上げた跡がバンドに残ると「オンにした直後」と同じ状態に戻らないため。
+ *   fc と Q はアプリが決めるものなので、作り直しても失われる情報は無い
+ * - パラメトリックはゲインだけ 0 にする。fc と Q はユーザが置いたものなので保つ —
+ *   バンドごと消すのはリセットではなく削除
+ * - preampAuto は触らない。自動か手動かは値ではなく方式の選択で、0 に戻す対象ではない。
+ *   自動は平らな曲線から 0 dB を導くので、リセット後はどちらを選んでいても 0 dB になる
+ *
+ * private ではなく internal なのは単体テストから呼ぶため。
+ */
+internal fun resetToZero(settings: EqSettings): EqSettings = when (settings.mode) {
+    EqMode.GRAPHIC -> reband(settings.copy(bands = emptyList()), settings.bandCount).copy(preampDb10 = 0)
+    else -> settings.copy(bands = settings.bands.map { it.copy(gainDb10 = 0) }, preampDb10 = 0)
 }
 
 /**

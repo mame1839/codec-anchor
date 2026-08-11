@@ -222,6 +222,9 @@
     <string name="eq_round_title">Passer en graphique ?</string>
     <string name="eq_round_body">Chaque bande est déplacée sur l\'une des fréquences fixes de l\'égaliseur graphique et son Q est ajusté en conséquence. La forme de la courbe est conservée autant que possible, mais les fréquences et les Q actuels sont perdus.</string>
     <string name="eq_round_quiet">Ne plus demander</string>
+    <string name="eq_reset">Tout remettre à zéro</string>
+    <string name="eq_reset_title">Tout remettre à zéro ?</string>
+    <string name="eq_reset_body">Tous les gains et le préampli manuel reviennent à 0 dB, et l\'égaliseur ne modifie plus le son. Les bandes restent où elles sont, mais la courbe actuelle est perdue si elle n\'a pas été enregistrée comme préréglage.</string>
 
     <string name="eq_presets">Préréglages</string>
     <string name="eq_preset_empty">Rien d\'enregistré pour le moment</string>

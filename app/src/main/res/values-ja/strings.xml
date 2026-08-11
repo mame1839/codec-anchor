@@ -218,6 +218,9 @@
     <string name="eq_round_title">グラフィックに切り替えますか</string>
     <string name="eq_round_body">各バンドはグラフィックの固定された周波数へ移り、Q もそれに合わせた値になります。曲線の形はできるだけ保ちますが、いまの周波数と Q は失われます。</string>
     <string name="eq_round_quiet">今後表示しない</string>
+    <string name="eq_reset">すべて 0 に戻す</string>
+    <string name="eq_reset_title">すべて 0 に戻しますか</string>
+    <string name="eq_reset_body">すべてのゲインと手動のプリアンプが 0 dB に戻り、イコライザーは音を変えなくなります。バンドはその場所に残りますが、いまの曲線はプリセットに保存していなければ戻せません。</string>
 
     <string name="eq_presets">プリセット</string>
     <string name="eq_preset_empty">保存されたプリセットはありません</string>

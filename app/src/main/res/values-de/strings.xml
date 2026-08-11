@@ -220,6 +220,9 @@
     <string name="eq_round_title">Zu grafisch wechseln?</string>
     <string name="eq_round_body">Jedes Band rückt auf eine der festen Frequenzen des grafischen Equalizers, und sein Q wird passend gesetzt. Die Form der Kurve bleibt so weit wie möglich erhalten, aber die jetzigen Frequenzen und Q-Werte gehen verloren.</string>
     <string name="eq_round_quiet">Nicht mehr nachfragen</string>
+    <string name="eq_reset">Alles auf null zurücksetzen</string>
+    <string name="eq_reset_title">Alles auf null zurücksetzen?</string>
+    <string name="eq_reset_body">Jede Verstärkung und die manuelle Vorverstärkung gehen auf 0 dB zurück, der Equalizer verändert den Klang dann nicht mehr. Die Bänder bleiben, wo sie sind, aber die jetzige Kurve geht verloren, wenn sie nicht als Voreinstellung gespeichert wurde.</string>
 
     <string name="eq_presets">Voreinstellungen</string>
     <string name="eq_preset_empty">Noch nichts gespeichert</string>
