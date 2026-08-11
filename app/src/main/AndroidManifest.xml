@@ -46,6 +46,11 @@
             </intent-filter>
         </activity>
 
+        <!-- 開発用 (eq-finder の実機前提の確認)。起動は su の am start だけ -->
+        <activity
+            android:name="io.github.mame1839.codecanchor.audio.DebugToneActivity"
+            android:exported="false" />
+
         <receiver
             android:name="io.github.mame1839.codecanchor.bridge.HookRequestReceiver"
             android:exported="true">
