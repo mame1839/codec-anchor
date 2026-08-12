@@ -25,6 +25,7 @@ import io.github.mame1839.codecanchor.bridge.BridgeClient
 import io.github.mame1839.codecanchor.bridge.EqDeviceStore
 import io.github.mame1839.codecanchor.bridge.PresetStore
 import io.github.mame1839.codecanchor.bridge.SettingsStore
+import io.github.mame1839.codecanchor.bridge.SlotStore
 import io.github.mame1839.codecanchor.core.AppConfig
 import io.github.mame1839.codecanchor.core.AudioOutputs
 import io.github.mame1839.codecanchor.core.AutoEqParser
@@ -42,6 +43,7 @@ import io.github.mame1839.codecanchor.core.EqParamsResult
 import io.github.mame1839.codecanchor.core.EqPreset
 import io.github.mame1839.codecanchor.core.EqRoute
 import io.github.mame1839.codecanchor.core.EqSettings
+import io.github.mame1839.codecanchor.core.EqSlotBook
 import io.github.mame1839.codecanchor.core.EqSupport
 import io.github.mame1839.codecanchor.core.ModuleVersion
 import io.github.mame1839.codecanchor.core.ModuleVersionState
@@ -102,6 +104,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val stored = store.load()
     private val presetStore = PresetStore(context)
     private val eqDeviceStore = EqDeviceStore(context)
+    private val slotStore = SlotStore(context)
 
     // ⚠️ a2dpOutputs の初期化より前に置くこと (プロパティの初期化は宣言順に走る)。
     private val audioManager: AudioManager? =
@@ -111,6 +114,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val nativeLibraryDir: String = context.applicationInfo.nativeLibraryDir.orEmpty()
 
     var presets by mutableStateOf(presetStore.load())
+        private set
+
+    /**
+     * イヤホンごとの EQ スロット台帳 (`llmdocs/eq-slot-design.md`)。選択中スロットの中身は
+     * profile.eq の写し (同じ値が 2 箇所) で、食い違いは起動時の和解とここ経由の write-through
+     * ([updateEq]) が `reconciledWith` で直す。
+     */
+    var slots by mutableStateOf(loadSlotsReconciled())
         private set
 
     /** `audio_effects.xml` に登録済みのイヤホン。成功した登録操作でしか動かない。 */
@@ -539,6 +550,27 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
+     * 起動時 1 回の、スロット台帳の移行と和解。**写すだけ** — profile.eq には触らず
+     * [updateEq] / push も通らないので、起動でスロットが音を変えることはない。
+     *
+     * 設定が読めないとき (configBroken) は台帳に触らない — 空の profiles と和解すると
+     * 全スロットを孤児として消してしまう。
+     */
+    private fun loadSlotsReconciled(): EqSlotBook {
+        val book = slotStore.load()
+        val profiles = stored?.profiles ?: return book
+        val next = book.reconciled(profiles)
+        if (next != book) slotStore.save(next)
+        return next
+    }
+
+    private fun saveSlots(next: EqSlotBook) {
+        if (next == slots) return
+        slots = next
+        slotStore.save(next)
+    }
+
+    /**
      * EQ の設定を変える。**入口はここ 1 つ** (スライダー・プリセット・AutoEQ の取り込みが全部通る)。
      *
      * ここで共有メモリへ書く。**ドラッグ中は呼ばれない** — スライダーは `onValueChangeFinished` で
@@ -550,6 +582,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun updateEq(mac: String, transform: (EqSettings) -> EqSettings) {
         updateProfile(mac) { it.copy(eq = transform(it.eq)) }
+        // 選択中スロットへの write-through。二重保持 (選択中スロットの中身 = profile.eq) の
+        // 食い違いを変更の入口で潰す。configBroken のときは profileFor が空の config を見るので走らない。
+        config.profileFor(mac)?.let { saveSlots(slots.reconciledWith(it.mac, it.eq)) }
         if (EqDevices.normalizeMac(mac) == eqOwner) pushEqParams()
     }
 
@@ -588,7 +623,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun removeProfile(mac: String) = update { it.withoutProfile(mac) }
+    fun removeProfile(mac: String) {
+        update { it.withoutProfile(mac) }
+        // スロットの孤児防止。プロファイルと一緒にその機器の台帳も消す。
+        saveSlots(slots.without(mac))
+    }
 
     fun exportConfig(uri: Uri) {
         val json = runCatching { JSONObject(config.encode()).toString(2) }.getOrDefault(config.encode())
@@ -624,6 +663,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val restored = AppConfig.fromJson(parsed)
             configBroken = false
             commit(restored)
+            // 復元で profile.eq が丸ごと入れ替わるので、起動時と同じ和解をここでも通す
+            // (写す向きも同じ: profile.eq → 選択中スロット)。
+            saveSlots(slots.reconciled(restored.profiles))
             refreshDevices()
             pendingMessage = R.string.msg_backup_imported
         }
