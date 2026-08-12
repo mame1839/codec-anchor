@@ -28,6 +28,8 @@
 
     <string name="cd_refresh_status">Status erneut prüfen</string>
     <string name="cd_back">Zurück</string>
+    <string name="cd_eq_slot_menu">Optionen für diesen Speicherplatz</string>
+    <string name="cd_eq_slot_add">Speicherplatz hinzufügen</string>
     <string name="state_expanded">Ausgeklappt</string>
     <string name="state_collapsed">Eingeklappt</string>
 
@@ -38,13 +40,9 @@
 
     <string name="section_general">Allgemein</string>
     <string name="toggle_auto_apply">Einstellungen automatisch anwenden</string>
-    <string name="toggle_auto_apply_desc">Solange dies aus ist, wird an keinem Gerät etwas geändert</string>
     <string name="toggle_enforce">Änderungen des Systems oder anderer Apps zurücknehmen</string>
-    <string name="toggle_enforce_desc">Wenn das System oder eine andere App den Codec ändert, wird zurückgeschaltet</string>
     <string name="toggle_notify">Codec-Wechsel melden</string>
-    <string name="toggle_notify_desc">Zeigt beim Umschalten des Codecs eine kurze Meldung</string>
     <string name="toggle_verbose">Ausführliche Logs schreiben</string>
-    <string name="toggle_verbose_desc">Zum Untersuchen von Geräten, die nicht umschalten</string>
 
     <string name="permission_title">Bluetooth-Berechtigung erforderlich</string>
     <string name="permission_body">Mit ihr kann die App die gekoppelten Geräte und ihre Namen lesen.</string>
@@ -81,7 +79,7 @@
     <string name="eq_unavailable_device">Diese Kopfhörer sind nicht für die Audiobearbeitung registriert, daher wirkt sich hier nichts Eingestelltes auf den Klang aus.</string>
 
     <string name="eq_device_register">Audiobearbeitung für diese Kopfhörer verwenden</string>
-    <string name="eq_device_register_desc">Fügt diese Kopfhörer den Audioeinstellungen des Telefons hinzu. Der Ton setzt kurz aus, während dies angewendet wird.</string>
+    <string name="eq_device_register_desc">Der Ton setzt kurz aus, während dies angewendet wird.</string>
     <string name="eq_device_confirm_on_title">Audiobearbeitung für diese Kopfhörer einschalten?</string>
     <string name="eq_device_confirm_off_title">Audiobearbeitung für diese Kopfhörer ausschalten?</string>
     <string name="eq_device_confirm_body">Der Audiodienst des Telefons wird neu gestartet, daher verstummt alles, was gerade abgespielt wird, für einige Sekunden. Bluetooth bleibt verbunden, und Ihre Equalizer-Einstellungen bleiben in jedem Fall erhalten.</string>
@@ -121,7 +119,6 @@
     <string name="profile_no_target">Es ist noch nichts fixiert</string>
 
     <string name="section_backup">Backup</string>
-    <string name="backup_body">Speichert alle Einstellungen als JSON-Datei.</string>
     <string name="backup_export">Exportieren</string>
     <string name="backup_import">Importieren</string>
     <string name="backup_confirm_title">Backup importieren?</string>
@@ -134,7 +131,6 @@
     <string name="msg_backup_failed">Datei konnte nicht gelesen werden</string>
 
     <string name="detail_auto_apply">Auf diesen Kopfhörer anwenden</string>
-    <string name="detail_auto_apply_desc">Schaltet bei jeder Verbindung auf die Einstellungen unten um</string>
     <string name="detail_current_codec">Aktueller Codec: %1$s</string>
     <string name="ldac_bitrate_offload">Die effektive Bitrate kann nicht gelesen werden, da die Hardware-Auslagerung von Bluetooth A2DP aktiviert ist.</string>
     <string name="detail_note">Letztes Ergebnis: %1$s</string>
@@ -161,9 +157,7 @@
     <string name="adv_force">Umschalten erzwingen</string>
     <string name="adv_force_desc">Probiert auch Kombinationen, die das Gerät nicht angibt</string>
     <string name="adv_via_sbc">Über SBC umschalten</string>
-    <string name="adv_via_sbc_desc">Wechselt zuerst auf SBC und dann auf den gewählten Codec</string>
     <string name="adv_auto_hd">HD-Audio automatisch einschalten</string>
-    <string name="adv_auto_hd_desc">Schaltet HD-Audio ein, wenn das System es deaktiviert hat</string>
     <string name="adv_delay">Wartezeit vor dem Anwenden</string>
     <string name="adv_delay_desc">Manche Geräte schalten direkt nach dem Verbinden nicht um</string>
     <string name="adv_retries">Anzahl der Versuche</string>
@@ -196,14 +190,14 @@
     </plurals>
     <string name="eq_summary_unavailable">Zurzeit nicht nutzbar. Öffnen Sie sie, um den Grund zu sehen.</string>
     <string name="eq_enabled">Equalizer</string>
-    <string name="eq_enabled_desc">Passt den Klang dieser Kopfhörer an</string>
     <string name="eq_latency_zero">Zusätzliche Verzögerung: 0 ms</string>
     <string name="eq_mode">Art der Bearbeitung</string>
-    <string name="eq_mode_desc">Grafisch hält jedes Band auf einer festen Frequenz. Parametrisch lässt Sie jedes Band frei setzen.</string>
     <string name="eq_mode_graphic">Grafisch</string>
+    <string name="eq_mode_graphic_desc">Jedes Band bleibt auf einer festen Frequenz</string>
     <string name="eq_mode_parametric">Parametrisch</string>
+    <string name="eq_mode_parametric_desc">Jedes Band lässt sich frei setzen</string>
     <string name="eq_band_count">Anzahl der Bänder</string>
-    <string name="eq_band_count_desc">Mehr Bänder folgen einer feinen Kurve genauer. Das ist keine Leistungseinstellung: Das Telefon rechnet in beiden Fällen gleich viel.</string>
+    <string name="eq_band_count_desc">Das ist keine Leistungseinstellung: Das Telefon rechnet bei jeder Anzahl gleich viel.</string>
     <string name="eq_band_none">Noch kein Band. Fügen Sie eines hinzu oder laden Sie eine AutoEQ-Datei.</string>
     <string name="eq_band_add">Band hinzufügen</string>
     <string name="eq_band_remove">Dieses Band entfernen</string>
@@ -224,9 +218,17 @@
     <string name="eq_reset_title">Alles auf null zurücksetzen?</string>
     <string name="eq_reset_body">Jede Verstärkung und die manuelle Vorverstärkung gehen auf 0 dB zurück, der Equalizer verändert den Klang dann nicht mehr. Die Bänder bleiben, wo sie sind, aber die jetzige Kurve geht verloren, wenn sie nicht als Voreinstellung gespeichert wurde.</string>
 
+    <string name="eq_slot_flat">Neutral</string>
+    <string name="eq_slot_default">Eigene %1$d</string>
+    <string name="eq_slot_rename">Umbenennen</string>
+    <string name="eq_slot_rename_title">Name des Speicherplatzes</string>
+    <string name="eq_slot_duplicate">Duplizieren</string>
+    <string name="eq_slot_save_preset">Als Voreinstellung speichern</string>
+    <string name="eq_slot_delete_title">Speicherplatz löschen?</string>
+    <string name="eq_slot_delete_body">Entfernt „%1$s“. Wenn Sie ihn gerade hören, geht der Klang zurück auf Neutral.</string>
+
     <string name="eq_presets">Voreinstellungen</string>
-    <string name="eq_preset_empty">Noch nichts gespeichert</string>
-    <string name="eq_preset_save">Diese Einstellungen speichern</string>
+    <string name="eq_preset_empty">Noch nichts gespeichert. Speichern lässt sich eine über das Menü des Speicherplatzes, den Sie gerade verwenden.</string>
     <string name="eq_preset_save_title">Name der Voreinstellung</string>
     <string name="eq_preset_name">Name</string>
     <string name="eq_preset_apply">Anwenden</string>
@@ -235,16 +237,20 @@
     <string name="eq_preset_delete_title">Voreinstellung löschen?</string>
     <string name="eq_preset_delete_body">Entfernt „%1$s“. Was bereits an Ihren Kopfhörern eingestellt ist, bleibt bestehen.</string>
     <string name="eq_autoeq_import">AutoEQ laden</string>
-    <string name="eq_autoeq_desc">Liest eine ParametricEQ.txt oder GraphicEQ.txt von AutoEQ und ersetzt die Einstellungen oben.</string>
+    <string name="eq_autoeq_desc">Liest eine ParametricEQ.txt oder GraphicEQ.txt von AutoEQ und legt sie als neuen Speicherplatz an.</string>
     <string name="eq_curve_desc">Kurve: So verändern diese Einstellungen den Klang</string>
     <string name="eq_finder_title">Equalizer nach Gehör finden</string>
     <string name="eq_finder_entry_desc">Blinde Hörvergleiche formen den Equalizer nach dem eigenen Geschmack</string>
     <string name="eq_finder_entry_resume">Ein gespeicherter Test wartet. Zum Fortsetzen öffnen.</string>
     <string name="eq_finder_entry_unavailable">Die Audioverarbeitung ist für diese Kopfhörer zurzeit nicht nutzbar.</string>
     <string name="eq_finder_entry_disconnected">Zum Starten diese Kopfhörer verbinden.</string>
+    <string name="eq_finder_material">Klang für den Test</string>
+    <string name="eq_finder_material_loop">Eine geloopte Stelle aus einem Titel</string>
+    <string name="eq_finder_material_live">Die gerade laufende Musik</string>
+    <string name="eq_finder_material_live_desc">Der Klang wird nicht vermessen, daher ist der Lautstärkeabgleich weniger genau als mit einer geloopten Stelle.</string>
+    <string name="eq_finder_no_music">Zum Starten in der Musik-App einen Titel abspielen.</string>
     <string name="eq_finder_song">Titel</string>
     <string name="eq_finder_song_none">Einen gut bekannten Titel wählen</string>
-    <string name="eq_finder_song_desc">Ein kurzer Ausschnitt daraus läuft beim Vergleichen in Schleife. Gewählt wird aus den Audiodateien auf diesem Telefon.</string>
     <string name="eq_finder_song_loading">Datei wird gelesen…</string>
     <string name="eq_finder_song_failed">Diese Datei ließ sich nicht lesen. Bitte eine andere wählen.</string>
     <string name="eq_finder_passage">Ausschnitt</string>
@@ -254,7 +260,6 @@
     <string name="eq_finder_include_mid">Auch die Mitten erkunden</string>
     <string name="eq_finder_include_mid_desc">Fügt eine dritte Achse rund um die Stimmen hinzu. Ein paar Fragen mehr.</string>
     <string name="eq_finder_fine_tune">Aktuelle Einstellungen feinjustieren</string>
-    <string name="eq_finder_fine_tune_desc">Beginnt beim jetzigen Equalizer und bewegt sich in kleinen Schritten.</string>
     <string name="eq_finder_notes">Vor dem Start</string>
     <string name="eq_finder_note_volume">Der Test klingt etwas leiser als gewohnt. Die Lautstärke erst nach dem Start angenehm einstellen und bis zum Ende nicht mehr ändern.</string>
     <string name="eq_finder_note_earphones">Mit diesen Kopfhörern an einem ruhigen Ort hören.</string>
@@ -280,6 +285,7 @@
     <string name="eq_finder_suspend">Speichern und zurück</string>
     <string name="eq_finder_paused_disconnected">Pausiert: Die Kopfhörer sind nicht verbunden. Der Test läuft weiter, sobald sie zurück sind.</string>
     <string name="eq_finder_paused_focus">Pausiert: Eine andere App hat den Ton übernommen.</string>
+    <string name="eq_finder_paused_no_music">Pausiert: Die Musik läuft nicht mehr. In der Musik-App wieder abspielen, dann geht es weiter.</string>
     <string name="eq_finder_resume_playback">Fortsetzen</string>
     <string name="eq_finder_result_curve_cd">Kurve des Equalizers vorher und nachher</string>
     <string name="eq_finder_before">Vorher</string>
@@ -291,11 +297,10 @@
     <string name="eq_finder_validated_lose">In der Blindprüfung am Ende hielt der Ausgangspunkt mit. Der Unterschied ist so oder so klein.</string>
     <string name="eq_finder_not_validated">Der Test endete vor der abschließenden Blindprüfung, das Ergebnis wurde also nicht überprüft.</string>
     <string name="eq_finder_consistency">Die Antworten schwankten etwas. Ein weiterer Durchlauf würde das Ergebnis schärfen.</string>
+    <string name="eq_finder_band_error">Weicht höchstens %1$s von der gehörten Kurve ab</string>
     <string name="eq_finder_bake_failed">Für das Ergebnis reichen die freien Bänder nicht aus. Einige Bänder entfernen und dann erneut abschließen.</string>
     <string name="eq_finder_apply">Anwenden und speichern</string>
     <string name="eq_finder_discard">Verwerfen</string>
     <string name="eq_finder_discard_title">Ergebnis verwerfen?</string>
     <string name="eq_finder_discard_body">Der Equalizer kehrt zum vorherigen Stand zurück, die Antworten werden gelöscht.</string>
-    <string name="eq_finder_preset_title">Auch als Voreinstellung speichern?</string>
-    <string name="eq_finder_preset_skip">Später</string>
 </resources>

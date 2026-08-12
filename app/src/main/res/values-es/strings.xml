@@ -29,6 +29,8 @@
 
     <string name="cd_refresh_status">Comprobar el estado de nuevo</string>
     <string name="cd_back">Atrás</string>
+    <string name="cd_eq_slot_menu">Opciones del espacio</string>
+    <string name="cd_eq_slot_add">Añadir un espacio</string>
     <string name="state_expanded">Expandido</string>
     <string name="state_collapsed">Contraído</string>
 
@@ -39,13 +41,9 @@
 
     <string name="section_general">Ajustes generales</string>
     <string name="toggle_auto_apply">Aplicar los ajustes automáticamente</string>
-    <string name="toggle_auto_apply_desc">Mientras esté desactivado, no se cambia nada en ningún dispositivo</string>
     <string name="toggle_enforce">Revertir los cambios de otras apps</string>
-    <string name="toggle_enforce_desc">Si el sistema u otra app cambia el códec, se vuelve a lo que has fijado</string>
     <string name="toggle_notify">Avisar cuando cambie el códec</string>
-    <string name="toggle_notify_desc">Muestra un mensaje breve al cambiar de códec</string>
     <string name="toggle_verbose">Registro detallado</string>
-    <string name="toggle_verbose_desc">Para investigar los dispositivos que no cambian</string>
 
     <string name="permission_title">Se necesita el permiso de Bluetooth</string>
     <string name="permission_body">Al concederlo, la app puede leer tus dispositivos emparejados y sus nombres.</string>
@@ -82,7 +80,7 @@
     <string name="eq_unavailable_device">Estos auriculares no están registrados para el procesamiento de audio, así que nada de lo que ajustes aquí llega al sonido.</string>
 
     <string name="eq_device_register">Usar el procesamiento de audio con estos auriculares</string>
-    <string name="eq_device_register_desc">Añade estos auriculares a los ajustes de audio del teléfono. El sonido se interrumpe un momento mientras se aplica.</string>
+    <string name="eq_device_register_desc">El sonido se interrumpe un momento mientras se aplica.</string>
     <string name="eq_device_confirm_on_title">¿Activar el procesamiento de audio para estos auriculares?</string>
     <string name="eq_device_confirm_off_title">¿Desactivar el procesamiento de audio para estos auriculares?</string>
     <string name="eq_device_confirm_body">El servicio de audio del teléfono se reinicia, así que lo que esté sonando ahora se silencia unos segundos. El Bluetooth sigue conectado, y tus ajustes del ecualizador se conservan en cualquier caso.</string>
@@ -122,7 +120,6 @@
     <string name="profile_no_target">Todavía no has fijado nada</string>
 
     <string name="section_backup">Copia de seguridad</string>
-    <string name="backup_body">Guarda todos los ajustes en un archivo JSON.</string>
     <string name="backup_export">Exportar</string>
     <string name="backup_import">Importar</string>
     <string name="backup_confirm_title">¿Importar una copia de seguridad?</string>
@@ -135,7 +132,6 @@
     <string name="msg_backup_failed">No se pudo leer el archivo</string>
 
     <string name="detail_auto_apply">Aplicar a estos auriculares</string>
-    <string name="detail_auto_apply_desc">Cambia a los ajustes de abajo cada vez que se conecten</string>
     <string name="detail_current_codec">Códec actual: %1$s</string>
     <string name="ldac_bitrate_offload">No se puede leer la tasa de bits efectiva porque la descarga por hardware de Bluetooth A2DP está activada.</string>
     <string name="detail_note">Último resultado: %1$s</string>
@@ -162,9 +158,7 @@
     <string name="adv_force">Forzar el cambio</string>
     <string name="adv_force_desc">Prueba también combinaciones que el dispositivo no declara</string>
     <string name="adv_via_sbc">Cambiar pasando por SBC</string>
-    <string name="adv_via_sbc_desc">Baja primero a SBC y después pasa al códec elegido</string>
     <string name="adv_auto_hd">Activar el audio HD automáticamente</string>
-    <string name="adv_auto_hd_desc">Lo activa cuando el sistema lo tiene desactivado</string>
     <string name="adv_delay">Espera antes de aplicar</string>
     <string name="adv_delay_desc">Algunos dispositivos no aceptan el cambio justo tras conectarse</string>
     <string name="adv_retries">Número de intentos</string>
@@ -198,14 +192,14 @@
     </plurals>
     <string name="eq_summary_unavailable">Ahora mismo no se puede usar. Abre para ver el motivo.</string>
     <string name="eq_enabled">Ecualizador</string>
-    <string name="eq_enabled_desc">Ajusta el sonido de estos auriculares</string>
     <string name="eq_latency_zero">Retardo añadido: 0 ms</string>
     <string name="eq_mode">Modo de edición</string>
-    <string name="eq_mode_desc">El modo gráfico mantiene cada banda en una frecuencia fija. El paramétrico te deja colocar cada banda donde quieras.</string>
     <string name="eq_mode_graphic">Gráfico</string>
+    <string name="eq_mode_graphic_desc">Cada banda se mantiene en una frecuencia fija</string>
     <string name="eq_mode_parametric">Paramétrico</string>
+    <string name="eq_mode_parametric_desc">Puedes colocar cada banda donde quieras</string>
     <string name="eq_band_count">Número de bandas</string>
-    <string name="eq_band_count_desc">Cuantas más bandas, mejor se sigue una curva detallada. No es un ajuste de rendimiento: el teléfono trabaja igual en ambos casos.</string>
+    <string name="eq_band_count_desc">No es un ajuste de rendimiento: el teléfono trabaja igual con cualquier número de bandas.</string>
     <string name="eq_band_none">Todavía no hay ninguna banda. Añade una o importa un archivo de AutoEQ.</string>
     <string name="eq_band_add">Añadir una banda</string>
     <string name="eq_band_remove">Quitar esta banda</string>
@@ -226,9 +220,17 @@
     <string name="eq_reset_title">¿Poner todo a cero?</string>
     <string name="eq_reset_body">Todas las ganancias y el preamplificador manual vuelven a 0 dB, y el ecualizador deja de cambiar el sonido. Las bandas se quedan donde están, pero la curva actual se pierde si no se ha guardado como preajuste.</string>
 
+    <string name="eq_slot_flat">Plano</string>
+    <string name="eq_slot_default">Personalizado %1$d</string>
+    <string name="eq_slot_rename">Cambiar el nombre</string>
+    <string name="eq_slot_rename_title">Nombre del espacio</string>
+    <string name="eq_slot_duplicate">Duplicar</string>
+    <string name="eq_slot_save_preset">Guardar como preajuste</string>
+    <string name="eq_slot_delete_title">¿Eliminar el espacio?</string>
+    <string name="eq_slot_delete_body">Elimina «%1$s». Si es el que estás escuchando, el sonido vuelve a Plano.</string>
+
     <string name="eq_presets">Preajustes</string>
-    <string name="eq_preset_empty">Todavía no hay nada guardado</string>
-    <string name="eq_preset_save">Guardar estos ajustes</string>
+    <string name="eq_preset_empty">Todavía no hay nada guardado. Puedes guardar uno desde el menú del espacio que estás usando.</string>
     <string name="eq_preset_save_title">Nombre del preajuste</string>
     <string name="eq_preset_name">Nombre</string>
     <string name="eq_preset_apply">Aplicar</string>
@@ -237,16 +239,20 @@
     <string name="eq_preset_delete_title">¿Eliminar el preajuste?</string>
     <string name="eq_preset_delete_body">Elimina «%1$s». Lo que ya está puesto en tus auriculares se queda como está.</string>
     <string name="eq_autoeq_import">Importar AutoEQ</string>
-    <string name="eq_autoeq_desc">Lee un ParametricEQ.txt o GraphicEQ.txt de AutoEQ y sustituye los ajustes de arriba.</string>
+    <string name="eq_autoeq_desc">Lee un ParametricEQ.txt o GraphicEQ.txt de AutoEQ y lo carga como un espacio nuevo.</string>
     <string name="eq_curve_desc">Curva de cómo estos ajustes cambian el sonido</string>
     <string name="eq_finder_title">Encontrar el ecualizador a tu gusto</string>
     <string name="eq_finder_entry_desc">Comparaciones de escucha a ciegas ajustan el ecualizador a tu gusto</string>
     <string name="eq_finder_entry_resume">Hay una prueba guardada. Ábrela para continuar.</string>
     <string name="eq_finder_entry_unavailable">El procesamiento de audio no está disponible ahora mismo para estos auriculares.</string>
     <string name="eq_finder_entry_disconnected">Conecta estos auriculares para empezar.</string>
+    <string name="eq_finder_material">Sonido para la prueba</string>
+    <string name="eq_finder_material_loop">Una parte de una canción en bucle</string>
+    <string name="eq_finder_material_live">La música que está sonando ahora</string>
+    <string name="eq_finder_material_live_desc">El sonido no se mide, así que el ajuste de volumen es menos preciso que con una parte en bucle.</string>
+    <string name="eq_finder_no_music">Reproduce una canción en tu aplicación de música para empezar.</string>
     <string name="eq_finder_song">Canción</string>
     <string name="eq_finder_song_none">Elige una canción que conozcas bien</string>
-    <string name="eq_finder_song_desc">Un fragmento corto de ella se repite mientras comparas. Se elige entre los archivos de audio del teléfono.</string>
     <string name="eq_finder_song_loading">Leyendo el archivo…</string>
     <string name="eq_finder_song_failed">No se pudo leer ese archivo. Elige otro.</string>
     <string name="eq_finder_passage">Fragmento</string>
@@ -256,7 +262,6 @@
     <string name="eq_finder_include_mid">Explorar también los medios</string>
     <string name="eq_finder_include_mid_desc">Añade un tercer eje alrededor de las voces. Algunas preguntas más.</string>
     <string name="eq_finder_fine_tune">Afinar los ajustes actuales</string>
-    <string name="eq_finder_fine_tune_desc">Parte del ecualizador actual y avanza en pasos pequeños.</string>
     <string name="eq_finder_notes">Antes de empezar</string>
     <string name="eq_finder_note_volume">La prueba suena un poco más baja de lo normal. Ajusta un volumen cómodo después de empezar y no lo cambies hasta el final.</string>
     <string name="eq_finder_note_earphones">Escucha con estos auriculares, en un lugar tranquilo.</string>
@@ -283,6 +288,7 @@
     <string name="eq_finder_suspend">Guardar y salir</string>
     <string name="eq_finder_paused_disconnected">En pausa: los auriculares no están conectados. La prueba sigue cuando vuelvan.</string>
     <string name="eq_finder_paused_focus">En pausa: otra aplicación ha tomado el sonido.</string>
+    <string name="eq_finder_paused_no_music">En pausa: la música se ha detenido. Pulsa reproducir en tu aplicación de música.</string>
     <string name="eq_finder_resume_playback">Reanudar</string>
     <string name="eq_finder_result_curve_cd">Curva del ecualizador antes y después</string>
     <string name="eq_finder_before">Antes</string>
@@ -294,11 +300,10 @@
     <string name="eq_finder_validated_lose">En la comprobación a ciegas final, el punto de partida aguantó bien. La diferencia es pequeña en cualquier caso.</string>
     <string name="eq_finder_not_validated">La prueba terminó antes de la comprobación a ciegas final, así que el resultado no se verificó.</string>
     <string name="eq_finder_consistency">Tus respuestas variaron un poco. Otra ronda afinaría el resultado.</string>
+    <string name="eq_finder_band_error">Se aparta como mucho %1$s de la curva que escuchaste</string>
     <string name="eq_finder_bake_failed">El resultado necesita más bandas libres de las que quedan en el ecualizador. Elimina algunas bandas y termina de nuevo.</string>
     <string name="eq_finder_apply">Aplicar y guardar</string>
     <string name="eq_finder_discard">Descartar</string>
     <string name="eq_finder_discard_title">¿Descartar el resultado?</string>
     <string name="eq_finder_discard_body">El ecualizador vuelve a como estaba y las respuestas se eliminan.</string>
-    <string name="eq_finder_preset_title">¿Guardarlo también como preajuste?</string>
-    <string name="eq_finder_preset_skip">Ahora no</string>
 </resources>

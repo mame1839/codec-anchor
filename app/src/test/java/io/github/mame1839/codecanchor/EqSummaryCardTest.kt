@@ -5,10 +5,13 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performSemanticsAction
+import io.github.mame1839.codecanchor.core.DeviceSlots
 import io.github.mame1839.codecanchor.core.EqAvailability
 import io.github.mame1839.codecanchor.core.EqBand
 import io.github.mame1839.codecanchor.core.EqMode
 import io.github.mame1839.codecanchor.core.EqSettings
+import io.github.mame1839.codecanchor.core.EqSlot
+import io.github.mame1839.codecanchor.core.EqSlotBook
 import io.github.mame1839.codecanchor.ui.EqSummaryCard
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -69,12 +72,55 @@ class EqSummaryCardTest {
         compose.onNodeWithText(string(R.string.eq_summary_unavailable), substring = true).assertDoesNotExist()
     }
 
+    /**
+     * イヤホンごとに曲線を何本も持てるので、**いまどれを聴いているか**も要約に要る。
+     * 名前を出さないと、開くまで分からないのは方式やバンド数ではなくこちらになる。
+     */
+    @Test
+    fun theRowNamesTheSlotYouAreListeningTo() {
+        show(on, slots = DeviceSlots(active = "2", slots = listOf(slot("1", "昼用"), slot("2", "夜用"))))
+
+        compose.onNodeWithText("夜用", substring = true).assertExists()
+        compose.onNodeWithText("昼用", substring = true).assertDoesNotExist()
+    }
+
+    /** 未命名は表示側の既定名。データには焼かれていないので、ここで組み立てられる。 */
+    @Test
+    fun anUnnamedSlotShowsTheDefaultName() {
+        show(on, slots = DeviceSlots(active = "2", slots = listOf(slot("1"), slot("2"))))
+
+        compose.onNodeWithText(string(R.string.eq_slot_default, 2), substring = true).assertExists()
+    }
+
+    /** フラットも名乗る (実体は保存されないが、聴いているのはこれ)。 */
+    @Test
+    fun theFlatSlotIsNamedToo() {
+        show(on, slots = DeviceSlots(active = EqSlotBook.FLAT_ID, slots = listOf(slot("1", "夜用"))))
+
+        compose.onNodeWithText(string(R.string.eq_slot_flat), substring = true).assertExists()
+        compose.onNodeWithText("夜用", substring = true).assertDoesNotExist()
+    }
+
+    // 切ってあるときスロットの行は画面から隠れる (オフは主電源、スロットはオンの中の層)。
+    // 要約だけが名前を出し続けると、行の無いものを指すことになる。
+    @Test
+    fun theRowNamesNoSlotWhileTheEqualiserIsOff() {
+        show(on.copy(enabled = false), slots = DeviceSlots(active = "1", slots = listOf(slot("1", "夜用"))))
+
+        compose.onNodeWithText("夜用", substring = true).assertDoesNotExist()
+    }
+
     @Test
     fun theRowOpensTheScreen() {
         var opened = false
         compose.setContent {
             MaterialTheme {
-                EqSummaryCard(eq = on, availability = EqAvailability.OK, onOpen = { opened = true })
+                EqSummaryCard(
+                    eq = on,
+                    slots = DeviceSlots(),
+                    availability = EqAvailability.OK,
+                    onOpen = { opened = true },
+                )
             }
         }
 
@@ -85,15 +131,22 @@ class EqSummaryCardTest {
         assertTrue(opened)
     }
 
-    private fun show(eq: EqSettings, availability: EqAvailability = EqAvailability.OK) {
+    private fun slot(id: String, name: String = "") = EqSlot(id = id, name = name, eq = on)
+
+    private fun show(
+        eq: EqSettings,
+        availability: EqAvailability = EqAvailability.OK,
+        slots: DeviceSlots = DeviceSlots(),
+    ) {
         compose.setContent {
             MaterialTheme {
-                EqSummaryCard(eq = eq, availability = availability, onOpen = {})
+                EqSummaryCard(eq = eq, slots = slots, availability = availability, onOpen = {})
             }
         }
     }
 
-    private fun string(id: Int): String = RuntimeEnvironment.getApplication().getString(id)
+    private fun string(id: Int, vararg args: Any): String =
+        RuntimeEnvironment.getApplication().getString(id, *args)
 
     private fun bands(count: Int): String =
         RuntimeEnvironment.getApplication().resources.getQuantityString(R.plurals.eq_summary_bands, count, count)

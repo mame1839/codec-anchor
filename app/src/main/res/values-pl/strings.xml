@@ -30,6 +30,8 @@
 
     <string name="cd_refresh_status">Sprawdź stan ponownie</string>
     <string name="cd_back">Wstecz</string>
+    <string name="cd_eq_slot_menu">Opcje slotu</string>
+    <string name="cd_eq_slot_add">Dodaj slot</string>
     <string name="state_expanded">Rozwinięte</string>
     <string name="state_collapsed">Zwinięte</string>
 
@@ -40,13 +42,9 @@
 
     <string name="section_general">Ustawienia ogólne</string>
     <string name="toggle_auto_apply">Stosuj ustawienia automatycznie</string>
-    <string name="toggle_auto_apply_desc">Gdy wyłączone, na żadnym urządzeniu nic się nie zmienia</string>
     <string name="toggle_enforce">Cofaj zmiany systemu i innych aplikacji</string>
-    <string name="toggle_enforce_desc">Jeśli system lub inna aplikacja zmieni kodek, przywraca przypiętą wartość</string>
     <string name="toggle_notify">Powiadamiaj o zmianie kodeka</string>
-    <string name="toggle_notify_desc">Pokazuje krótki komunikat przy przełączeniu kodeka</string>
     <string name="toggle_verbose">Zapisuj szczegółowe logi</string>
-    <string name="toggle_verbose_desc">Do badania urządzeń, które się nie przełączają</string>
 
     <string name="permission_title">Potrzebne uprawnienie Bluetooth</string>
     <string name="permission_body">Po przyznaniu aplikacja może odczytać sparowane urządzenia i ich nazwy.</string>
@@ -83,7 +81,7 @@
     <string name="eq_unavailable_device">Te słuchawki nie są zarejestrowane do przetwarzania dźwięku, więc nic z tego, co tu ustawisz, nie dociera do dźwięku.</string>
 
     <string name="eq_device_register">Używaj przetwarzania dźwięku z tymi słuchawkami</string>
-    <string name="eq_device_register_desc">Dodaje te słuchawki do ustawień audio telefonu. Podczas stosowania dźwięk na chwilę milknie.</string>
+    <string name="eq_device_register_desc">Podczas stosowania dźwięk na chwilę milknie.</string>
     <string name="eq_device_confirm_on_title">Włączyć przetwarzanie dźwięku dla tych słuchawek?</string>
     <string name="eq_device_confirm_off_title">Wyłączyć przetwarzanie dźwięku dla tych słuchawek?</string>
     <string name="eq_device_confirm_body">Usługa audio telefonu uruchamia się ponownie, więc to, co teraz gra, na kilka sekund ucichnie. Bluetooth pozostaje połączony, a ustawienia korektora są zachowywane w obu przypadkach.</string>
@@ -123,7 +121,6 @@
     <string name="profile_no_target">Nic nie jest jeszcze przypięte</string>
 
     <string name="section_backup">Kopia zapasowa</string>
-    <string name="backup_body">Zapisuje wszystkie ustawienia w pliku JSON.</string>
     <string name="backup_export">Eksportuj</string>
     <string name="backup_import">Importuj</string>
     <string name="backup_confirm_title">Zaimportować kopię zapasową?</string>
@@ -136,7 +133,6 @@
     <string name="msg_backup_failed">Nie udało się odczytać pliku</string>
 
     <string name="detail_auto_apply">Stosuj do tych słuchawek</string>
-    <string name="detail_auto_apply_desc">Przy każdym połączeniu przełącza na ustawienia poniżej</string>
     <string name="detail_current_codec">Obecny kodek: %1$s</string>
     <string name="ldac_bitrate_offload">Nie można odczytać efektywnej przepływności, ponieważ włączone jest sprzętowe odciążanie Bluetooth A2DP.</string>
     <string name="detail_note">Ostatni wynik: %1$s</string>
@@ -163,9 +159,7 @@
     <string name="adv_force">Wymuś przełączenie</string>
     <string name="adv_force_desc">Próbuje też kombinacji, których urządzenie nie zgłasza</string>
     <string name="adv_via_sbc">Przełączaj przez SBC</string>
-    <string name="adv_via_sbc_desc">Najpierw schodzi do SBC, potem przechodzi na wybrany kodek</string>
     <string name="adv_auto_hd">Włączaj dźwięk HD automatycznie</string>
-    <string name="adv_auto_hd_desc">Włącza dźwięk HD, gdy system ma go wyłączonego</string>
     <string name="adv_delay">Opóźnienie przed zastosowaniem</string>
     <string name="adv_delay_desc">Niektóre urządzenia nie przełączają się od razu po połączeniu</string>
     <string name="adv_retries">Liczba prób</string>
@@ -200,14 +194,14 @@
     </plurals>
     <string name="eq_summary_unavailable">Na razie nie działa. Otwórz, aby zobaczyć dlaczego.</string>
     <string name="eq_enabled">Korektor</string>
-    <string name="eq_enabled_desc">Kształtuje brzmienie tych słuchawek</string>
     <string name="eq_latency_zero">Dodane opóźnienie: 0 ms</string>
     <string name="eq_mode">Sposób edycji</string>
-    <string name="eq_mode_desc">W trybie graficznym każde pasmo stoi na stałej częstotliwości. W parametrycznym możesz ustawić pasmo tam, gdzie chcesz.</string>
     <string name="eq_mode_graphic">Graficzny</string>
+    <string name="eq_mode_graphic_desc">Każde pasmo stoi na stałej częstotliwości</string>
     <string name="eq_mode_parametric">Parametryczny</string>
+    <string name="eq_mode_parametric_desc">Możesz ustawić pasmo tam, gdzie chcesz</string>
     <string name="eq_band_count">Liczba pasm</string>
-    <string name="eq_band_count_desc">Im więcej pasm, tym dokładniej odwzorowana jest szczegółowa krzywa. To nie jest ustawienie wydajności: telefon liczy tyle samo w obu przypadkach.</string>
+    <string name="eq_band_count_desc">To nie jest ustawienie wydajności: telefon liczy tyle samo przy każdej liczbie pasm.</string>
     <string name="eq_band_none">Nie ma jeszcze żadnego pasma. Dodaj je albo wczytaj plik AutoEQ.</string>
     <string name="eq_band_add">Dodaj pasmo</string>
     <string name="eq_band_remove">Usuń to pasmo</string>
@@ -228,9 +222,17 @@
     <string name="eq_reset_title">Wyzerować wszystko?</string>
     <string name="eq_reset_body">Każde wzmocnienie i ręczny przedwzmacniacz wracają do 0 dB, a korektor przestaje zmieniać dźwięk. Pasma zostają na swoich miejscach, ale obecna krzywa przepadnie, jeśli nie została zapisana w ustawieniach własnych.</string>
 
+    <string name="eq_slot_flat">Neutralne</string>
+    <string name="eq_slot_default">Własne %1$d</string>
+    <string name="eq_slot_rename">Zmień nazwę</string>
+    <string name="eq_slot_rename_title">Nazwa slotu</string>
+    <string name="eq_slot_duplicate">Duplikuj</string>
+    <string name="eq_slot_save_preset">Zapisz jako ustawienie własne</string>
+    <string name="eq_slot_delete_title">Usunąć slot?</string>
+    <string name="eq_slot_delete_body">Usuwa „%1$s”. Jeśli właśnie go słuchasz, dźwięk wraca do ustawienia Neutralne.</string>
+
     <string name="eq_presets">Ustawienia własne</string>
-    <string name="eq_preset_empty">Nic jeszcze nie zapisano</string>
-    <string name="eq_preset_save">Zapisz te ustawienia</string>
+    <string name="eq_preset_empty">Nic jeszcze nie zapisano. Możesz zapisać ustawienie z menu slotu, którego używasz.</string>
     <string name="eq_preset_save_title">Nazwa ustawienia</string>
     <string name="eq_preset_name">Nazwa</string>
     <string name="eq_preset_apply">Zastosuj</string>
@@ -239,16 +241,20 @@
     <string name="eq_preset_delete_title">Usunąć ustawienie?</string>
     <string name="eq_preset_delete_body">Usuwa „%1$s”. To, co jest już ustawione w słuchawkach, zostaje bez zmian.</string>
     <string name="eq_autoeq_import">Wczytaj AutoEQ</string>
-    <string name="eq_autoeq_desc">Czyta plik ParametricEQ.txt albo GraphicEQ.txt z AutoEQ i zastępuje ustawienia powyżej.</string>
+    <string name="eq_autoeq_desc">Czyta plik ParametricEQ.txt albo GraphicEQ.txt z AutoEQ i wczytuje go jako nowy slot.</string>
     <string name="eq_curve_desc">Krzywa pokazująca, jak te ustawienia zmieniają dźwięk</string>
     <string name="eq_finder_title">Dobierz korektor do swojego gustu</string>
     <string name="eq_finder_entry_desc">Ślepe porównania słuchowe dopasowują korektor do Twojego gustu</string>
     <string name="eq_finder_entry_resume">Czeka zapisany test. Otwórz, aby kontynuować.</string>
     <string name="eq_finder_entry_unavailable">Przetwarzanie dźwięku jest teraz niedostępne dla tych słuchawek.</string>
     <string name="eq_finder_entry_disconnected">Podłącz te słuchawki, aby zacząć.</string>
+    <string name="eq_finder_material">Dźwięk do testu</string>
+    <string name="eq_finder_material_loop">Zapętlony fragment utworu</string>
+    <string name="eq_finder_material_live">Muzyka, która gra teraz</string>
+    <string name="eq_finder_material_live_desc">Dźwięk nie jest mierzony, więc wyrównanie głośności jest mniej dokładne niż z zapętlonym fragmentem.</string>
+    <string name="eq_finder_no_music">Aby zacząć, włącz utwór w aplikacji muzycznej.</string>
     <string name="eq_finder_song">Utwór</string>
     <string name="eq_finder_song_none">Wybierz dobrze znany utwór</string>
-    <string name="eq_finder_song_desc">Krótki fragment utworu powtarza się podczas porównywania. Wybiera się go z plików audio w telefonie.</string>
     <string name="eq_finder_song_loading">Odczytywanie pliku…</string>
     <string name="eq_finder_song_failed">Nie udało się odczytać tego pliku. Wybierz inny.</string>
     <string name="eq_finder_passage">Fragment</string>
@@ -258,7 +264,6 @@
     <string name="eq_finder_include_mid">Badaj też średnie tony</string>
     <string name="eq_finder_include_mid_desc">Dodaje trzecią oś wokół wokali. Kilka pytań więcej.</string>
     <string name="eq_finder_fine_tune">Dostrój obecne ustawienia</string>
-    <string name="eq_finder_fine_tune_desc">Zaczyna od obecnego korektora i porusza się małymi krokami.</string>
     <string name="eq_finder_notes">Zanim zaczniesz</string>
     <string name="eq_finder_note_volume">Test gra nieco ciszej niż zwykle. Ustaw wygodną głośność po rozpoczęciu i nie zmieniaj jej do końca.</string>
     <string name="eq_finder_note_earphones">Słuchaj na tych słuchawkach, w cichym miejscu.</string>
@@ -286,6 +291,7 @@
     <string name="eq_finder_suspend">Zapisz i wyjdź</string>
     <string name="eq_finder_paused_disconnected">Wstrzymano: słuchawki nie są podłączone. Test ruszy dalej, gdy wrócą.</string>
     <string name="eq_finder_paused_focus">Wstrzymano: inna aplikacja przejęła dźwięk.</string>
+    <string name="eq_finder_paused_no_music">Wstrzymano: muzyka się zatrzymała. Wznów odtwarzanie w aplikacji muzycznej.</string>
     <string name="eq_finder_resume_playback">Wznów</string>
     <string name="eq_finder_result_curve_cd">Krzywa korektora przed i po</string>
     <string name="eq_finder_before">Przed</string>
@@ -297,11 +303,10 @@
     <string name="eq_finder_validated_lose">W końcowym ślepym sprawdzeniu punkt wyjścia się obronił. Różnica i tak jest niewielka.</string>
     <string name="eq_finder_not_validated">Test zakończył się przed końcowym ślepym sprawdzeniem, więc wynik nie został zweryfikowany.</string>
     <string name="eq_finder_consistency">Odpowiedzi trochę się wahały. Jeszcze jedna runda doprecyzowałaby wynik.</string>
+    <string name="eq_finder_band_error">Odbiega od usłyszanej krzywej najwyżej o %1$s</string>
     <string name="eq_finder_bake_failed">Wynik wymaga więcej wolnych pasm, niż zostało w korektorze. Usuń kilka pasm i zakończ ponownie.</string>
     <string name="eq_finder_apply">Zastosuj i zapisz</string>
     <string name="eq_finder_discard">Odrzuć</string>
     <string name="eq_finder_discard_title">Odrzucić wynik?</string>
     <string name="eq_finder_discard_body">Korektor wraca do poprzedniego stanu, a odpowiedzi są usuwane.</string>
-    <string name="eq_finder_preset_title">Zapisać też jako ustawienie własne?</string>
-    <string name="eq_finder_preset_skip">Nie teraz</string>
 </resources>

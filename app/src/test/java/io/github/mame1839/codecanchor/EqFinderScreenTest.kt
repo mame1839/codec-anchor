@@ -18,7 +18,6 @@ import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performSemanticsAction
-import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.createFontFamilyResolver
@@ -31,6 +30,7 @@ import io.github.mame1839.codecanchor.core.EqSolver
 import io.github.mame1839.codecanchor.ui.EqFinderAnswer
 import io.github.mame1839.codecanchor.ui.EqFinderAxisDelta
 import io.github.mame1839.codecanchor.ui.EqFinderAxisKind
+import io.github.mame1839.codecanchor.ui.EqFinderBandChoice
 import io.github.mame1839.codecanchor.ui.EqFinderCandidate
 import io.github.mame1839.codecanchor.ui.EqFinderIntroUi
 import io.github.mame1839.codecanchor.ui.EqFinderIntroContent
@@ -42,9 +42,11 @@ import io.github.mame1839.codecanchor.ui.EqFinderResumeUi
 import io.github.mame1839.codecanchor.ui.EqFinderTrialContent
 import io.github.mame1839.codecanchor.ui.EqFinderTrialUi
 import io.github.mame1839.codecanchor.ui.drawEqFinderCurves
+import io.github.mame1839.codecanchor.ui.eqCountText
 import io.github.mame1839.codecanchor.ui.eqFinderPlotRange
 import io.github.mame1839.codecanchor.ui.eqFinderResponseDb
 import io.github.mame1839.codecanchor.ui.eqFinderTimeText
+import io.github.mame1839.codecanchor.ui.eqGainText
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -172,12 +174,26 @@ class EqFinderScreenTest {
         onText(R.string.eq_finder_answer_a).assertIsNotEnabled()
     }
 
+    /**
+     * ライブ題材の無音は自動で下りる一時停止で、**再開ボタンを出さない** — 他人のアプリの
+     * 再生はこちらから再開できない (「再生を再開」はフォーカス喪失専用で、ライブでは
+     * フォーカスを取らないので到達もしない)。
+     */
+    @Test
+    fun theNoMusicPauseHasNoResumeButton() {
+        showTrial(trial.copy(bothHeard = true, pause = EqFinderPause.NO_MUSIC))
+        onText(R.string.eq_finder_paused_no_music).assertExists()
+        compose.onNodeWithText(string(R.string.eq_finder_resume_playback)).assertDoesNotExist()
+        onText(R.string.eq_finder_answer_a).assertIsNotEnabled()
+    }
+
     // ------------------------------------------------------------------
     // 導入
     // ------------------------------------------------------------------
 
     private fun showIntro(
         ui: EqFinderIntroUi,
+        onMaterial: (Boolean) -> Unit = {},
         onBegin: () -> Unit = {},
         onResume: () -> Unit = {},
         onStartOver: () -> Unit = {},
@@ -187,6 +203,7 @@ class EqFinderScreenTest {
                 Column {
                     EqFinderIntroContent(
                         ui = ui,
+                        onMaterial = onMaterial,
                         onPickSong = {},
                         onStartMs = {},
                         onStartMsChosen = {},
@@ -234,6 +251,46 @@ class EqFinderScreenTest {
     fun aSongIsRequiredBeforeStarting() {
         showIntro(EqFinderIntroUi())
         onText(R.string.eq_finder_begin).assertIsNotEnabled()
+    }
+
+    /** ライブ題材に曲は要らない。曲の行ごと消え、音楽さえ流れていれば始められる。 */
+    @Test
+    fun theLiveMaterialNeedsNoSong() {
+        var begun = false
+        showIntro(EqFinderIntroUi(materialLive = true), onBegin = { begun = true })
+        compose.onNodeWithText(string(R.string.eq_finder_song)).assertDoesNotExist()
+        // 精度が下がることの 1 行は「始める前に」のノートに出続ける。
+        onText(R.string.eq_finder_material_live_desc).assertExists()
+        onText(R.string.eq_finder_begin).assertIsEnabled().performSemanticsAction(SemanticsActions.OnClick)
+        assertTrue(begun)
+    }
+
+    /** 音楽が流れていないライブは、既存の門 (startBlockedReason) の形で塞がる。 */
+    @Test
+    fun theLiveMaterialIsGatedOnPlayingMusic() {
+        showIntro(
+            EqFinderIntroUi(
+                materialLive = true,
+                startBlockedReason = "play music first",
+            ),
+        )
+        onText(R.string.eq_finder_begin).assertIsNotEnabled()
+        compose.onNodeWithText("play music first").assertExists()
+    }
+
+    /** 題材の選択肢に、精度が下がることの説明が付いている (選ぶ瞬間に読める)。 */
+    @Test
+    fun choosingTheLiveMaterialShowsItsPrecisionNote() {
+        var chosen: Boolean? = null
+        showIntro(EqFinderIntroUi(), onMaterial = { chosen = it })
+        onText(R.string.eq_finder_material).performSemanticsAction(SemanticsActions.OnClick)
+        compose.onNode(
+            hasText(string(R.string.eq_finder_material_live_desc)) and hasAnyAncestor(isDialog()),
+        ).assertExists()
+        compose.onNode(
+            hasText(string(R.string.eq_finder_material_live)) and hasAnyAncestor(isDialog()),
+        ).performSemanticsAction(SemanticsActions.OnClick)
+        assertEquals(true, chosen)
     }
 
     @Test
@@ -296,10 +353,7 @@ class EqFinderScreenTest {
     // 結果
     // ------------------------------------------------------------------
 
-    private fun result(
-        bakeFailed: Boolean = false,
-        presetOffer: Boolean = false,
-    ) = EqFinderResultUi(
+    private fun result(bandChoices: List<EqFinderBandChoice>? = null) = EqFinderResultUi(
         axes = listOf(
             EqFinderAxisDelta(EqFinderAxisKind.BASS, 25),
             EqFinderAxisDelta(EqFinderAxisKind.TREBLE, -10),
@@ -308,26 +362,27 @@ class EqFinderScreenTest {
         afterDb = DoubleArray(8) { 3.0 },
         consistencyWarning = true,
         startBeaten = true,
-        bakeFailed = bakeFailed,
-        presetOffer = presetOffer,
+        bandChoices = bandChoices,
     )
 
     private fun showResult(
         ui: EqFinderResultUi,
+        selectedBandCount: Int = 10,
+        onBandCount: (Int) -> Unit = {},
+        bakeFailed: Boolean = false,
         onApply: () -> Unit = {},
         onDiscard: () -> Unit = {},
-        onSavePreset: (String) -> Unit = {},
-        onDismissPresetOffer: () -> Unit = {},
     ) {
         compose.setContent {
             MaterialTheme {
                 Column {
                     EqFinderResultContent(
                         ui = ui,
+                        selectedBandCount = selectedBandCount,
+                        onBandCount = onBandCount,
+                        bakeFailed = bakeFailed,
                         onApply = onApply,
                         onDiscard = onDiscard,
-                        onSavePreset = onSavePreset,
-                        onDismissPresetOffer = onDismissPresetOffer,
                     )
                 }
             }
@@ -347,23 +402,61 @@ class EqFinderScreenTest {
         assertTrue(discarded)
     }
 
+    /**
+     * 適用したら**何も聞かずに終わる。**結果は自分のスロットへ残り、名前付けも書き出しも
+     * スロットのメニューに常設されている — ここで重ねて聞くと同じことを 2 通りで聞く。
+     */
     @Test
-    fun thePresetOfferSavesTheTypedName() {
-        var saved: String? = null
-        showResult(result(presetOffer = true), onSavePreset = { saved = it })
-        // 空のうちは押せない (無名のプリセットは一覧で選べない)。
-        onText(R.string.action_save).assertIsNotEnabled()
-        compose.onNodeWithText(string(R.string.eq_preset_name)).performTextInput("夜用")
-        onText(R.string.action_save).assertIsEnabled().performSemanticsAction(SemanticsActions.OnClick)
-        assertEquals("夜用", saved)
+    fun applyingAsksNothingFurther() {
+        var applied = false
+        showResult(result(), onApply = { applied = true })
+        onText(R.string.eq_finder_apply).performSemanticsAction(SemanticsActions.OnClick)
+        assertTrue(applied)
+        compose.onNode(isDialog()).assertDoesNotExist()
     }
 
     @Test
     fun theHonestLinesAreShown() {
-        showResult(result(bakeFailed = true))
+        showResult(result(), bakeFailed = true)
         onText(R.string.eq_finder_validated_win).assertExists()
         onText(R.string.eq_finder_consistency).assertExists()
         onText(R.string.eq_finder_bake_failed).assertExists()
+    }
+
+    /** バンド数の行はグラフィックのときだけ。選択肢は忠実度の 1 行を連れて出る。 */
+    @Test
+    fun theBandCountRowShowsFidelityPerChoice() {
+        var chosen: Int? = null
+        showResult(
+            result(
+                bandChoices = listOf(
+                    EqFinderBandChoice(5, 21),
+                    EqFinderBandChoice(10, 6),
+                    EqFinderBandChoice(15, 3),
+                    EqFinderBandChoice(31, 4),
+                ),
+            ),
+            onBandCount = { chosen = it },
+        )
+        onText(R.string.eq_band_count).performSemanticsAction(SemanticsActions.OnClick)
+        // 副題 = 「聴いた曲線との差 最大 X.X dB」。数字は 0.1 dB 丸めの db10 から組む。
+        // eq_unit_db は書式そのもの (%1$s を含む) なので、引数付きの getString には通さない。
+        val unit = RuntimeEnvironment.getApplication().getString(R.string.eq_unit_db)
+        compose.onNode(
+            hasText(string(R.string.eq_finder_band_error, eqGainText(21, unit, signed = false))) and
+                hasAnyAncestor(isDialog()),
+        ).assertExists()
+        compose.onNode(
+            hasText(eqCountText(31)) and hasAnyAncestor(isDialog()),
+        ).performSemanticsAction(SemanticsActions.OnClick)
+        assertEquals(31, chosen)
+    }
+
+    /** パラメトリックの結果 (bandChoices = null) にバンド数の行は出ない。 */
+    @Test
+    fun parametricResultsHaveNoBandCountRow() {
+        showResult(result())
+        compose.onNodeWithText(string(R.string.eq_band_count)).assertDoesNotExist()
     }
 
     private fun onText(id: Int) = compose.onNodeWithText(string(id))

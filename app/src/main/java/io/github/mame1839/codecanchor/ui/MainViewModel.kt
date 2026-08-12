@@ -25,12 +25,14 @@ import io.github.mame1839.codecanchor.bridge.BridgeClient
 import io.github.mame1839.codecanchor.bridge.EqDeviceStore
 import io.github.mame1839.codecanchor.bridge.PresetStore
 import io.github.mame1839.codecanchor.bridge.SettingsStore
+import io.github.mame1839.codecanchor.bridge.SlotStore
 import io.github.mame1839.codecanchor.core.AppConfig
 import io.github.mame1839.codecanchor.core.AudioOutputs
 import io.github.mame1839.codecanchor.core.AutoEqParser
 import io.github.mame1839.codecanchor.core.AutoEqResult
 import io.github.mame1839.codecanchor.core.CodecKeys
 import io.github.mame1839.codecanchor.core.DeviceProfile
+import io.github.mame1839.codecanchor.core.DeviceSlots
 import io.github.mame1839.codecanchor.core.DeviceStatus
 import io.github.mame1839.codecanchor.core.EqAvailability
 import io.github.mame1839.codecanchor.core.EqDelivery
@@ -42,6 +44,7 @@ import io.github.mame1839.codecanchor.core.EqParamsResult
 import io.github.mame1839.codecanchor.core.EqPreset
 import io.github.mame1839.codecanchor.core.EqRoute
 import io.github.mame1839.codecanchor.core.EqSettings
+import io.github.mame1839.codecanchor.core.EqSlotBook
 import io.github.mame1839.codecanchor.core.EqSupport
 import io.github.mame1839.codecanchor.core.ModuleVersion
 import io.github.mame1839.codecanchor.core.ModuleVersionState
@@ -102,6 +105,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val stored = store.load()
     private val presetStore = PresetStore(context)
     private val eqDeviceStore = EqDeviceStore(context)
+    private val slotStore = SlotStore(context)
 
     // ⚠️ a2dpOutputs の初期化より前に置くこと (プロパティの初期化は宣言順に走る)。
     private val audioManager: AudioManager? =
@@ -111,6 +115,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val nativeLibraryDir: String = context.applicationInfo.nativeLibraryDir.orEmpty()
 
     var presets by mutableStateOf(presetStore.load())
+        private set
+
+    /**
+     * イヤホンごとの EQ スロット台帳 (`llmdocs/eq-slot-design.md`)。選択中スロットの中身は
+     * profile.eq の写し (同じ値が 2 箇所) で、食い違いは起動時の和解とここ経由の write-through
+     * ([updateEq]) が `reconciledWith` で直す。
+     */
+    var slots by mutableStateOf(loadSlotsReconciled())
         private set
 
     /** `audio_effects.xml` に登録済みのイヤホン。成功した登録操作でしか動かない。 */
@@ -539,6 +551,101 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
+     * 起動時 1 回の、スロット台帳の移行と和解。**写すだけ** — profile.eq には触らず
+     * [updateEq] / push も通らないので、起動でスロットが音を変えることはない。
+     *
+     * 設定が読めないとき (configBroken) は台帳に触らない — 空の profiles と和解すると
+     * 全スロットを孤児として消してしまう。
+     */
+    private fun loadSlotsReconciled(): EqSlotBook {
+        val book = slotStore.load()
+        val profiles = stored?.profiles ?: return book
+        val next = book.reconciled(profiles)
+        if (next != book) slotStore.save(next)
+        return next
+    }
+
+    private fun saveSlots(next: EqSlotBook) {
+        if (next == slots) return
+        slots = next
+        slotStore.save(next)
+    }
+
+    fun slotsOf(mac: String): DeviceSlots = slots.of(mac)
+
+    /**
+     * スロットを選ぶ。
+     *
+     * ⚠️ **台帳を先に書いてから [updateEq] を呼ぶ。**逆順だと write-through が新しい曲線を
+     * 「まだ選択中の古いスロット」へ写して上書きする ([EqSlotBook.reconciledWith] の KDoc)。
+     * **選択を動かす操作 ([deleteSlot] / [landInNewSlot]) はすべてこの順番。**
+     * `EqSlotSelectionTest.switchingSlotsLeavesTheCurveYouCameFromAlone` が見張っている。
+     */
+    fun selectSlot(mac: String, id: String) {
+        val device = slots.of(mac)
+        if (device.active == id) return
+        // 知らない id には倒さない。倒すと active が宙に浮き、和解が勝手に新しいスロットを立てる。
+        val target = if (id == EqSlotBook.FLAT_ID) null else device.slot(id) ?: return
+        saveSlots(slots.mapDevice(mac) { it.copy(active = id) })
+        applySlotCurve(mac, target?.eq)
+    }
+
+    /** 「+」。フラットを種にした新しいスロットを作って選ぶ。 */
+    fun addSlot(mac: String) {
+        landInNewSlot(mac, flatEq(config.profileFor(mac)?.eq ?: EqSettings(enabled = true)))
+    }
+
+    /**
+     * 複製。**名前は引き継がない** (未命名 = 表示は次の「カスタム n」)。
+     * 「〜のコピー」を作ると、訳文がデータに焼かれて端末の言語を替えたときに嘘になる。
+     */
+    fun duplicateSlot(mac: String, id: String) {
+        val slot = slots.of(mac).slot(id) ?: return
+        landInNewSlot(mac, slot.eq)
+    }
+
+    /** 空文字は未命名に戻す (表示は既定名へ)。名前は音に関わらないので [updateEq] は通さない。 */
+    fun renameSlot(mac: String, id: String, name: String) {
+        saveSlots(slots.mapDevice(mac) { it.renamed(id, name.trim()) })
+    }
+
+    /** 選択中を消したらフラットへ戻る ([DeviceSlots.without])。鳴っている音もそこへ合わせる。 */
+    fun deleteSlot(mac: String, id: String) {
+        val device = slots.of(mac)
+        if (device.slot(id) == null) return
+        val wasActive = device.active == id
+        saveSlots(slots.mapDevice(mac) { it.without(id) })
+        if (wasActive) applySlotCurve(mac, null)
+    }
+
+    /**
+     * 外から来た曲線を**新しいスロットに着地**させて選ぶ。プリセットの適用・AutoEQ の取り込み・
+     * 好み探索の結果・「+」が通る唯一の道 (`llmdocs/eq-slot-design.md` §1「既存スロットを
+     * 黙って上書きする経路を作らない」)。
+     *
+     * [name] を渡してよいのは**ユーザが付けた名前**だけ (プリセット名)。既定名は表示側で作る —
+     * 「自動 1」のような訳文をデータに焼くと、端末の言語を替えたときにデータが嘘になる。
+     */
+    fun landInNewSlot(mac: String, eq: EqSettings, name: String = "") {
+        val curve = slotCurve(eq)
+        saveSlots(slots.mapDevice(mac) { it.withNewSlot(curve, name) })
+        updateEq(mac) { curve }
+    }
+
+    /** [eq] が null ならフラット。台帳を書き終えた後にだけ呼ぶこと (上の ⚠️)。 */
+    private fun applySlotCurve(mac: String, eq: EqSettings?) {
+        updateEq(mac) { current -> eq?.let(::slotCurve) ?: flatEq(current) }
+    }
+
+    /**
+     * スロットの中身として扱ってよい形にする。**主電源は必ず入れる** — オフとスロットは別の層
+     * (仕様 §1) なので、スロットを選んだだけでイコライザーが切れてはいけない。
+     * `enabled = false` のプリセットを読み込んだときにだけ効く。
+     */
+    private fun slotCurve(eq: EqSettings): EqSettings =
+        if (eq.enabled) eq else eq.copy(enabled = true)
+
+    /**
      * EQ の設定を変える。**入口はここ 1 つ** (スライダー・プリセット・AutoEQ の取り込みが全部通る)。
      *
      * ここで共有メモリへ書く。**ドラッグ中は呼ばれない** — スライダーは `onValueChangeFinished` で
@@ -550,6 +657,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun updateEq(mac: String, transform: (EqSettings) -> EqSettings) {
         updateProfile(mac) { it.copy(eq = transform(it.eq)) }
+        // 選択中スロットへの write-through。二重保持 (選択中スロットの中身 = profile.eq) の
+        // 食い違いを変更の入口で潰す。configBroken のときは profileFor が空の config を見るので走らない。
+        config.profileFor(mac)?.let { saveSlots(slots.reconciledWith(it.mac, it.eq)) }
         if (EqDevices.normalizeMac(mac) == eqOwner) pushEqParams()
     }
 
@@ -566,9 +676,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         presetStore.save(presets)
     }
 
+    /**
+     * プリセットの「適用」= **新しいスロットとして読み込む。**選択中のスロットは残るので、
+     * 試した後に元の曲線へ 1 タップで戻れる。
+     *
+     * 名前はプリセットの名前をそのまま引き継ぐ — ユーザが付けた名前なので、
+     * 「既定名をデータに焼かない」規則には触れない。
+     */
     fun applyPreset(mac: String, name: String) {
         val preset = presets.presets.firstOrNull { it.name == name } ?: return
-        updateEq(mac) { preset.settings }
+        landInNewSlot(mac, preset.settings, preset.name)
     }
 
     fun confirmEqRounding() {
@@ -588,7 +705,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun removeProfile(mac: String) = update { it.withoutProfile(mac) }
+    fun removeProfile(mac: String) {
+        update { it.withoutProfile(mac) }
+        // スロットの孤児防止。プロファイルと一緒にその機器の台帳も消す。
+        saveSlots(slots.without(mac))
+    }
 
     fun exportConfig(uri: Uri) {
         val json = runCatching { JSONObject(config.encode()).toString(2) }.getOrDefault(config.encode())
@@ -624,6 +745,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val restored = AppConfig.fromJson(parsed)
             configBroken = false
             commit(restored)
+            // 復元で profile.eq が丸ごと入れ替わるので、起動時と同じ和解をここでも通す
+            // (写す向きも同じ: profile.eq → 選択中スロット)。
+            saveSlots(slots.reconciled(restored.profiles))
             refreshDevices()
             pendingMessage = R.string.msg_backup_imported
         }
@@ -667,9 +791,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 pendingMessage = R.string.msg_autoeq_failed
                 return@launch
             }
-            when (val result = AutoEqParser.parse(text, bandCount)) {
+            // GraphicEQ 形式は曲線全体へのフィットを回すので main スレッドでは重い
+            val result = withContext(Dispatchers.Default) { AutoEqParser.parse(text, bandCount) }
+            when (result) {
                 is AutoEqResult.Ok -> {
-                    updateEq(mac) { result.settings }
+                    // 取り込んだ曲線も新しいスロットに着地する (既存の作りかけを潰さない)。
+                    landInNewSlot(mac, result.settings)
                     pendingMessage = R.string.msg_autoeq_imported
                 }
 
