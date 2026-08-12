@@ -875,18 +875,46 @@ void runShmSections(Report& r) {
         // (5) false→true が configure を待たずに確保する (同じ fs/ch のまま)。
         //     configure は同じ fs/ch なら冪等に return するので、setter 側で確保しないと
         //     **次の configure が来るまで永久に確保されない。**
+        //
+        // ⚠️ **順序を入れ替える釘は「どの状態で入れ替えるか」で強さが変わる。**
+        // ここは最初、まっさらな pipeline でしか入れ替えていなかった。それだと
+        // `p_cur_` の戻し忘れ (= 確保はされるのに FIR が永久に始まらない) を捕まえられない —
+        // `p_cur_` は process() を 1 度でも回して初めて 0 でなくなるため。
+        // **入れ替えの前に process() を回す**のが、この釘の本来の形。
         {
             caeq::EqPipeline pl;
             pl.setFirCapable(false);
             pl.configure(48000.0, 2, caeq::Structure::kTdf2);
             r.check(!pl.firAvailable(), "false のあいだは作業領域なし");
+
+            // **入れ替えの前に回す。**これで p_cur_ が 960 に据わる。
+            caeq::Params p;
+            p.band_count = 0;
+            p.preamp_db  = 0.0;
+            pl.snapParams(p);
+            pl.setActive(true);
+            pl.setFirEnabled(true);
+            const std::vector<float> curve = tiltCurve(-6.0f, 6.0f);
+            pl.setCurve(curve.data(), 1);
+            Driver drv(pl, 960, 2);
+            drv.step();
+
             pl.setFirCapable(true);
+            pl.warmUp();
             r.check(pl.firAvailable() && pl.arenaBytes() > 0,
                     "false→true で、configure を挟まずにその場で確保する (%zu KB)",
                     pl.arenaBytes() / 1024);
-            // 確保しただけで FIR は始まらない (許可であって要求ではない)。
-            r.check(pl.firState() == caeq::EqPipeline::FirState::kBiquad && pl.rebuilds() == 0,
-                    "確保しただけでは FIR は始まらない (許可であって要求ではない)");
+
+            // **同じブロック長のまま回して FIR に到達すること。**`p_cur_` を戻していないと
+            // evaluateBlock が呼ばれず、arena があるのに永久に kBiquad のまま。
+            int reached = -1;
+            for (int b = 0; b < 80; b++) {
+                drv.step();
+                if (pl.firState() == caeq::EqPipeline::FirState::kFir) { reached = b; break; }
+            }
+            r.check(reached >= 0,
+                    "同じブロック長のまま FIR へ到達する (%d ブロック) — "
+                    "確保の後にブロック長の再評価が走っている", reached);
         }
 
         // (6) true→false が鳴っている最中でも落ちない。**落下には数えない。**
