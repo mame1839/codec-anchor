@@ -222,7 +222,7 @@ ca_setup() {
     SHM=/data/vendor/audio/ca_eq_stats.bin
     if [ -d /data/vendor/audio ]; then
         rm -f "$SHM"
-        dd if=/dev/zero of="$SHM" bs=5760 count=1 2>/dev/null
+        dd if=/dev/zero of="$SHM" bs=19584 count=1 2>/dev/null
         chmod 664 "$SHM"
         chown audioserver:audio "$SHM"
         chcon --reference=/data/vendor/audio "$SHM"

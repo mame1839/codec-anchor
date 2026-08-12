@@ -1046,6 +1046,10 @@ void checkParamGuards(Report& r) {
 
 // generation から全フィールドを決めて、読み手が「この世代ならこの値」を照合できるようにする。
 // 1 つでもずれていれば、それは千切れた読みを採用したということ。
+//
+// **曲線 (401 点) も世代から決める。**版 4 で枠が 576 → 2176 B に増えたぶん、
+// 書き込みの途中を掴む窓が広がっている。曲線を照合に入れないと、この節は
+// 「増えた 4 分の 3 を見ていない」検査になる。
 void fillGeneration(ca_eq_slot_t* s, uint32_t gen) {
     s->generation = gen;
     s->flags = CA_EQ_FLAG_ENABLED;
@@ -1058,13 +1062,19 @@ void fillGeneration(ca_eq_slot_t* s, uint32_t gen) {
         s->band[i].gain_db = static_cast<float>(gen % 11) - 5.0f;
         s->band[i].type = CA_EQ_BAND_PEAKING;
     }
+    s->curve_gen = gen;
+    // 点ごとに違う値にする。全点同値だと、隣の世代の曲線を掴んでも一致してしまう。
+    for (int i = 0; i < caeq::kCurvePoints; i++) {
+        s->curve_db[i] = static_cast<float>((gen + static_cast<uint32_t>(i)) % 23) - 11.0f;
+    }
 }
 
 bool matchesGeneration(const ca_eq_slot_t& s) {
     ca_eq_slot_t want{};
     fillGeneration(&want, s.generation);
     if (s.flags != want.flags || s.band_count != want.band_count ||
-        s.preamp_db != want.preamp_db || s.writer_pid != want.writer_pid) {
+        s.preamp_db != want.preamp_db || s.writer_pid != want.writer_pid ||
+        s.curve_gen != want.curve_gen) {
         return false;
     }
     for (uint32_t i = 0; i < CA_EQ_MAX_BANDS; i++) {
@@ -1072,6 +1082,9 @@ bool matchesGeneration(const ca_eq_slot_t& s) {
             s.band[i].gain_db != want.band[i].gain_db || s.band[i].type != want.band[i].type) {
             return false;
         }
+    }
+    for (int i = 0; i < caeq::kCurvePoints; i++) {
+        if (s.curve_db[i] != want.curve_db[i]) return false;
     }
     return true;
 }
@@ -1082,7 +1095,7 @@ void checkSeqlock(Report& r) {
     r.check(sizeof(ca_shm_t) == CA_SHM_BYTES,
             "ca_shm_t = %zu バイト。post-fs-data.sh が作る大きさと一致 (%d)", sizeof(ca_shm_t),
             CA_SHM_BYTES);
-    r.check(sizeof(ca_eq_slot_t) == 576 && sizeof(ca_eq_band_t) == 16,
+    r.check(sizeof(ca_eq_slot_t) == CA_EQ_PARAM_SLOT_BYTES && sizeof(ca_eq_band_t) == 16,
             "並びが固定 (ca_eq_slot_t %zu / ca_eq_band_t %zu)", sizeof(ca_eq_slot_t),
             sizeof(ca_eq_band_t));
 
@@ -1272,12 +1285,16 @@ void putSlot(ca_shm_t* m, uint32_t i, uint64_t pid, int32_t session) {
     s.sample_rate = 48000;
 }
 
+// ca_stats_open() が書くのと同じ顔ぶれ。**ここを .so と食い違わせないこと** —
+// 食い違うと shmState の判定がハーネスでだけ通る。
 ca_shm_t* newShm() {
     auto* m = new ca_shm_t{};
     m->magic = CA_SHM_MAGIC;
     m->version = CA_SHM_VERSION;
     m->slot_count = CA_SHM_SLOTS;
     m->slot_size = static_cast<uint32_t>(sizeof(ca_slot_t));
+    m->param_slot_size = static_cast<uint32_t>(sizeof(ca_eq_slot_t));
+    m->curve_points = static_cast<uint32_t>(caeq::kCurvePoints);
     return m;
 }
 
@@ -1286,8 +1303,10 @@ void checkSlotPick(Report& r) {
 
     // session_id は pad を潰して入れた。**ここがずれると版 2 の .so が書いた 0 を
     // session_id として読むことになる** (共有メモリの版を上げてある理由でもある)。
-    r.check(offsetof(ca_slot_t, session_id) == 124 && sizeof(ca_slot_t) == 128,
-            "session_id は末尾の 4 バイト (offset %zu / 大きさ %zu)",
+    // 版 4 で FIR の診断が付いて 256 B になったが、**版 3 の 128 B の並びは動かしていない。**
+    // ここがずれると版 2 の .so が書いた 0 を session_id として読むことになる。
+    r.check(offsetof(ca_slot_t, session_id) == 124 && sizeof(ca_slot_t) == CA_SLOT_BYTES,
+            "session_id は版 3 の 128 B の末尾のまま (offset %zu / 大きさ %zu)",
             offsetof(ca_slot_t, session_id), sizeof(ca_slot_t));
     r.check(CA_AUDIO_SESSION_DEVICE == -2, "AUDIO_SESSION_DEVICE は -2");
 

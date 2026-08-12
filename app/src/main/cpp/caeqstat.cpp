@@ -45,6 +45,32 @@ void format_age(char* buf, size_t n, uint64_t last_ns, uint64_t now_ns) {
     snprintf(buf, n, "%.2fs", static_cast<double>(now_ns - last_ns) / 1e9);
 }
 
+const char* fir_state_name(uint32_t s) {
+    switch (s) {
+    case CA_FIR_STATE_BIQUAD:   return "biquad";
+    case CA_FIR_STATE_PREPARE:  return "準備中";
+    case CA_FIR_STATE_FADE_IN:  return "乗り移り中 (biquad→FIR)";
+    case CA_FIR_STATE_FIR:      return "FIR";
+    case CA_FIR_STATE_FADE_OUT: return "降り中 (FIR→biquad)";
+    default:                    return "?";
+    }
+}
+
+// **「高精度を頼んだのに biquad のまま」の理由を 1 行で言い切る。**
+// ここが曖昧だと、現地で「入っていない」「効いていない」「そもそも要求していない」の
+// どれなのかが分からず、モジュールの入れ直しから始めることになる。
+const char* fir_why_biquad(const ca_slot_t& s, const ca_eq_slot_t* q) {
+    if (!(s.fir_flags & CA_FIR_F_REQUESTED)) return "高精度が要求されていない (標準モード)";
+    if (!(s.fir_flags & CA_FIR_F_ARENA))
+        return "作業領域が無い — このインスタンスは 3ch 以上 (spatializer 等) か確保に失敗";
+    if (!(s.fir_flags & CA_FIR_F_BLOCK_OK))
+        return "このスレッドのブロック長では回せない (不適の内訳は size/budget を見る)";
+    if (q != nullptr && q->curve_gen == 0) return "曲線がまだ届いていない (書き手が送っていない)";
+    if (s.fir_design_failures > 0) return "設計器が止まった (曲線が非有限になった)";
+    if (s.fir_fill < s.fir_partitions) return "FDL を温めている最中 (fill/K を見る)";
+    return "準備は整っているが、まだ乗り移っていない";
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -79,7 +105,23 @@ int main(int argc, char** argv) {
         printf("    grep libcaeq /proc/$(pidof android.hardware.audio.service.mediatek)/maps\n");
         return 1;
     }
-    printf("version=%u slots=%u slot_size=%u\n", m->version, m->slot_count, m->slot_size);
+    printf("version=%u (期待 %u) slots=%u slot_size=%u (期待 %zu) param_slot_size=%u "
+           "(期待 %zu) curve_points=%u (期待 %d)\n",
+           m->version, CA_SHM_VERSION, m->slot_count, m->slot_size, sizeof(ca_slot_t),
+           m->param_slot_size, sizeof(ca_eq_slot_t), m->curve_points, caeq::kCurvePoints);
+    if (m->version != CA_SHM_VERSION) {
+        // 版 3 の .so は 128 B 刻みで統計を書き、1152 B から 576 B 刻みでパラメータを読む。
+        // 版 4 のファイルではどちらも枠の境界がずれるので、下の表は意味を持たない。
+        printf("\n⚠️ 版が食い違っている。以下の表は枠の境界がずれているので読まないこと。\n");
+        printf("   モジュールとアプリのどちらかが古い。入れ直すこと。\n");
+        return 1;
+    }
+    if (m->slot_size != sizeof(ca_slot_t) || m->param_slot_size != sizeof(ca_eq_slot_t) ||
+        m->curve_points != static_cast<uint32_t>(caeq::kCurvePoints)) {
+        printf("\n⚠️ 版は同じなのに並びが違う。**版を上げずに構造体を変えたビルドが混ざっている。**\n");
+        printf("   以下の表は枠の境界がずれているので読まないこと。\n");
+        return 1;
+    }
     printf("%-4s %-18s %-6s %-10s %-4s %-7s %-6s %-9s %-6s %-7s %-8s %-8s %s\n",
            "slot", "ctx", "io", "frames", "ch", "rate", "block", "age", "pid", "gain_mB",
            "in_dBFS", "out_dBFS", "state");
@@ -118,10 +160,14 @@ int main(int argc, char** argv) {
                    ? "(DEVICE = <deviceEffects> 経由 = イヤホン側)"
                    : "(DEVICE でない = postprocess 等。イヤホンの設定を書く先ではない)");
         // パラメータ経路。**捨てたことが見えないと「効かない」の原因が追えない。**
+        const ca_eq_slot_t* q = nullptr;
         if (s.param_slot == CA_PARAM_SLOT_NONE) {
             printf("     param: 枠が未割り当て — パラメータを一切適用せず素通し\n");
+        } else if (s.param_slot >= static_cast<uint32_t>(CA_SHM_SLOTS)) {
+            printf("     param: 枠=%u は範囲外 (0..%d)。**壊れた値**\n",
+                   s.param_slot, CA_SHM_SLOTS - 1);
         } else {
-            const ca_eq_slot_t* q = &m->params[s.param_slot];
+            q = &m->params[s.param_slot];
             printf("     param: 枠=%u 適用済み gen=%u / 共有メモリ gen=%u bands=%u "
                    "preamp=%.2f dB flags=0x%x 却下=%u\n",
                    s.param_slot, s.param_gen, q->generation, q->band_count,
@@ -132,6 +178,27 @@ int main(int argc, char** argv) {
                 printf("            (共有メモリの世代に追いついていない。"
                        "却下が増えているなら検査に落ちている)\n");
             }
+        }
+        // 「高精度」(最小位相 FIR)。**要求と実際が別々に出ることが要点** —
+        // 「設定は高精度なのに biquad で鳴っている」を、理由まで含めてここで読む。
+        printf("     fir  : %s / 要求=%s 作業領域=%s ブロック=%s  FDL %u/%u  曲線 gen=%u/%u\n",
+               fir_state_name(s.fir_state),
+               (s.fir_flags & CA_FIR_F_REQUESTED) ? "高精度" : "標準",
+               (s.fir_flags & CA_FIR_F_ARENA) ? "あり" : "なし",
+               (s.fir_flags & CA_FIR_F_BLOCK_OK) ? "可" : "不可",
+               s.fir_fill, s.fir_partitions, s.fir_curve_gen,
+               q != nullptr ? q->curve_gen : 0u);
+        printf("            taps=%u M=%u arena=%u KB スライス最大=%.1f µs "
+               "再構築=%u 差し替え=%u\n",
+               s.fir_taps, s.fir_m, s.fir_arena_kb,
+               static_cast<double>(s.fir_max_slice_ns) / 1000.0,
+               s.fir_rebuilds, s.fir_face_fades);
+        printf("            落下=%u モード切=%u 設計失敗=%u 不適(大きさ)=%u 不適(予算)=%u "
+               "曲線却下=%u 潰し=%u\n",
+               s.fir_fallbacks, s.fir_mode_offs, s.fir_design_failures, s.fir_unfit_size,
+               s.fir_unfit_budget, s.fir_curve_rejected, s.fir_scrubbed);
+        if (s.fir_state != CA_FIR_STATE_FIR) {
+            printf("            → %s\n", fir_why_biquad(s, q));
         }
     }
     if (active == 0) {

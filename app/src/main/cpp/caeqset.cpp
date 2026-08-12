@@ -10,6 +10,12 @@
 //   caeqset --show                # いまの中身と、どの枠が生きているかを出すだけ
 //   caeqset --auto-slot --dry-run # 選ぶところまでやって、書かずに終了コードだけ返す
 //
+//   caeqset --auto-slot --hp --curve out.txt   # 高精度 (最小位相 FIR) を要求し、曲線を送る
+//
+// **曲線は 401 点の dB を 1 行 1 値で並べたテキスト。**周波数は書かない — グリッドは
+// 20 Hz〜20 kHz の対数等間隔で `dsp/ca_eq_curve.h` に定義があり、点数も間隔もそこ 1 箇所。
+// ファイルに周波数を書くと定義が 2 箇所になる。
+//
 // --- 終了コード -------------------------------------------------------------
 //
 // **`EqParams.kt` が同じ値を literal で持っている。片方だけ変えないこと。**
@@ -59,12 +65,42 @@ enum {
 void usage() {
     printf("caeqset — 共有メモリのパラメータ枠に書く\n\n");
     printf("  caeqset [--file PATH] (--auto-slot|--slot N) [--off|--on] [--preamp dB]\n");
-    printf("          [--band fc:q:gain[:type]] ... [--dry-run]\n");
+    printf("          [--band fc:q:gain[:type]] ... [--std|--hp] [--curve PATH] [--dry-run]\n");
     printf("  caeqset [--file PATH] --show\n\n");
     printf("  --auto-slot は生きているイヤホン側の枠を自分で選ぶ (アプリはこちらを使う)\n");
     printf("  type は pk (peaking, 既定) / ls (low shelf) / hs (high shelf)\n");
     printf("  --band を 1 つも渡さなければバンドは空 (プリアンプだけ) になる\n");
+    printf("  --std / --hp は処理方式 (標準 = biquad / 高精度 = 最小位相 FIR)。既定は標準\n");
+    printf("  --curve は %d 行の dB (1 行 1 値)。周波数は書かない — グリッドは固定\n",
+           caeq::kCurvePoints);
     printf("  検査は .so と同じ範囲で先に行う。落ちたら書かずに理由を出す\n");
+}
+
+// 曲線のファイルを読む。**周波数の欄を持たない** — グリッドは dsp/ca_eq_curve.h 1 箇所。
+// 空行と # で始まる行は読み飛ばす。点数がちょうど kCurvePoints でなければ失敗。
+bool readCurve(const char* path, float* out) {
+    FILE* f = std::fopen(path, "r");
+    if (f == nullptr) {
+        fprintf(stderr, "曲線を開けない %s: %s\n", path, std::strerror(errno));
+        return false;
+    }
+    char line[128];
+    int n = 0;
+    bool overflow = false;
+    while (std::fgets(line, sizeof(line), f) != nullptr) {
+        const char* s = line;
+        while (*s == ' ' || *s == '\t') s++;
+        if (*s == '\0' || *s == '\n' || *s == '\r' || *s == '#') continue;
+        if (n >= caeq::kCurvePoints) { overflow = true; break; }
+        out[n++] = static_cast<float>(atof(s));
+    }
+    std::fclose(f);
+    if (overflow || n != caeq::kCurvePoints) {
+        fprintf(stderr, "曲線の点数が違う: %s は %d 点%s (期待 %d 点)\n", path, n,
+                overflow ? " 以上" : "", caeq::kCurvePoints);
+        return false;
+    }
+    return true;
 }
 
 // 実機での生存確認。/proc/<pid> が無ければそのプロセスは死んでいる。
@@ -121,14 +157,18 @@ void describeSlot(const ca_slot_t& s) {
 }
 
 void showAll(const ca_shm_t* m) {
-    printf("version=%u (期待 %u) slots=%u\n", m->version, CA_SHM_VERSION, m->slot_count);
+    printf("version=%u (期待 %u) slots=%u 枠 %u B (期待 %zu) 曲線 %u 点 (期待 %d)\n",
+           m->version, CA_SHM_VERSION, m->slot_count, m->param_slot_size,
+           sizeof(ca_eq_slot_t), m->curve_points, caeq::kCurvePoints);
     for (uint32_t i = 0; i < CA_SHM_SLOTS; i++) {
         const ca_eq_slot_t* q = &m->params[i];
         const ca_slot_t* s = &m->slots[i];
         if (q->generation == 0 && s->in_use != CA_SHM_MAGIC) continue;
-        printf("枠 %u: gen=%u flags=0x%x bands=%u preamp=%.2f dB writer_pid=%u",
-               i, q->generation, q->flags, q->band_count,
-               static_cast<double>(q->preamp_db), q->writer_pid);
+        printf("枠 %u: gen=%u flags=0x%x%s bands=%u preamp=%.2f dB 曲線 gen=%u writer_pid=%u",
+               i, q->generation, q->flags,
+               (q->flags & CA_EQ_FLAG_HIGH_PRECISION) ? " 高精度" : " 標準",
+               q->band_count, static_cast<double>(q->preamp_db), q->curve_gen,
+               q->writer_pid);
         describeSlot(*s);
         printf("\n");
         for (uint32_t b = 0; b < q->band_count && b < CA_EQ_MAX_BANDS; b++) {
@@ -180,9 +220,12 @@ int main(int argc, char** argv) {
     bool show = false;
     bool dryRun = false;
     bool enabled = true;
+    bool highPrecision = false;
     double preamp = 0.0;
     ca_eq_band_t bands[CA_EQ_MAX_BANDS];
     uint32_t band_count = 0;
+    float curve[caeq::kCurvePoints] = {};
+    bool haveCurve = false;
 
     for (int i = 1; i < argc; i++) {
         const char* a = argv[i];
@@ -192,8 +235,14 @@ int main(int argc, char** argv) {
         else if (std::strcmp(a, "--preamp") == 0 && i + 1 < argc) preamp = atof(argv[++i]);
         else if (std::strcmp(a, "--off") == 0)                    enabled = false;
         else if (std::strcmp(a, "--on") == 0)                     enabled = true;
+        else if (std::strcmp(a, "--std") == 0)                    highPrecision = false;
+        else if (std::strcmp(a, "--hp") == 0)                     highPrecision = true;
         else if (std::strcmp(a, "--show") == 0)                   show = true;
         else if (std::strcmp(a, "--dry-run") == 0)                dryRun = true;
+        else if (std::strcmp(a, "--curve") == 0 && i + 1 < argc) {
+            if (!readCurve(argv[++i], curve)) return kExitBadInput;
+            haveCurve = true;
+        }
         else if (std::strcmp(a, "--band") == 0 && i + 1 < argc) {
             if (band_count >= CA_EQ_MAX_BANDS) {
                 fprintf(stderr, "バンドが多すぎる (上限 %d)\n", CA_EQ_MAX_BANDS);
@@ -263,6 +312,15 @@ int main(int argc, char** argv) {
                         "モジュールを入れ直すこと\n",
                 m->version, CA_SHM_VERSION);
         return kExitShmMismatch;
+    case caeq::ShmState::kLayoutMismatch:
+        // 版の番号は同じなのに並びが違う = 版を上げずに構造体を変えたビルドが混ざっている。
+        // そのまま書くと枠の境界がずれて別のインスタンスの設定を上書きする。
+        fprintf(stderr, "共有メモリの並びが違う (枠 %u B / 期待 %zu、曲線 %u 点 / 期待 %d、"
+                        "統計 %u B / 期待 %zu)。版は同じなので、.so とこのコマンドの"
+                        "ビルドが食い違っている\n",
+                m->param_slot_size, sizeof(ca_eq_slot_t), m->curve_points, caeq::kCurvePoints,
+                m->slot_size, sizeof(ca_slot_t));
+        return kExitShmMismatch;
     case caeq::ShmState::kOk:
         break;
     }
@@ -299,6 +357,15 @@ int main(int argc, char** argv) {
     staged.preamp_db = static_cast<float>(preamp);
     for (uint32_t i = 0; i < band_count; i++) staged.band[i] = bands[i];
 
+    // 曲線も .so と同じ検査を先に通す。**落ちる並びを書くと、.so は枠の更新を丸ごと
+    // 捨てる** — バンドまで一緒に消えるので、ここで止めるほうが原因が分かる。
+    if (haveCurve && !caeq::curveValid(curve)) {
+        fprintf(stderr, "曲線が検査に落ちた (各点が有限かつ |dB| <= %.0f であること)。"
+                        ".so も同じ理由で枠の更新を丸ごと捨てる\n",
+                static_cast<double>(caeq::kCurveMaxAbsDb));
+        return kExitRejected;
+    }
+
     caeq::Params check;
     if (!caeq::paramsConvert(staged, &check)) {
         fprintf(stderr, "並びが不正 (type かバンド数)\n");
@@ -323,19 +390,36 @@ int main(int argc, char** argv) {
     uint32_t gen = dst->generation + 1;
     if (gen == 0) gen = 1;   // 0 は「未割り当て」の意味なので使わない
 
+    // **曲線の版は曲線を渡したときだけ進める。**バンドやプリアンプを触るたびに進めると、
+    // ドラッグのたびに FIR の再構築が走る (eq-fir-design.md §2)。
+    // 曲線を渡さなければ、前に書いた曲線と版がそのまま残る。
+    uint32_t curve_gen = dst->curve_gen;
+    if (haveCurve) {
+        curve_gen++;
+        if (curve_gen == 0) curve_gen = 1;   // 0 は「曲線が載っていない」の意味
+    }
+
     caeq::paramsBeginWrite(dst);
     dst->generation = gen;
-    dst->flags = enabled ? CA_EQ_FLAG_ENABLED : 0u;
+    dst->flags = (enabled ? CA_EQ_FLAG_ENABLED : 0u) |
+                 (highPrecision ? CA_EQ_FLAG_HIGH_PRECISION : 0u);
     dst->band_count = band_count;
     dst->preamp_db = static_cast<float>(preamp);
     dst->writer_pid = static_cast<uint32_t>(getpid());
     for (uint32_t i = 0; i < CA_EQ_MAX_BANDS; i++) {
         dst->band[i] = (i < band_count) ? bands[i] : ca_eq_band_t{};
     }
+    if (haveCurve) {
+        for (int i = 0; i < caeq::kCurvePoints; i++) dst->curve_db[i] = curve[i];
+    }
+    dst->curve_gen = curve_gen;
     caeq::paramsEndWrite(dst);
 
-    printf("枠 %u に書いた: gen=%u %s bands=%u preamp=%.2f dB (fs=%.0f Hz で検査済み)\n",
-           param_slot, gen, enabled ? "enabled" : "disabled", band_count, preamp, fs);
+    printf("枠 %u に書いた: gen=%u %s %s bands=%u preamp=%.2f dB 曲線 gen=%u%s "
+           "(fs=%.0f Hz で検査済み)\n",
+           param_slot, gen, enabled ? "enabled" : "disabled",
+           highPrecision ? "高精度" : "標準", band_count, preamp, curve_gen,
+           haveCurve ? " (今回更新)" : "", fs);
     for (uint32_t i = 0; i < band_count; i++) {
         printf("  %2u: %8.1f Hz  Q %5.2f  %+6.2f dB  %s\n", i,
                static_cast<double>(bands[i].fc_hz), static_cast<double>(bands[i].q),

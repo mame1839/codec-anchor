@@ -62,6 +62,12 @@ namespace caeq {
 // ブロック長の上限。2P がこれを超えると fftSetupBytes の予約の外に出る。
 inline constexpr int kMaxConvBlock = 4096;
 
+// `.so` の descriptor.memoryUsage に申告する値 (KB)。**ここが唯一の出どころで、
+// ハーネス 30 節が全サンプルレートの arena を実測して超えないことを見張る。**
+// フレームワークはこの値を予約には使わない (dumpsys に出る申告値) が、実際に 1 MB
+// 使うものを 64 KB と申告すると、あとから見た人が別の場所を疑うことになる。
+inline constexpr unsigned kDeclaredMemoryKb = 1536;
+
 // スライス予算 = この割合 × ブロックの実時間 (P/fs)。ホスト実測 (ハーネス 26 節) では
 // 設計全体が ~0.5 ms で、P ≥ 512 なら 1 スライスに収まり、完成までの時間は FDL の
 // 温め (K ブロック) が支配する — FIR 開始まで実測 12 ブロック ≈ 240 ms @ P=960。
@@ -124,6 +130,12 @@ public:
     FirState firState() const { return state_; }
     bool     idle() const;               // 両エンジンとも完全な素通しか (-ENODATA の合図)
     int      fdlFill() const { return kernel_.fill(); }
+    // FDL が満ちる目標 (K = ceil(taps/P))。fill と並べると温めがどこまで進んだか分かる。
+    int      fdlPartitions() const { return kernel_.partitions(); }
+    // いまのブロック長で FIR を回せるか。**不適の累計 (unfitSize/unfitBudget) とは別物** —
+    // あちらは「起きたことがある」、こちらは「いま起きている」。現地診断で
+    // 「このスレッドのブロック長では始まらない」を 1 目で読むために要る。
+    bool     blockOk() const { return p_ok_; }
     uint32_t rebuilds() const { return rebuilds_; }          // designer の起動回数
     uint32_t faceFades() const { return face_fades_; }       // FIR→FIR の差し替え回数
     // **鳴っていた FIR が端末側の都合で止まり biquad へ乗り換わった回数。**

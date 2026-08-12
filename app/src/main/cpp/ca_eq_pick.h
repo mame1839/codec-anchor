@@ -36,6 +36,14 @@ enum class ShmState {
     kForeign,
     /** `magic` は正しいが版が違う。**本物の版ずれ。** */
     kVersionMismatch,
+    /**
+     * 版は合っているのに枠の大きさか曲線の点数が違う。
+     *
+     * **版を上げ忘れて並びだけ変えたビルド**がこれ。番号が同じなので `kVersionMismatch`
+     * では捕まらず、そのまま読むと枠の境界がずれて別のインスタンスの設定を読む。
+     * 開発中にしか起きないが、起きたときに黙って化けるのが一番高くつく形なので分けてある。
+     */
+    kLayoutMismatch,
 };
 
 inline ShmState shmState(const ca_shm_t* m) {
@@ -43,6 +51,13 @@ inline ShmState shmState(const ca_shm_t* m) {
     if (m->magic == 0u) return ShmState::kNotInitialised;
     if (m->magic != CA_SHM_MAGIC) return ShmState::kForeign;
     if (m->version != CA_SHM_VERSION) return ShmState::kVersionMismatch;
+    // **版の次に並びを見る。**順序が肝で、版が違うときは並びが違って当たり前なので、
+    // 先に並びを見ると「版ずれ」という本当の理由が「並びが違う」に化ける。
+    if (m->slot_size != static_cast<uint32_t>(sizeof(ca_slot_t)) ||
+        m->param_slot_size != static_cast<uint32_t>(sizeof(ca_eq_slot_t)) ||
+        m->curve_points != static_cast<uint32_t>(kCurvePoints)) {
+        return ShmState::kLayoutMismatch;
+    }
     return ShmState::kOk;
 }
 
