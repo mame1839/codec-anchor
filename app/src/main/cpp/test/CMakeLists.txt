@@ -61,6 +61,10 @@ endif()
 target_compile_definitions(ca_eq_test PRIVATE CA_EQ_DSP_TEST_HOOKS=1)
 
 if(MSVC)
+    # std::fopen が C4996 (「fopen_s を使え」) になる。**fopen_s は MSVC 専用**で、
+    # ここのコードは NDK の clang でも同じものが組まれるので置き換えられない。
+    # ハーネスとツールがテキストを読むためだけの用途なので、この警告だけ黙らせる。
+    target_compile_definitions(ca_eq_test PRIVATE _CRT_SECURE_NO_WARNINGS=1)
     # /utf-8 が無いと cl はソースを CP932 として読む。LF 改行のチェックアウトでは、行末が
     # CP932 の先行バイト (「、」「。」の UTF-8 末尾 0x81/0x82) の行が次の LF を食って行が
     # 融合し、コメントの次の行のプリプロセッサ指令が消える (#if が消えて #error が無条件で
