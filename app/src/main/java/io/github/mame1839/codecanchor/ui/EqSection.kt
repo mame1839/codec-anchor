@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.toggleable
@@ -16,7 +15,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -39,6 +37,7 @@ import io.github.mame1839.codecanchor.core.EqBand
 import io.github.mame1839.codecanchor.core.EqBandType
 import io.github.mame1839.codecanchor.core.EqMode
 import io.github.mame1839.codecanchor.core.EqSettings
+import io.github.mame1839.codecanchor.core.EqSlotBook
 import io.github.mame1839.codecanchor.core.EqSolver
 
 // ±12.0 dB を 0.1 dB 刻み。範囲は EqCurve.kt が持つ (絵の縦軸と同じ値を見るため)。
@@ -120,83 +119,99 @@ fun EqSection(vm: MainViewModel, mac: String, profile: DeviceProfile) {
 
         RowDivider()
 
-        // グラフィックは「fc と Q を固定したパラメトリック」なので内部表現は 1 つ。
-        // 方式の違いは行に常時出さず、選ぶダイアログの選択肢に副題として付ける。
-        ChoiceRow(
-            title = stringResource(R.string.eq_mode),
-            options = listOf(
-                EqMode.GRAPHIC to stringResource(R.string.eq_mode_graphic),
-                EqMode.PARAMETRIC to stringResource(R.string.eq_mode_parametric),
-            ),
-            optionDescriptions = mapOf(
-                EqMode.GRAPHIC to stringResource(R.string.eq_mode_graphic_desc),
-                EqMode.PARAMETRIC to stringResource(R.string.eq_mode_parametric_desc),
-            ),
-            selected = eq.mode,
-            onSelect = { value ->
-                when {
-                    value == eq.mode -> Unit
-                    // グラフィックへ移ると fc と Q が固定値へ丸められる。戻せないので一度だけ確認する。
-                    value == EqMode.GRAPHIC && !vm.eqRoundingConfirmed -> confirmGraphic = true
-                    value == EqMode.GRAPHIC -> vm.updateEq(mac) { toGraphic(it) }
-                    else -> vm.updateEq(mac) { toParametric(it) }
-                }
-            },
-        )
+        // スロットの行はトグルの下・曲線の上 (eq-slot-design.md §1)。切り替えは 1 タップで、
+        // ダイアログを挟まない — 耳で聞き比べながら往復する操作なので、1 往復に 2 タップ増えると死ぬ。
+        EqSlotRow(vm = vm, mac = mac)
 
-        if (eq.mode == EqMode.GRAPHIC) {
-            ChoiceRow(
-                title = stringResource(R.string.eq_band_count),
-                description = stringResource(R.string.eq_band_count_desc),
-                options = EqSettings.BAND_COUNTS.map { it to eqCountText(it) },
-                selected = eq.bandCount,
-                onSelect = { value -> vm.updateEq(mac) { reband(it, value) } },
-            )
-        }
+        // **フラットを選んでいる間は編集 UI を出さない。**0 のスライダーを 10 本 disabled で
+        // 並べるより、行ごと消すほうが「ここは固定」が伝わる。曲線 (平ら) だけは出す。
+        val flat = vm.slotsOf(mac).active == EqSlotBook.FLAT_ID
 
         RowDivider()
+
+        if (!flat) {
+            // グラフィックは「fc と Q を固定したパラメトリック」なので内部表現は 1 つ。
+            // 方式の違いは行に常時出さず、選ぶダイアログの選択肢に副題として付ける。
+            ChoiceRow(
+                title = stringResource(R.string.eq_mode),
+                options = listOf(
+                    EqMode.GRAPHIC to stringResource(R.string.eq_mode_graphic),
+                    EqMode.PARAMETRIC to stringResource(R.string.eq_mode_parametric),
+                ),
+                optionDescriptions = mapOf(
+                    EqMode.GRAPHIC to stringResource(R.string.eq_mode_graphic_desc),
+                    EqMode.PARAMETRIC to stringResource(R.string.eq_mode_parametric_desc),
+                ),
+                selected = eq.mode,
+                onSelect = { value ->
+                    when {
+                        value == eq.mode -> Unit
+                        // グラフィックへ移ると fc と Q が固定値へ丸められる。戻せないので一度だけ確認する。
+                        value == EqMode.GRAPHIC && !vm.eqRoundingConfirmed -> confirmGraphic = true
+                        value == EqMode.GRAPHIC -> vm.updateEq(mac) { toGraphic(it) }
+                        else -> vm.updateEq(mac) { toParametric(it) }
+                    }
+                },
+            )
+
+            if (eq.mode == EqMode.GRAPHIC) {
+                ChoiceRow(
+                    title = stringResource(R.string.eq_band_count),
+                    description = stringResource(R.string.eq_band_count_desc),
+                    options = EqSettings.BAND_COUNTS.map { it to eqCountText(it) },
+                    selected = eq.bandCount,
+                    onSelect = { value -> vm.updateEq(mac) { reband(it, value) } },
+                )
+            }
+
+            RowDivider()
+        }
 
         // 絵はスライダーと同じ EqPreviewHost の下に置く。ドラッグ中の値が絵にだけ流れる。
         EqPreviewHost {
             EqCurve(eq)
-            if (eq.mode == EqMode.GRAPHIC) {
-                GraphicBands(vm = vm, mac = mac, eq = eq, gainText = gainText, frequencyText = frequencyText)
-            } else {
-                ParametricBands(vm = vm, mac = mac, eq = eq, gainText = gainText, frequencyText = frequencyText)
+            if (!flat) {
+                if (eq.mode == EqMode.GRAPHIC) {
+                    GraphicBands(vm = vm, mac = mac, eq = eq, gainText = gainText, frequencyText = frequencyText)
+                } else {
+                    ParametricBands(vm = vm, mac = mac, eq = eq, gainText = gainText, frequencyText = frequencyText)
+                }
             }
         }
 
-        // バンド列の末尾に置く。戻す対象 (上のバンドと下のプリアンプ) の両方に掛かる操作なので、
-        // その境目が置き場所として読み取りやすい。既に全部 0 なら押せない — 押しても何も
-        // 起きないのに確認だけ出るのを避ける。
-        TextButton(
-            onClick = { confirmReset = true },
-            enabled = eq.bands.any { it.gainDb10 != 0 } || eq.preampDb10 != 0,
-            modifier = Modifier.padding(start = 8.dp),
-        ) {
-            Text(stringResource(R.string.eq_reset))
-        }
+        if (!flat) {
+            // バンド列の末尾に置く。戻す対象 (上のバンドと下のプリアンプ) の両方に掛かる操作なので、
+            // その境目が置き場所として読み取りやすい。既に全部 0 なら押せない — 押しても何も
+            // 起きないのに確認だけ出るのを避ける。
+            TextButton(
+                onClick = { confirmReset = true },
+                enabled = eq.bands.any { it.gainDb10 != 0 } || eq.preampDb10 != 0,
+                modifier = Modifier.padding(start = 8.dp),
+            ) {
+                Text(stringResource(R.string.eq_reset))
+            }
 
-        RowDivider()
+            RowDivider()
 
-        // 自動のときも値を出す。出さないと何 dB 引かれているのか分からない。
-        // 求めた値は保存しない — preampDb10 は手動で決めた値の置き場で、自動のときは
-        // 適用する側が同じ式で解く (EqSolver.autoPreampDb10)。両方に書くと出どころが 2 つになる。
-        val autoPreamp = remember(eq.bands) { EqSolver.autoPreampDb10(eq.bands) }
-        SwitchRow(
-            title = stringResource(R.string.eq_preamp_auto),
-            description = stringResource(R.string.eq_preamp_auto_desc, gainText(autoPreamp)),
-            checked = eq.preampAuto,
-            onChange = { value -> vm.updateEq(mac) { it.copy(preampAuto = value) } },
-        )
-        if (!eq.preampAuto) {
-            EqSliderRow(
-                label = stringResource(R.string.eq_preamp),
-                value = eq.preampDb10,
-                scale = PREAMP_SCALE,
-                valueText = gainText,
-                onCommit = { value -> vm.updateEq(mac) { it.copy(preampDb10 = value) } },
+            // 自動のときも値を出す。出さないと何 dB 引かれているのか分からない。
+            // 求めた値は保存しない — preampDb10 は手動で決めた値の置き場で、自動のときは
+            // 適用する側が同じ式で解く (EqSolver.autoPreampDb10)。両方に書くと出どころが 2 つになる。
+            val autoPreamp = remember(eq.bands) { EqSolver.autoPreampDb10(eq.bands) }
+            SwitchRow(
+                title = stringResource(R.string.eq_preamp_auto),
+                description = stringResource(R.string.eq_preamp_auto_desc, gainText(autoPreamp)),
+                checked = eq.preampAuto,
+                onChange = { value -> vm.updateEq(mac) { it.copy(preampAuto = value) } },
             )
+            if (!eq.preampAuto) {
+                EqSliderRow(
+                    label = stringResource(R.string.eq_preamp),
+                    value = eq.preampDb10,
+                    scale = PREAMP_SCALE,
+                    valueText = gainText,
+                    onCommit = { value -> vm.updateEq(mac) { it.copy(preampDb10 = value) } },
+                )
+            }
         }
 
         RowDivider()
@@ -395,8 +410,6 @@ internal fun ParametricBands(
 
 @Composable
 private fun EqPresetRows(vm: MainViewModel, mac: String, eq: EqSettings) {
-    var naming by rememberSaveable { mutableStateOf(false) }
-    var newName by rememberSaveable { mutableStateOf("") }
     var deleting by rememberSaveable { mutableStateOf<String?>(null) }
 
     // 書き出しの対象は名前で持つ。ファイル選択の間にプロセスが作り直されても復元できる。
@@ -450,16 +463,9 @@ private fun EqPresetRows(vm: MainViewModel, mac: String, eq: EqSettings) {
     }
 
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)) {
-        OutlinedButton(
-            onClick = {
-                newName = ""
-                naming = true
-            },
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(stringResource(R.string.eq_preset_save))
-        }
-        Spacer(Modifier.height(10.dp))
+        // 保存の入口はここではなくスロットのメニュー (「プリセットとして保存」)。**主語が要るから** —
+        // スロットが入ってからの「いまの設定」は「選択中スロットの曲線」で、
+        // フラットを選んでいるときは保存する中身が無い。
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             OutlinedButton(
                 onClick = { importLauncher.launch(arrayOf("*/*")) },
@@ -478,35 +484,6 @@ private fun EqPresetRows(vm: MainViewModel, mac: String, eq: EqSettings) {
             text = stringResource(R.string.eq_autoeq_desc),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-
-    if (naming) {
-        AlertDialog(
-            onDismissRequest = { naming = false },
-            title = { Text(stringResource(R.string.eq_preset_save_title)) },
-            text = {
-                OutlinedTextField(
-                    value = newName,
-                    onValueChange = { newName = it },
-                    label = { Text(stringResource(R.string.eq_preset_name)) },
-                    singleLine = true,
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        naming = false
-                        vm.savePreset(newName, eq)
-                    },
-                    enabled = newName.isNotBlank(),
-                ) {
-                    Text(stringResource(R.string.action_save))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { naming = false }) { Text(stringResource(R.string.action_cancel)) }
-            },
         )
     }
 
@@ -667,6 +644,19 @@ internal fun resetToZero(settings: EqSettings): EqSettings = when (settings.mode
     EqMode.GRAPHIC -> reband(settings.copy(bands = emptyList()), settings.bandCount).copy(preampDb10 = 0)
     else -> settings.copy(bands = settings.bands.map { it.copy(gainDb10 = 0) }, preampDb10 = 0)
 }
+
+/**
+ * フラット (読み取り専用の暗黙スロット) の中身。[base] からは主電源 ([EqSettings.enabled]) と
+ * バンド数だけを引き継ぐ。
+ *
+ * **必ず [EqSlotBook.isNeutral] を満たすこと。**満たさないと、フラットのチップを押した瞬間に
+ * write-through の和解がそれを「中立でない曲線」と読んで**新しいスロットを勝手に作る** —
+ * フラットに戻すたびにスロットが 1 つ増える。
+ * `EqSlotSelectionTest.theFlatCurveIsWhatTheLedgerCallsNeutral` がこの一致を見張っている。
+ */
+internal fun flatEq(base: EqSettings): EqSettings = withStartingBands(
+    base.copy(mode = EqMode.GRAPHIC, bands = emptyList(), preampAuto = true, preampDb10 = 0),
+)
 
 /**
  * EQ をオンにしたときに、バンドが 1 本も出ない状態を避ける。

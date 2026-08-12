@@ -28,6 +28,8 @@
 
     <string name="cd_refresh_status">Status erneut prüfen</string>
     <string name="cd_back">Zurück</string>
+    <string name="cd_eq_slot_menu">Optionen für diesen Speicherplatz</string>
+    <string name="cd_eq_slot_add">Speicherplatz hinzufügen</string>
     <string name="state_expanded">Ausgeklappt</string>
     <string name="state_collapsed">Eingeklappt</string>
 
@@ -216,9 +218,17 @@
     <string name="eq_reset_title">Alles auf null zurücksetzen?</string>
     <string name="eq_reset_body">Jede Verstärkung und die manuelle Vorverstärkung gehen auf 0 dB zurück, der Equalizer verändert den Klang dann nicht mehr. Die Bänder bleiben, wo sie sind, aber die jetzige Kurve geht verloren, wenn sie nicht als Voreinstellung gespeichert wurde.</string>
 
+    <string name="eq_slot_flat">Neutral</string>
+    <string name="eq_slot_default">Eigene %1$d</string>
+    <string name="eq_slot_rename">Umbenennen</string>
+    <string name="eq_slot_rename_title">Name des Speicherplatzes</string>
+    <string name="eq_slot_duplicate">Duplizieren</string>
+    <string name="eq_slot_save_preset">Als Voreinstellung speichern</string>
+    <string name="eq_slot_delete_title">Speicherplatz löschen?</string>
+    <string name="eq_slot_delete_body">Entfernt „%1$s“. Wenn Sie ihn gerade hören, geht der Klang zurück auf Neutral.</string>
+
     <string name="eq_presets">Voreinstellungen</string>
-    <string name="eq_preset_empty">Noch nichts gespeichert</string>
-    <string name="eq_preset_save">Diese Einstellungen speichern</string>
+    <string name="eq_preset_empty">Noch nichts gespeichert. Speichern lässt sich eine über das Menü des Speicherplatzes, den Sie gerade verwenden.</string>
     <string name="eq_preset_save_title">Name der Voreinstellung</string>
     <string name="eq_preset_name">Name</string>
     <string name="eq_preset_apply">Anwenden</string>
@@ -227,7 +237,7 @@
     <string name="eq_preset_delete_title">Voreinstellung löschen?</string>
     <string name="eq_preset_delete_body">Entfernt „%1$s“. Was bereits an Ihren Kopfhörern eingestellt ist, bleibt bestehen.</string>
     <string name="eq_autoeq_import">AutoEQ laden</string>
-    <string name="eq_autoeq_desc">Liest eine ParametricEQ.txt oder GraphicEQ.txt von AutoEQ und ersetzt die Einstellungen oben.</string>
+    <string name="eq_autoeq_desc">Liest eine ParametricEQ.txt oder GraphicEQ.txt von AutoEQ und legt sie als neuen Speicherplatz an.</string>
     <string name="eq_curve_desc">Kurve: So verändern diese Einstellungen den Klang</string>
     <string name="eq_finder_title">Equalizer nach Gehör finden</string>
     <string name="eq_finder_entry_desc">Blinde Hörvergleiche formen den Equalizer nach dem eigenen Geschmack</string>

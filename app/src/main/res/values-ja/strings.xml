@@ -27,6 +27,8 @@
 
     <string name="cd_refresh_status">状態を再確認</string>
     <string name="cd_back">戻る</string>
+    <string name="cd_eq_slot_menu">スロットの操作</string>
+    <string name="cd_eq_slot_add">スロットを追加</string>
     <string name="state_expanded">展開中</string>
     <string name="state_collapsed">折りたたみ中</string>
 
@@ -214,9 +216,17 @@
     <string name="eq_reset_title">すべて 0 に戻しますか</string>
     <string name="eq_reset_body">すべてのゲインと手動のプリアンプが 0 dB に戻り、イコライザーは音を変えなくなります。バンドはその場所に残りますが、いまの曲線はプリセットに保存していなければ戻せません。</string>
 
+    <string name="eq_slot_flat">フラット</string>
+    <string name="eq_slot_default">カスタム %1$d</string>
+    <string name="eq_slot_rename">名前を変える</string>
+    <string name="eq_slot_rename_title">スロットの名前</string>
+    <string name="eq_slot_duplicate">複製</string>
+    <string name="eq_slot_save_preset">プリセットとして保存</string>
+    <string name="eq_slot_delete_title">スロットを削除しますか</string>
+    <string name="eq_slot_delete_body">「%1$s」を削除します。選択中だった場合、音はフラットに戻ります。</string>
+
     <string name="eq_presets">プリセット</string>
-    <string name="eq_preset_empty">保存されたプリセットはありません</string>
-    <string name="eq_preset_save">いまの設定を保存</string>
+    <string name="eq_preset_empty">保存されたプリセットはありません。使っているスロットのメニューから保存できます。</string>
     <string name="eq_preset_save_title">プリセットの名前</string>
     <string name="eq_preset_name">名前</string>
     <string name="eq_preset_apply">適用</string>
@@ -225,7 +235,7 @@
     <string name="eq_preset_delete_title">プリセットを削除しますか</string>
     <string name="eq_preset_delete_body">「%1$s」を削除します。イヤホンに設定した内容はそのまま残ります。</string>
     <string name="eq_autoeq_import">AutoEQ を読み込む</string>
-    <string name="eq_autoeq_desc">AutoEQ の ParametricEQ.txt または GraphicEQ.txt を読み込み、上の設定を置き換えます。</string>
+    <string name="eq_autoeq_desc">AutoEQ の ParametricEQ.txt または GraphicEQ.txt を読み込み、新しいスロットにします。</string>
     <string name="eq_curve_desc">この設定が音をどう変えるかの曲線</string>
     <string name="eq_finder_title">好みの EQ を探す</string>
     <string name="eq_finder_entry_desc">目隠しの聴き比べで、イコライザーを好みに合わせて仕上げます</string>

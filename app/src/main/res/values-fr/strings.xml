@@ -29,6 +29,8 @@
 
     <string name="cd_refresh_status">Vérifier à nouveau l\'état</string>
     <string name="cd_back">Retour</string>
+    <string name="cd_eq_slot_menu">Options de l\'emplacement</string>
+    <string name="cd_eq_slot_add">Ajouter un emplacement</string>
     <string name="state_expanded">Développé</string>
     <string name="state_collapsed">Réduit</string>
 
@@ -218,9 +220,17 @@
     <string name="eq_reset_title">Tout remettre à zéro ?</string>
     <string name="eq_reset_body">Tous les gains et le préampli manuel reviennent à 0 dB, et l\'égaliseur ne modifie plus le son. Les bandes restent où elles sont, mais la courbe actuelle est perdue si elle n\'a pas été enregistrée comme préréglage.</string>
 
+    <string name="eq_slot_flat">Neutre</string>
+    <string name="eq_slot_default">Personnalisé %1$d</string>
+    <string name="eq_slot_rename">Renommer</string>
+    <string name="eq_slot_rename_title">Nom de l\'emplacement</string>
+    <string name="eq_slot_duplicate">Dupliquer</string>
+    <string name="eq_slot_save_preset">Enregistrer comme préréglage</string>
+    <string name="eq_slot_delete_title">Supprimer l\'emplacement ?</string>
+    <string name="eq_slot_delete_body">Supprime « %1$s ». Si c\'est celui que vous écoutez, le son revient à Neutre.</string>
+
     <string name="eq_presets">Préréglages</string>
-    <string name="eq_preset_empty">Rien d\'enregistré pour le moment</string>
-    <string name="eq_preset_save">Enregistrer ces réglages</string>
+    <string name="eq_preset_empty">Rien d\'enregistré pour le moment. Vous pouvez en enregistrer un depuis le menu de l\'emplacement que vous utilisez.</string>
     <string name="eq_preset_save_title">Nom du préréglage</string>
     <string name="eq_preset_name">Nom</string>
     <string name="eq_preset_apply">Appliquer</string>
@@ -229,7 +239,7 @@
     <string name="eq_preset_delete_title">Supprimer le préréglage ?</string>
     <string name="eq_preset_delete_body">Supprime « %1$s ». Ce qui est déjà réglé sur vos écouteurs ne change pas.</string>
     <string name="eq_autoeq_import">Importer AutoEQ</string>
-    <string name="eq_autoeq_desc">Lit un fichier ParametricEQ.txt ou GraphicEQ.txt d\'AutoEQ et remplace les réglages ci-dessus.</string>
+    <string name="eq_autoeq_desc">Lit un fichier ParametricEQ.txt ou GraphicEQ.txt d\'AutoEQ et le charge dans un nouvel emplacement.</string>
     <string name="eq_curve_desc">Courbe de l\'effet de ces réglages sur le son</string>
     <string name="eq_finder_title">Trouver l\'égaliseur à votre goût</string>
     <string name="eq_finder_entry_desc">Des comparaisons d\'écoute à l\'aveugle façonnent l\'égaliseur selon vos goûts</string>

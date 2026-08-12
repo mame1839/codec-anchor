@@ -29,6 +29,8 @@
 
     <string name="cd_refresh_status">Verificar o status novamente</string>
     <string name="cd_back">Voltar</string>
+    <string name="cd_eq_slot_menu">Opções do espaço</string>
+    <string name="cd_eq_slot_add">Adicionar um espaço</string>
     <string name="state_expanded">Expandido</string>
     <string name="state_collapsed">Recolhido</string>
 
@@ -218,9 +220,17 @@
     <string name="eq_reset_title">Zerar tudo?</string>
     <string name="eq_reset_body">Todos os ganhos e o pré-amplificador manual voltam a 0 dB, e o equalizador deixa de mudar o som. As bandas ficam onde estão, mas a curva atual é perdida se não tiver sido salva como predefinição.</string>
 
+    <string name="eq_slot_flat">Plano</string>
+    <string name="eq_slot_default">Personalizado %1$d</string>
+    <string name="eq_slot_rename">Renomear</string>
+    <string name="eq_slot_rename_title">Nome do espaço</string>
+    <string name="eq_slot_duplicate">Duplicar</string>
+    <string name="eq_slot_save_preset">Salvar como predefinição</string>
+    <string name="eq_slot_delete_title">Excluir o espaço?</string>
+    <string name="eq_slot_delete_body">Remove “%1$s”. Se for o que você está ouvindo, o som volta para Plano.</string>
+
     <string name="eq_presets">Predefinições</string>
-    <string name="eq_preset_empty">Nada salvo ainda</string>
-    <string name="eq_preset_save">Salvar estes ajustes</string>
+    <string name="eq_preset_empty">Nada salvo ainda. Você pode salvar uma pelo menu do espaço que está usando.</string>
     <string name="eq_preset_save_title">Nome da predefinição</string>
     <string name="eq_preset_name">Nome</string>
     <string name="eq_preset_apply">Aplicar</string>
@@ -229,7 +239,7 @@
     <string name="eq_preset_delete_title">Excluir a predefinição?</string>
     <string name="eq_preset_delete_body">Remove “%1$s”. O que já está ajustado nos seus fones continua como está.</string>
     <string name="eq_autoeq_import">Importar AutoEQ</string>
-    <string name="eq_autoeq_desc">Lê um ParametricEQ.txt ou GraphicEQ.txt do AutoEQ e substitui os ajustes acima.</string>
+    <string name="eq_autoeq_desc">Lê um ParametricEQ.txt ou GraphicEQ.txt do AutoEQ e carrega em um espaço novo.</string>
     <string name="eq_curve_desc">Curva de como estas configurações mudam o som</string>
     <string name="eq_finder_title">Encontrar o equalizador do seu gosto</string>
     <string name="eq_finder_entry_desc">Comparações de escuta às cegas moldam o equalizador ao seu gosto</string>

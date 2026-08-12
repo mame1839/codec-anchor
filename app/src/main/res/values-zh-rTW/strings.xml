@@ -27,6 +27,8 @@
 
     <string name="cd_refresh_status">重新檢查狀態</string>
     <string name="cd_back">返回</string>
+    <string name="cd_eq_slot_menu">方案選項</string>
+    <string name="cd_eq_slot_add">新增方案</string>
     <string name="state_expanded">已展開</string>
     <string name="state_collapsed">已收合</string>
 
@@ -214,9 +216,17 @@
     <string name="eq_reset_title">要全部歸零嗎</string>
     <string name="eq_reset_body">所有增益和手動前級增益都會回到 0 dB，等化器不再改變聲音。頻段會留在原處，但如果沒有存成預設組合，目前的曲線將無法找回。</string>
 
+    <string name="eq_slot_flat">平直</string>
+    <string name="eq_slot_default">自訂 %1$d</string>
+    <string name="eq_slot_rename">重新命名</string>
+    <string name="eq_slot_rename_title">方案的名稱</string>
+    <string name="eq_slot_duplicate">複製</string>
+    <string name="eq_slot_save_preset">儲存為預設組合</string>
+    <string name="eq_slot_delete_title">要刪除方案嗎</string>
+    <string name="eq_slot_delete_body">刪除「%1$s」。如果正在聽的就是它，聲音會回到平直。</string>
+
     <string name="eq_presets">預設組合</string>
-    <string name="eq_preset_empty">還沒有儲存任何預設組合</string>
-    <string name="eq_preset_save">儲存目前的設定</string>
+    <string name="eq_preset_empty">還沒有儲存任何預設組合。可以從正在使用的方案的選單中儲存。</string>
     <string name="eq_preset_save_title">預設組合的名稱</string>
     <string name="eq_preset_name">名稱</string>
     <string name="eq_preset_apply">套用</string>
@@ -225,7 +235,7 @@
     <string name="eq_preset_delete_title">要刪除預設組合嗎</string>
     <string name="eq_preset_delete_body">刪除「%1$s」。耳機上已經設定的內容維持不變。</string>
     <string name="eq_autoeq_import">讀取 AutoEQ</string>
-    <string name="eq_autoeq_desc">讀取 AutoEQ 的 ParametricEQ.txt 或 GraphicEQ.txt，並取代上面的設定。</string>
+    <string name="eq_autoeq_desc">讀取 AutoEQ 的 ParametricEQ.txt 或 GraphicEQ.txt，並載入為新的方案。</string>
     <string name="eq_curve_desc">顯示這些設定如何改變聲音的曲線</string>
     <string name="eq_finder_title">找出合你口味的等化器</string>
     <string name="eq_finder_entry_desc">盲聽比較會依你的喜好塑造等化器</string>

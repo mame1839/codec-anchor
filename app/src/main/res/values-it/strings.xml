@@ -29,6 +29,8 @@
 
     <string name="cd_refresh_status">Controlla di nuovo lo stato</string>
     <string name="cd_back">Indietro</string>
+    <string name="cd_eq_slot_menu">Opzioni dello spazio</string>
+    <string name="cd_eq_slot_add">Aggiungi uno spazio</string>
     <string name="state_expanded">Espanso</string>
     <string name="state_collapsed">Compresso</string>
 
@@ -218,9 +220,17 @@
     <string name="eq_reset_title">Riportare tutto a zero?</string>
     <string name="eq_reset_body">Tutti i guadagni e il preamplificatore manuale tornano a 0 dB e l\'equalizzatore smette di cambiare il suono. Le bande restano dove sono, ma la curva attuale va persa se non è stata salvata come preimpostazione.</string>
 
+    <string name="eq_slot_flat">Piatto</string>
+    <string name="eq_slot_default">Personalizzato %1$d</string>
+    <string name="eq_slot_rename">Rinomina</string>
+    <string name="eq_slot_rename_title">Nome dello spazio</string>
+    <string name="eq_slot_duplicate">Duplica</string>
+    <string name="eq_slot_save_preset">Salva come preimpostazione</string>
+    <string name="eq_slot_delete_title">Eliminare lo spazio?</string>
+    <string name="eq_slot_delete_body">Rimuove «%1$s». Se è quello che stai ascoltando, il suono torna a Piatto.</string>
+
     <string name="eq_presets">Preimpostazioni</string>
-    <string name="eq_preset_empty">Non hai ancora salvato nulla</string>
-    <string name="eq_preset_save">Salva queste impostazioni</string>
+    <string name="eq_preset_empty">Non hai ancora salvato nulla. Puoi salvarne una dal menu dello spazio che stai usando.</string>
     <string name="eq_preset_save_title">Nome della preimpostazione</string>
     <string name="eq_preset_name">Nome</string>
     <string name="eq_preset_apply">Applica</string>
@@ -229,7 +239,7 @@
     <string name="eq_preset_delete_title">Eliminare la preimpostazione?</string>
     <string name="eq_preset_delete_body">Rimuove «%1$s». Quello che è già impostato sui tuoi auricolari resta com\'è.</string>
     <string name="eq_autoeq_import">Importa AutoEQ</string>
-    <string name="eq_autoeq_desc">Legge un ParametricEQ.txt o GraphicEQ.txt di AutoEQ e sostituisce le impostazioni qui sopra.</string>
+    <string name="eq_autoeq_desc">Legge un ParametricEQ.txt o GraphicEQ.txt di AutoEQ e lo carica in un nuovo spazio.</string>
     <string name="eq_curve_desc">Curva di come queste impostazioni cambiano il suono</string>
     <string name="eq_finder_title">Trovare l\'equalizzatore che ti piace</string>
     <string name="eq_finder_entry_desc">Confronti d\'ascolto alla cieca modellano l\'equalizzatore sui tuoi gusti</string>

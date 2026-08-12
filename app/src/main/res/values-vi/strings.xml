@@ -27,6 +27,8 @@
 
     <string name="cd_refresh_status">Kiểm tra lại trạng thái</string>
     <string name="cd_back">Quay lại</string>
+    <string name="cd_eq_slot_menu">Tuỳ chọn của ô</string>
+    <string name="cd_eq_slot_add">Thêm một ô</string>
     <string name="state_expanded">Đã mở rộng</string>
     <string name="state_collapsed">Đã thu gọn</string>
 
@@ -214,9 +216,17 @@
     <string name="eq_reset_title">Đưa tất cả về 0?</string>
     <string name="eq_reset_body">Mọi độ lợi và tiền khuếch đại chỉnh tay sẽ trở về 0 dB, bộ chỉnh âm không còn thay đổi âm thanh nữa. Các dải vẫn ở nguyên chỗ, nhưng đường cong hiện tại sẽ mất nếu chưa được lưu thành thiết lập sẵn.</string>
 
+    <string name="eq_slot_flat">Phẳng</string>
+    <string name="eq_slot_default">Tuỳ chỉnh %1$d</string>
+    <string name="eq_slot_rename">Đổi tên</string>
+    <string name="eq_slot_rename_title">Tên của ô</string>
+    <string name="eq_slot_duplicate">Nhân đôi</string>
+    <string name="eq_slot_save_preset">Lưu thành thiết lập sẵn</string>
+    <string name="eq_slot_delete_title">Xóa ô?</string>
+    <string name="eq_slot_delete_body">Xóa “%1$s”. Nếu đang nghe ô này, âm thanh sẽ trở về Phẳng.</string>
+
     <string name="eq_presets">Thiết lập sẵn</string>
-    <string name="eq_preset_empty">Chưa lưu gì cả</string>
-    <string name="eq_preset_save">Lưu các thiết lập này</string>
+    <string name="eq_preset_empty">Chưa lưu gì cả. Bạn có thể lưu từ menu của ô đang dùng.</string>
     <string name="eq_preset_save_title">Tên của thiết lập</string>
     <string name="eq_preset_name">Tên</string>
     <string name="eq_preset_apply">Áp dụng</string>
@@ -225,7 +235,7 @@
     <string name="eq_preset_delete_title">Xóa thiết lập?</string>
     <string name="eq_preset_delete_body">Xóa “%1$s”. Những gì đã đặt trên tai nghe của bạn vẫn giữ nguyên.</string>
     <string name="eq_autoeq_import">Nhập AutoEQ</string>
-    <string name="eq_autoeq_desc">Đọc tệp ParametricEQ.txt hoặc GraphicEQ.txt của AutoEQ và thay cho các thiết lập ở trên.</string>
+    <string name="eq_autoeq_desc">Đọc tệp ParametricEQ.txt hoặc GraphicEQ.txt của AutoEQ và nạp vào một ô mới.</string>
     <string name="eq_curve_desc">Đường cong cho biết các cài đặt này thay đổi âm thanh như thế nào</string>
     <string name="eq_finder_title">Tìm bộ chỉnh âm hợp ý</string>
     <string name="eq_finder_entry_desc">So sánh nghe giấu kín giúp chỉnh bộ chỉnh âm theo sở thích của bạn</string>

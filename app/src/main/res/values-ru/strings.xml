@@ -30,6 +30,8 @@
 
     <string name="cd_refresh_status">Проверить состояние снова</string>
     <string name="cd_back">Назад</string>
+    <string name="cd_eq_slot_menu">Действия со слотом</string>
+    <string name="cd_eq_slot_add">Добавить слот</string>
     <string name="state_expanded">Развёрнуто</string>
     <string name="state_collapsed">Свёрнуто</string>
 
@@ -220,9 +222,17 @@
     <string name="eq_reset_title">Сбросить всё в ноль?</string>
     <string name="eq_reset_body">Все усиления и ручное предусиление вернутся к 0 дБ, и эквалайзер перестанет менять звук. Полосы останутся на своих местах, но нынешняя кривая будет потеряна, если она не сохранена как пресет.</string>
 
+    <string name="eq_slot_flat">Нейтрально</string>
+    <string name="eq_slot_default">Свой %1$d</string>
+    <string name="eq_slot_rename">Переименовать</string>
+    <string name="eq_slot_rename_title">Название слота</string>
+    <string name="eq_slot_duplicate">Дублировать</string>
+    <string name="eq_slot_save_preset">Сохранить как пресет</string>
+    <string name="eq_slot_delete_title">Удалить слот?</string>
+    <string name="eq_slot_delete_body">Удаляет «%1$s». Если сейчас звучит именно он, звук вернётся к «Нейтрально».</string>
+
     <string name="eq_presets">Пресеты</string>
-    <string name="eq_preset_empty">Пока ничего не сохранено</string>
-    <string name="eq_preset_save">Сохранить эти настройки</string>
+    <string name="eq_preset_empty">Пока ничего не сохранено. Сохранить пресет можно из меню слота, который вы используете.</string>
     <string name="eq_preset_save_title">Название пресета</string>
     <string name="eq_preset_name">Название</string>
     <string name="eq_preset_apply">Применить</string>
@@ -231,7 +241,7 @@
     <string name="eq_preset_delete_title">Удалить пресет?</string>
     <string name="eq_preset_delete_body">Удаляет «%1$s». То, что уже настроено на наушниках, остаётся как есть.</string>
     <string name="eq_autoeq_import">Загрузить AutoEQ</string>
-    <string name="eq_autoeq_desc">Читает ParametricEQ.txt или GraphicEQ.txt из AutoEQ и заменяет настройки выше.</string>
+    <string name="eq_autoeq_desc">Читает ParametricEQ.txt или GraphicEQ.txt из AutoEQ и загружает в новый слот.</string>
     <string name="eq_curve_desc">Кривая того, как эти настройки меняют звук</string>
     <string name="eq_finder_title">Подобрать эквалайзер по вкусу</string>
     <string name="eq_finder_entry_desc">Слепые сравнения на слух подстраивают эквалайзер под ваш вкус</string>
