@@ -1548,6 +1548,9 @@ void printDeviceChecklist(Report& r) {
 
 }  // namespace
 
+// 「高精度」(最小位相 FIR) 経路のセクション (19〜)。ca_eq_fir_test.cpp。
+void runFirSections(catest::Report& r);
+
 int main(int argc, char** argv) {
     (void)argc;
     (void)argv;
@@ -1573,6 +1576,7 @@ int main(int argc, char** argv) {
     checkRateChange(r);
     checkSlotPick(r);
     printDeviceChecklist(r);
+    runFirSections(r);
 
     std::printf("\n%d / %d 件が通った。\n", r.total() - r.failures(), r.total());
     return r.failures() == 0 ? 0 : 1;
