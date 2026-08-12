@@ -1547,6 +1547,12 @@ void checkPipeline(Report& r) {
         // 上限超えのブロックが来ると、落下経路の biquad が arena の区画へ
         // frames·ch を書いて外へ出た)。いまは biquad だけの経路が out へ直接書くので
         // arena に触れない。上限の前後を跨いで釘を打つ。
+        //
+        // ⚠️ **この釘が破れたときの見え方は「FAIL の行」ではなく「プロセスの異常終了」**
+        // (区画外への書き込みなので heap が壊れる。壊し実験では 0xC0000374)。
+        // 正確な診断が要るときは検分の手口 —— arena をガードページ付きで確保し直した
+        // 別バイナリ (scratchpad/attack、`attack.exe oob`) —— を使う。あちらは
+        // 1 バイト目の逸脱で 0xC0000005 になるので、どこで出たかが即分かる。
         for (int big : {caeq::kMaxConvBlock * 2, caeq::kMaxConvBlock + 32, 8192, 6144}) {
             caeq::EqPipeline pl;
             pl.configure(48000.0, 2, caeq::Structure::kTdf2);
