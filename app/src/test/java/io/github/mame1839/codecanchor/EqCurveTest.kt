@@ -24,6 +24,7 @@ import io.github.mame1839.codecanchor.ui.AXIS_HI_HZ
 import io.github.mame1839.codecanchor.ui.AXIS_LO_HZ
 import io.github.mame1839.codecanchor.ui.EqField
 import io.github.mame1839.codecanchor.ui.EqPreviewTarget
+import io.github.mame1839.codecanchor.ui.PLOT_OVERSHOOT_DB
 import io.github.mame1839.codecanchor.ui.PLOT_RANGES_DB
 import io.github.mame1839.codecanchor.ui.SAMPLES
 import io.github.mame1839.codecanchor.ui.centreGainsDb10
@@ -33,9 +34,11 @@ import io.github.mame1839.codecanchor.ui.eqFrequencyShort
 import io.github.mame1839.codecanchor.ui.eqGainNumber
 import io.github.mame1839.codecanchor.ui.eqGainTick
 import io.github.mame1839.codecanchor.ui.evenColumns
+import io.github.mame1839.codecanchor.ui.graphicPlotRange
 import io.github.mame1839.codecanchor.ui.graphicResponse
 import io.github.mame1839.codecanchor.ui.gridValues
 import io.github.mame1839.codecanchor.ui.holdRange
+import io.github.mame1839.codecanchor.ui.parametricPlotRange
 import io.github.mame1839.codecanchor.ui.parametricResponse
 import io.github.mame1839.codecanchor.ui.pickLabels
 import io.github.mame1839.codecanchor.ui.plotFraction
@@ -235,28 +238,132 @@ class EqCurveTest {
     // 縦軸
     // ---------------------------------------------------------------------
 
-    /** 既定は ±12 dB。スライダーの範囲と同じで、平らな設定で軸が縮まないこと。 */
+    /** 既定は ±12 dB。摘みを可動域いっぱいに振っても、その段に留まること。 */
     @Test
     fun axisStaysAtTheSliderRangeWhenNothingExceedsIt() {
-        assertEquals(12.0, plotRange(doubleArrayOf(0.0), flatBands(10, 0)), 0.0)
-        assertEquals(12.0, plotRange(doubleArrayOf(11.9, -3.0), flatBands(10, 100)), 0.0)
+        assertEquals(12.0, plotRange(knobPeakDb = 0.0, curvePeakDb = 0.0), 0.0)
+        assertEquals(12.0, plotRange(knobPeakDb = 12.0, curvePeakDb = 11.9), 0.0)
+    }
+
+    /**
+     * **元の不具合 1: 全バンド +12 (グラフィックで一番よく使う絵) が段 18 に跳ねて、
+     * 縦の 2/3 しか使っていなかった。**摘みは ±12 までしか動かせないので、摘みだけで
+     * 作れる絵は段 12 に収まらなければならない。中心間の膨らみ (実測で最大 13.88 dB、
+     * [PLOT_OVERSHOOT_DB] のコメントの表) は、段ではなく枠の余白が受ける。
+     */
+    @Test
+    fun fullTiltKnobsUseTheTwelveDbStep() {
+        for (n in listOf(5, 10, 15, 31)) {
+            val freqs = EqSolver.centerFrequencies(n)
+            val q = EqSolver.defaultQ(n)
+            val shapes = listOf(
+                DoubleArray(n) { 12.0 },
+                DoubleArray(n) { -12.0 },
+                DoubleArray(n) { if (it % 2 == 0) 12.0 else -12.0 },
+                // 隣接ペアだけ +12。膨らみの実測の最悪 (10 バンドで 13.8744 dB)
+                DoubleArray(n) { if (it == n / 2 - 1 || it == n / 2) 12.0 else 0.0 },
+            )
+            for (targets in shapes) {
+                val response = graphicResponse(EqSolver.solveBands(targets, freqs, q))
+                assertEquals(
+                    "n=$n targets=${targets.toList()}",
+                    12.0,
+                    graphicPlotRange(response, n),
+                    0.0,
+                )
+                // 段 12 に入れた以上、描く物は全部が枠の物理端の内側に写ること
+                val peak = response.maxOf { abs(it) }
+                assertTrue("膨らみが枠から出る: $peak", peak <= 12.0 + PLOT_OVERSHOOT_DB)
+            }
+        }
     }
 
     /** 収まらなくなったら段で広げる。曲線が枠の外で切れたままにしない。 */
     @Test
     fun axisGrowsInStepsToHoldTheCurve() {
+        // 生のゲイン +12 を 10 本 (解いていない旧形式の保存値)。中心では +35 dB 鳴る。
         val bands = flatBands(10, 120)
         val response = graphicResponse(bands)
-        val range = plotRange(response, bands)
-        assertTrue("曲線が枠から出ている: ${response.max()} > $range", response.max() <= range)
+        val range = graphicPlotRange(response, bands.size)
+        assertTrue(
+            "曲線が枠から出ている: ${response.max()} > $range + $PLOT_OVERSHOOT_DB",
+            response.max() <= range + PLOT_OVERSHOOT_DB,
+        )
         assertTrue("段以外の値が出た", range in PLOT_RANGES_DB)
+        assertTrue("35 dB の曲線が段 12 に居座っている", range > 12.0)
     }
 
     /** 取り込んだプリセットが強くても、段の一番上で受け止めること。 */
     @Test
     fun axisHasATopStep() {
         val bands = listOf(EqBand(1_000, 141, 400))
-        assertEquals(PLOT_RANGES_DB.last(), plotRange(doubleArrayOf(999.0), bands), 0.0)
+        assertEquals(PLOT_RANGES_DB.last(), parametricPlotRange(doubleArrayOf(999.0), bands), 0.0)
+    }
+
+    /**
+     * **元の不具合 2 (実機で再現): 摘み +12/+12/x/+12/+12 (5 バンド) の x を
+     * -8.3 → -8.4 と 0.1 dB 動かすと、軸が 24 ⇄ 18 で跳ねた。**曲線も摘みも ±14 の中なのに。
+     *
+     * 原因は、解いた後のフィルタの生ゲイン (画面のどこにも描かれない内部値) を軸の材料に
+     * していたこと。この形はちょうど Q エスカレーションの境界で、生ゲインの最大が
+     * 19.9 → 13.7 dB へ崖落ちする (前提の assert)。軸は描かれるものだけから選ぶ。
+     */
+    @Test
+    fun theAxisIgnoresInvisibleSolverGains() {
+        val freqs = EqSolver.centerFrequencies(5)
+        val q = EqSolver.defaultQ(5)
+        fun bandsAt(x: Double) =
+            EqSolver.solveBands(doubleArrayOf(12.0, 12.0, x, 12.0, 12.0), freqs, q)
+
+        // 前提: 生ゲインは実際に 18 dB の境界をまたいで崖落ちしている。ここが崩れたら
+        // この試験は跳ねを見張れていない (ソルバが変わったら形を選び直すこと)。
+        val before = bandsAt(-8.3)
+        val after = bandsAt(-8.4)
+        val gainBefore = before.maxOf { abs(it.gainDb10) }
+        val gainAfter = after.maxOf { abs(it.gainDb10) }
+        assertTrue("前提が崩れた: |g|max=$gainBefore (18 dB 超のはず)", gainBefore > 180)
+        assertTrue("前提が崩れた: |g|max=$gainAfter (18 dB 未満のはず)", gainAfter < 180)
+
+        // 本体: 0.1 dB の操作で軸が動かない。摘みが ±12 の中なので段は 12。
+        assertEquals(12.0, graphicPlotRange(graphicResponse(before), 5), 0.0)
+        assertEquals(12.0, graphicPlotRange(graphicResponse(after), 5), 0.0)
+
+        // ノッチをどこまで下げても、この摘みの範囲では軸は動かない
+        for (x10 in 0 downTo -120) {
+            assertEquals(
+                "x=${x10 / 10.0} で軸が跳ねた",
+                12.0,
+                graphicPlotRange(graphicResponse(bandsAt(x10 / 10.0)), 5),
+                0.0,
+            )
+        }
+    }
+
+    /**
+     * 段の許容と描画余白は同じ 1 つの値 ([PLOT_OVERSHOOT_DB])。「段に収まる」⇔
+     * 「枠の中に描ける」が境界まで一致していることを見る。片方だけ動かすと、
+     * 段に収まったのに枠から出る (またはその逆) が黙って生まれる。
+     */
+    @Test
+    fun theAxisGrowsExactlyWhenInkWouldLeaveTheFrame() {
+        val edge = 12.0 + PLOT_OVERSHOOT_DB
+        assertEquals(12.0, plotRange(knobPeakDb = 12.0, curvePeakDb = edge), 0.0)
+        assertEquals("枠のちょうど上端に写るはず", 0.0, plotFraction(edge, 12.0).toDouble(), 1e-6)
+        assertEquals("枠のちょうど下端に写るはず", 1.0, plotFraction(-edge, 12.0).toDouble(), 1e-6)
+        assertEquals(18.0, plotRange(knobPeakDb = 12.0, curvePeakDb = edge + 0.01), 0.0)
+
+        // 摘みは許容を使えない。点は目盛りの内側にあるべきもの。
+        assertEquals(18.0, plotRange(knobPeakDb = 12.1, curvePeakDb = 0.0), 0.0)
+
+        // 許容を超える形は実在する: ±12 で挟んだ +12 ペア (実測 15.01 dB) は段 18 へ。
+        val framed = EqSolver.solveBands(
+            doubleArrayOf(-12.0, 12.0, 12.0, -12.0, 0.0),
+            EqSolver.centerFrequencies(5),
+            EqSolver.defaultQ(5),
+        )
+        val response = graphicResponse(framed)
+        assertTrue("前提: この形は許容を超えて膨らむ (実測 15.01 dB)", response.max() > edge)
+        assertEquals(18.0, graphicPlotRange(response, 5), 0.0)
     }
 
     // ---------------------------------------------------------------------
@@ -264,40 +371,36 @@ class EqCurveTest {
     // ---------------------------------------------------------------------
 
     /**
-     * 段が落ちる状態。**125 Hz と 250 Hz だけ**を持ち上げると、2 本の重なりで合成が
-     * 12 dB をわずかに越えて段が 18 dB になる (Q=1.0、+9.0 の 2 本でピーク 12.154 dB)。
-     * 片方を 0.5 dB 下げるとピークが 12 を割り、段が 12 dB へ戻る
-     * (段 12 dB は摘みの可動域 ±12 dB が下から支えている)。
+     * 段が落ちる状態。パラメトリックで同じ 1 kHz に 2 本重ねると、合成が生ゲインの和になる。
+     * +12 dB の隣で 2 本目を下げていくと、合成のピークが段の受け幅 (段 + 許容) を割った
+     * ところで段が一段落ちる。
+     *
+     * (旧実装では隣接 2 本 +9 のグラフィックでも 18 → 12 が起きたが、いまの段選びは
+     * 摘み ±12 の絵を段 12 が許容ごと受けるので、グラフィックで落ちるのは
+     * 曲線が 12 + 許容を超える形 — ±12 で挟んだペアなど — からに限られる。)
      */
-    private fun raisedPair(neighbour: Int, dragged: Int): List<EqBand> {
-        val freqs = EqSolver.centerFrequencies(10)
-        val at = freqs.indexOf(125)
-        return freqs.mapIndexed { i, hz ->
-            val gain = when (i) {
-                at -> dragged
-                at + 1 -> neighbour
-                else -> 0
-            }
-            EqBand(freqHz = hz, q100 = 100, gainDb10 = gain)
-        }
-    }
+    private fun stackedPair(draggedDb10: Int): List<EqBand> =
+        listOf(EqBand(1_000, 141, 120), EqBand(1_000, 141, draggedDb10))
+
+    private fun parametricRangeOf(bands: List<EqBand>): Double =
+        parametricPlotRange(sumColumns(parametricResponse(bands)), bands)
 
     /**
-     * **この試験が 1 番目の修正の本体。**
+     * **この試験が段固定の本体。**
      *
-     * 段は合成のピークで決まるので、摘みを下げると段まで下がることがある。段が下がると
-     * 絵が拡大するので、**指を下げているのに点が上がる。**数字は下がり、絵は上がる。
+     * 段は摘みと曲線のピークで決まるので、摘みを下げると段まで下がることがある。段が
+     * 下がると絵が拡大するので、**指を下げているのに点が上がる。**数字は下がり、絵は上がる。
      */
     @Test
     fun theAxisIsHeldWhileAKnobIsMoving() {
-        val before = raisedPair(neighbour = 90, dragged = 90)
-        val after = raisedPair(neighbour = 90, dragged = 85)
-        val resting = plotRange(graphicResponse(before), before)
-        val shrunk = plotRange(graphicResponse(after), after)
+        val before = stackedPair(90) // 合成 21.0 dB
+        val after = stackedPair(85) // 合成 20.5 dB = 18 + 許容 ちょうど
+        val resting = parametricRangeOf(before)
+        val shrunk = parametricRangeOf(after)
 
         // 前提。ここが崩れたら以下は何も見ていないので、先に落とす。
-        assertEquals("触る前の段", 18.0, resting, 0.0)
-        assertEquals("0.5 dB 下げたときの段", 12.0, shrunk, 0.0)
+        assertEquals("触る前の段", 24.0, resting, 0.0)
+        assertEquals("0.5 dB 下げたときの段", 18.0, shrunk, 0.0)
 
         // 縦位置は 0 が上端、1 が下端。下げたのだから、値は増えなければならない。
         val was = plotFraction(9.0, resting)
@@ -310,29 +413,31 @@ class EqCurveTest {
             "段を固定したのに点が上がった: $was -> ${plotFraction(8.5, held)}",
             plotFraction(8.5, held) > was,
         )
+        // 触っていない +12 の点は指と無関係に動くので、症状がより目立つ
+        assertTrue(
+            "触っていない点まで上がる (これも症状)",
+            plotFraction(12.0, shrunk) < plotFraction(12.0, resting),
+        )
 
         // 指を離したら本来の段へ戻す。戻さないと軸が広がりっぱなしになる。
         assertEquals(shrunk, holdRange(shrunk, resting, dragging = false), 0.0)
     }
 
     /**
-     * 段が落ちる状態は珍しくない。**隣り合う 2 本を持ち上げるだけで作れる**ので、
+     * 段が落ちる状態は珍しくない。**2 本を重ねて片方を下げるだけで作れる**ので、
      * 1 つの例だけでなく、作れる範囲を全部見て「固定すれば 1 件も上がらない」ことを見る。
      */
     @Test
     fun noAxisShrinkMovesThePointAgainstTheFinger() {
-        val freqs = EqSolver.centerFrequencies(10)
         var shrinks = 0
         var rises = 0
         var risesWhileHeld = 0
-        for (pair in 0 until freqs.size - 1) {
-            for (g in 5..120 step 5) {
-                val base = freqs.mapIndexed { i, hz ->
-                    EqBand(freqHz = hz, q100 = 100, gainDb10 = if (i == pair || i == pair + 1) g else 0)
-                }
-                val dragged = base.mapIndexed { i, b -> if (i == pair) b.copy(gainDb10 = g - 5) else b }
-                val resting = plotRange(graphicResponse(base), base)
-                val shrunk = plotRange(graphicResponse(dragged), dragged)
+        for (fc in EqSolver.centerFrequencies(10)) {
+            for (g in 10..120 step 5) {
+                val base = listOf(EqBand(fc, 141, 120), EqBand(fc, 141, g))
+                val dragged = listOf(base[0], base[1].copy(gainDb10 = g - 5))
+                val resting = parametricRangeOf(base)
+                val shrunk = parametricRangeOf(dragged)
                 if (shrunk >= resting) continue
                 shrinks++
                 val was = plotFraction(g / 10.0, resting)
@@ -342,7 +447,7 @@ class EqCurveTest {
         }
         // 見張るものが本当にあることを、同じ試験の中で確かめる。
         assertTrue("段が落ちる組み合わせが 1 つも無い", shrinks > 0)
-        assertEquals("段が落ちても点が上がらない = 症状が再現していない", shrinks, rises)
+        assertTrue("段が落ちても点が上がらない = 症状が再現していない", rises > 0)
         assertEquals("段を固定したのに点が上がった", 0, risesWhileHeld)
     }
 
@@ -533,7 +638,7 @@ class EqCurveTest {
      */
     private inner class GraphicScene(bands: List<EqBand>) {
         val response = graphicResponse(bands)
-        val range = plotRange(response, bands)
+        val range = graphicPlotRange(response, bands.size)
         private val ticks = ticksFor(range)
         private val style = TextStyle(fontSize = 10.sp, color = bandText)
         private val gains = centreGainsDb10(response, bands.size).map { measurer.measure(eqGainNumber(it), style) }
@@ -565,7 +670,7 @@ class EqCurveTest {
         val rowHeight = labels.maxOf { it.size.height }.toFloat()
         val perBand = parametricResponse(bands)
         val composite = sumColumns(perBand)
-        val range = plotRange(composite, bands)
+        val range = parametricPlotRange(composite, bands)
         val height = (132f + 6f) * density.density + rowHeight * 2f
         return Painted(984, height.toInt()) {
             drawParametricPlot(
@@ -640,6 +745,45 @@ class EqCurveTest {
             down.count(0 until downZero.first - 2, ::isAccent),
         )
         assertTrue("0 dB より下に絵が無い", down.count(downZero.last + 3 until down.height, ::isAccent) > 0)
+    }
+
+    /**
+     * ±12 に振り切った絵が、段 12 の枠に収まりつつ縁に張り付かないこと。
+     *
+     * 旧実装は全 +12 が段 18 に跳ねた上、仮に段 12 に入れても `plotFraction(±12, 12)` が
+     * 0/1 で点と目盛りが枠の縁そのものに描かれた。いまは ±(段 + 許容) が枠の端なので、
+     * ±12 の目盛りは内側に来て、中心間の膨らみ (+12.44 dB) は目盛りの外・枠の中に載る。
+     */
+    @Test
+    fun aFullTiltPlotKeepsItsInkInsideTheFrame() {
+        val freqs = EqSolver.centerFrequencies(10)
+        val scene = GraphicScene(
+            EqSolver.solveBands(DoubleArray(10) { 12.0 }, freqs, EqSolver.defaultQ(10)),
+        )
+        assertEquals("前提: 全 +12 は段 12", 12.0, scene.range, 0.0)
+
+        val plotH = scene.plotBottom - scene.plotTop
+        val lines = scene.painted.runsDown(scene.width - 1, ::isGrid)
+        assertEquals("目盛り線の本数", 5, lines.size)
+        assertTrue(
+            "+12 の目盛りが枠の縁に張り付いている: y=${lines.first().first} 枠上端=${scene.plotTop}",
+            lines.first().first >= scene.plotTop + plotH * 0.05f,
+        )
+        assertTrue(
+            "-12 の目盛りが枠の縁に張り付いている: y=${lines.last().last} 枠下端=${scene.plotBottom}",
+            lines.last().last <= scene.plotBottom - plotH * 0.05f,
+        )
+
+        // 膨らみは +12 の目盛りより上・枠の中に描かれる。枠の外 (ラベル行) には出ない。
+        assertEquals(
+            "絵が枠の上へ食み出した",
+            0,
+            scene.painted.count(0 until scene.plotTop.toInt(), ::isAccent),
+        )
+        assertTrue(
+            "膨らみ (+12.44 dB) が +12 の目盛りより上の余白に描かれていない",
+            scene.painted.count(scene.plotTop.toInt() + 2 until lines.first().first, ::isAccent) > 0,
+        )
     }
 
     // ---------------------------------------------------------------------
@@ -737,34 +881,29 @@ class EqAxisHoldTest {
 
     @Test
     fun theHeldAxisSurvivesRecomposition() {
-        val freqs = EqSolver.centerFrequencies(10)
-        val at = freqs.indexOf(125)
-        var gain by mutableStateOf(90)
+        var gain by mutableStateOf(120)
         var dragging by mutableStateOf(false)
         val seen = mutableListOf<Double>()
 
         compose.setContent {
-            val bands = freqs.mapIndexed { i, hz ->
-                val value = when (i) {
-                    at -> gain
-                    at + 1 -> 90
-                    else -> 0
-                }
-                EqBand(freqHz = hz, q100 = 100, gainDb10 = value)
-            }
-            seen += rememberPlotRange(graphicResponse(bands), bands, dragging)
+            // 1 kHz に 2 本重ねたパラメトリック。+12 と +12 で合成 24 dB → 段 24。
+            val bands = listOf(EqBand(1_000, 141, 120), EqBand(1_000, 141, gain))
+            seen += rememberPlotRange(
+                parametricPlotRange(sumColumns(parametricResponse(bands)), bands),
+                dragging,
+            )
         }
         compose.waitForIdle()
-        assertEquals("触る前の段", 18.0, seen.last(), 0.0)
+        assertEquals("触る前の段", 24.0, seen.last(), 0.0)
 
         dragging = true
-        gain = 85
+        gain = 85 // 合成 20.5 dB → 素の段は 18
         compose.waitForIdle()
-        assertEquals("ドラッグの 1 フレーム目で段が動いた", 18.0, seen.last(), 0.0)
+        assertEquals("ドラッグの 1 フレーム目で段が動いた", 24.0, seen.last(), 0.0)
 
-        gain = 60
+        gain = 20 // 合成 14.0 dB → 素の段は 12
         compose.waitForIdle()
-        assertEquals("ドラッグを続けるうちに段が動いた", 18.0, seen.last(), 0.0)
+        assertEquals("ドラッグを続けるうちに段が動いた", 24.0, seen.last(), 0.0)
 
         dragging = false
         compose.waitForIdle()
