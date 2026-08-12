@@ -1,7 +1,9 @@
 package io.github.mame1839.codecanchor.ui
 
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.media.AudioManager
 import android.net.Uri
 import android.provider.OpenableColumns
@@ -18,6 +20,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import io.github.mame1839.codecanchor.R
 import io.github.mame1839.codecanchor.audio.Loaded
@@ -241,6 +244,9 @@ class EqFinderController(
     fun begin() {
         val clip = loaded ?: return
         if (session != null || loading) return
+        // 画面の門 (startBlockedReason) とは別の実行時ガード — タップの直後に切断される
+        // レースがあり、ここを抜けるとスピーカーへ向けてセッションが始まる。
+        if (vm.eqOwner != mac) return
         val current = vm.config.profileFor(mac)?.eq ?: EqSettings()
         scope.launch {
             loading = true
@@ -280,6 +286,8 @@ class EqFinderController(
         val record = saved ?: return
         val uri = songUri ?: return
         if (loading || session != null || resumeBlocked() != null) return
+        // begin() と同じレースのガード (タップ直後の切断)。
+        if (vm.eqOwner != mac) return
         scope.launch {
             loading = true
             loadFailed = false
@@ -298,7 +306,7 @@ class EqFinderController(
                 resumeSongBlocked = true
                 return@launch
             }
-            val restored = EqFinderSession.fromJson(record.session)
+            val restored = eqFinderRestore(record)
             if (restored == null) {
                 // 読めない記録は再開できない。壊れたまま出し続けるより、新規の導入に戻す。
                 store.clear()
@@ -308,12 +316,12 @@ class EqFinderController(
             }
             loaded = clip
             songLoaded = true
-            base = record.base
-            baseBands = if (base.enabled) base.bands else emptyList()
-            includeMid = record.includeMid
+            base = restored.base
+            baseBands = restored.baseBands
+            includeMid = record.includeMid // 表示用。軸の真実はセッション側 (eqFinderRestore)
             fineTune = record.fineTune
             startMs = record.startMs
-            axes = EqFinderAxes.default(record.includeMid)
+            axes = restored.axes
             pcmHash = hash
             val bands = baseBands
             val ax = axes
@@ -327,7 +335,7 @@ class EqFinderController(
             }
             weights = prep.first
             trimDb = prep.second
-            session = restored
+            session = restored.session
             loading = false
             phase = EqFinderPhase.TRIAL
             beginTrial()
@@ -503,6 +511,20 @@ class EqFinderController(
         }
     }
 
+    /**
+     * 出口が消える予告 (BT 切断・有線抜き) を受けた。**[onConnectionChanged] より先に来る** —
+     * `AudioDeviceCallback` 経由で `vm.eqOwner` が変わるまでの短い窓のあいだ、ループが
+     * スピーカーから鳴りうるので、まず音を止める。持ち主の変化が後から届いたときの
+     * 状態合わせは従来どおり [onConnectionChanged] が行う。
+     */
+    fun onBecomingNoisy() {
+        player.stop()
+        previewPlaying = false
+        if (phase == EqFinderPhase.TRIAL && pause == EqFinderPause.NONE) {
+            pause = EqFinderPause.DISCONNECTED
+        }
+    }
+
     /** AudioFocus を失った。プレイヤーは自分で止まっているので、状態だけ追いつかせる。 */
     private fun onFocusLost() {
         previewPlaying = false
@@ -565,6 +587,32 @@ class EqFinderController(
         /** 微調整モードの初期ステップ。現在値の近傍だけを細かく探す。 */
         const val FINE_STEP_DB10 = 10
     }
+}
+
+/** 再開に要るセッション状態の組み立て結果。 */
+internal class EqFinderResumeState(
+    val session: EqFinderSession,
+    val axes: List<EqFinderAxis>,
+    val base: EqSettings,
+    val baseBands: List<EqBand>,
+)
+
+/**
+ * 保存した記録から再開の状態を組み立てる。読めない記録は null。
+ *
+ * **軸はセッション JSON を真とする。**record.includeMid から `EqFinderAxes.default` で
+ * 引き直すと同じ情報の 2 箇所持ちになり、既定の軸定義が変わった版で旧セッションを再開した
+ * とき、保存済みのオーバーレイが別のバンドに実体化する (軸数が食い違えば候補の組み立ての
+ * require がアプリを落とす)。includeMid は表示用の旗でしかない。
+ */
+internal fun eqFinderRestore(record: EqFinderSaved): EqFinderResumeState? {
+    val session = EqFinderSession.fromJson(record.session) ?: return null
+    return EqFinderResumeState(
+        session = session,
+        axes = session.axes,
+        base = record.base,
+        baseBands = if (record.base.enabled) record.base.bands else emptyList(),
+    )
 }
 
 /**
@@ -638,7 +686,26 @@ fun EqFinderScreen(
     val key = remember(mac) { EqDevices.normalizeMac(mac) ?: mac.uppercase() }
     val controller = remember { EqFinderController(appContext, vm, key, scope) }
     DisposableEffect(controller) {
-        onDispose { controller.dispose() }
+        // 出口が消える予告 (BT 切断・有線抜き)。AudioDeviceCallback → vm.eqOwner の変化より
+        // 先に届くので、これを受けて先に止めないと、その窓のあいだ一節がスピーカーから鳴る。
+        // システム放送なので NOT_EXPORTED でよい (他アプリから受ける必要が無い)。
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(from: Context?, intent: Intent?) {
+                if (intent?.action == AudioManager.ACTION_AUDIO_BECOMING_NOISY) {
+                    controller.onBecomingNoisy()
+                }
+            }
+        }
+        ContextCompat.registerReceiver(
+            appContext,
+            receiver,
+            IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY),
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
+        onDispose {
+            runCatching { appContext.unregisterReceiver(receiver) }
+            controller.dispose()
+        }
     }
 
     val owner = vm.eqOwner

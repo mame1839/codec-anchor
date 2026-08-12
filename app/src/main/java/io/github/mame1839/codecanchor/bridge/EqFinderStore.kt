@@ -87,7 +87,10 @@ data class EqFinderSaved(
                 fineTune = o.optBoolean("fine", false),
                 done = o.optInt("done", 0).coerceAtLeast(0),
                 pcmHash = o.optLong("pcm", 0L),
-                base = EqSettings.fromJson(o.optJSONObject("base")),
+                // fromJson(null) は既定値を返すので、欠けをここで弾かないと base が
+                // 空の EqSettings() に化ける — 「設定ずれ」の照合が偶然すり抜けて、
+                // 空の土台の上で再開してしまう。
+                base = EqSettings.fromJson(o.optJSONObject("base") ?: return null),
                 session = o.optJSONObject("session") ?: return null,
                 savedAt = o.optLong("at", 0L),
             )

@@ -71,11 +71,12 @@ class EqFinderStoreTest {
         assertNull(EqFinderSaved.decode(next))
     }
 
-    // セッション本体・機器・曲のどれが欠けても再開はできない。部分的に読んで
-    // 別の機器や別の曲で「続きから」を出すほうが害が大きい。
+    // セッション本体・機器・曲・base のどれが欠けても再開はできない。部分的に読んで
+    // 別の機器や別の曲で「続きから」を出すほうが害が大きい。base は特に、欠けが既定の
+    // EqSettings() に化けると「設定ずれ」の照合が偶然すり抜けて、空の土台で再開してしまう。
     @Test
     fun recordsMissingTheEssentialsAreRejected() {
-        for (key in listOf("mac", "uri", "session", "len")) {
+        for (key in listOf("mac", "uri", "session", "len", "base")) {
             val broken = JSONObject(record.encode()).apply { remove(key) }.toString()
             assertNull("$key 抜きで読めてしまった", EqFinderSaved.decode(broken))
         }
