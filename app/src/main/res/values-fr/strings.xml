@@ -306,6 +306,4 @@
     <string name="eq_finder_discard">Abandonner</string>
     <string name="eq_finder_discard_title">Abandonner le résultat ?</string>
     <string name="eq_finder_discard_body">L\'égaliseur revient à son état précédent et les réponses sont supprimées.</string>
-    <string name="eq_finder_preset_title">L\'enregistrer aussi comme préréglage ?</string>
-    <string name="eq_finder_preset_skip">Plus tard</string>
 </resources>

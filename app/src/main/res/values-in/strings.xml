@@ -300,6 +300,4 @@
     <string name="eq_finder_discard">Buang</string>
     <string name="eq_finder_discard_title">Buang hasilnya?</string>
     <string name="eq_finder_discard_body">Ekualiser kembali seperti semula dan jawaban dihapus.</string>
-    <string name="eq_finder_preset_title">Simpan juga sebagai prasetel?</string>
-    <string name="eq_finder_preset_skip">Nanti saja</string>
 </resources>

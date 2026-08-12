@@ -46,6 +46,7 @@ import io.github.mame1839.codecanchor.R
 import io.github.mame1839.codecanchor.core.ApplyOutcome
 import io.github.mame1839.codecanchor.core.CodecKeys
 import io.github.mame1839.codecanchor.core.DeviceProfile
+import io.github.mame1839.codecanchor.core.DeviceSlots
 import io.github.mame1839.codecanchor.core.DeviceStatus
 import io.github.mame1839.codecanchor.core.EqAvailability
 import io.github.mame1839.codecanchor.core.EqMode
@@ -136,7 +137,12 @@ fun DeviceDetailScreen(
 
             TargetCard(vm = vm, mac = mac, profile = profile, status = status)
 
-            EqSummaryCard(eq = profile.eq, availability = vm.eqAvailability(mac), onOpen = onOpenEq)
+            EqSummaryCard(
+                eq = profile.eq,
+                slots = vm.slotsOf(mac),
+                availability = vm.eqAvailability(mac),
+                onOpen = onOpenEq,
+            )
 
             SettingsCard {
                 ExpandableHeader(
@@ -344,15 +350,26 @@ private fun DeviceHeader(name: String, mac: String, status: DeviceStatus?, offlo
  * ここが言うのは**音に効いているか。**この機器が未登録のときは編集はできるが音には届かないので、
  * 行は「使えない」と言い、開いた先の登録のトグルへ送る。
  *
+ * **選択中スロットの名前も出す。**イヤホンごとに複数の曲線を持てるので、行が方式とバンド数
+ * だけだと「いまどれを聴いているか」が開かないと分からない。オフのときは出さない —
+ * スロットの行はオフでは隠れる (オフは主電源、スロットはオンの中の層)。
+ *
  * private ではなく internal なのは、要約が出ることを見るテストから直接呼ぶため。
  */
 @Composable
-internal fun EqSummaryCard(eq: EqSettings, availability: EqAvailability, onOpen: () -> Unit) {
+internal fun EqSummaryCard(
+    eq: EqSettings,
+    slots: DeviceSlots,
+    availability: EqAvailability,
+    onOpen: () -> Unit,
+) {
     val summary = if (!eq.enabled) {
         stringResource(R.string.eq_summary_off)
     } else {
         listOf(
             stringResource(R.string.eq_summary_on),
+            // 名前はユーザが打った任意の文字列 (既定名は数字入り)。数字と同じ理由で囲む。
+            bidiIsolate(eqActiveSlotLabel(slots)),
             stringResource(
                 if (eq.mode == EqMode.GRAPHIC) R.string.eq_mode_graphic else R.string.eq_mode_parametric,
             ),

@@ -300,6 +300,4 @@
     <string name="eq_finder_discard">破棄</string>
     <string name="eq_finder_discard_title">結果を破棄しますか？</string>
     <string name="eq_finder_discard_body">イコライザーは元の設定に戻り、回答は削除されます。</string>
-    <string name="eq_finder_preset_title">プリセットとしても保存しますか？</string>
-    <string name="eq_finder_preset_skip">あとで</string>
 </resources>

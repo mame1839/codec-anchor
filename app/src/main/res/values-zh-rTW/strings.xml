@@ -300,6 +300,4 @@
     <string name="eq_finder_discard">捨棄</string>
     <string name="eq_finder_discard_title">要捨棄結果嗎？</string>
     <string name="eq_finder_discard_body">等化器恢復原樣，回答會被刪除。</string>
-    <string name="eq_finder_preset_title">也存成預設組合嗎？</string>
-    <string name="eq_finder_preset_skip">暫不</string>
 </resources>

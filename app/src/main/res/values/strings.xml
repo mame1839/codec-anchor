@@ -343,8 +343,6 @@
     <string name="eq_finder_discard">Discard</string>
     <string name="eq_finder_discard_title">Discard the result?</string>
     <string name="eq_finder_discard_body">The equaliser goes back to how it was, and the answers are deleted.</string>
-    <string name="eq_finder_preset_title">Save it as a preset too?</string>
-    <string name="eq_finder_preset_skip">Not now</string>
     <string name="eq_finder_a" translatable="false">A</string>
     <string name="eq_finder_b" translatable="false">B</string>
     <string name="eq_finder_progress_value" translatable="false">%1$s / ~%2$s</string>
