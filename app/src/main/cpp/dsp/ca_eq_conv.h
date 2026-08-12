@@ -54,6 +54,10 @@ public:
     // clearState と同規模)。FDL 本体には触らない。
     void reset();
 
+    // バッファへの参照を放す。**バッファの寿命が尽きる (arena の解放) 前に必ず呼ぶ** —
+    // bind したまま reset() が来ると、解放済みの tail へ memset して heap を壊す。
+    void unbind() { bound_ = false; }
+
     bool ready() const { return bound_ && fill_ >= k_total_; }
     bool bound() const { return bound_; }
     int  partitions() const { return k_total_; }

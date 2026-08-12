@@ -37,22 +37,30 @@ namespace caeq {
 // (88.2k で 8192 のままだと IR が 93 ms に縮んで最低域の分解能が落ちる)。
 inline int firTapsFor(double fs) { return fs >= 64000.0 ? 16384 : 8192; }
 
-// 大 FFT の既定。ゲートの実測 (誤差 vs M、ハーネス 22 節) で決めた:
-//   taps=8192 (44.1/48k) は M=16384 で 65536 と 1e-3 dB 台しか違わず、32768 で一致。
-//   taps=16384 (96k) は M = 2·taps = 32768 で 65536 との差が 1e-4 dB 台。
-//   ケプストラムのエイリアシングは M/taps ≥ 2 で実用曲線の誤差床 (折れ線の帯域制限)
-//   より 1 桁下に沈む。65536 は setup+バッファが倍 (~1.3 MB) 増えるだけで得るものが無い。
+// 大 FFT の既定は M = 2·taps。ゲートの実測 (誤差 vs M、ハーネス 22 節) で決めた:
+//   実用曲線では M=2·taps と M=65536 の差が最大 0.0002 dB (48k、96k とも) —
+//   ケプストラムのエイリアシングは実用曲線の誤差床 (最下端の分解能) の 3 桁下。
+//   隣接摘み ±12 の病的曲線だけ M=2·taps: 5.5 dB / M=4·taps: 3.5 dB と差が出るが、
+//   どちらも分解能の床の中で、setup とバッファが倍 (数百 KB) 増えるのに見合わない。
 inline int firDefaultM(double fs) { return firTapsFor(fs) * 2; }
 
-// 窓。既定は kHalfHann (EqualizerAPO と同じ)。ゲートの実測 (ハーネス 22 節) で
-// 3 種を比較した: kRect は打ち切りの Gibbs で実用曲線でも 0.05 dB 級のリップルが乗り、
-// kTailTaper (後端 1/8) は kHalfHann と同等以下にしかならない。全長の half-Hann が
-// 最低域の分解能 (170 ms の IR 実時間) と高域の平滑のバランスで最良だった。
+// 窓。**既定は kTailTaper (後端 taps/8)。**ゲートの実測 (ハーネス 22 節、fs=48k、
+// M=16384) で比較した結果で、参照実装 (EqualizerAPO) の全長 half-Hann とは違う判断:
+//   - 全長 half-Hann は IR の実効長を縮め、最低域 (20〜32 Hz は摘み間隔が 5〜6 Hz で
+//     IR ≈170 ms の分解能 5.9 Hz と同じ桁) の誤差を 2〜3 倍にする
+//     (DUNU 実曲線 0.20 dB、後端テーパなら 0.07 dB)
+//   - 実用曲線では窓なし・後端 1/16・1/8・1/4 の差は 0.03 dB 未満
+//   - 病的曲線 (隣接摘み ±12) では後端 1/8 が谷: 窓なし 7.8 / 1/16 7.4 / 1/8 5.5 /
+//     1/4 9.7 dB。短いと打ち切り縁の漏れ、長いと分解能の食い潰しに倒れる
+// kHalfHann は golden (18_minphase_golden.py との突き合わせ) と比較実測のために残す。
 enum class FirWindow : uint8_t {
-    kHalfHann  = 0,  // w[n] = 0.5·(1 + cos(πn/taps))。n=0 で 1、末尾へ滑らかに 0
+    kHalfHann  = 0,  // w[n] = 0.5·(1 + cos(πn/taps))。参照実装と golden の突き合わせ用
     kRect      = 1,  // 窓なし (打ち切りのみ)。比較実測用
-    kTailTaper = 2,  // 先頭は 1、後端 taper 本だけ raised cosine で 0 へ。比較実測用
+    kTailTaper = 2,  // 先頭は 1、後端 taper 本だけ raised cosine で 0 へ。**製品の既定**
 };
+
+// 後端テーパの既定長 (上の実測の谷)。
+inline int firDefaultTaper(int taps) { return taps / 8; }
 
 // --- スライス償却の費用モデル -----------------------------------------------
 //
@@ -92,10 +100,10 @@ struct FirDesignSpec {
     const float* curve_db = nullptr;
     double    fs     = 48000.0;
     int       taps   = 8192;   // firTapsFor(fs)
-    int       m      = 32768;  // 大 FFT。fftSizeValid ∧ m ≥ 2·taps
+    int       m      = 16384;  // 大 FFT。fftSizeValid ∧ m ≥ 2·taps。既定は firDefaultM
     int       block  = 0;      // P。convBlockSizeValid ∧ 2P ≤ taps
-    FirWindow window = FirWindow::kHalfHann;
-    int       taper  = 0;      // kTailTaper のときだけ使う (0 < taper ≤ taps)
+    FirWindow window = FirWindow::kTailTaper;
+    int       taper  = 1024;   // kTailTaper のときだけ使う (0 < taper ≤ taps)。firDefaultTaper
 };
 
 class FirDesigner {

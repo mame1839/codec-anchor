@@ -172,7 +172,9 @@ bool FirDesigner::step(int64_t budget_ns) {
         switch (phase_) {
         case Phase::kResample: {
             const int total = spec_.m / 2 + 1;
-            int want = static_cast<int>(left / fircost::kResampleNsPerBin);
+            // int に落とす前に残数で頭打ちにする (巨大な予算で int が溢れる)。
+            const int64_t want64 = left / fircost::kResampleNsPerBin;
+            int want = want64 > total ? total : static_cast<int>(want64);
             if (want < 1) {
                 if (!first) return false;
                 want = 1;
@@ -209,7 +211,8 @@ bool FirDesigner::step(int64_t budget_ns) {
         }
         case Phase::kFold: {
             const int total = spec_.m;
-            int want = static_cast<int>(left / fircost::kFoldNsPerElem);
+            const int64_t want64 = left / fircost::kFoldNsPerElem;
+            int want = want64 > total ? total : static_cast<int>(want64);
             if (want < 1) {
                 if (!first) return false;
                 want = 1;
@@ -227,7 +230,8 @@ bool FirDesigner::step(int64_t budget_ns) {
         }
         case Phase::kExp: {
             const int total = spec_.m / 2 + 1;
-            int want = static_cast<int>(left / fircost::kExpNsPerBin);
+            const int64_t want64 = left / fircost::kExpNsPerBin;
+            int want = want64 > total ? total : static_cast<int>(want64);
             if (want < 1) {
                 if (!first) return false;
                 want = 1;
@@ -245,7 +249,8 @@ bool FirDesigner::step(int64_t budget_ns) {
         }
         case Phase::kWindow: {
             const int total = spec_.taps;
-            int want = static_cast<int>(left / fircost::kWindowNsPerTap);
+            const int64_t want64 = left / fircost::kWindowNsPerTap;
+            int want = want64 > total ? total : static_cast<int>(want64);
             if (want < 1) {
                 if (!first) return false;
                 want = 1;

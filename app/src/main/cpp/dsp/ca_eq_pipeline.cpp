@@ -24,6 +24,11 @@ inline int64_t setupBuildNs(int n) { return static_cast<int64_t>(n) * kSetupNsPe
 EqPipeline::~EqPipeline() { releaseArena(); }
 
 void EqPipeline::releaseArena() {
+    // 順序が要点: invalidateFir (中の kernel.reset が tail へ memset する) は
+    // arena が生きているうちに。その後 unbind してから解放する — 逆にすると
+    // 解放済みの領域へ書いて heap を壊す (実際に踏んだ)。
+    invalidateFir();
+    kernel_.unbind();
     plan_m_.release();
     plan_2p_.release();
     if (arena_ != nullptr) {
@@ -31,7 +36,6 @@ void EqPipeline::releaseArena() {
         arena_ = nullptr;
     }
     arena_bytes_ = 0;
-    invalidateFir();
     have_curve_  = false;
     curve_dirty_ = false;
     bq_gate_     = 1.0;  // 落下の途中で arena が消えても null の bq_y を触らない
@@ -266,7 +270,8 @@ void EqPipeline::startDesigner(int face) {
     spec.taps     = taps_;
     spec.m        = m_;
     spec.block    = p_cur_;
-    spec.window   = FirWindow::kHalfHann;
+    spec.window   = FirWindow::kTailTaper;   // 既定の根拠は ca_eq_fir.h (ゲート実測)
+    spec.taper    = firDefaultTaper(taps_);
     designer_.abort();
     if (designer_.start(spec, &plan_m_, &plan_2p_, buf_data_, buf_work_, buf_filt_[face])) {
         rebuilds_++;
@@ -351,7 +356,10 @@ void EqPipeline::mixFirOut(const float* in, float* out, int frames, bool accumul
         const size_t base = static_cast<size_t>(i) * static_cast<size_t>(ch);
         for (int c = 0; c < ch; c++) {
             const size_t at  = base + static_cast<size_t>(c);
-            const double dry = static_cast<double>(in[at]);
+            // dry 側の NaN を潰す。kernel は FDL に入る前に潰している (= y は有限) が、
+            // wet < 1 の混合で dry がそのまま出る経路が残る。
+            const float raw  = in[at];
+            const double dry = std::isfinite(raw) ? static_cast<double>(raw) : 0.0;
             const double y   = static_cast<double>(buf_fir_y_[at]) * pre_cur_;
             double mixed     = dry + (y - dry) * wet;
             if (bq != nullptr) {
@@ -382,8 +390,10 @@ void EqPipeline::processBiquadGated(const float* in, float* out, int frames,
         if (g > 1.0) g = 1.0;
         const size_t base = static_cast<size_t>(i) * static_cast<size_t>(ch);
         for (int c = 0; c < ch; c++) {
-            const size_t at    = base + static_cast<size_t>(c);
-            const double dry   = static_cast<double>(in[at]);
+            const size_t at  = base + static_cast<size_t>(c);
+            // dry 側の NaN もここで潰す (Eq は内部で潰すが、dry と混ぜた瞬間に戻ってくる)。
+            const float raw  = in[at];
+            const double dry = std::isfinite(raw) ? static_cast<double>(raw) : 0.0;
             const double mixed = dry + (static_cast<double>(buf_bq_y_[at]) - dry) * g;
             if (accumulate) {
                 out[at] += static_cast<float>(mixed);
