@@ -10,8 +10,11 @@
 //   2. 境界の明示的なテスト (先頭/末尾の点、先頭/末尾の枠、枠と枠の継ぎ目)
 //   3. ca_shm_t の外に置いた自前の番兵 (確保の外側 = ASan と同じ形を mingw でも見る)
 #include <cstring>
+#include <limits>
+#include <string>
 
 #include "ca_test_support.h"
+#include "../ca_eq_curve_io.h"
 #include "../ca_eq_pick.h"
 #include "../dsp/ca_eq_poll.h"
 
@@ -479,7 +482,102 @@ void runShmSections(Report& r) {
                     (s.fir_flags & CA_FIR_F_BLOCK_OK) && s.fir_curve_gen == 0,
                 "診断で「要求あり・作業領域あり・ブロック可・でも曲線が無い」と読める "
                 "(flags=0x%x)", s.fir_flags);
+        r.check(caeq::firWhy(s, &w->m.params[0]) == caeq::FirWhy::kNoCurve,
+                "理由の判定が「曲線が届いていない」を返す");
         delete w;
+    }
+
+    // --- 9b. 理由の判定 — **上のものほど根本的** ----------------------------
+    //
+    // ⚠️ この製品で繰り返し出ている失敗が「嘘の理由が出る」形なので、順序を表で固定する。
+    // 例: 作業領域が無いのに「曲線が届いていない」と出ると、モジュールの入れ直しから始まる。
+    {
+        ca_slot_t s{};
+        ca_eq_slot_t q{};
+        s.fir_state = CA_FIR_STATE_FIR;
+        r.check(caeq::firWhy(s, &q) == caeq::FirWhy::kRunning, "鳴っていれば理由は要らない");
+
+        s.fir_state = CA_FIR_STATE_BIQUAD;
+        r.check(caeq::firWhy(s, &q) == caeq::FirWhy::kNotRequested,
+                "要求されていなければ「標準モード」(異常ではない)");
+
+        // 以降は「1 つ手前まで満たしたうえで次だけ欠けている」形にして、順序を固定する。
+        s.fir_flags = CA_FIR_F_REQUESTED;
+        s.fir_design_failures = 3;   // **より下の理由を先に言わないこと**の見張り
+        s.fir_fill = 0;
+        s.fir_partitions = 9;
+        r.check(caeq::firWhy(s, &q) == caeq::FirWhy::kNoArena,
+                "作業領域が無ければ、設計失敗や温め中より先に「作業領域が無い」");
+
+        s.fir_flags |= CA_FIR_F_ARENA;
+        r.check(caeq::firWhy(s, &q) == caeq::FirWhy::kBlockUnfit,
+                "作業領域があってブロックが不適なら「ブロック長」");
+
+        s.fir_flags |= CA_FIR_F_BLOCK_OK;
+        r.check(caeq::firWhy(s, &q) == caeq::FirWhy::kNoCurve,
+                "曲線が無ければ、設計失敗より先に「曲線が届いていない」");
+
+        q.curve_gen = 5;
+        r.check(caeq::firWhy(s, &q) == caeq::FirWhy::kDesignFailed,
+                "曲線があって設計器が止まっていれば「設計器が止まった」");
+
+        s.fir_design_failures = 0;
+        r.check(caeq::firWhy(s, &q) == caeq::FirWhy::kWarming, "温め中なら「温めている最中」");
+
+        s.fir_fill = s.fir_partitions;
+        r.check(caeq::firWhy(s, &q) == caeq::FirWhy::kAlmost, "全部揃っていれば「まだ乗り移る前」");
+
+        // 枠が未割り当て (params が無い) のインスタンスでも落ちない。
+        s.fir_fill = 0;
+        r.check(caeq::firWhy(s, nullptr) == caeq::FirWhy::kWarming,
+                "パラメータ枠が無くても判定できる (曲線の有無だけ飛ばす)");
+    }
+
+    // --- 9c. 曲線のテキストの解析 (caeqset が使う) ---------------------------
+    {
+        std::vector<float> got(static_cast<size_t>(caeq::kCurvePoints) + 8, -999.0f);
+
+        // ちょうどの点数 + 空行 + コメント + 前置きの空白。
+        {
+            std::string text;
+            text += "# comment\n\n";
+            for (int i = 0; i < caeq::kCurvePoints; i++) {
+                text += (i % 3 == 0 ? "  " : "");
+                text += std::to_string(i % 17) + ".5\n";
+                if (i % 50 == 0) text += "# 途中のコメント\n\n";
+            }
+            catest::TempFile f(text);
+            const caeq::CurveReadResult res = caeq::readCurveFile(f.path(), got.data());
+            bool same = res.status == caeq::CurveRead::kOk && res.count == caeq::kCurvePoints;
+            for (int i = 0; i < caeq::kCurvePoints && same; i++) {
+                if (got[static_cast<size_t>(i)] != static_cast<float>(i % 17) + 0.5f) same = false;
+            }
+            r.check(same, "%d 点ちょうどのファイルを読める (空行・コメント・前置きの空白を飛ばす)",
+                    caeq::kCurvePoints);
+            r.check(got[static_cast<size_t>(caeq::kCurvePoints)] == -999.0f,
+                    "配列の外へ 1 つも書いていない");
+        }
+
+        // 1 点足りない / 1 点多い。**どちらも失敗**で、足りない分を 0 dB で埋めない。
+        {
+            std::string few, many;
+            for (int i = 0; i < caeq::kCurvePoints - 1; i++) few += "1.0\n";
+            for (int i = 0; i < caeq::kCurvePoints + 1; i++) many += "1.0\n";
+            catest::TempFile ff(few), fm(many);
+            const caeq::CurveReadResult a = caeq::readCurveFile(ff.path(), got.data());
+            const caeq::CurveReadResult b = caeq::readCurveFile(fm.path(), got.data());
+            r.check(a.status == caeq::CurveRead::kWrongCount &&
+                        a.count == caeq::kCurvePoints - 1 &&
+                        b.status == caeq::CurveRead::kWrongCount &&
+                        b.count == caeq::kCurvePoints + 1,
+                    "1 点足りない (%d) も 1 点多い (%d) も失敗にする", a.count, b.count);
+            r.check(got[static_cast<size_t>(caeq::kCurvePoints)] == -999.0f,
+                    "点数が多いファイルでも配列の外へ書かない");
+        }
+
+        r.check(caeq::readCurveFile("__no_such_curve_file__", got.data()).status ==
+                    caeq::CurveRead::kOpenFailed,
+                "開けないファイルは「点数が違う」ではなく「開けない」と言う");
     }
 
     // --- 10. 診断の写し取りが pipeline の値そのものであること -----------------

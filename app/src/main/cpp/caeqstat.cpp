@@ -7,6 +7,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include "ca_eq_pick.h"
 #include "ca_eq_shm.h"
 
 namespace {
@@ -59,16 +60,22 @@ const char* fir_state_name(uint32_t s) {
 // **「高精度を頼んだのに biquad のまま」の理由を 1 行で言い切る。**
 // ここが曖昧だと、現地で「入っていない」「効いていない」「そもそも要求していない」の
 // どれなのかが分からず、モジュールの入れ直しから始めることになる。
-const char* fir_why_biquad(const ca_slot_t& s, const ca_eq_slot_t* q) {
-    if (!(s.fir_flags & CA_FIR_F_REQUESTED)) return "高精度が要求されていない (標準モード)";
-    if (!(s.fir_flags & CA_FIR_F_ARENA))
+// **判定は caeq::firWhy (ca_eq_pick.h) にあり、ハーネスが表ごと固定している。**
+// ここは文言だけ。
+const char* fir_why_text(caeq::FirWhy w) {
+    switch (w) {
+    case caeq::FirWhy::kRunning:      return "";
+    case caeq::FirWhy::kNotRequested: return "高精度が要求されていない (標準モード)";
+    case caeq::FirWhy::kNoArena:
         return "作業領域が無い — このインスタンスは 3ch 以上 (spatializer 等) か確保に失敗";
-    if (!(s.fir_flags & CA_FIR_F_BLOCK_OK))
+    case caeq::FirWhy::kBlockUnfit:
         return "このスレッドのブロック長では回せない (不適の内訳は size/budget を見る)";
-    if (q != nullptr && q->curve_gen == 0) return "曲線がまだ届いていない (書き手が送っていない)";
-    if (s.fir_design_failures > 0) return "設計器が止まった (曲線が非有限になった)";
-    if (s.fir_fill < s.fir_partitions) return "FDL を温めている最中 (fill/K を見る)";
-    return "準備は整っているが、まだ乗り移っていない";
+    case caeq::FirWhy::kNoCurve:      return "曲線がまだ届いていない (書き手が送っていない)";
+    case caeq::FirWhy::kDesignFailed: return "設計器が止まった (曲線が非有限になった)";
+    case caeq::FirWhy::kWarming:      return "FDL を温めている最中 (fill/K を見る)";
+    case caeq::FirWhy::kAlmost:       return "準備は整っているが、まだ乗り移っていない";
+    }
+    return "?";
 }
 
 }  // namespace
@@ -197,9 +204,8 @@ int main(int argc, char** argv) {
                "曲線却下=%u 潰し=%u\n",
                s.fir_fallbacks, s.fir_mode_offs, s.fir_design_failures, s.fir_unfit_size,
                s.fir_unfit_budget, s.fir_curve_rejected, s.fir_scrubbed);
-        if (s.fir_state != CA_FIR_STATE_FIR) {
-            printf("            → %s\n", fir_why_biquad(s, q));
-        }
+        const caeq::FirWhy why = caeq::firWhy(s, q);
+        if (why != caeq::FirWhy::kRunning) printf("            → %s\n", fir_why_text(why));
     }
     if (active == 0) {
         // magic が立っている = ca_stats_open() が走った = create_effect() が最低 1 回はあった。

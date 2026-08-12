@@ -41,6 +41,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "ca_eq_curve_io.h"
 #include "ca_eq_pick.h"
 #include "ca_eq_shm.h"
 #include "dsp/ca_eq_params.h"
@@ -76,31 +77,21 @@ void usage() {
     printf("  検査は .so と同じ範囲で先に行う。落ちたら書かずに理由を出す\n");
 }
 
-// 曲線のファイルを読む。**周波数の欄を持たない** — グリッドは dsp/ca_eq_curve.h 1 箇所。
-// 空行と # で始まる行は読み飛ばす。点数がちょうど kCurvePoints でなければ失敗。
+// 解析そのものは ca_eq_curve_io.h (ホストのハーネスが同じコードを掛ける)。ここは理由の表示だけ。
 bool readCurve(const char* path, float* out) {
-    FILE* f = std::fopen(path, "r");
-    if (f == nullptr) {
+    const caeq::CurveReadResult r = caeq::readCurveFile(path, out);
+    switch (r.status) {
+    case caeq::CurveRead::kOk:
+        return true;
+    case caeq::CurveRead::kOpenFailed:
         fprintf(stderr, "曲線を開けない %s: %s\n", path, std::strerror(errno));
         return false;
-    }
-    char line[128];
-    int n = 0;
-    bool overflow = false;
-    while (std::fgets(line, sizeof(line), f) != nullptr) {
-        const char* s = line;
-        while (*s == ' ' || *s == '\t') s++;
-        if (*s == '\0' || *s == '\n' || *s == '\r' || *s == '#') continue;
-        if (n >= caeq::kCurvePoints) { overflow = true; break; }
-        out[n++] = static_cast<float>(atof(s));
-    }
-    std::fclose(f);
-    if (overflow || n != caeq::kCurvePoints) {
-        fprintf(stderr, "曲線の点数が違う: %s は %d 点%s (期待 %d 点)\n", path, n,
-                overflow ? " 以上" : "", caeq::kCurvePoints);
+    case caeq::CurveRead::kWrongCount:
+        fprintf(stderr, "曲線の点数が違う: %s は %d 点%s (期待 %d 点)\n", path, r.count,
+                r.count > caeq::kCurvePoints ? " 以上" : "", caeq::kCurvePoints);
         return false;
     }
-    return true;
+    return false;
 }
 
 // 実機での生存確認。/proc/<pid> が無ければそのプロセスは死んでいる。

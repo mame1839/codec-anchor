@@ -61,6 +61,39 @@ inline ShmState shmState(const ca_shm_t* m) {
     return ShmState::kOk;
 }
 
+/**
+ * 「高精度 (最小位相 FIR) を頼んだのに biquad のまま」の理由。
+ *
+ * ⚠️ **理由の判定をリーダの表示コードに書かないこと。**この製品で繰り返し出ている
+ * 失敗が「嘘の理由が出る」形なので、判定はここ 1 箇所に置いてハーネスで表ごと固定する。
+ * **順序に意味がある** — 上のものほど根本的で、下は上が満たされて初めて意味を持つ。
+ */
+enum class FirWhy {
+    kRunning = 0,     /* FIR が鳴っている。理由は要らない */
+    kNotRequested,    /* 標準モード。**異常ではない** */
+    kNoArena,         /* 作業領域が無い = 3ch 以上のインスタンスか確保に失敗 */
+    kBlockUnfit,      /* このスレッドのブロック長では回せない */
+    kNoCurve,         /* 曲線がまだ届いていない */
+    kDesignFailed,    /* 設計器が止まった */
+    kWarming,         /* FDL を温めている最中 */
+    kAlmost,          /* 条件は揃っている。次のブロックから乗り移る */
+};
+
+/**
+ * 統計の枠 (+ 対応するパラメータ枠。無ければ nullptr) から理由を決める。
+ * `curve_gen` はパラメータ枠のもの (`.so` が鳴らしている世代ではない)。
+ */
+inline FirWhy firWhy(const ca_slot_t& s, const ca_eq_slot_t* q) {
+    if (s.fir_state == CA_FIR_STATE_FIR) return FirWhy::kRunning;
+    if ((s.fir_flags & CA_FIR_F_REQUESTED) == 0u) return FirWhy::kNotRequested;
+    if ((s.fir_flags & CA_FIR_F_ARENA) == 0u) return FirWhy::kNoArena;
+    if ((s.fir_flags & CA_FIR_F_BLOCK_OK) == 0u) return FirWhy::kBlockUnfit;
+    if (q != nullptr && q->curve_gen == 0u) return FirWhy::kNoCurve;
+    if (s.fir_design_failures > 0u) return FirWhy::kDesignFailed;
+    if (s.fir_fill < s.fir_partitions) return FirWhy::kWarming;
+    return FirWhy::kAlmost;
+}
+
 enum class SlotPick {
     kOk = 0,      /* 生きた DEVICE の枠がちょうど 1 つ */
     kNone,        /* 1 つも無い。**失敗ではなく「イヤホンが繋がっていない」正常な状態** */
