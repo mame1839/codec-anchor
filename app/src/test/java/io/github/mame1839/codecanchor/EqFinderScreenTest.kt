@@ -354,11 +354,7 @@ class EqFinderScreenTest {
     // 結果
     // ------------------------------------------------------------------
 
-    private fun result(
-        bakeFailed: Boolean = false,
-        presetOffer: Boolean = false,
-        bandChoices: List<EqFinderBandChoice>? = null,
-    ) = EqFinderResultUi(
+    private fun result(bandChoices: List<EqFinderBandChoice>? = null) = EqFinderResultUi(
         axes = listOf(
             EqFinderAxisDelta(EqFinderAxisKind.BASS, 25),
             EqFinderAxisDelta(EqFinderAxisKind.TREBLE, -10),
@@ -368,14 +364,15 @@ class EqFinderScreenTest {
         consistencyWarning = true,
         startBeaten = true,
         bandChoices = bandChoices,
-        bakeFailed = bakeFailed,
-        presetOffer = presetOffer,
     )
 
+    @Suppress("LongParameterList")
     private fun showResult(
         ui: EqFinderResultUi,
         selectedBandCount: Int = 10,
         onBandCount: (Int) -> Unit = {},
+        bakeFailed: Boolean = false,
+        presetOffer: Boolean = false,
         onApply: () -> Unit = {},
         onDiscard: () -> Unit = {},
         onSavePreset: (String) -> Unit = {},
@@ -388,6 +385,8 @@ class EqFinderScreenTest {
                         ui = ui,
                         selectedBandCount = selectedBandCount,
                         onBandCount = onBandCount,
+                        bakeFailed = bakeFailed,
+                        presetOffer = presetOffer,
                         onApply = onApply,
                         onDiscard = onDiscard,
                         onSavePreset = onSavePreset,
@@ -414,7 +413,7 @@ class EqFinderScreenTest {
     @Test
     fun thePresetOfferSavesTheTypedName() {
         var saved: String? = null
-        showResult(result(presetOffer = true), onSavePreset = { saved = it })
+        showResult(result(), presetOffer = true, onSavePreset = { saved = it })
         // 空のうちは押せない (無名のプリセットは一覧で選べない)。
         onText(R.string.action_save).assertIsNotEnabled()
         compose.onNodeWithText(string(R.string.eq_preset_name)).performTextInput("夜用")
@@ -424,7 +423,7 @@ class EqFinderScreenTest {
 
     @Test
     fun theHonestLinesAreShown() {
-        showResult(result(bakeFailed = true))
+        showResult(result(), bakeFailed = true)
         onText(R.string.eq_finder_validated_win).assertExists()
         onText(R.string.eq_finder_consistency).assertExists()
         onText(R.string.eq_finder_bake_failed).assertExists()

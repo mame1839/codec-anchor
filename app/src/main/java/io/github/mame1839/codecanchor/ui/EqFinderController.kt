@@ -189,6 +189,13 @@ class EqFinderController(
     var bakeBandCount by mutableIntStateOf(10)
         private set
 
+    // 適用の途中で変わる状態。**[EqFinderResultUi] には入れない** — あちらに混ぜると
+    // 旗 1 つのために全フィールドを写す形になり、写し忘れが静かに壊す (KDoc 参照)。
+    var bakeFailed by mutableStateOf(false)
+        private set
+    var presetOffer by mutableStateOf(false)
+        private set
+
     private var overlay: List<Int> = emptyList()
 
     /**
@@ -542,6 +549,8 @@ class EqFinderController(
             }
             bakePlan = built.first
             bakeBandCount = theBase.bandCount
+            bakeFailed = false
+            presetOffer = false
             result = built.second
             phase = EqFinderPhase.RESULT
         }
@@ -562,10 +571,10 @@ class EqFinderController(
 
     /** 適用して保存。成功したらプリセット保存の提案に切り替わる。 */
     fun apply() {
-        val r = result ?: return
+        if (result == null) return
         val baked = bakePlan[bakeBandCount]?.settings
         if (baked == null) {
-            result = r.with(bakeFailed = true)
+            bakeFailed = true
             return
         }
         appliedSettings = baked
@@ -576,7 +585,7 @@ class EqFinderController(
         vm.updateEq(mac) { baked }
         vm.setEqPreview(null)
         store.clear()
-        result = r.with(presetOffer = true)
+        presetOffer = true
     }
 
     /** 破棄。永続設定の音へ戻す (画面側が確認済み)。 */
@@ -612,7 +621,10 @@ class EqFinderController(
                 // ライブはプレイヤーを持たない — play() の成否 (ここでは常に false) を見ると
                 // 永久に DISCONNECTED のまま残る。音楽の有無だけ見て直接戻す。
                 pause = if (music.active) EqFinderPause.NONE else EqFinderPause.NO_MUSIC
-                if (pause == EqFinderPause.NONE) markHeard(selected)
+                // ⚠️ 一時停止を解く判定 (デバウンス済み) と heard の判定 (生値) は別物。
+                // 切断 → 音楽アプリが自動停止 → デバウンスの窓が閉じる前に再接続、の順で
+                // 戻ると、まだ何も鳴っていないのに解錠されてしまう。
+                if (pause == EqFinderPause.NONE && heardNow()) markHeard(selected)
             } else if (player.play()) {
                 pause = EqFinderPause.NONE
             }
@@ -654,7 +666,8 @@ class EqFinderController(
         } else if (pause == EqFinderPause.NO_MUSIC) {
             pause = EqFinderPause.NONE
             // 選択中の候補は押し込まれたまま音楽が戻った = ここで初めて聴けている。
-            markHeard(selected)
+            // 判定は他の 3 経路と同じ heardNow() を通す (heard の出どころを 1 本に保つ)。
+            if (heardNow()) markHeard(selected)
         }
     }
 
@@ -966,6 +979,8 @@ fun EqFinderScreen(
                     ui = ui,
                     selectedBandCount = controller.bakeBandCount,
                     onBandCount = controller::chooseBakeBandCount,
+                    bakeFailed = controller.bakeFailed,
+                    presetOffer = controller.presetOffer,
                     onApply = controller::apply,
                     onDiscard = {
                         controller.discard()

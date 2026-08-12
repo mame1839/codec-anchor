@@ -221,6 +221,41 @@ class EqFinderLiveTest {
         assertEquals(EqFinderPause.NO_MUSIC, c.pause)
     }
 
+    /**
+     * 再接続が**デバウンスの窓の内側**に入る場合 (BT 切断 → 音楽アプリが自動停止 →
+     * 1.5 秒経つ前に再接続)。一時停止はデバウンス済みの値で解けてよいが、**heard は
+     * 生値で判定する** — この瞬間はまだ何も鳴っていないので、聴いていない候補が
+     * 解錠されてはいけない。
+     */
+    @Test
+    fun reconnectingInsideTheDebounceWindowDoesNotUnlockASilentCandidate() {
+        val vm = vm()
+        val m = monitor(quietDelayMs = 1_500)
+        val c = controller(vm, m)
+        m.onRaw(true)
+        c.chooseMaterial(true)
+        c.begin()
+
+        // 音楽が止まった直後 (窓の中)。B へ切り替えても鳴っていないので bHeard は立たない。
+        m.onRaw(false)
+        c.listen(EqFinderCandidate.B)
+        assertEquals(EqFinderCandidate.B, c.selected)
+        assertFalse(c.bHeard)
+
+        // 窓が閉じる前に切断 → 再接続。music.active はまだ true なので一時停止は解けるが、
+        // 生値は false のままなので B は「聴いた」にならない。
+        c.onConnectionChanged(false)
+        assertEquals(EqFinderPause.DISCONNECTED, c.pause)
+        c.onConnectionChanged(true)
+        assertEquals(EqFinderPause.NONE, c.pause)
+        assertFalse("無音のまま再接続で解錠された", c.bHeard)
+
+        // 実際に音楽が戻ったところで初めて立つ。
+        m.onRaw(true)
+        c.listen(EqFinderCandidate.B)
+        assertTrue(c.bHeard)
+    }
+
     // ------------------------------------------------------------------
     // 中断と再開
     // ------------------------------------------------------------------

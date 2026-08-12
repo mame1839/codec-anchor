@@ -103,6 +103,12 @@ class EqFinderBakeFlowTest {
         assertTrue(eq.enabled)
         assertTrue(eq.preampAuto)
         assertTrue("適用後はプレビューが解除される", vm.eqPreview == null)
+
+        // 適用の旗はコントローラ側の状態で、結果の中身 (選択肢・曲線) は組み直されない。
+        // 旗を結果に混ぜて写していた頃は、写し忘れがここを静かに壊した。
+        assertTrue(c.presetOffer)
+        assertSame("適用で結果が組み直された", ui, c.result)
+        assertEquals(EqSettings.BAND_COUNTS, c.result!!.bandChoices?.map { it.count })
     }
 
     @Test

@@ -164,8 +164,14 @@ data class EqFinderAxisDelta(val kind: EqFinderAxisKind, val deltaDb10: Int)
 data class EqFinderBandChoice(val count: Int, val maxErrorDb10: Int)
 
 /**
- * 結果画面の状態。[beforeDb] / [afterDb] は [eqFinderResponseDb] で標本化した応答
- * (data class にしないのは、配列の equals が参照比較で意味を持たないため)。
+ * 結果画面のうち、**セッションが決めて以後変わらない**もの。[beforeDb] / [afterDb] は
+ * [eqFinderResponseDb] で標本化した応答 (data class にしないのは、配列の equals が
+ * 参照比較で意味を持たないため)。
+ *
+ * ⚠️ **適用の途中で変わる状態 (焼き込みの失敗・プリセットの提案) をここに入れないこと。**
+ * 混ぜると「旗を 1 つ変えるために全フィールドを写す」形になり、フィールドが増えたときの
+ * 写し忘れが「適用したらバンド数の選択肢が消える」ような静かな壊れ方になる。
+ * 変わるものはコントローラの状態として持ち、[EqFinderResultContent] へ別の引数で渡す。
  */
 class EqFinderResultUi(
     val axes: List<EqFinderAxisDelta>,
@@ -176,23 +182,7 @@ class EqFinderResultUi(
     val startBeaten: Boolean?,
     /** 焼き込みのバンド数の選択肢。null = 出さない (パラメトリック — fc/Q は手作業の成果物)。 */
     val bandChoices: List<EqFinderBandChoice>? = null,
-    val bakeFailed: Boolean = false,
-    /** 適用が済んで、プリセットとしても保存するかを聞いている。 */
-    val presetOffer: Boolean = false,
-) {
-    /** 旗だけ差し替えた写し (data class ではないので copy が無い)。 */
-    fun with(bakeFailed: Boolean = this.bakeFailed, presetOffer: Boolean = this.presetOffer) =
-        EqFinderResultUi(
-            axes = axes,
-            beforeDb = beforeDb,
-            afterDb = afterDb,
-            consistencyWarning = consistencyWarning,
-            startBeaten = startBeaten,
-            bandChoices = bandChoices,
-            bakeFailed = bakeFailed,
-            presetOffer = presetOffer,
-        )
-}
+)
 
 // ---------------------------------------------------------------------------
 // 入口 (EqScreen のカード)
@@ -757,11 +747,16 @@ private fun RowScope.AnswerButton(text: String, enabled: Boolean, onClick: () ->
 // 結果
 // ---------------------------------------------------------------------------
 
+@Suppress("LongParameterList")
 @Composable
 internal fun EqFinderResultContent(
     ui: EqFinderResultUi,
     selectedBandCount: Int,
     onBandCount: (Int) -> Unit,
+    /** 焼き込みが入らなかった (パラメトリックが満杯)。 */
+    bakeFailed: Boolean,
+    /** 適用が済んで、プリセットとしても保存するかを聞いている。 */
+    presetOffer: Boolean,
     onApply: () -> Unit,
     onDiscard: () -> Unit,
     onSavePreset: (String) -> Unit,
@@ -857,7 +852,7 @@ internal fun EqFinderResultContent(
         }
     }
 
-    if (ui.bakeFailed) {
+    if (bakeFailed) {
         Text(
             text = stringResource(R.string.eq_finder_bake_failed),
             style = MaterialTheme.typography.bodyMedium,
@@ -898,7 +893,7 @@ internal fun EqFinderResultContent(
         )
     }
 
-    if (ui.presetOffer) {
+    if (presetOffer) {
         var name by rememberSaveable { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = onDismissPresetOffer,
