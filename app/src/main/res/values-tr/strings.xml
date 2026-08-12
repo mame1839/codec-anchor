@@ -287,6 +287,7 @@
     <string name="eq_finder_validated_lose">Sondaki kör doğrulamada başlangıç noktası da geri kalmadı. Fark zaten küçük.</string>
     <string name="eq_finder_not_validated">Test, sondaki kör doğrulamadan önce bitti; sonuç doğrulanmadı.</string>
     <string name="eq_finder_consistency">Yanıtlar biraz dalgalandı. Bir tur daha sonucu keskinleştirir.</string>
+    <string name="eq_finder_band_error">Duyduğun eğriden en fazla %1$s sapar</string>
     <string name="eq_finder_bake_failed">Sonuç, ekolayzırda kalandan daha fazla boş bant istiyor. Birkaç bandı kaldırıp yeniden bitir.</string>
     <string name="eq_finder_apply">Uygula ve kaydet</string>
     <string name="eq_finder_discard">Vazgeç</string>

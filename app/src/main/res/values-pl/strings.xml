@@ -293,6 +293,7 @@
     <string name="eq_finder_validated_lose">W końcowym ślepym sprawdzeniu punkt wyjścia się obronił. Różnica i tak jest niewielka.</string>
     <string name="eq_finder_not_validated">Test zakończył się przed końcowym ślepym sprawdzeniem, więc wynik nie został zweryfikowany.</string>
     <string name="eq_finder_consistency">Odpowiedzi trochę się wahały. Jeszcze jedna runda doprecyzowałaby wynik.</string>
+    <string name="eq_finder_band_error">Odbiega od usłyszanej krzywej najwyżej o %1$s</string>
     <string name="eq_finder_bake_failed">Wynik wymaga więcej wolnych pasm, niż zostało w korektorze. Usuń kilka pasm i zakończ ponownie.</string>
     <string name="eq_finder_apply">Zastosuj i zapisz</string>
     <string name="eq_finder_discard">Odrzuć</string>

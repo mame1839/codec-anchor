@@ -290,6 +290,7 @@
     <string name="eq_finder_validated_lose">Nella verifica alla cieca finale il punto di partenza ha retto bene. La differenza è comunque piccola.</string>
     <string name="eq_finder_not_validated">Il test è terminato prima della verifica alla cieca finale, quindi il risultato non è stato verificato.</string>
     <string name="eq_finder_consistency">Le risposte sono state un po\' altalenanti. Un altro giro affinerebbe il risultato.</string>
+    <string name="eq_finder_band_error">Si discosta al massimo di %1$s dalla curva ascoltata</string>
     <string name="eq_finder_bake_failed">Il risultato richiede più bande libere di quante ne restino all\'equalizzatore. Rimuovi qualche banda e concludi di nuovo.</string>
     <string name="eq_finder_apply">Applica e salva</string>
     <string name="eq_finder_discard">Scarta</string>

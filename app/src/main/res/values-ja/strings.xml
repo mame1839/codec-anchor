@@ -284,6 +284,7 @@
     <string name="eq_finder_validated_lose">最後の目隠し確認では、開始時の音も引けを取りませんでした。差はどちらにしても小さいものです。</string>
     <string name="eq_finder_not_validated">最後の目隠し確認の前に終えたため、結果は検証されていません。</string>
     <string name="eq_finder_consistency">回答のブレが大きめでした。もう一巡すると精度が上がります。</string>
+    <string name="eq_finder_band_error">聴いた曲線との差は最大 %1$s</string>
     <string name="eq_finder_bake_failed">結果を書き込むにはバンドの空きが足りません。バンドをいくつか削除してから、もう一度確定してください。</string>
     <string name="eq_finder_apply">適用して保存</string>
     <string name="eq_finder_discard">破棄</string>

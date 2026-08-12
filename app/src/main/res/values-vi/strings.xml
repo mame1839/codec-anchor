@@ -284,6 +284,7 @@
     <string name="eq_finder_validated_lose">Trong lần kiểm chứng giấu kín cuối, điểm xuất phát vẫn không thua kém. Dù sao khác biệt cũng nhỏ.</string>
     <string name="eq_finder_not_validated">Bài kiểm tra kết thúc trước lần kiểm chứng giấu kín cuối, nên kết quả chưa được kiểm chứng.</string>
     <string name="eq_finder_consistency">Câu trả lời hơi dao động. Chạy thêm một lượt sẽ cho kết quả chính xác hơn.</string>
+    <string name="eq_finder_band_error">Lệch tối đa %1$s so với đường cong bạn đã nghe</string>
     <string name="eq_finder_bake_failed">Kết quả cần nhiều dải trống hơn số còn lại trong bộ chỉnh âm. Hãy xóa vài dải rồi chốt lại.</string>
     <string name="eq_finder_apply">Áp dụng và lưu</string>
     <string name="eq_finder_discard">Bỏ</string>

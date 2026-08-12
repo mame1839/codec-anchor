@@ -287,6 +287,7 @@
     <string name="eq_finder_validated_lose">In der Blindprüfung am Ende hielt der Ausgangspunkt mit. Der Unterschied ist so oder so klein.</string>
     <string name="eq_finder_not_validated">Der Test endete vor der abschließenden Blindprüfung, das Ergebnis wurde also nicht überprüft.</string>
     <string name="eq_finder_consistency">Die Antworten schwankten etwas. Ein weiterer Durchlauf würde das Ergebnis schärfen.</string>
+    <string name="eq_finder_band_error">Weicht höchstens %1$s von der gehörten Kurve ab</string>
     <string name="eq_finder_bake_failed">Für das Ergebnis reichen die freien Bänder nicht aus. Einige Bänder entfernen und dann erneut abschließen.</string>
     <string name="eq_finder_apply">Anwenden und speichern</string>
     <string name="eq_finder_discard">Verwerfen</string>

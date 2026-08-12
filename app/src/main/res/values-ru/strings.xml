@@ -293,6 +293,7 @@
     <string name="eq_finder_validated_lose">В финальной слепой проверке исходная настройка не уступила. Разница в любом случае невелика.</string>
     <string name="eq_finder_not_validated">Тест завершился до финальной слепой проверки, поэтому результат не проверен.</string>
     <string name="eq_finder_consistency">Ответы немного расходились. Ещё один прогон сделал бы результат точнее.</string>
+    <string name="eq_finder_band_error">Отклоняется от услышанной кривой не более чем на %1$s</string>
     <string name="eq_finder_bake_failed">Для результата нужно больше свободных полос, чем осталось в эквалайзере. Удалите несколько полос и завершите ещё раз.</string>
     <string name="eq_finder_apply">Применить и сохранить</string>
     <string name="eq_finder_discard">Отбросить</string>

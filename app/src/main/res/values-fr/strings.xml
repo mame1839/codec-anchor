@@ -290,6 +290,7 @@
     <string name="eq_finder_validated_lose">Lors de la vérification à l\'aveugle finale, le point de départ a tenu bon. La différence est de toute façon minime.</string>
     <string name="eq_finder_not_validated">Le test s\'est terminé avant la vérification à l\'aveugle finale ; le résultat n\'a donc pas été vérifié.</string>
     <string name="eq_finder_consistency">Vos réponses ont un peu fluctué. Un tour de plus affinerait le résultat.</string>
+    <string name="eq_finder_band_error">S\'écarte d\'au plus %1$s de la courbe entendue</string>
     <string name="eq_finder_bake_failed">Le résultat demande plus de bandes libres qu\'il n\'en reste à l\'égaliseur. Supprimez quelques bandes, puis concluez à nouveau.</string>
     <string name="eq_finder_apply">Appliquer et enregistrer</string>
     <string name="eq_finder_discard">Abandonner</string>

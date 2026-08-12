@@ -299,6 +299,7 @@
     <string name="eq_finder_validated_lose">في الفحص المعمّى الأخير صمدت نقطة البداية. الفرق ضئيل على أي حال.</string>
     <string name="eq_finder_not_validated">انتهى الاختبار قبل الفحص المعمّى الأخير، لذا لم يجرِ التحقق من النتيجة.</string>
     <string name="eq_finder_consistency">تذبذبت الإجابات قليلًا. جولة إضافية سترفع دقة النتيجة.</string>
+    <string name="eq_finder_band_error">يبتعد عن المنحنى الذي سمعته بمقدار %1$s كحد أقصى</string>
     <string name="eq_finder_bake_failed">تحتاج النتيجة إلى نطاقات حرة أكثر مما تبقّى في المعادل. احذف بعض النطاقات ثم أنهِ مرة أخرى.</string>
     <string name="eq_finder_apply">تطبيق وحفظ</string>
     <string name="eq_finder_discard">تجاهل</string>

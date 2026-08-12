@@ -287,6 +287,7 @@
     <string name="eq_finder_validated_lose">आख़िरी अंधी जाँच में शुरुआती बिंदु भी टिका रहा। फ़र्क़ वैसे भी छोटा है।</string>
     <string name="eq_finder_not_validated">परीक्षण आख़िरी अंधी जाँच से पहले ख़त्म हुआ, इसलिए नतीजे की पुष्टि नहीं हुई।</string>
     <string name="eq_finder_consistency">जवाब थोड़े डगमगाए। एक और दौर से नतीजा और सटीक होगा।</string>
+    <string name="eq_finder_band_error">सुने गए कर्व से ज़्यादा से ज़्यादा %1$s का अंतर</string>
     <string name="eq_finder_bake_failed">नतीजे के लिए इक्वलाइज़र में जितने खाली बैंड बचे हैं उससे ज़्यादा चाहिए। कुछ बैंड हटाकर फिर पूरा करें।</string>
     <string name="eq_finder_apply">लागू करके सहेजें</string>
     <string name="eq_finder_discard">छोड़ें</string>

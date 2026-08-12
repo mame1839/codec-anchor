@@ -284,6 +284,7 @@
     <string name="eq_finder_validated_lose">ในการตรวจแบบไม่เห็นค่ารอบสุดท้าย จุดเริ่มต้นก็ยังสูสี ยังไงความต่างก็เล็กน้อย</string>
     <string name="eq_finder_not_validated">การทดสอบจบก่อนการตรวจแบบไม่เห็นค่ารอบสุดท้าย ผลจึงยังไม่ได้รับการยืนยัน</string>
     <string name="eq_finder_consistency">คำตอบแกว่งเล็กน้อย ทำอีกรอบจะช่วยให้ผลแม่นขึ้น</string>
+    <string name="eq_finder_band_error">ต่างจากเส้นโค้งที่คุณฟังไม่เกิน %1$s</string>
     <string name="eq_finder_bake_failed">ผลลัพธ์ต้องใช้แบนด์ว่างมากกว่าที่เหลือในอีควอไลเซอร์ ลบบางแบนด์แล้วจบใหม่อีกครั้ง</string>
     <string name="eq_finder_apply">ใช้และบันทึก</string>
     <string name="eq_finder_discard">ทิ้ง</string>

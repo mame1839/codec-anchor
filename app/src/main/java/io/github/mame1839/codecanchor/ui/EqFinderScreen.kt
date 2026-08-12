@@ -158,6 +158,12 @@ data class EqFinderTrialUi(
 data class EqFinderAxisDelta(val kind: EqFinderAxisKind, val deltaDb10: Int)
 
 /**
+ * 焼き込みのバンド数の選択肢 1 つ。[maxErrorDb10] は試聴した応答 (base + オーバーレイ) と
+ * 焼き込み後の応答の max|差| (0.1 dB 単位に丸め済み) — 副題に出す忠実度。
+ */
+data class EqFinderBandChoice(val count: Int, val maxErrorDb10: Int)
+
+/**
  * 結果画面の状態。[beforeDb] / [afterDb] は [eqFinderResponseDb] で標本化した応答
  * (data class にしないのは、配列の equals が参照比較で意味を持たないため)。
  */
@@ -168,10 +174,25 @@ class EqFinderResultUi(
     val consistencyWarning: Boolean,
     /** 検証段で結果が開始点に勝ったか。null = 検証まで進まずに終えた。 */
     val startBeaten: Boolean?,
+    /** 焼き込みのバンド数の選択肢。null = 出さない (パラメトリック — fc/Q は手作業の成果物)。 */
+    val bandChoices: List<EqFinderBandChoice>? = null,
     val bakeFailed: Boolean = false,
     /** 適用が済んで、プリセットとしても保存するかを聞いている。 */
     val presetOffer: Boolean = false,
-)
+) {
+    /** 旗だけ差し替えた写し (data class ではないので copy が無い)。 */
+    fun with(bakeFailed: Boolean = this.bakeFailed, presetOffer: Boolean = this.presetOffer) =
+        EqFinderResultUi(
+            axes = axes,
+            beforeDb = beforeDb,
+            afterDb = afterDb,
+            consistencyWarning = consistencyWarning,
+            startBeaten = startBeaten,
+            bandChoices = bandChoices,
+            bakeFailed = bakeFailed,
+            presetOffer = presetOffer,
+        )
+}
 
 // ---------------------------------------------------------------------------
 // 入口 (EqScreen のカード)
@@ -739,6 +760,8 @@ private fun RowScope.AnswerButton(text: String, enabled: Boolean, onClick: () ->
 @Composable
 internal fun EqFinderResultContent(
     ui: EqFinderResultUi,
+    selectedBandCount: Int,
+    onBandCount: (Int) -> Unit,
     onApply: () -> Unit,
     onDiscard: () -> Unit,
     onSavePreset: (String) -> Unit,
@@ -807,6 +830,29 @@ internal fun EqFinderResultContent(
                 icon = R.drawable.ic_info,
                 text = stringResource(R.string.eq_finder_consistency),
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 10.dp),
+            )
+        }
+    }
+
+    // 焼き込みのバンド数 (グラフィックのみ)。選んだ数は保存物にだけ効く — いま鳴っている音も
+    // 上の曲線 (afterDb) もオーバーレイの目標のままで、差は選択肢の副題の数字が言う
+    // (「摘みと曲線の差は仕様」と同じ整理)。押し直さないのは、バンド構成が変わる push が
+    // クリックレス切替の条件を外れて、耳で選んだ after と別物の聴感になるため。
+    val choices = ui.bandChoices
+    if (choices != null) {
+        SettingsCard {
+            val dbUnit = stringResource(R.string.eq_unit_db)
+            ChoiceRow(
+                title = stringResource(R.string.eq_band_count),
+                options = choices.map { it.count to eqCountText(it.count) },
+                selected = selectedBandCount,
+                onSelect = onBandCount,
+                optionDescriptions = choices.associate { choice ->
+                    choice.count to stringResource(
+                        R.string.eq_finder_band_error,
+                        eqGainText(choice.maxErrorDb10, dbUnit, signed = false),
+                    )
+                },
             )
         }
     }

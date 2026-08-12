@@ -284,6 +284,7 @@
     <string name="eq_finder_validated_lose">Pada pemeriksaan tersamar terakhir, titik awal tetap bertahan. Bedanya memang kecil.</string>
     <string name="eq_finder_not_validated">Tes berakhir sebelum pemeriksaan tersamar terakhir, jadi hasil belum terverifikasi.</string>
     <string name="eq_finder_consistency">Jawaban agak berubah-ubah. Satu putaran lagi akan mempertajam hasil.</string>
+    <string name="eq_finder_band_error">Menyimpang paling banyak %1$s dari kurva yang Anda dengar</string>
     <string name="eq_finder_bake_failed">Hasil butuh pita kosong lebih banyak daripada yang tersisa di ekualiser. Hapus beberapa pita, lalu selesaikan lagi.</string>
     <string name="eq_finder_apply">Terapkan dan simpan</string>
     <string name="eq_finder_discard">Buang</string>

@@ -327,6 +327,7 @@
     <string name="eq_finder_validated_lose">In the blind check at the end, your starting point held up. The difference is small either way.</string>
     <string name="eq_finder_not_validated">The test ended before the final blind check, so the result was not verified.</string>
     <string name="eq_finder_consistency">Your answers wavered a little. Running the test once more would sharpen the result.</string>
+    <string name="eq_finder_band_error">Up to %1$s away from the curve you heard</string>
     <string name="eq_finder_bake_failed">The result needs more free bands than the equaliser has left. Remove some bands, then finish again.</string>
     <string name="eq_finder_apply">Apply and save</string>
     <string name="eq_finder_discard">Discard</string>

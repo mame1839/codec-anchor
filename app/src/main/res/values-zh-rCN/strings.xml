@@ -284,6 +284,7 @@
     <string name="eq_finder_validated_lose">在最后的盲听核验中，起点也没有落败。反正差别很小。</string>
     <string name="eq_finder_not_validated">测试在最后的盲听核验之前就结束了，因此结果未经核验。</string>
     <string name="eq_finder_consistency">你的回答有些摇摆。再做一轮能让结果更准。</string>
+    <string name="eq_finder_band_error">与试听曲线的差最大 %1$s</string>
     <string name="eq_finder_bake_failed">写入结果所需的空余频段比均衡器剩下的多。删掉几个频段后再确定一次。</string>
     <string name="eq_finder_apply">应用并保存</string>
     <string name="eq_finder_discard">丢弃</string>

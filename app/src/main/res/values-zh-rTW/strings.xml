@@ -284,6 +284,7 @@
     <string name="eq_finder_validated_lose">在最後的盲聽核驗中，起點也沒有落敗。反正差別很小。</string>
     <string name="eq_finder_not_validated">測試在最後的盲聽核驗之前就結束了，因此結果未經核驗。</string>
     <string name="eq_finder_consistency">你的回答有些搖擺。再做一輪能讓結果更準。</string>
+    <string name="eq_finder_band_error">與試聽曲線的差最大 %1$s</string>
     <string name="eq_finder_bake_failed">寫入結果所需的空頻段比等化器剩下的多。刪掉幾個頻段後再確定一次。</string>
     <string name="eq_finder_apply">套用並儲存</string>
     <string name="eq_finder_discard">捨棄</string>

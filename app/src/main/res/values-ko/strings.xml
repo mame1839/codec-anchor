@@ -284,6 +284,7 @@
     <string name="eq_finder_validated_lose">마지막 블라인드 확인에서는 시작 시점도 밀리지 않았습니다. 어느 쪽이든 차이는 작습니다.</string>
     <string name="eq_finder_not_validated">마지막 블라인드 확인 전에 끝나서 결과가 검증되지 않았습니다.</string>
     <string name="eq_finder_consistency">답변이 조금 흔들렸습니다. 한 번 더 돌리면 정확도가 올라갑니다.</string>
+    <string name="eq_finder_band_error">들었던 곡선과의 차이는 최대 %1$s</string>
     <string name="eq_finder_bake_failed">결과를 넣기에는 남은 밴드가 부족합니다. 밴드를 몇 개 삭제한 뒤 다시 확정하세요.</string>
     <string name="eq_finder_apply">적용하고 저장</string>
     <string name="eq_finder_discard">버리기</string>

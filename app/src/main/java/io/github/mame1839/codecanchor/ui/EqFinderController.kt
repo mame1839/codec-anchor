@@ -40,7 +40,9 @@ import io.github.mame1839.codecanchor.core.EqFinderAxis
 import io.github.mame1839.codecanchor.core.EqFinderMaterialize
 import io.github.mame1839.codecanchor.core.EqFinderSession
 import io.github.mame1839.codecanchor.core.EqLoudness
+import io.github.mame1839.codecanchor.core.EqMode
 import io.github.mame1839.codecanchor.core.EqSettings
+import io.github.mame1839.codecanchor.core.EqUnits
 import io.github.mame1839.codecanchor.core.Spectrum
 import androidx.compose.material3.SnackbarHostState
 import kotlinx.coroutines.CoroutineDispatcher
@@ -48,6 +50,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.math.abs
 import kotlin.random.Random
 
 /** 探索の進行段階。導入 → 試行 → 結果の一方向で、戻るのは画面を閉じるときだけ。 */
@@ -79,7 +82,7 @@ class EqFinderController(
         runCatching { context.getSystemService(AudioManager::class.java) }.getOrNull(),
         Handler(Looper.getMainLooper()),
     ),
-    /** 重い計算 (重み・トリム) の走り先。テストは Unconfined を入れて同期に落とす。 */
+    /** 重い計算 (重み・トリム・焼き込み計画) の走り先。テストは Unconfined を入れて同期に落とす。 */
     private val compute: CoroutineDispatcher = Dispatchers.Default,
 ) {
     private val store = EqFinderStore(context)
@@ -181,7 +184,19 @@ class EqFinderController(
 
     var result by mutableStateOf<EqFinderResultUi?>(null)
         private set
+
+    /** 焼き込むバンド数 (グラフィックのみ意味を持つ)。既定は結果画面に入った時点の bandCount。 */
+    var bakeBandCount by mutableIntStateOf(10)
+        private set
+
     private var overlay: List<Int> = emptyList()
+
+    /**
+     * 結果画面に入るときに全選択肢分を一度に作るキャッシュ。副題の忠実度と [apply] が保存する
+     * 実体を**同じ計算から**出す (「同じ値が 2 箇所」の予防)。値 null = その形には焼けない
+     * (パラメトリック満杯)。
+     */
+    private var bakePlan: Map<Int, EqFinderBaked?> = emptyMap()
     private var appliedSettings: EqSettings? = null
 
     init {
@@ -495,51 +510,73 @@ class EqFinderController(
         val afterBands = EqFinderMaterialize.candidateBands(baseBands, axes, overlay)
         // 結果の音を鳴らしたまま見せる (前後の聴き比べは確定前の最後の判断材料)。
         pushBands(afterBands)
-        result = EqFinderResultUi(
-            axes = axes.mapIndexed { i, axis ->
-                EqFinderAxisDelta(axisKind(axis), overlay.getOrElse(i) { 0 })
-            },
-            beforeDb = eqFinderResponseDb(baseBands),
-            afterDb = eqFinderResponseDb(afterBands),
-            consistencyWarning = r.consistencyWarning,
-            startBeaten = r.startBeatenInValidation,
-        )
-        phase = EqFinderPhase.RESULT
+        // 変わり続ける状態を Default のスレッドから読まないよう、材料はここで写し取る。
+        val theBase = base
+        val theAxes = axes
+        val theBaseBands = baseBands
+        val theOverlay = overlay
+        scope.launch {
+            val built = withContext(compute) {
+                val plan = eqFinderBakePlan(theBase, theAxes, theOverlay)
+                plan to EqFinderResultUi(
+                    axes = theAxes.mapIndexed { i, axis ->
+                        EqFinderAxisDelta(axisKind(axis), theOverlay.getOrElse(i) { 0 })
+                    },
+                    beforeDb = eqFinderResponseDb(theBaseBands),
+                    afterDb = eqFinderResponseDb(afterBands),
+                    consistencyWarning = r.consistencyWarning,
+                    startBeaten = r.startBeatenInValidation,
+                    bandChoices = if (theBase.mode == EqMode.GRAPHIC) {
+                        EqSettings.BAND_COUNTS.mapNotNull { count ->
+                            plan[count]?.let {
+                                EqFinderBandChoice(
+                                    count,
+                                    Math.round(it.maxErrorDb * EqUnits.GAIN_SCALE).toInt(),
+                                )
+                            }
+                        }
+                    } else {
+                        null
+                    },
+                )
+            }
+            bakePlan = built.first
+            bakeBandCount = theBase.bandCount
+            result = built.second
+            phase = EqFinderPhase.RESULT
+        }
     }
 
     // ------------------------------------------------------------------
     // 結果
     // ------------------------------------------------------------------
 
+    /**
+     * 焼き込むバンド数を選ぶ。**プレビューは押し直さない** — バンド構成が変わる push は
+     * クリックレス切替 (ゲイン差のみ) の条件を外れ、耳で選んだ after と別物の聴感になる。
+     * 選択は [apply] が保存する実体にだけ効く。
+     */
+    fun chooseBakeBandCount(count: Int) {
+        if (count in bakePlan) bakeBandCount = count
+    }
+
     /** 適用して保存。成功したらプリセット保存の提案に切り替わる。 */
     fun apply() {
         val r = result ?: return
-        val baked = EqFinderMaterialize.bake(base, axes, overlay)
+        val baked = bakePlan[bakeBandCount]?.settings
         if (baked == null) {
-            result = EqFinderResultUi(
-                axes = r.axes,
-                beforeDb = r.beforeDb,
-                afterDb = r.afterDb,
-                consistencyWarning = r.consistencyWarning,
-                startBeaten = r.startBeaten,
-                bakeFailed = true,
-            )
+            result = r.with(bakeFailed = true)
             return
         }
         appliedSettings = baked
         // 永続化はここ 1 回だけ。押し込みは updateEq → pushEqParams が担い、直後の
         // setEqPreview(null) で最後の押しが「プレビュー無し + 新しい永続値」になる。
+        // 「選んだバンド数で焼き込んだ EqSettings を作る」(bakePlan) までが不変の資産で、
+        // 保存先を知るのはこの 1 行だけ — スロット制が来たらここを差し替える。
         vm.updateEq(mac) { baked }
         vm.setEqPreview(null)
         store.clear()
-        result = EqFinderResultUi(
-            axes = r.axes,
-            beforeDb = r.beforeDb,
-            afterDb = r.afterDb,
-            consistencyWarning = r.consistencyWarning,
-            startBeaten = r.startBeaten,
-            presetOffer = true,
-        )
+        result = r.with(presetOffer = true)
     }
 
     /** 破棄。永続設定の音へ戻す (画面側が確認済み)。 */
@@ -705,6 +742,55 @@ internal fun eqFinderRestore(record: EqFinderSaved): EqFinderResumeState? {
         base = record.base,
         baseBands = if (record.base.enabled) record.base.bands else emptyList(),
     )
+}
+
+/** 焼き込み 1 通り分: 保存する実体と、試聴した応答からの最大乖離 (dB)。 */
+internal class EqFinderBaked(val settings: EqSettings, val maxErrorDb: Double)
+
+/**
+ * 結果画面の焼き込み候補をまとめて作る。グラフィックは選べるバンド数の全部
+ * ([EqSettings.BAND_COUNTS])、パラメトリックは元の形 1 通り (満杯で焼けなければ値が null)。
+ * 副題に出す忠実度と apply が保存する実体を同じ計算から出すための入口 —
+ * ここ以外で [EqFinderMaterialize.bake] を呼ばない。
+ *
+ * ### バンド数を変える焼き込みは「摘みの折れ線を運ぶ」([reband] → bake の順)
+ *
+ * 旧バンドの真の応答を新しい中心でサンプルすると、解の残差 (中心間の起伏) を次の目標に
+ * 焼き込む — 全摘み +12 が 12.4 になる、reband が折れ線方式で直したのと同じ壊れ方が
+ * ここに再発する。先に [reband] で摘みの折れ線を新しい並びへ運び、その応答 (中心では
+ * 摘みの値そのもの) を bake が読む。
+ *
+ * ### 忠実度は全帯域の格子で測る
+ *
+ * バンド中心だけで測ると solve が厳密に合わせる点を測ることになり、常にほぼ 0 の
+ * 何も言わない数字になる。試聴した応答 (base + オーバーレイ。土台の規則は
+ * セッションと同じ「enabled なら bands、切ってあれば素の音」) と焼き込み後の応答の
+ * max|差| を [eqFinderResponseDb] の 120 点で取る。
+ *
+ * **31 バンドが 15 バンドより悪い数字になることがあるが、バグではない** — 最上バンド
+ * (20 kHz 中心) が fs 48 kHz の Nyquist で潰れる分で、[EqSolver.defaultQ] の表の
+ * 31 バンド行に書かれた既知の挙動。Q でもシェルフでも消えないことは実測済みなので、
+ * 事実のまま副題に出す。
+ */
+internal fun eqFinderBakePlan(
+    base: EqSettings,
+    axes: List<EqFinderAxis>,
+    overlayDb10: List<Int>,
+): Map<Int, EqFinderBaked?> {
+    val heardBands = EqFinderMaterialize.candidateBands(
+        if (base.enabled) base.bands else emptyList(),
+        axes,
+        overlayDb10,
+    )
+    val heardDb = eqFinderResponseDb(heardBands)
+    val counts = if (base.mode == EqMode.GRAPHIC) EqSettings.BAND_COUNTS else listOf(base.bandCount)
+    return counts.associateWith { count ->
+        val seed = if (base.mode == EqMode.GRAPHIC) reband(base, count) else base
+        EqFinderMaterialize.bake(seed, axes, overlayDb10)?.let { baked ->
+            val bakedDb = eqFinderResponseDb(baked.bands)
+            EqFinderBaked(baked, heardDb.indices.maxOf { abs(heardDb[it] - bakedDb[it]) })
+        }
+    }
 }
 
 /**
@@ -878,6 +964,8 @@ fun EqFinderScreen(
             EqFinderPhase.RESULT -> controller.result?.let { ui ->
                 EqFinderResultContent(
                     ui = ui,
+                    selectedBandCount = controller.bakeBandCount,
+                    onBandCount = controller::chooseBakeBandCount,
                     onApply = controller::apply,
                     onDiscard = {
                         controller.discard()

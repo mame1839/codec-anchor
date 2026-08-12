@@ -390,13 +390,13 @@ class EqFinderTest {
     // ------------------------------------------------------------ 焼き込み
 
     // 指示のテスト 5: グラフィックへの焼き込み後、合成応答 ≒ 元の応答 + オーバーレイ応答
-    // (バンド中心で 0.2 dB 以内)。
+    // (バンド中心で 0.2 dB 以内)。土台に入るのは enabled のバンドだけ (下のテストと対)。
     @Test
     fun bakedGraphicMatchesTheBaseResponsePlusTheOverlay() {
         val freqs = EqSolver.centerFrequencies(10)
         val target = doubleArrayOf(3.0, -2.0, 4.0, 0.0, -5.0, 2.0, 0.0, 1.0, -1.0, 2.0)
         val base = EqSettings(
-            enabled = false,
+            enabled = true,
             mode = EqMode.GRAPHIC,
             bandCount = 10,
             bands = EqSolver.solveBands(target, freqs, EqSolver.defaultQ(10)),
@@ -417,6 +417,43 @@ class EqFinderTest {
             val got = EqSolver.combinedResponseDb(baked.bands, hz.toDouble())
             assertEquals("バンド $hz Hz", expect, got, 0.2)
         }
+    }
+
+    /**
+     * **仕様変更 (2026-08): 適用した設定は試聴した音と同じ応答を持つ。**
+     *
+     * base.enabled=false かつ bands 非空のとき、試聴の土台は素の音 (baseBands = 空) なのに
+     * 旧実装の bake は base.bands を応答に含めていた — 切ってあった旧カーブが適用の瞬間に
+     * 復活し、耳で選んだ after と別の音が保存されていた。土台は試聴と同じ規則で選ぶ。
+     */
+    @Test
+    fun bakedGraphicIgnoresDisabledBandsLikeTheAuditionDid() {
+        val freqs = EqSolver.centerFrequencies(10)
+        val old = doubleArrayOf(8.0, 6.0, 4.0, 0.0, -5.0, 2.0, 0.0, 1.0, -1.0, 2.0)
+        val base = EqSettings(
+            enabled = false,
+            mode = EqMode.GRAPHIC,
+            bandCount = 10,
+            bands = EqSolver.solveBands(old, freqs, EqSolver.defaultQ(10)),
+        )
+        val axes = EqFinderAxes.default(false)
+        val overlay = listOf(60, -40)
+        val overlayBands = EqFinderMaterialize.candidateBands(emptyList(), axes, overlay)
+
+        val baked = EqFinderMaterialize.bake(base, axes, overlay)
+        assertNotNull(baked)
+        for (hz in freqs) {
+            val heard = EqSolver.combinedResponseDb(overlayBands, hz.toDouble())
+            val got = EqSolver.combinedResponseDb(baked!!.bands, hz.toDouble())
+            assertEquals("バンド $hz Hz (試聴した音と違う音が保存される)", heard, got, 0.2)
+        }
+        // 旧挙動 (base+overlay) とは有意に違うこと — 期待値が偶然一致して何も見ていない、を防ぐ。
+        val atLow = EqSolver.combinedResponseDb(base.bands, 63.0) +
+            EqSolver.combinedResponseDb(overlayBands, 63.0)
+        assertTrue(
+            "土台のカーブが平ら過ぎて新旧の挙動が区別できていない",
+            kotlin.math.abs(atLow - EqSolver.combinedResponseDb(baked!!.bands, 63.0)) > 2.0,
+        )
     }
 
     // バンド未設定 (空) のグラフィックでも、オーバーレイ応答を目標に解ける。
@@ -464,11 +501,33 @@ class EqFinderTest {
         assertEquals(EqFinderAxes.BASS.q100, added.q100)
         assertEquals(EqBandType.LOW_SHELF, added.type)
         assertEquals(40, added.gainDb10)
+        // base は切ってあった = 試聴の土台は素の音。fc/Q (手作業の成果物) は残るがゲインは 0 —
+        // 応答は試聴と厳密に同じ (ゲイン 0 のバンドは音を変えない)。
+        fit.bands.dropLast(1).forEachIndexed { i, band ->
+            assertEquals("fc $i が変わった", 50 + i * 100, band.freqHz)
+            assertEquals("q $i が変わった", 141, band.q100)
+            assertEquals("切ってあった旧ゲインが復活した", 0, band.gainDb10)
+        }
 
         // 全軸 0 dB なら何も足さないので、満杯でも通る
         val unchanged = EqFinderMaterialize.bake(parametric(31), axes, listOf(0, 0))
         assertNotNull(unchanged)
         assertEquals(31, unchanged!!.bands.size)
         assertTrue(unchanged.enabled)
+        assertTrue(unchanged.bands.all { it.gainDb10 == 0 })
+    }
+
+    /** enabled のパラメトリックは従来どおり: 既存バンドは値ごと保たれ、軸のバンドが足される。 */
+    @Test
+    fun bakedParametricKeepsEnabledBandsIntact() {
+        val bands = listOf(
+            EqBand(freqHz = 200, q100 = 141, gainDb10 = 25),
+            EqBand(freqHz = 4_000, q100 = 200, gainDb10 = -30),
+        )
+        val base = EqSettings(enabled = true, mode = EqMode.PARAMETRIC, bands = bands)
+        val baked = EqFinderMaterialize.bake(base, EqFinderAxes.default(false), listOf(40, -20))
+        assertNotNull(baked)
+        assertEquals(bands, baked!!.bands.take(2))
+        assertEquals(listOf(40, -20), baked.bands.drop(2).map { it.gainDb10 })
     }
 }

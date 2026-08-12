@@ -31,6 +31,7 @@ import io.github.mame1839.codecanchor.core.EqSolver
 import io.github.mame1839.codecanchor.ui.EqFinderAnswer
 import io.github.mame1839.codecanchor.ui.EqFinderAxisDelta
 import io.github.mame1839.codecanchor.ui.EqFinderAxisKind
+import io.github.mame1839.codecanchor.ui.EqFinderBandChoice
 import io.github.mame1839.codecanchor.ui.EqFinderCandidate
 import io.github.mame1839.codecanchor.ui.EqFinderIntroUi
 import io.github.mame1839.codecanchor.ui.EqFinderIntroContent
@@ -42,9 +43,11 @@ import io.github.mame1839.codecanchor.ui.EqFinderResumeUi
 import io.github.mame1839.codecanchor.ui.EqFinderTrialContent
 import io.github.mame1839.codecanchor.ui.EqFinderTrialUi
 import io.github.mame1839.codecanchor.ui.drawEqFinderCurves
+import io.github.mame1839.codecanchor.ui.eqCountText
 import io.github.mame1839.codecanchor.ui.eqFinderPlotRange
 import io.github.mame1839.codecanchor.ui.eqFinderResponseDb
 import io.github.mame1839.codecanchor.ui.eqFinderTimeText
+import io.github.mame1839.codecanchor.ui.eqGainText
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -354,6 +357,7 @@ class EqFinderScreenTest {
     private fun result(
         bakeFailed: Boolean = false,
         presetOffer: Boolean = false,
+        bandChoices: List<EqFinderBandChoice>? = null,
     ) = EqFinderResultUi(
         axes = listOf(
             EqFinderAxisDelta(EqFinderAxisKind.BASS, 25),
@@ -363,12 +367,15 @@ class EqFinderScreenTest {
         afterDb = DoubleArray(8) { 3.0 },
         consistencyWarning = true,
         startBeaten = true,
+        bandChoices = bandChoices,
         bakeFailed = bakeFailed,
         presetOffer = presetOffer,
     )
 
     private fun showResult(
         ui: EqFinderResultUi,
+        selectedBandCount: Int = 10,
+        onBandCount: (Int) -> Unit = {},
         onApply: () -> Unit = {},
         onDiscard: () -> Unit = {},
         onSavePreset: (String) -> Unit = {},
@@ -379,6 +386,8 @@ class EqFinderScreenTest {
                 Column {
                     EqFinderResultContent(
                         ui = ui,
+                        selectedBandCount = selectedBandCount,
+                        onBandCount = onBandCount,
                         onApply = onApply,
                         onDiscard = onDiscard,
                         onSavePreset = onSavePreset,
@@ -419,6 +428,42 @@ class EqFinderScreenTest {
         onText(R.string.eq_finder_validated_win).assertExists()
         onText(R.string.eq_finder_consistency).assertExists()
         onText(R.string.eq_finder_bake_failed).assertExists()
+    }
+
+    /** バンド数の行はグラフィックのときだけ。選択肢は忠実度の 1 行を連れて出る。 */
+    @Test
+    fun theBandCountRowShowsFidelityPerChoice() {
+        var chosen: Int? = null
+        showResult(
+            result(
+                bandChoices = listOf(
+                    EqFinderBandChoice(5, 21),
+                    EqFinderBandChoice(10, 6),
+                    EqFinderBandChoice(15, 3),
+                    EqFinderBandChoice(31, 4),
+                ),
+            ),
+            onBandCount = { chosen = it },
+        )
+        onText(R.string.eq_band_count).performSemanticsAction(SemanticsActions.OnClick)
+        // 副題 = 「聴いた曲線との差 最大 X.X dB」。数字は 0.1 dB 丸めの db10 から組む。
+        // eq_unit_db は書式そのもの (%1$s を含む) なので、引数付きの getString には通さない。
+        val unit = RuntimeEnvironment.getApplication().getString(R.string.eq_unit_db)
+        compose.onNode(
+            hasText(string(R.string.eq_finder_band_error, eqGainText(21, unit, signed = false))) and
+                hasAnyAncestor(isDialog()),
+        ).assertExists()
+        compose.onNode(
+            hasText(eqCountText(31)) and hasAnyAncestor(isDialog()),
+        ).performSemanticsAction(SemanticsActions.OnClick)
+        assertEquals(31, chosen)
+    }
+
+    /** パラメトリックの結果 (bandChoices = null) にバンド数の行は出ない。 */
+    @Test
+    fun parametricResultsHaveNoBandCountRow() {
+        showResult(result())
+        compose.onNodeWithText(string(R.string.eq_band_count)).assertDoesNotExist()
     }
 
     private fun onText(id: Int) = compose.onNodeWithText(string(id))
