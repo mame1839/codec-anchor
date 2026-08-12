@@ -21,6 +21,7 @@
 #include "dsp/ca_eq_params.h"
 #include "dsp/ca_eq_pipeline.h"
 #include "dsp/ca_eq_poll.h"
+#include "dsp/ca_eq_stats.h"
 
 #define CA_LOG_TAG "CodecAnchorEQ"
 // ログは制御スレッド (create / SET_CONFIG / ENABLE / release) からだけ呼ぶ。
@@ -167,15 +168,11 @@ void ca_stats_open() {
 }
 
 // seqlock。書く前に奇数、書き終えたら偶数にする。読み手は前後で同じ偶数を見たら採用する。
-inline void ca_seq_begin(ca_slot_t* s) {
-    s->seq++;
-    std::atomic_thread_fence(std::memory_order_release);
-}
+// **規約は dsp/ca_eq_stats.h** — 読み手 (caeqstat) と同じ定義を共有していて、
+// ホストのハーネスが書き手のスレッドを立てて千切れた読みが起きないことを確かめている。
+inline void ca_seq_begin(ca_slot_t* s) { caeq::statsBeginWrite(s); }
 
-inline void ca_seq_end(ca_slot_t* s) {
-    std::atomic_thread_fence(std::memory_order_release);
-    s->seq++;
-}
+inline void ca_seq_end(ca_slot_t* s) { caeq::statsEndWrite(s); }
 
 inline std::atomic<uint32_t>* ca_in_use(ca_slot_t* s) {
     return reinterpret_cast<std::atomic<uint32_t>*>(&s->in_use);

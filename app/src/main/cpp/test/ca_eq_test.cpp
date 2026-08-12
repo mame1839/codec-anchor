@@ -16,6 +16,7 @@
 #include "ca_test_support.h"
 #include "../ca_eq_pick.h"
 #include "../dsp/ca_eq_params.h"
+#include "../dsp/ca_eq_stats.h"
 
 using catest::Report;
 using catest::Rng;
@@ -1089,6 +1090,60 @@ bool matchesGeneration(const ca_eq_slot_t& s) {
     return true;
 }
 
+// 統計の枠も同じやり方で。**向きが逆** (書き手が `.so`、読み手が外の caeqstat) で、
+// 2026-08-13 まではこちら側の seqlock が ca_eq.cpp の中にあってホストで一度も
+// 回っていなかった。枠の全域を世代から決めて、千切れを照合できるようにする。
+void fillStatSlot(ca_slot_t* s, uint32_t gen) {
+    s->frames = static_cast<uint64_t>(gen) * 1000ull;
+    s->sample_rate = 48000u + gen;
+    s->channels = 2u;
+    s->block_frames = gen;
+    s->state = CA_STATE_ENABLED | CA_STATE_CONFIGURED;
+    s->gain_mb = -static_cast<int32_t>(gen % 100u);
+    s->io_id = static_cast<int32_t>(gen);
+    s->pid = static_cast<uint64_t>(gen) + 7ull;
+    s->ctx = static_cast<uint64_t>(gen) * 3ull;
+    s->last_ns = static_cast<uint64_t>(gen) * 1000000ull;
+    s->in_peak = static_cast<float>(gen % 17u) / 16.0f;
+    s->out_peak = static_cast<float>(gen % 19u) / 18.0f;
+    s->in_peak_i32 = gen;
+    s->out_peak_i32 = gen + 1u;
+    s->param_slot = gen % CA_SHM_SLOTS;
+    s->param_gen = gen;
+    s->param_rejected = gen / 2u;
+    s->session_id = CA_AUDIO_SESSION_DEVICE;
+    // **版 4 で足した末尾 (FIR の診断) まで照合に入れる。**枠が 128 → 256 B に
+    // 増えたぶん、書き込みの途中を掴む窓も広がっている。
+    s->fir_state = gen % 5u;
+    s->fir_flags = gen % 32u;
+    s->fir_fill = gen;
+    s->fir_partitions = gen + 2u;
+    s->fir_rebuilds = gen + 3u;
+    s->fir_face_fades = gen + 4u;
+    s->fir_fallbacks = gen + 5u;
+    s->fir_mode_offs = gen + 6u;
+    s->fir_design_failures = gen + 7u;
+    s->fir_unfit_size = gen + 8u;
+    s->fir_unfit_budget = gen + 9u;
+    s->fir_curve_rejected = gen + 10u;
+    s->fir_curve_gen = gen + 11u;
+    s->fir_taps = gen + 12u;
+    s->fir_m = gen + 13u;
+    s->fir_arena_kb = gen + 14u;
+    s->fir_max_slice_ns = gen + 15u;
+    s->fir_scrubbed = static_cast<uint64_t>(gen) + 16ull;
+}
+
+bool matchesStatSlot(const ca_slot_t& s) {
+    ca_slot_t want{};
+    fillStatSlot(&want, static_cast<uint32_t>(s.frames / 1000ull));
+    // seq と in_use は照合の対象外 — seq は seqlock そのもの、in_use は
+    // seqlock の外で CAS される (ca_stats_attach / detach)。
+    want.seq = s.seq;
+    want.in_use = s.in_use;
+    return std::memcmp(&s, &want, sizeof(ca_slot_t)) == 0;
+}
+
 void checkSeqlock(Report& r) {
     r.section("15. 共有メモリの seqlock (書き手を別スレッドで走らせる)");
 
@@ -1176,6 +1231,65 @@ void checkSeqlock(Report& r) {
         r.check(caeq::paramsConvert(slot, &p) && !eq.setParams(p) &&
                     eq.rejectedCount() == before + 1,
                 "48 kHz で fc 30 kHz の並びを丸ごと却下する");
+    }
+
+    // --- 統計の向き (書き手が `.so`、読み手が caeqstat) ---------------------
+    //
+    // パラメータ側と同じ形で回す。**同じ共有メモリなのに片方向だけ網が無い**状態を
+    // 塞ぐのがこの節の目的で、ここが緑でも `caeqstat` の出力の正しさは何も言えない
+    // (見ているのは「千切れた枠を採用しないこと」だけ)。
+    {
+        auto* slot = new ca_slot_t{};
+        slot->in_use = CA_SHM_MAGIC;
+        std::atomic<bool> stop{false};
+        std::atomic<uint64_t> writes{0};
+
+        std::thread writer([&] {
+            uint32_t gen = 1;
+            while (!stop.load(std::memory_order_relaxed)) {
+                caeq::statsBeginWrite(slot);
+                fillStatSlot(slot, gen);
+                caeq::statsEndWrite(slot);
+                gen++;
+                writes.fetch_add(1, std::memory_order_relaxed);
+            }
+        });
+
+        uint64_t ok = 0, gave_up = 0, torn = 0;
+        const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(600);
+        while (std::chrono::steady_clock::now() < deadline) {
+            ca_slot_t snap;
+            if (caeq::statsRead(slot, &snap)) {
+                ok++;
+                if (snap.frames != 0 && !matchesStatSlot(snap)) torn++;
+            } else {
+                gave_up++;
+            }
+        }
+        stop.store(true);
+        writer.join();
+
+        r.check(torn == 0, "統計: 千切れた枠を採用した回数 %llu / 成功 %llu / 諦め %llu "
+                           "(書き込み %llu 回)",
+                static_cast<unsigned long long>(torn), static_cast<unsigned long long>(ok),
+                static_cast<unsigned long long>(gave_up),
+                static_cast<unsigned long long>(writes.load()));
+        r.check(ok > 0, "統計: 書き込みと同時でも読めている");
+        delete slot;
+    }
+
+    // 書き手が書き込みの途中で死んだ場合。**パラメータ側と挙動が違う** —
+    // こちらは諦めたときも dst を埋めて false を返す (caeqstat が印を付けて出すため)。
+    {
+        ca_slot_t slot{};
+        slot.in_use = CA_SHM_MAGIC;
+        fillStatSlot(&slot, 5);
+        caeq::statsBeginWrite(&slot);   // 奇数のまま放置 = 書き手が死んだ状態
+        ca_slot_t snap{};
+        snap.frames = 0xDEADBEEFull;    // 埋め直されることを見るための印
+        const bool got = caeq::statsRead(&slot, &snap, 8);
+        r.check(!got && snap.frames == 5000ull,
+                "統計: 書き手が途中で死んでも諦めて返り、その枠の中身は呼び手に届く");
     }
 }
 

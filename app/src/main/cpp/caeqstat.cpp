@@ -9,23 +9,9 @@
 #include <unistd.h>
 #include "ca_eq_pick.h"
 #include "ca_eq_shm.h"
+#include "dsp/ca_eq_stats.h"
 
 namespace {
-
-// seqlock の読み手側。seq が偶数で、コピーの前後で変わっていなければ内容は一貫している。
-// 書き手 (オーディオスレッド) が奇数の区間に居るのは数十 ns なので、まず 1 回で通る。
-bool read_slot(const ca_slot_t* src, ca_slot_t* dst) {
-    for (int attempt = 0; attempt < 100; attempt++) {
-        const uint32_t s1 = src->seq;
-        std::atomic_thread_fence(std::memory_order_acquire);
-        if (s1 & 1u) continue;                  // 書き込み中
-        std::memcpy(dst, src, sizeof(ca_slot_t));
-        std::atomic_thread_fence(std::memory_order_acquire);
-        if (s1 == src->seq) return true;
-    }
-    std::memcpy(dst, src, sizeof(ca_slot_t));   // 諦めて素で読み、行に印を付ける
-    return false;
-}
 
 uint64_t now_monotonic_ns() {
     struct timespec ts;
@@ -140,7 +126,7 @@ int main(int argc, char** argv) {
     int active = 0;
     for (uint32_t i = 0; i < m->slot_count && i < static_cast<uint32_t>(CA_SHM_SLOTS); i++) {
         ca_slot_t s;
-        const bool stable = read_slot(&m->slots[i], &s);
+        const bool stable = caeq::statsRead(&m->slots[i], &s);
         if (s.in_use != CA_SHM_MAGIC) continue;
         active++;
         char age[16], ind[16], outd[16];

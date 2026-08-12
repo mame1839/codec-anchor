@@ -199,6 +199,18 @@ void EqPipeline::setFirCapable(bool capable) {
     // ⚠️ 落とし穴の根は `releaseArena()` が「作業領域を解放する」と「曲線を忘れる」を
     // 束ねていること。曲線は arena と独立したデータなので概念的には分けられるが、
     // fs 変化の往復 (31 節) が今の束ね方の上で通っているので、いま解くのは割に合わない。
+    //
+    // ⚠️ **本物の降格 (`true → false → true`) は、届いていた曲線をそのまま落とす。**
+    // `false` で `releaseArena()` が曲線を忘れ、`true` に戻しても poll は世代が同じなら
+    // 早期 return するので**再送されない。**いまこれを踏まないのは運ではなく構造で、
+    // **`.so` が `setFirCapable` を撃つのは create で 1 回 (session 判定) と
+    // `EFFECT_CMD_SET_PARAM` の `CA_PARAM_ID_SLOT` (常に `true` へ引き上げ) の 2 箇所だけ**
+    // — `false` へ落とす経路が存在しない。**「いまは踏めない」ではなく「経路が無い」。**
+    //
+    // したがって **`false` へ落とす呼び手を足した瞬間に踏む。**具体的には
+    // `llmdocs/hold-process.md` §7 の退路段 — 保持プロセスが `SET_PARAM` で枠を
+    // 振り直す構成では、宛先が動くたびに `capable` が両方向へ動きうる。
+    // そこを実装するなら、先に `releaseArena()` から「曲線を忘れる」を切り離すこと。
     if (capable == fir_capable_) return;
     fir_capable_ = capable;
     if (!capable) {
