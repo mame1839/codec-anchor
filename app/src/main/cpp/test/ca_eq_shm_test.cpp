@@ -54,6 +54,18 @@ float curveSample(uint32_t slot, int i) {
     return static_cast<float>(slot) * 0.5f + static_cast<float>(i % 61) * 0.125f - 3.0f;
 }
 
+// 枠の末尾の pad にも番兵を置く。
+//
+// ⚠️ **これが無いと「曲線を 1 点はみ出して書く」を誰も捕まえない** (変異試験で確認した)。
+// pad は 48 B = float 12 個ぶんあるので、12 点までのはみ出しは pad に落ちて隣の枠へ
+// 届かず、枠ごとの模様の照合を素通りする。**pad は製品側の誰も読み書きしない**ので、
+// テストが番兵として使ってよい。
+uint8_t padSample(uint32_t slot, size_t i) {
+    return static_cast<uint8_t>(0xC0u + ((slot * 7u + static_cast<uint32_t>(i)) & 0x3Fu));
+}
+
+// ⚠️ **書く順序が検査の効き目を決める。**pad を先に、曲線を最後に置くこと —
+// 逆にすると、曲線がはみ出して汚した pad を、その後の pad の書き込みが直してしまう。
 void fillSlotPattern(ca_eq_slot_t* q, uint32_t slot) {
     q->generation = slot + 1u;
     q->curve_gen  = slot + 101u;
@@ -64,14 +76,30 @@ void fillSlotPattern(ca_eq_slot_t* q, uint32_t slot) {
     q->band[0].q       = 1.0f;
     q->band[0].gain_db = 0.0f;
     q->band[0].type    = CA_EQ_BAND_PEAKING;
+    for (size_t i = 0; i < sizeof(q->pad); i++) q->pad[i] = padSample(slot, i);
     for (int i = 0; i < caeq::kCurvePoints; i++) q->curve_db[i] = curveSample(slot, i);
 }
 
+// ⚠️ **枠は添字の大きいほうから埋めること。**前から埋めると、枠 i のはみ出しで壊れた
+// 枠 i+1 を、その後の枠 i+1 の書き込みが直してしまう (pad を曲線より先に書くのと同じ理由)。
+void fillAllSlots(ca_shm_t* m) {
+    for (int i = CA_SHM_SLOTS - 1; i >= 0; i--) {
+        fillSlotPattern(&m->params[i], static_cast<uint32_t>(i));
+    }
+}
+
 bool slotPatternIntact(const ca_eq_slot_t& q, uint32_t slot) {
+    // seq は誰も書いていない。**隣からはみ出してきた書き込みが最初に当たる欄**なので、
+    // 模様の一部として見る。
+    if (q.seq != 0u) return false;
     if (q.generation != slot + 1u || q.curve_gen != slot + 101u) return false;
+    if (q.flags != CA_EQ_FLAG_ENABLED || q.band_count != 1u) return false;
     if (q.band[0].fc_hz != 1000.0f + static_cast<float>(slot)) return false;
     for (int i = 0; i < caeq::kCurvePoints; i++) {
         if (q.curve_db[i] != curveSample(slot, i)) return false;
+    }
+    for (size_t i = 0; i < sizeof(q.pad); i++) {
+        if (q.pad[i] != padSample(slot, i)) return false;
     }
     return true;
 }
@@ -179,12 +207,13 @@ void runShmSections(Report& r) {
     // 見ない)。枠ごとに違う模様を書いて全部読み戻すのが唯一の手。
     {
         ShmWithCanary* w = newCanaryShm();
-        for (uint32_t i = 0; i < CA_SHM_SLOTS; i++) fillSlotPattern(&w->m.params[i], i);
+        fillAllSlots(&w->m);
         bool all = true;
         for (uint32_t i = 0; i < CA_SHM_SLOTS; i++) {
             if (!slotPatternIntact(w->m.params[i], i)) all = false;
         }
-        r.check(all, "%d 枠すべてに枠ごとの模様を書いて、どれも隣に食い込んでいない",
+        r.check(all, "%d 枠すべてに枠ごとの模様 (曲線 + 末尾の pad) を書いて、"
+                     "どれも隣にも pad にも食い込んでいない",
                 CA_SHM_SLOTS);
 
         // 末尾の枠の末尾の点を書いても、確保の外へ出ない。
@@ -267,7 +296,7 @@ void runShmSections(Report& r) {
     // --- 6. 自分の枠だけを読む ----------------------------------------------
     {
         ShmWithCanary* w = newCanaryShm();
-        for (uint32_t i = 0; i < CA_SHM_SLOTS; i++) fillSlotPattern(&w->m.params[i], i);
+        fillAllSlots(&w->m);
         // 枠 5 にだけ本物の曲線を置く。
         writeSlot(&w->m.params[5], 77u, 88u, good.data(), CA_EQ_FLAG_ENABLED, -2.0);
 
