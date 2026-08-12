@@ -912,14 +912,26 @@ void runShmSections(Report& r) {
                     "鳴っている最中に false にしても作業領域が解放されて biquad へ戻る");
             r.check(pl.fallbacks() == fb && pl.modeOffs() == mo,
                     "落下にもモード切にも数えない (枠の宛先が動いただけ)");
+            // ⚠️ **Eq を起こしていること。**kFir のあいだ Eq は wet 0 で駐機しているので、
+            // 起こさずに渡すと**素通しの段差**になる (Drop::kQuiet を流用すると起きる)。
+            // 「数えない」と「起こさない」は別の問いで、ここは数えないが起こす側。
+            r.check(pl.biquad().active(),
+                    "受け渡しで Eq を起こしている (駐機したままだと素通しの段差になる)");
             bool finite = true;
+            double energy = 0.0;
             for (int b = 0; b < 10; b++) {
                 drv.step();
                 for (float v : drv.out) {
                     if (!std::isfinite(v)) finite = false;
                 }
+                for (size_t i = 0; i < drv.out.size(); i++) {
+                    energy += std::fabs(static_cast<double>(drv.out[i]) -
+                                        static_cast<double>(drv.in[i]));
+                }
             }
             r.check(finite, "解放したあとも出力が有限 (解放済みの領域を触っていない)");
+            r.check(energy > 0.0,
+                    "biquad が実際に鳴っている (素通しに落ちていない。差の総和 %.3g)", energy);
             delete w;
         }
     }
