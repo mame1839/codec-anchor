@@ -238,6 +238,11 @@
     <string name="eq_finder_entry_resume">Есть сохранённый тест. Откройте, чтобы продолжить.</string>
     <string name="eq_finder_entry_unavailable">Обработка звука для этих наушников сейчас недоступна.</string>
     <string name="eq_finder_entry_disconnected">Подключите эти наушники, чтобы начать.</string>
+    <string name="eq_finder_material">Звук для теста</string>
+    <string name="eq_finder_material_loop">Фрагмент композиции по кругу</string>
+    <string name="eq_finder_material_live">Музыка, которая играет сейчас</string>
+    <string name="eq_finder_material_live_desc">Звук не измеряется, поэтому выравнивание громкости менее точное, чем с фрагментом по кругу.</string>
+    <string name="eq_finder_no_music">Чтобы начать, включите композицию в музыкальном приложении.</string>
     <string name="eq_finder_song">Композиция</string>
     <string name="eq_finder_song_none">Выберите хорошо знакомую композицию</string>
     <string name="eq_finder_song_loading">Чтение файла…</string>
@@ -276,6 +281,7 @@
     <string name="eq_finder_suspend">Сохранить и выйти</string>
     <string name="eq_finder_paused_disconnected">Пауза: наушники не подключены. Тест продолжится, когда они вернутся.</string>
     <string name="eq_finder_paused_focus">Пауза: звук занят другим приложением.</string>
+    <string name="eq_finder_paused_no_music">Пауза: музыка остановилась. Включите воспроизведение в музыкальном приложении.</string>
     <string name="eq_finder_resume_playback">Продолжить</string>
     <string name="eq_finder_result_curve_cd">Кривая эквалайзера до и после</string>
     <string name="eq_finder_before">До</string>

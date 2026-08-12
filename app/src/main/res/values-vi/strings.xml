@@ -232,6 +232,11 @@
     <string name="eq_finder_entry_resume">Có bài kiểm tra đã lưu. Mở để tiếp tục.</string>
     <string name="eq_finder_entry_unavailable">Hiện chưa dùng được xử lý âm thanh cho tai nghe này.</string>
     <string name="eq_finder_entry_disconnected">Kết nối tai nghe này để bắt đầu.</string>
+    <string name="eq_finder_material">Âm thanh dùng cho bài kiểm tra</string>
+    <string name="eq_finder_material_loop">Một đoạn bài hát phát lặp lại</string>
+    <string name="eq_finder_material_live">Nhạc đang phát hiện tại</string>
+    <string name="eq_finder_material_live_desc">Âm thanh không được đo, nên việc cân bằng âm lượng kém chính xác hơn so với đoạn phát lặp lại.</string>
+    <string name="eq_finder_no_music">Phát một bài hát trong ứng dụng nhạc của bạn để bắt đầu.</string>
     <string name="eq_finder_song">Bài hát</string>
     <string name="eq_finder_song_none">Chọn một bài hát bạn thuộc</string>
     <string name="eq_finder_song_loading">Đang đọc tệp…</string>
@@ -267,6 +272,7 @@
     <string name="eq_finder_suspend">Lưu và thoát</string>
     <string name="eq_finder_paused_disconnected">Tạm dừng: tai nghe chưa kết nối. Bài kiểm tra sẽ tiếp tục khi tai nghe trở lại.</string>
     <string name="eq_finder_paused_focus">Tạm dừng: ứng dụng khác đã chiếm âm thanh.</string>
+    <string name="eq_finder_paused_no_music">Tạm dừng: nhạc đã dừng. Bấm phát lại trong ứng dụng nhạc của bạn.</string>
     <string name="eq_finder_resume_playback">Tiếp tục</string>
     <string name="eq_finder_result_curve_cd">Đường cong bộ chỉnh âm trước và sau</string>
     <string name="eq_finder_before">Trước</string>

@@ -6,6 +6,8 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.media.AudioManager
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -26,6 +28,7 @@ import io.github.mame1839.codecanchor.R
 import io.github.mame1839.codecanchor.audio.Loaded
 import io.github.mame1839.codecanchor.audio.LoopPlayer
 import io.github.mame1839.codecanchor.audio.LoopSource
+import io.github.mame1839.codecanchor.audio.MusicPlaybackMonitor
 import io.github.mame1839.codecanchor.bridge.EqFinderSaved
 import io.github.mame1839.codecanchor.bridge.EqFinderStore
 import io.github.mame1839.codecanchor.core.EqAvailability
@@ -40,6 +43,7 @@ import io.github.mame1839.codecanchor.core.EqLoudness
 import io.github.mame1839.codecanchor.core.EqSettings
 import io.github.mame1839.codecanchor.core.Spectrum
 import androidx.compose.material3.SnackbarHostState
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -70,6 +74,13 @@ class EqFinderController(
     /** 正規化済み (`EqDevices.normalizeMac`) の対象イヤホン。 */
     val mac: String,
     private val scope: CoroutineScope,
+    /** 音楽の検知。注入なのは Robolectric で raw の遷移を直接振って全遷移を検査するため。 */
+    private val music: MusicPlaybackMonitor = MusicPlaybackMonitor(
+        runCatching { context.getSystemService(AudioManager::class.java) }.getOrNull(),
+        Handler(Looper.getMainLooper()),
+    ),
+    /** 重い計算 (重み・トリム) の走り先。テストは Unconfined を入れて同期に落とす。 */
+    private val compute: CoroutineDispatcher = Dispatchers.Default,
 ) {
     private val store = EqFinderStore(context)
     private val player = LoopPlayer(
@@ -104,6 +115,17 @@ class EqFinderController(
 
     /** この機器の中断セッション。null なら新規の導入を出す。 */
     var saved by mutableStateOf(store.load()?.takeIf { it.mac == mac })
+        private set
+
+    /**
+     * 題材: false = 曲の一節のループ再生 (既定)、true = いま流れている音楽。
+     * 中断データがあるあいだは記録の値が真 (導入は選択肢を出さない)。
+     */
+    var materialLive by mutableStateOf(saved?.live == true)
+        private set
+
+    /** 音楽 (USAGE_MEDIA) が鳴っているか。ライブ題材の門と一時停止の材料 (デバウンス済み)。 */
+    var musicActive by mutableStateOf(false)
         private set
 
     /** 保存した一節が同じ形で開けなかった (消えた・差し替わった)。再開は遮断する。 */
@@ -162,9 +184,29 @@ class EqFinderController(
     private var overlay: List<Int> = emptyList()
     private var appliedSettings: EqSettings? = null
 
+    init {
+        // 検知は画面が開いているあいだ常時。読む相手は handler (main) のスレッドに束ねてある。
+        music.onChange = { onMusicChanged(it) }
+        music.start()
+        musicActive = music.active
+    }
+
     // ------------------------------------------------------------------
     // 導入
     // ------------------------------------------------------------------
+
+    /**
+     * 題材の切り替え (導入でだけ効く)。ループ用の試聴中にライブへ移ったら音を止める —
+     * 鳴らし続けると AudioFocus を握ったままになり、ユーザの音楽アプリが再生を始められない。
+     */
+    fun chooseMaterial(live: Boolean) {
+        if (materialLive == live) return
+        materialLive = live
+        if (live && previewPlaying) {
+            player.stop()
+            previewPlaying = false
+        }
+    }
 
     /**
      * 曲が選ばれた。permission は取り直しの効かない一度きりなのでここで永続化する
@@ -242,11 +284,14 @@ class EqFinderController(
 
     /** 新規に始める。重み・トリム・開始点をここで固定する。 */
     fun begin() {
-        val clip = loaded ?: return
+        // ライブ題材に一節は無い (再生はユーザのアプリのまま。AudioFocus も取らない)。
+        val clip = if (materialLive) null else (loaded ?: return)
         if (session != null || loading) return
         // 画面の門 (startBlockedReason) とは別の実行時ガード — タップの直後に切断される
         // レースがあり、ここを抜けるとスピーカーへ向けてセッションが始まる。
         if (vm.eqOwner != mac) return
+        // 同じくタップ直後に音楽が止まるレース。
+        if (materialLive && !music.active) return
         val current = vm.config.profileFor(mac)?.eq ?: EqSettings()
         scope.launch {
             loading = true
@@ -254,19 +299,10 @@ class EqFinderController(
             // EQ を切っている人の基準は「素の音」。バンドを重ねる土台も空にする。
             baseBands = if (current.enabled) current.bands else emptyList()
             axes = EqFinderAxes.default(includeMid)
-            val bands = baseBands
-            val ax = axes
-            val prep = withContext(Dispatchers.Default) {
-                val w = weightsOf(clip)
-                val corners = eqFinderCornerOverlays(ax)
-                    .map { EqFinderMaterialize.candidateBands(bands, ax, it) }
-                w to EqLoudness.sessionTrimDb(corners, w)
-            }
-            weights = prep.first
-            trimDb = prep.second
-            pcmHash = pcmContentHash(clip.pcm)
+            prepareLoudness(clip)
+            pcmHash = clip?.let { pcmContentHash(it.pcm) } ?: 0L
             session = EqFinderSession.start(
-                axes = ax,
+                axes = axes,
                 seed = Random.nextLong(),
                 startStepDb10 = if (fineTune && fineTuneVisible()) FINE_STEP_DB10 else START_STEP_DB10,
             )
@@ -274,37 +310,46 @@ class EqFinderController(
             loading = false
             phase = EqFinderPhase.TRIAL
             beginTrial()
-            startPlayer { if (!it) pause = EqFinderPause.FOCUS_LOST }
+            if (clip != null) startPlayer { if (!it) pause = EqFinderPause.FOCUS_LOST }
         }
     }
 
     /**
-     * 中断からの再開。曲は保存時と同じ一節を読み直す。開けない・中身が違う・設定が変わった —
-     * どれか 1 つでも当てはまれば再開しない ([resumeBlocked])。
+     * 中断からの再開。ループなら曲を保存時と同じ一節で読み直す。開けない・中身が違う・
+     * 設定が変わった — どれか 1 つでも当てはまれば再開しない ([resumeBlocked])。
+     * ライブは一節を持たないので読み直しも照合も無い (SONG_CHANGED はライブでは出ない)。
      */
     fun resume() {
         val record = saved ?: return
-        val uri = songUri ?: return
+        val uri = if (record.live) null else (songUri ?: return)
         if (loading || session != null || resumeBlocked() != null) return
-        // begin() と同じレースのガード (タップ直後の切断)。
+        // begin() と同じレースのガード (タップ直後の切断・音楽の停止)。
         if (vm.eqOwner != mac) return
+        if (record.live && !music.active) return
         scope.launch {
             loading = true
             loadFailed = false
-            val clip = withContext(Dispatchers.IO) {
-                LoopSource.load(context, uri, record.startMs.toLong(), record.lengthMs.toLong())
-            }.getOrNull()
-            if (clip == null) {
-                loading = false
-                resumeSongBlocked = true
-                return@launch
+            val clip = uri?.let {
+                withContext(Dispatchers.IO) {
+                    LoopSource.load(context, it, record.startMs.toLong(), record.lengthMs.toLong())
+                }.getOrNull()
             }
-            val hash = pcmContentHash(clip.pcm)
-            if (record.pcmHash != 0L && hash != record.pcmHash) {
-                // 別の音になっている。これまでの回答は前の音についてのものなので続けない。
-                loading = false
-                resumeSongBlocked = true
-                return@launch
+            if (!record.live) {
+                if (clip == null) {
+                    loading = false
+                    resumeSongBlocked = true
+                    return@launch
+                }
+                val hash = pcmContentHash(clip.pcm)
+                if (record.pcmHash != 0L && hash != record.pcmHash) {
+                    // 別の音になっている。これまでの回答は前の音についてのものなので続けない。
+                    loading = false
+                    resumeSongBlocked = true
+                    return@launch
+                }
+                pcmHash = hash
+            } else {
+                pcmHash = 0L
             }
             val restored = eqFinderRestore(record)
             if (restored == null) {
@@ -315,32 +360,42 @@ class EqFinderController(
                 return@launch
             }
             loaded = clip
-            songLoaded = true
+            songLoaded = clip != null
             base = restored.base
             baseBands = restored.baseBands
             includeMid = record.includeMid // 表示用。軸の真実はセッション側 (eqFinderRestore)
             fineTune = record.fineTune
             startMs = record.startMs
+            materialLive = record.live
             axes = restored.axes
-            pcmHash = hash
-            val bands = baseBands
-            val ax = axes
-            val prep = withContext(Dispatchers.Default) {
-                // 重みとトリムは保存していない — 同じ一節から決定的に同じ値が出る
-                // (同じであることはハッシュで確かめた後)。
-                val w = weightsOf(clip)
-                val corners = eqFinderCornerOverlays(ax)
-                    .map { EqFinderMaterialize.candidateBands(bands, ax, it) }
-                w to EqLoudness.sessionTrimDb(corners, w)
-            }
-            weights = prep.first
-            trimDb = prep.second
+            prepareLoudness(clip)
             session = restored.session
             loading = false
             phase = EqFinderPhase.TRIAL
             beginTrial()
-            startPlayer { if (!it) pause = EqFinderPause.FOCUS_LOST }
+            if (clip != null) startPlayer { if (!it) pause = EqFinderPause.FOCUS_LOST }
         }
+    }
+
+    /**
+     * 聴感の重みとセッション共通トリムを決めて固定する。**begin と resume の唯一の共通経路** —
+     * 2 箇所に複製すると片方だけ直る (このリポジトリで繰り返している「同じ値が 2 箇所」)。
+     *
+     * [clip] が null (ライブ題材) なら重みは既定 (ピンク × K 特性)。トリムは同じ式。
+     * ループでは重みとトリムを保存せず毎回ここで計算し直す — 同じ一節から決定的に
+     * 同じ値が出る (同じであることは呼び出し側がハッシュで確かめた後)。
+     */
+    private suspend fun prepareLoudness(clip: Loaded?) {
+        val bands = baseBands
+        val ax = axes
+        val prep = withContext(compute) {
+            val w = if (clip == null) EqLoudness.defaultWeights() else weightsOf(clip)
+            val corners = eqFinderCornerOverlays(ax)
+                .map { EqFinderMaterialize.candidateBands(bands, ax, it) }
+            w to EqLoudness.sessionTrimDb(corners, w)
+        }
+        weights = prep.first
+        trimDb = prep.second
     }
 
     /** 保存済みセッションを消して新規の導入に戻す (確認は画面側で済んでいる)。 */
@@ -348,6 +403,7 @@ class EqFinderController(
         store.clear()
         saved = null
         resumeSongBlocked = false
+        materialLive = false
         songUri = null
         songName = null
         loaded = null
@@ -382,7 +438,7 @@ class EqFinderController(
         total = estimate
         // A を自動で鳴らす — 鳴っている音とラベルを常に一致させる (無音のまま答えさせない)。
         selected = EqFinderCandidate.A
-        aHeard = true
+        aHeard = heardNow()
         bHeard = false
         pushOverlay(trial.aOverlayDb10)
     }
@@ -393,15 +449,23 @@ class EqFinderController(
         val trial = session?.currentTrial() ?: return
         selected = candidate
         when (candidate) {
-            EqFinderCandidate.A -> {
-                aHeard = true
-                pushOverlay(trial.aOverlayDb10)
-            }
+            EqFinderCandidate.A -> pushOverlay(trial.aOverlayDb10)
+            EqFinderCandidate.B -> pushOverlay(trial.bOverlayDb10)
+        }
+        if (heardNow()) markHeard(candidate)
+    }
 
-            EqFinderCandidate.B -> {
-                bHeard = true
-                pushOverlay(trial.bOverlayDb10)
-            }
+    /**
+     * いま押した候補は実際に聞こえるか。ループは常に真 (自分で鳴らしている)。
+     * ライブは音楽が本当に鳴っている間 (デバウンス無しの生値) だけ —
+     * 無音のまま「聴いた」ことにすると、聴いていない音への回答が解錠される。
+     */
+    private fun heardNow(): Boolean = !materialLive || music.rawActive
+
+    private fun markHeard(candidate: EqFinderCandidate) {
+        when (candidate) {
+            EqFinderCandidate.A -> aHeard = true
+            EqFinderCandidate.B -> bHeard = true
         }
     }
 
@@ -507,7 +571,14 @@ class EqFinderController(
         }
         // 候補の押し直しは vm の出口変化の再押し込み (eqPreview を拾う) が担う。音だけ戻す。
         if (phase == EqFinderPhase.TRIAL && pause == EqFinderPause.DISCONNECTED) {
-            if (player.play()) pause = EqFinderPause.NONE
+            if (materialLive) {
+                // ライブはプレイヤーを持たない — play() の成否 (ここでは常に false) を見ると
+                // 永久に DISCONNECTED のまま残る。音楽の有無だけ見て直接戻す。
+                pause = if (music.active) EqFinderPause.NONE else EqFinderPause.NO_MUSIC
+                if (pause == EqFinderPause.NONE) markHeard(selected)
+            } else if (player.play()) {
+                pause = EqFinderPause.NONE
+            }
         }
     }
 
@@ -533,13 +604,31 @@ class EqFinderController(
         }
     }
 
-    /** 一時停止 (フォーカス喪失) からの再開ボタン。 */
+    /**
+     * 音楽の有無 (デバウンス済み) が変わった。ライブ題材の試行だけが反応する —
+     * 自動で立てて自動で下ろす。再開ボタンは無い (他人のアプリは再開させられない)。
+     * 切断が先に立っているときは上書きしない (戻し先は [onConnectionChanged] が決める)。
+     */
+    private fun onMusicChanged(active: Boolean) {
+        musicActive = active
+        if (!materialLive || phase != EqFinderPhase.TRIAL) return
+        if (!active) {
+            if (pause == EqFinderPause.NONE) pause = EqFinderPause.NO_MUSIC
+        } else if (pause == EqFinderPause.NO_MUSIC) {
+            pause = EqFinderPause.NONE
+            // 選択中の候補は押し込まれたまま音楽が戻った = ここで初めて聴けている。
+            markHeard(selected)
+        }
+    }
+
+    /** 一時停止 (フォーカス喪失) からの再開ボタン。ライブでは到達しない (フォーカスを取らない)。 */
     fun resumePlayback() {
         if (player.play()) pause = EqFinderPause.NONE
     }
 
     /** 画面を離れるときに必ず呼ぶ。**終了経路はすべて setEqPreview(null) を通す。** */
     fun dispose() {
+        music.stop()
         player.release()
         vm.setEqPreview(null)
     }
@@ -562,13 +651,16 @@ class EqFinderController(
 
     private fun persist() {
         val s = session ?: return
-        val uri = songUri?.toString() ?: return
+        val uri = songUri?.toString()
+        // ループの記録に一節の URI は必須 (無ければ再開で開けない)。ライブは持たない。
+        if (!materialLive && uri == null) return
         store.save(
             EqFinderSaved(
                 mac = mac,
-                uri = uri,
-                startMs = startMs,
-                lengthMs = EQ_FINDER_LOOP_MS,
+                live = materialLive,
+                uri = if (materialLive) null else uri,
+                startMs = if (materialLive) 0 else startMs,
+                lengthMs = if (materialLive) 0 else EQ_FINDER_LOOP_MS,
                 includeMid = includeMid,
                 fineTune = fineTune,
                 done = s.progress().first,
@@ -727,10 +819,15 @@ fun EqFinderScreen(
                         stringResource(R.string.eq_finder_entry_unavailable)
 
                     owner != key -> stringResource(R.string.eq_finder_entry_disconnected)
+                    // ライブ題材は音楽が流れていないと始められない (検知は試行と同じもの)。
+                    controller.materialLive && !controller.musicActive ->
+                        stringResource(R.string.eq_finder_no_music)
+
                     else -> null
                 }
                 EqFinderIntroContent(
                     ui = EqFinderIntroUi(
+                        materialLive = controller.materialLive,
                         songName = controller.songName,
                         loading = controller.loading,
                         loadFailed = controller.loadFailed,
@@ -743,9 +840,14 @@ fun EqFinderScreen(
                         fineTune = controller.fineTune,
                         startBlockedReason = blocked,
                         resume = controller.saved?.let {
-                            EqFinderResumeUi(done = it.done, blocked = controller.resumeBlocked())
+                            EqFinderResumeUi(
+                                done = it.done,
+                                live = it.live,
+                                blocked = controller.resumeBlocked(),
+                            )
                         },
                     ),
+                    onMaterial = controller::chooseMaterial,
                     onPickSong = { pickLauncher.launch(arrayOf("audio/*")) },
                     onStartMs = { controller.startMs = it },
                     onStartMsChosen = controller::startMsChosen,

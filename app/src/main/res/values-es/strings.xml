@@ -236,6 +236,11 @@
     <string name="eq_finder_entry_resume">Hay una prueba guardada. Ábrela para continuar.</string>
     <string name="eq_finder_entry_unavailable">El procesamiento de audio no está disponible ahora mismo para estos auriculares.</string>
     <string name="eq_finder_entry_disconnected">Conecta estos auriculares para empezar.</string>
+    <string name="eq_finder_material">Sonido para la prueba</string>
+    <string name="eq_finder_material_loop">Una parte de una canción en bucle</string>
+    <string name="eq_finder_material_live">La música que está sonando ahora</string>
+    <string name="eq_finder_material_live_desc">El sonido no se mide, así que el ajuste de volumen es menos preciso que con una parte en bucle.</string>
+    <string name="eq_finder_no_music">Reproduce una canción en tu aplicación de música para empezar.</string>
     <string name="eq_finder_song">Canción</string>
     <string name="eq_finder_song_none">Elige una canción que conozcas bien</string>
     <string name="eq_finder_song_loading">Leyendo el archivo…</string>
@@ -273,6 +278,7 @@
     <string name="eq_finder_suspend">Guardar y salir</string>
     <string name="eq_finder_paused_disconnected">En pausa: los auriculares no están conectados. La prueba sigue cuando vuelvan.</string>
     <string name="eq_finder_paused_focus">En pausa: otra aplicación ha tomado el sonido.</string>
+    <string name="eq_finder_paused_no_music">En pausa: la música se ha detenido. Pulsa reproducir en tu aplicación de música.</string>
     <string name="eq_finder_resume_playback">Reanudar</string>
     <string name="eq_finder_result_curve_cd">Curva del ecualizador antes y después</string>
     <string name="eq_finder_before">Antes</string>

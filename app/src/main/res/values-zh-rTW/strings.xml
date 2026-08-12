@@ -232,6 +232,11 @@
     <string name="eq_finder_entry_resume">有一個已儲存的測試。開啟即可繼續。</string>
     <string name="eq_finder_entry_unavailable">這副耳機目前無法使用音訊處理。</string>
     <string name="eq_finder_entry_disconnected">連接這副耳機即可開始。</string>
+    <string name="eq_finder_material">測試用的聲音</string>
+    <string name="eq_finder_material_loop">循環播放歌曲片段</string>
+    <string name="eq_finder_material_live">正在播放的音樂</string>
+    <string name="eq_finder_material_live_desc">不對聲音做測量，音量對齊的精度低於循環播放。</string>
+    <string name="eq_finder_no_music">在音樂應用程式裡播放一首歌即可開始。</string>
     <string name="eq_finder_song">歌曲</string>
     <string name="eq_finder_song_none">選一首你很熟的歌</string>
     <string name="eq_finder_song_loading">正在讀取檔案…</string>
@@ -267,6 +272,7 @@
     <string name="eq_finder_suspend">儲存並離開</string>
     <string name="eq_finder_paused_disconnected">已暫停：耳機未連接。耳機回來後測試會繼續。</string>
     <string name="eq_finder_paused_focus">已暫停：其他應用程式佔用了聲音。</string>
+    <string name="eq_finder_paused_no_music">已暫停：音樂停了。請在音樂應用程式裡繼續播放。</string>
     <string name="eq_finder_resume_playback">繼續播放</string>
     <string name="eq_finder_result_curve_cd">等化器前後對比曲線</string>
     <string name="eq_finder_before">之前</string>

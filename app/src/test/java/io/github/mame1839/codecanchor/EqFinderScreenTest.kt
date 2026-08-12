@@ -172,12 +172,26 @@ class EqFinderScreenTest {
         onText(R.string.eq_finder_answer_a).assertIsNotEnabled()
     }
 
+    /**
+     * ライブ題材の無音は自動で下りる一時停止で、**再開ボタンを出さない** — 他人のアプリの
+     * 再生はこちらから再開できない (「再生を再開」はフォーカス喪失専用で、ライブでは
+     * フォーカスを取らないので到達もしない)。
+     */
+    @Test
+    fun theNoMusicPauseHasNoResumeButton() {
+        showTrial(trial.copy(bothHeard = true, pause = EqFinderPause.NO_MUSIC))
+        onText(R.string.eq_finder_paused_no_music).assertExists()
+        compose.onNodeWithText(string(R.string.eq_finder_resume_playback)).assertDoesNotExist()
+        onText(R.string.eq_finder_answer_a).assertIsNotEnabled()
+    }
+
     // ------------------------------------------------------------------
     // 導入
     // ------------------------------------------------------------------
 
     private fun showIntro(
         ui: EqFinderIntroUi,
+        onMaterial: (Boolean) -> Unit = {},
         onBegin: () -> Unit = {},
         onResume: () -> Unit = {},
         onStartOver: () -> Unit = {},
@@ -187,6 +201,7 @@ class EqFinderScreenTest {
                 Column {
                     EqFinderIntroContent(
                         ui = ui,
+                        onMaterial = onMaterial,
                         onPickSong = {},
                         onStartMs = {},
                         onStartMsChosen = {},
@@ -234,6 +249,46 @@ class EqFinderScreenTest {
     fun aSongIsRequiredBeforeStarting() {
         showIntro(EqFinderIntroUi())
         onText(R.string.eq_finder_begin).assertIsNotEnabled()
+    }
+
+    /** ライブ題材に曲は要らない。曲の行ごと消え、音楽さえ流れていれば始められる。 */
+    @Test
+    fun theLiveMaterialNeedsNoSong() {
+        var begun = false
+        showIntro(EqFinderIntroUi(materialLive = true), onBegin = { begun = true })
+        compose.onNodeWithText(string(R.string.eq_finder_song)).assertDoesNotExist()
+        // 精度が下がることの 1 行は「始める前に」のノートに出続ける。
+        onText(R.string.eq_finder_material_live_desc).assertExists()
+        onText(R.string.eq_finder_begin).assertIsEnabled().performSemanticsAction(SemanticsActions.OnClick)
+        assertTrue(begun)
+    }
+
+    /** 音楽が流れていないライブは、既存の門 (startBlockedReason) の形で塞がる。 */
+    @Test
+    fun theLiveMaterialIsGatedOnPlayingMusic() {
+        showIntro(
+            EqFinderIntroUi(
+                materialLive = true,
+                startBlockedReason = "play music first",
+            ),
+        )
+        onText(R.string.eq_finder_begin).assertIsNotEnabled()
+        compose.onNodeWithText("play music first").assertExists()
+    }
+
+    /** 題材の選択肢に、精度が下がることの説明が付いている (選ぶ瞬間に読める)。 */
+    @Test
+    fun choosingTheLiveMaterialShowsItsPrecisionNote() {
+        var chosen: Boolean? = null
+        showIntro(EqFinderIntroUi(), onMaterial = { chosen = it })
+        onText(R.string.eq_finder_material).performSemanticsAction(SemanticsActions.OnClick)
+        compose.onNode(
+            hasText(string(R.string.eq_finder_material_live_desc)) and hasAnyAncestor(isDialog()),
+        ).assertExists()
+        compose.onNode(
+            hasText(string(R.string.eq_finder_material_live)) and hasAnyAncestor(isDialog()),
+        ).performSemanticsAction(SemanticsActions.OnClick)
+        assertEquals(true, chosen)
     }
 
     @Test

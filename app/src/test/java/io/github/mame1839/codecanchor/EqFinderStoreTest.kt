@@ -9,6 +9,7 @@ import io.github.mame1839.codecanchor.core.EqSettings
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -51,9 +52,52 @@ class EqFinderStoreTest {
         assertEquals(expected, actual.copy(session = expected.session))
     }
 
+    private val liveRecord = record.copy(
+        live = true,
+        uri = null,
+        startMs = 0,
+        lengthMs = 0,
+        pcmHash = 0L,
+    )
+
     @Test
     fun recordRoundTrips() {
         assertSame(record, EqFinderSaved.decode(record.encode()))
+    }
+
+    @Test
+    fun liveRecordRoundTrips() {
+        assertSame(liveRecord, EqFinderSaved.decode(liveRecord.encode()))
+    }
+
+    /**
+     * **材料キーの無い v1 の記録はループとして読める** (後方互換)。ループの記録の encode は
+     * 従来と同じキー並びのままなので、旧ビルドとの行き来で中断データが消えない。
+     */
+    @Test
+    fun aV1RecordWithoutTheMaterialKeyReadsAsLoop() {
+        val legacy = JSONObject(record.encode())
+        assertTrue("前提が崩れた: ループの記録に材料キーが入っている", !legacy.has("live"))
+        val decoded = EqFinderSaved.decode(legacy.toString())
+        requireNotNull(decoded)
+        assertTrue(!decoded.live)
+        assertSame(record, decoded)
+    }
+
+    /**
+     * ライブの記録は uri キーを持たない。**これが旧ビルドの安全な劣化の仕組み** —
+     * このキーを知らない版の decode は uri 欠けで null (「保存なし」) に倒れ、
+     * 壊れた「続きから」を出さない。ここが変わると劣化の経路が消える。
+     */
+    @Test
+    fun aLiveRecordCarriesNoSongKeysForOldBuildsToTripOn() {
+        val o = JSONObject(liveRecord.encode())
+        assertTrue(!o.has("uri"))
+        assertTrue(!o.has("start"))
+        assertTrue(!o.has("len"))
+        // 紛れ込んだ uri は捨てる — 動きは材料キーだけで決まる。
+        val stray = JSONObject(liveRecord.encode()).put("uri", "content://x").toString()
+        assertNull(EqFinderSaved.decode(stray)!!.uri)
     }
 
     @Test

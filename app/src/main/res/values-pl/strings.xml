@@ -238,6 +238,11 @@
     <string name="eq_finder_entry_resume">Czeka zapisany test. Otwórz, aby kontynuować.</string>
     <string name="eq_finder_entry_unavailable">Przetwarzanie dźwięku jest teraz niedostępne dla tych słuchawek.</string>
     <string name="eq_finder_entry_disconnected">Podłącz te słuchawki, aby zacząć.</string>
+    <string name="eq_finder_material">Dźwięk do testu</string>
+    <string name="eq_finder_material_loop">Zapętlony fragment utworu</string>
+    <string name="eq_finder_material_live">Muzyka, która gra teraz</string>
+    <string name="eq_finder_material_live_desc">Dźwięk nie jest mierzony, więc wyrównanie głośności jest mniej dokładne niż z zapętlonym fragmentem.</string>
+    <string name="eq_finder_no_music">Aby zacząć, włącz utwór w aplikacji muzycznej.</string>
     <string name="eq_finder_song">Utwór</string>
     <string name="eq_finder_song_none">Wybierz dobrze znany utwór</string>
     <string name="eq_finder_song_loading">Odczytywanie pliku…</string>
@@ -276,6 +281,7 @@
     <string name="eq_finder_suspend">Zapisz i wyjdź</string>
     <string name="eq_finder_paused_disconnected">Wstrzymano: słuchawki nie są podłączone. Test ruszy dalej, gdy wrócą.</string>
     <string name="eq_finder_paused_focus">Wstrzymano: inna aplikacja przejęła dźwięk.</string>
+    <string name="eq_finder_paused_no_music">Wstrzymano: muzyka się zatrzymała. Wznów odtwarzanie w aplikacji muzycznej.</string>
     <string name="eq_finder_resume_playback">Wznów</string>
     <string name="eq_finder_result_curve_cd">Krzywa korektora przed i po</string>
     <string name="eq_finder_before">Przed</string>

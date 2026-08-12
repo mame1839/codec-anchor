@@ -232,6 +232,11 @@
     <string name="eq_finder_entry_resume">저장된 테스트가 있습니다. 열면 이어서 할 수 있습니다.</string>
     <string name="eq_finder_entry_unavailable">지금은 이 이어폰에서 오디오 처리를 사용할 수 없습니다.</string>
     <string name="eq_finder_entry_disconnected">이 이어폰을 연결하면 시작할 수 있습니다.</string>
+    <string name="eq_finder_material">테스트에 쓸 소리</string>
+    <string name="eq_finder_material_loop">곡의 한 부분을 반복 재생</string>
+    <string name="eq_finder_material_live">지금 재생 중인 음악</string>
+    <string name="eq_finder_material_live_desc">소리를 측정하지 않고 음량을 맞추므로, 정확도는 반복 재생보다 떨어집니다.</string>
+    <string name="eq_finder_no_music">음악 앱에서 곡을 재생하면 시작할 수 있습니다.</string>
     <string name="eq_finder_song">곡</string>
     <string name="eq_finder_song_none">잘 아는 곡을 선택하세요</string>
     <string name="eq_finder_song_loading">파일을 읽는 중…</string>
@@ -267,6 +272,7 @@
     <string name="eq_finder_suspend">저장하고 나가기</string>
     <string name="eq_finder_paused_disconnected">일시정지: 이어폰이 연결되어 있지 않습니다. 다시 연결되면 이어집니다.</string>
     <string name="eq_finder_paused_focus">일시정지: 다른 앱이 소리를 가져갔습니다.</string>
+    <string name="eq_finder_paused_no_music">일시정지: 음악이 멈췄습니다. 음악 앱에서 다시 재생해 주세요.</string>
     <string name="eq_finder_resume_playback">다시 시작</string>
     <string name="eq_finder_result_curve_cd">적용 전과 후의 이퀄라이저 곡선</string>
     <string name="eq_finder_before">적용 전</string>

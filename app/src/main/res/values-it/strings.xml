@@ -236,6 +236,11 @@
     <string name="eq_finder_entry_resume">C\'è un test salvato. Apri per continuare.</string>
     <string name="eq_finder_entry_unavailable">L\'elaborazione audio al momento non è disponibile per questi auricolari.</string>
     <string name="eq_finder_entry_disconnected">Collega questi auricolari per iniziare.</string>
+    <string name="eq_finder_material">Suono per il test</string>
+    <string name="eq_finder_material_loop">Una parte di un brano in loop</string>
+    <string name="eq_finder_material_live">La musica in riproduzione adesso</string>
+    <string name="eq_finder_material_live_desc">Il suono non viene misurato, quindi il pareggio del volume è meno preciso rispetto a una parte in loop.</string>
+    <string name="eq_finder_no_music">Riproduci un brano nella tua app di musica per iniziare.</string>
     <string name="eq_finder_song">Brano</string>
     <string name="eq_finder_song_none">Scegli un brano che conosci bene</string>
     <string name="eq_finder_song_loading">Lettura del file…</string>
@@ -273,6 +278,7 @@
     <string name="eq_finder_suspend">Salva ed esci</string>
     <string name="eq_finder_paused_disconnected">In pausa: gli auricolari non sono collegati. Il test riprende al loro ritorno.</string>
     <string name="eq_finder_paused_focus">In pausa: un\'altra app ha preso l\'audio.</string>
+    <string name="eq_finder_paused_no_music">In pausa: la musica si è fermata. Premi play nella tua app di musica.</string>
     <string name="eq_finder_resume_playback">Riprendi</string>
     <string name="eq_finder_result_curve_cd">Curva dell\'equalizzatore prima e dopo</string>
     <string name="eq_finder_before">Prima</string>

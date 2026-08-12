@@ -234,6 +234,11 @@
     <string name="eq_finder_entry_resume">Ein gespeicherter Test wartet. Zum Fortsetzen öffnen.</string>
     <string name="eq_finder_entry_unavailable">Die Audioverarbeitung ist für diese Kopfhörer zurzeit nicht nutzbar.</string>
     <string name="eq_finder_entry_disconnected">Zum Starten diese Kopfhörer verbinden.</string>
+    <string name="eq_finder_material">Klang für den Test</string>
+    <string name="eq_finder_material_loop">Eine geloopte Stelle aus einem Titel</string>
+    <string name="eq_finder_material_live">Die gerade laufende Musik</string>
+    <string name="eq_finder_material_live_desc">Der Klang wird nicht vermessen, daher ist der Lautstärkeabgleich weniger genau als mit einer geloopten Stelle.</string>
+    <string name="eq_finder_no_music">Zum Starten in der Musik-App einen Titel abspielen.</string>
     <string name="eq_finder_song">Titel</string>
     <string name="eq_finder_song_none">Einen gut bekannten Titel wählen</string>
     <string name="eq_finder_song_loading">Datei wird gelesen…</string>
@@ -270,6 +275,7 @@
     <string name="eq_finder_suspend">Speichern und zurück</string>
     <string name="eq_finder_paused_disconnected">Pausiert: Die Kopfhörer sind nicht verbunden. Der Test läuft weiter, sobald sie zurück sind.</string>
     <string name="eq_finder_paused_focus">Pausiert: Eine andere App hat den Ton übernommen.</string>
+    <string name="eq_finder_paused_no_music">Pausiert: Die Musik läuft nicht mehr. In der Musik-App wieder abspielen, dann geht es weiter.</string>
     <string name="eq_finder_resume_playback">Fortsetzen</string>
     <string name="eq_finder_result_curve_cd">Kurve des Equalizers vorher und nachher</string>
     <string name="eq_finder_before">Vorher</string>
