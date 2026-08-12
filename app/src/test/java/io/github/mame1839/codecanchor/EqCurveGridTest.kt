@@ -3,8 +3,11 @@ package io.github.mame1839.codecanchor
 import io.github.mame1839.codecanchor.core.AutoEqParser
 import io.github.mame1839.codecanchor.core.EqBand
 import io.github.mame1839.codecanchor.core.EqCurveGrid
+import io.github.mame1839.codecanchor.core.EqPrecision
 import io.github.mame1839.codecanchor.core.EqSolver
 import io.github.mame1839.codecanchor.core.EqUnits
+import io.github.mame1839.codecanchor.ui.centreGainsDb10
+import io.github.mame1839.codecanchor.ui.graphicResponse
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -12,6 +15,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 import kotlin.math.abs
+import kotlin.math.exp
 import kotlin.math.ln
 
 /**
@@ -241,6 +245,61 @@ class EqCurveGridTest {
         val curve = EqCurveGrid.graphicCurveDb(loud)
         assertTrue(EqCurveGrid.valid(curve))
         assertTrue("上限まで持ち上がっている", curve.max() >= EqCurveGrid.MAX_ABS_DB - 1e-9)
+    }
+
+    // --- 絵と音 -------------------------------------------------------------
+
+    /**
+     * **高精度のとき、絵は送るものと同じ折れ線を描く。**規則が同じだけでは足りない —
+     * 頂点の吸着まで含めて同じでないと、絵と音が「半ステップ × 傾き」ずれる。
+     */
+    @Test
+    fun theHighPrecisionPlotDrawsExactlyWhatWeSend() {
+        for (bands in listOf(tilted(), zigzag())) {
+            val drawn = graphicResponse(bands, EqPrecision.HIGH)
+            val vertices = EqCurveGrid.knobPolyline(bands)
+            // 絵の標本は「吸着後の中心を等間隔に並べた軸」の上にある。同じ軸で折れ線を読めば一致する。
+            val last = bands.size - 1
+            val perBand = (drawn.size - 1) / last
+            for (s in drawn.indices) {
+                val i = (s / perBand).coerceAtMost(last - 1)
+                val t = (s - i * perBand).toDouble() / perBand
+                val hz = exp(ln(vertices[i].first) * (1 - t) + ln(vertices[i + 1].first) * t)
+                assertEquals("標本 $s", AutoEqParser.interpolate(vertices, hz), drawn[s], 1e-12)
+            }
+        }
+    }
+
+    /**
+     * **摘みの点は方式で動かない。**「摘みの値 = そのバンド中心で実際に鳴る音量」は
+     * 既存の契約で、方式の切り替えで動くと**摘みと絵の不一致が別の形で戻ってくる。**
+     */
+    @Test
+    fun theKnobDotsDoNotMoveBetweenTheTwoModes() {
+        for (bands in listOf(tilted(), zigzag())) {
+            val standard = centreGainsDb10(graphicResponse(bands, EqPrecision.STANDARD), bands.size)
+            val high = centreGainsDb10(graphicResponse(bands, EqPrecision.HIGH), bands.size)
+            assertEquals(EqSolver.graphicTargetsDb10(bands).toList(), standard.toList())
+            assertEquals(standard.toList(), high.toList())
+        }
+    }
+
+    /** 標準は今までどおり biquad の合成応答 (退行が無いこと)。 */
+    @Test
+    fun theStandardPlotStillDrawsTheBiquadResponse() {
+        val bands = tilted()
+        val drawn = graphicResponse(bands, EqPrecision.STANDARD)
+        val last = bands.size - 1
+        val perBand = (drawn.size - 1) / last
+        val lnFreqs = bands.map { ln(it.freqHz.toDouble()) }
+        for (s in drawn.indices) {
+            val i = (s / perBand).coerceAtMost(last - 1)
+            val t = (s - i * perBand).toDouble() / perBand
+            val hz = exp(lnFreqs[i] * (1 - t) + lnFreqs[i + 1] * t)
+            assertEquals("標本 $s", EqSolver.combinedResponseDb(bands, hz), drawn[s], 1e-12)
+        }
+        // 既定の引数は標準。既存の呼び出し (テストを含む) が黙って高精度に変わらないこと。
+        assertEquals(drawn.toList(), graphicResponse(bands).toList())
     }
 
     // --- 材料 ---------------------------------------------------------------

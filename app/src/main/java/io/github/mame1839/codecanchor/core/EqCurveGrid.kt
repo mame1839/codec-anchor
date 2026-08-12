@@ -84,13 +84,28 @@ object EqCurveGrid {
      */
     fun graphicCurveDb(bands: List<EqBand>, fs: Int = EqSolver.DEFAULT_FS): DoubleArray {
         if (bands.isEmpty()) return DoubleArray(POINTS)
-        val knobs = EqSolver.graphicTargetsDb10(bands, fs)
-        val vertices = bands.mapIndexed { i, band ->
-            snapHz(band.freqHz.toDouble()) to knobs[i].toDouble() / EqUnits.GAIN_SCALE
-        }.sortedBy { it.first }
+        val vertices = knobPolyline(bands, fs)
         return DoubleArray(POINTS) { i ->
             AutoEqParser.interpolate(vertices, hzAt(i)).coerceIn(-MAX_ABS_DB, MAX_ABS_DB)
         }
+    }
+
+    /**
+     * 摘みの折れ線の頂点 (周波数, dB)。**送る側も描く側もここから引く。**
+     *
+     * 頂点の周波数は [snapHz] で格子へ寄せてある。**描く側も吸着後の値を使うこと** —
+     * 吸着前の折れ線を描くと、絵と音が「半ステップ × その区間の傾き」だけずれる
+     * (31 バンドの ±12 ジグザグで 0.9 dB 級)。吸着で動くのは周波数のほうで、
+     * 絵の上では 340 dp 幅の 0.4 dp、目では追えない。
+     *
+     * 並びは周波数の昇順。グラフィックのバンドは常に昇順なので入れ替わらないが、
+     * [AutoEqParser.interpolate] が昇順を要求するので念のため並べ替える。
+     */
+    fun knobPolyline(bands: List<EqBand>, fs: Int = EqSolver.DEFAULT_FS): List<Pair<Double, Double>> {
+        val knobs = EqSolver.graphicTargetsDb10(bands, fs)
+        return bands.mapIndexed { i, band ->
+            snapHz(band.freqHz.toDouble()) to knobs[i].toDouble() / EqUnits.GAIN_SCALE
+        }.sortedBy { it.first }
     }
 
     /**
