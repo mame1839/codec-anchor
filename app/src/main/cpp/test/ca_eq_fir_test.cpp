@@ -871,12 +871,20 @@ void checkKernel(Report& r) {
         std::memcpy(rig.filt0.p, fb.filt.p,
                     sizeof(float) * static_cast<size_t>(caeq::firPartitions(taps, p)) *
                         static_cast<size_t>(2 * p));
-        const int nblk = caeq::firPartitions(taps, p) + 2;
+        // インパルスを 2 発: ブロック先頭 (t=0) と末尾 (t=p-1)。先頭は「h[0] が同じ
+        // ブロックの先頭に出る = 遅延 0」の証明、末尾は h がブロック境界を越えて
+        // 尻尾 (OLA) 経路を通ることの証明 — 先頭のインパルスはセグメント畳み込みの
+        // 後半がゼロになり、尻尾を捨てても通ってしまう (壊し実験で確認した穴)。
+        const int nblk = caeq::firPartitions(taps, p) + 3;
         std::vector<float> in(static_cast<size_t>(p), 0.0f);
         std::vector<float> out(static_cast<size_t>(p));
         std::vector<float> got;
         for (int b = 0; b < nblk; b++) {
-            in[0] = (b == 0) ? 1.0f : 0.0f;
+            std::fill(in.begin(), in.end(), 0.0f);
+            if (b == 0) {
+                in[0] = 1.0f;
+                in[static_cast<size_t>(p - 1)] = 0.5f;
+            }
             rig.k.processBlock(in.data(), out.data(), 0, -1, 0.0f, 0.0f);
             got.insert(got.end(), out.begin(), out.end());
         }
@@ -886,14 +894,18 @@ void checkKernel(Report& r) {
         }
         double worst = 0.0;
         for (int i = 0; i < nblk * p; i++) {
-            const double want = i < taps ? static_cast<double>(fb.d.ir()[i]) : 0.0;
-            worst = std::fmax(
-                worst, std::fabs(static_cast<double>(got[static_cast<size_t>(i)]) - want));
+            const double h1 = i < taps ? static_cast<double>(fb.d.ir()[i]) : 0.0;
+            const double h2 = (i >= p - 1 && i - (p - 1) < taps)
+                                  ? 0.5 * static_cast<double>(fb.d.ir()[i - (p - 1)])
+                                  : 0.0;
+            worst = std::fmax(worst, std::fabs(static_cast<double>(
+                                         got[static_cast<size_t>(i)]) -
+                                     (h1 + h2)));
         }
         const int k_total = caeq::firPartitions(taps, p);
         r.check(worst / scale < 3e-6,
-                "P=%-5d K=%-3d%s インパルス→設計 h と一致 (相対 %.1e)、遅延 0", p, k_total,
-                (taps % p) ? " (端数)" : "      ", worst / scale);
+                "P=%-5d K=%-3d%s インパルス (先頭 + 末尾)→設計 h と一致 (相対 %.1e)、遅延 0",
+                p, k_total, (taps % p) ? " (端数)" : "      ", worst / scale);
     }
 
     {   // 直接畳み込み (double) との突き合わせ。任意の h、端数分割、乱数入力
