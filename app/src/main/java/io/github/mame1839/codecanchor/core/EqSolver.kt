@@ -2,6 +2,7 @@ package io.github.mame1839.codecanchor.core
 
 import kotlin.math.abs
 import kotlin.math.cos
+import kotlin.math.exp
 import kotlin.math.ln
 import kotlin.math.log10
 import kotlin.math.pow
@@ -32,6 +33,20 @@ object EqSolver {
     // 「+12.0 に合わせたのに +11.9 と出る」が起きる。
     private const val REFINE_SWEEPS = 8
 
+    // 取り込みのフィット (fitCurve) の評価グリッド。20 Hz〜最終バンド中心を対数で刻む。
+    // 2000 は eq-spec §1 の実測 (tools/eq/12_fit_redo.py) と同じ点数で、127 点の
+    // AutoEQ 曲線には十分に密。
+    private const val FIT_GRID_POINTS = 2000
+
+    // 固定基底 (各バンド +6 dB の実応答をそのゲインで割った列) での減衰付き反復。
+    // 12_fit_redo.py と同じ方式。solveOnce と違ってヤコビアンを動作点で作り直さないのは、
+    // 摘みの契約 (中心厳密一致) と違ってフィットは妥協解でよく、毎回ヤコビアンを作る
+    // ガウス・ニュートンと比べても DUNU の実測で差が 0.03 dB 以下だったため。
+    // ここを solveOnce に「揃える」修正も、solveOnce をこちらに「揃える」修正も誤り。
+    private const val FIT_ITERATIONS = 12
+    private const val FIT_DAMPING = 0.6
+    private const val FIT_REFERENCE_GAIN_DB = 6.0
+
     /**
      * 求解の結果。
      *
@@ -60,6 +75,10 @@ object EqSolver {
      *     密なバンドほど隣との重なりを増やさないと Nyquist 側の潰れが谷になる
      * この規則を消すと、次に測り直した人が旧表に戻してしまう。
      * 谷の上限は EqSolverTest.flatTargetsStayFlatBetweenTheCentres が固定している。
+     *
+     * 各行の DUNU の値は選定時の実測で、当時の取り込み (中心サンプル) の実現誤差。
+     * 取り込みは今は曲線全体フィット ([fitCurve]) なので現行の実現誤差はより小さい
+     * (AutoEqImportFitTest が上限を固定)。Q の選定根拠としてはこの表のまま。
      */
     fun defaultQ(bandCount: Int): Double = when (bandCount) {
         31 -> 1.41 // 1/3 oct。平ら+12 のずれ 2.9 dB (16k 超のみ。16k までは 0.6) / DUNU 2.2 dB / 条件数 60
@@ -140,6 +159,161 @@ object EqSolver {
         // 0.01 の刻みに乗らないとき (0.5 * 1.5^2 = 1.125 -> q100 112)、solution.q で詰めると
         // 読み戻し (q100 の応答) が 1 目盛りずれて「-12.0 にしたのに -11.9」が再発する。
         return refineToTargets(bands, targetDb10, q100.toDouble() / EqUnits.Q_SCALE, fs)
+    }
+
+    /**
+     * [fitCurve] の結果。[offsetDb] は曲線から分離した広帯域オフセット。
+     * peaking は DC と Nyquist で必ず 0 dB になるので、広帯域のオフセットはバンドでは
+     * 作れない — プリアンプが唯一の置き場 (呼び出し側が preampDb10 に移す)。
+     */
+    class CurveFit(val bands: List<EqBand>, val offsetDb: Double)
+
+    /**
+     * 目標の曲線 (dB) に合成応答が最も近づくバンドを最小二乗で決める。**取り込み専用。**
+     *
+     * 摘みの操作 ([withGraphicTarget]) の「バンド中心で厳密一致」とは目的が違う —
+     * 取り込みの目的は曲線全体の再現で、中心の値だけを合わせると中心の間で曲線から離れる
+     * (DUNU Titan S の 127 点で実測 2.2 dB。フィットなら 20 Hz〜20 kHz で 1.5 dB /
+     * 10 kHz 以下 0.4 dB。上限は AutoEqImportFitTest が固定)。取り込んだ後の摘みは
+     * 「バンド中心での実現値」として実応答から読み直されるので、摘みが曲線に乗る
+     * 不変条件はそのまま。
+     *
+     * - **フィットの範囲は 20 Hz〜最終バンド中心。**バンドの届かない裾 (5〜15 バンドの
+     *   16 kHz より上) を目標に入れると、届かない裾を追って届く範囲が歪む
+     *   (15 バンドで 10 kHz 以下の誤差が 0.69 → 2.92 dB に悪化する実測)
+     * - **オフセット (曲線の平均) を先に分離して、形だけを解く。**オフセットを未知数として
+     *   一緒に解くと「全バンド同値」の応答がほぼ平らであること (§7) と共線になり、解が
+     *   バンド全部 +9 dB / オフセット -16 dB のような分解へ流れる — 鳴る音は同じでも、
+     *   摘みとプリアンプが UI の可動域 (±12 / -30〜0) から出る
+     * - 解の上限は solve() と同じ [SOLVED_GAIN_LIMIT_DB]。収まらなければ Q を
+     *   [Q_ESCALATION] 倍して解き直し、それでも収まらなければ素朴な値 (中心サンプル) に戻す
+     * - 最後に、量子化後の実応答の誤差が上下対称になる位置へオフセットだけを寄せる
+     *   (バンドは動かさないので摘みの値には影響しない)
+     */
+    fun fitCurve(
+        curveDb: (Double) -> Double,
+        freqs: List<Int>,
+        q: Double,
+        fs: Int = DEFAULT_FS,
+    ): CurveFit {
+        if (freqs.isEmpty()) return CurveFit(emptyList(), 0.0)
+        val hiHz = minOf(20_000.0, freqs.last().toDouble())
+        val atHz = DoubleArray(FIT_GRID_POINTS) { i ->
+            exp(ln(20.0) + (ln(hiHz) - ln(20.0)) * i / (FIT_GRID_POINTS - 1.0))
+        }
+        val target = DoubleArray(atHz.size) { curveDb(atHz[it]) }
+        val offset = target.average()
+        val shape = DoubleArray(atHz.size) { target[it] - offset }
+
+        var currentQ = q
+        repeat(Q_ESCALATION_TRIES) {
+            // 保存される量子化後の Q でフィットする (solveBands の詰めと同じ理由 —
+            // 解いた Q と保存した Q がずれると、読み戻した応答が 1 目盛りずれる)。
+            val q100 = (currentQ * EqUnits.Q_SCALE).toInt().coerceIn(EqBand.Q_RANGE)
+            val gains = fitShape(shape, atHz, freqs, q100.toDouble() / EqUnits.Q_SCALE, fs)
+            if (gains != null) return quantizedFit(gains, q100, shape, atHz, freqs, offset, fs)
+            currentQ *= Q_ESCALATION
+        }
+        // Q を上げても収まらない目標。solve() と同じく素朴な値 (中心サンプル) に戻す。
+        // 暴れた解を渡すより、効きが目標より強いほうがまだ説明できる。
+        val q100 = (q * EqUnits.Q_SCALE).toInt().coerceIn(EqBand.Q_RANGE)
+        val naive = DoubleArray(freqs.size) { curveDb(freqs[it].toDouble()) - offset }
+        return quantizedFit(naive, q100, shape, atHz, freqs, offset, fs)
+    }
+
+    /**
+     * 形 (オフセット除去済み) への最小二乗フィット。基底は固定のまま、残差は本物の応答で
+     * 測り直す (裾がゲインに比例しないのは [solveOnce] と同じ事情)。正規方程式の左辺は
+     * 反復を通して不変なので 1 回だけ作る。
+     *
+     * 解が [SOLVED_GAIN_LIMIT_DB] のクランプに張り付いたままなら null
+     * (呼び出し側が Q を上げて解き直す)。
+     */
+    private fun fitShape(
+        shape: DoubleArray,
+        atHz: DoubleArray,
+        freqs: List<Int>,
+        q: Double,
+        fs: Int,
+    ): DoubleArray? {
+        val n = freqs.size
+        val rows = atHz.size
+        val grid = CentreGrid(atHz, freqs, q, fs)
+        val basis = Array(rows) { i ->
+            DoubleArray(n) { j -> grid.responseDb(i, j, FIT_REFERENCE_GAIN_DB) / FIT_REFERENCE_GAIN_DB }
+        }
+        val normal = Array(n) { DoubleArray(n) }
+        for (r in 0 until rows) {
+            val row = basis[r]
+            for (i in 0 until n) {
+                val ri = row[i]
+                if (ri == 0.0) continue
+                val ni = normal[i]
+                for (j in i until n) ni[j] += ri * row[j]
+            }
+        }
+        for (i in 0 until n) for (j in 0 until i) normal[i][j] = normal[j][i]
+
+        fun lstsq(residual: DoubleArray): DoubleArray? {
+            val rhs = DoubleArray(n)
+            for (r in 0 until rows) {
+                val w = residual[r]
+                if (w == 0.0) continue
+                val row = basis[r]
+                for (j in 0 until n) rhs[j] += row[j] * w
+            }
+            return solveLinear(normal, rhs)
+        }
+
+        val gains = lstsq(shape) ?: return null
+        for (j in 0 until n) {
+            gains[j] = gains[j].coerceIn(-SOLVED_GAIN_LIMIT_DB, SOLVED_GAIN_LIMIT_DB)
+        }
+        for (iteration in 0 until FIT_ITERATIONS) {
+            val residual = DoubleArray(rows) { i -> shape[i] - grid.combinedAt(i, gains) }
+            val delta = lstsq(residual) ?: break
+            for (j in 0 until n) {
+                gains[j] = (gains[j] + FIT_DAMPING * delta[j])
+                    .coerceIn(-SOLVED_GAIN_LIMIT_DB, SOLVED_GAIN_LIMIT_DB)
+            }
+        }
+        // 張り付いた解は上限を超えたがっている。ちょうど上限ぴったりの解も巻き添えで
+        // エスカレートするが、実プリセットの解は一桁 dB (DUNU で 10.4) なので幅に実害は無い。
+        return if (gains.all { abs(it) < SOLVED_GAIN_LIMIT_DB }) gains else null
+    }
+
+    /**
+     * フィット解を 0.1 dB に量子化してバンドに組み、量子化後の実応答の誤差が上下対称に
+     * なる位置へオフセットを寄せる。詰め ([refineToTargets]) はしない — フィットには
+     * 「この点に厳密に合わせる」目標が無く、摘みは実応答から読み直されるため。
+     */
+    private fun quantizedFit(
+        gainsDb: DoubleArray,
+        q100: Int,
+        shape: DoubleArray,
+        atHz: DoubleArray,
+        freqs: List<Int>,
+        offsetDb: Double,
+        fs: Int,
+    ): CurveFit {
+        val bands = freqs.mapIndexed { i, hz ->
+            EqBand(
+                freqHz = hz.coerceIn(EqBand.FREQ_RANGE),
+                q100 = q100,
+                gainDb10 = Math.round(gainsDb[i] * EqUnits.GAIN_SCALE).toInt()
+                    .coerceIn(EqBand.GAIN_RANGE),
+            )
+        }
+        val grid = CentreGrid(atHz, freqs, q100.toDouble() / EqUnits.Q_SCALE, fs)
+        val quantized = DoubleArray(bands.size) { bands[it].gainDb10.toDouble() / EqUnits.GAIN_SCALE }
+        var maxErr = Double.NEGATIVE_INFINITY
+        var minErr = Double.POSITIVE_INFINITY
+        for (i in atHz.indices) {
+            val err = grid.combinedAt(i, quantized) - shape[i]
+            if (err > maxErr) maxErr = err
+            if (err < minErr) minErr = err
+        }
+        return CurveFit(bands, offsetDb - (maxErr + minErr) / 2.0)
     }
 
     /**
@@ -247,7 +421,9 @@ object EqSolver {
     }
 
     /**
-     * バンド中心どうしの応答を、ゲインだけ変えて何度も評価するための前計算。
+     * 評価点 × バンドの応答を、ゲインだけ変えて何度も評価するための前計算。
+     * 求解 (solveOnce) は評価点 = バンド中心の正方で、取り込みのフィット (fitShape) は
+     * 評価点 = 密な対数グリッドの長方形で使う。
      *
      * 求解はドラッグ 1 コマごとに走る (`EqCurve.withPreview`)。素直に
      * [peakingResponseDb] を n² 回ずつ呼ぶと 31 バンドで 1 コマ 1.9 ms 掛かり、
@@ -265,23 +441,27 @@ object EqSolver {
      * **[peakingResponseDb] と同じ値を返すことを EqSolverTest が突き合わせている。**
      * 式を触ったら必ずそのテストを見ること。
      */
-    internal class CentreGrid(freqs: List<Int>, q: Double, val fs: Int) {
+    internal class CentreGrid(atHz: DoubleArray, freqs: List<Int>, q: Double, val fs: Int) {
+        constructor(freqs: List<Int>, q: Double, fs: Int) :
+            this(DoubleArray(freqs.size) { freqs[it].toDouble() }, freqs, q, fs)
+
         val n = freqs.size
-        private val p = DoubleArray(n * n)
-        private val u = DoubleArray(n * n)
-        private val r = DoubleArray(n * n)
-        private val v = DoubleArray(n * n)
+        private val rows = atHz.size
+        private val p = DoubleArray(rows * n)
+        private val u = DoubleArray(rows * n)
+        private val r = DoubleArray(rows * n)
+        private val v = DoubleArray(rows * n)
         private val alpha = DoubleArray(n)
 
         init {
-            // 評価点 (i) 側の三角関数はバンド (j) に依存しない。j の内側で回すと n^2 回
+            // 評価点 (i) 側の三角関数はバンド (j) に依存しない。j の内側で回すと rows×n 回
             // 計算することになるので先に出しておく。
-            val cosW = DoubleArray(n)
-            val sinW = DoubleArray(n)
-            val cos2W = DoubleArray(n)
-            val sin2W = DoubleArray(n)
-            for (i in 0 until n) {
-                val w = 2.0 * Math.PI * freqs[i] / fs
+            val cosW = DoubleArray(rows)
+            val sinW = DoubleArray(rows)
+            val cos2W = DoubleArray(rows)
+            val sin2W = DoubleArray(rows)
+            for (i in 0 until rows) {
+                val w = 2.0 * Math.PI * atHz[i] / fs
                 cosW[i] = cos(w)
                 sinW[i] = sin(w)
                 cos2W[i] = cos(2 * w)
@@ -291,7 +471,7 @@ object EqSolver {
                 val w0 = 2.0 * Math.PI * freqs[j] / fs
                 alpha[j] = sin(w0) / (2.0 * q)
                 val cosW0 = cos(w0)
-                for (i in 0 until n) {
+                for (i in 0 until rows) {
                     val k = i * n + j
                     p[k] = 1 - 2 * cosW0 * cosW[i] + cos2W[i]
                     u[k] = 1 - cos2W[i]
@@ -301,7 +481,7 @@ object EqSolver {
             }
         }
 
-        /** バンド [j] を [gainDb] にしたときの、バンド中心 [i] での応答 (dB)。 */
+        /** バンド [j] を [gainDb] にしたときの、評価点 [i] での応答 (dB)。 */
         fun responseDb(i: Int, j: Int, gainDb: Double): Double {
             if (gainDb == 0.0) return 0.0
             val a = 10.0.pow(gainDb / 40.0)
@@ -317,7 +497,7 @@ object EqSolver {
             return 10.0 * log10((numRe * numRe + numIm * numIm) / den)
         }
 
-        /** バンド全部を重ねた、バンド中心 [i] での応答 (dB)。 */
+        /** バンド全部を重ねた、評価点 [i] での応答 (dB)。 */
         fun combinedAt(i: Int, gains: DoubleArray): Double {
             var sum = 0.0
             for (j in 0 until n) sum += responseDb(i, j, gains[j])

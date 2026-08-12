@@ -667,7 +667,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 pendingMessage = R.string.msg_autoeq_failed
                 return@launch
             }
-            when (val result = AutoEqParser.parse(text, bandCount)) {
+            // GraphicEQ 形式は曲線全体へのフィットを回すので main スレッドでは重い
+            val result = withContext(Dispatchers.Default) { AutoEqParser.parse(text, bandCount) }
+            when (result) {
                 is AutoEqResult.Ok -> {
                     updateEq(mac) { result.settings }
                     pendingMessage = R.string.msg_autoeq_imported

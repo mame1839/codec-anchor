@@ -83,12 +83,13 @@ class AutoEqParserTest {
 
     // GraphicEQ.txt はプリアンプが曲線に焼き込んである。プリアンプに移すのは
     // 「曲線全体のオフセット」だけで、ヘッドルームを別途足すと二重に掛かって全体が沈む。
-    // この曲線はバンド中心での平均が -6.69 dB なので、プリアンプはそれと一致する。
+    // この曲線の平均は -6.6 dB 前後なので、プリアンプはその近傍に出る (ヘッドルームが
+    // 混ざると、さらにバンドの最大ゲイン分 ≈2 dB 下がるので区別できる)。
     @Test
     fun graphicMovesOnlyTheCurveOffsetIntoPreamp() {
         val text = "GraphicEQ: 20 -6.0; 100 -5.0; 1000 -7.0; 10000 -8.0; 20000 -9.0"
         val r = AutoEqParser.parse(text, bandCount = 10) as AutoEqResult.Ok
-        assertEquals(-66, r.settings.preampDb10)
+        assertTrue("preampDb10=${r.settings.preampDb10}", r.settings.preampDb10 in -75..-58)
         // 形だけが残るのでバンドのゲインは小さい。自動プリアンプを掛け直したときの
         // 値 (ヘッドルーム) と混ざっていないこと。
         assertTrue(r.settings.bands.all { it.gainDb10 in -30..30 })
