@@ -238,7 +238,7 @@
     <string name="eq_finder_title">找出合你口味的均衡器</string>
     <string name="eq_finder_entry_desc">盲听对比会按你的喜好塑造均衡器</string>
     <string name="eq_finder_entry_resume">有一个已保存的测试。打开即可继续。</string>
-    <string name="eq_finder_entry_unavailable">目前无法使用——原因见上方。</string>
+    <string name="eq_finder_entry_unavailable">这副耳机目前无法使用音频处理。</string>
     <string name="eq_finder_entry_disconnected">连接这副耳机即可开始。</string>
     <string name="eq_finder_song">歌曲</string>
     <string name="eq_finder_song_none">选一首你很熟的歌</string>

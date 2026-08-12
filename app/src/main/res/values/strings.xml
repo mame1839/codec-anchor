@@ -279,7 +279,7 @@
     <string name="eq_finder_title">Find the EQ you like</string>
     <string name="eq_finder_entry_desc">Blind listening comparisons shape the equaliser to your taste</string>
     <string name="eq_finder_entry_resume">A saved test is waiting. Open to continue.</string>
-    <string name="eq_finder_entry_unavailable">Not usable right now — the reasons are shown above.</string>
+    <string name="eq_finder_entry_unavailable">Audio processing is not usable for these earphones right now.</string>
     <string name="eq_finder_entry_disconnected">Connect these earphones to start.</string>
     <string name="eq_finder_song">Song</string>
     <string name="eq_finder_song_none">Choose a song you know well</string>

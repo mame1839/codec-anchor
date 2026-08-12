@@ -238,7 +238,7 @@
     <string name="eq_finder_title">好みの EQ を探す</string>
     <string name="eq_finder_entry_desc">目隠しの聴き比べで、イコライザーを好みに合わせて仕上げます</string>
     <string name="eq_finder_entry_resume">中断したテストがあります。開くと続きからできます。</string>
-    <string name="eq_finder_entry_unavailable">いまは使えません。理由は上に出ています。</string>
+    <string name="eq_finder_entry_unavailable">いまはこのイヤホンで音響処理が使えない状態です。</string>
     <string name="eq_finder_entry_disconnected">このイヤホンを接続すると始められます。</string>
     <string name="eq_finder_song">曲</string>
     <string name="eq_finder_song_none">よく知っている曲を選んでください</string>

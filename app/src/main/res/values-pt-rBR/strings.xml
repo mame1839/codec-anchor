@@ -242,7 +242,7 @@
     <string name="eq_finder_title">Encontrar o equalizador do seu gosto</string>
     <string name="eq_finder_entry_desc">Comparações de escuta às cegas moldam o equalizador ao seu gosto</string>
     <string name="eq_finder_entry_resume">Há um teste salvo. Abra para continuar.</string>
-    <string name="eq_finder_entry_unavailable">Não dá para usar agora; os motivos aparecem acima.</string>
+    <string name="eq_finder_entry_unavailable">O processamento de áudio não está disponível agora para estes fones.</string>
     <string name="eq_finder_entry_disconnected">Conecte estes fones para começar.</string>
     <string name="eq_finder_song">Música</string>
     <string name="eq_finder_song_none">Escolha uma música que você conhece bem</string>

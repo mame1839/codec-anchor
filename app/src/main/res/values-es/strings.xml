@@ -242,7 +242,7 @@
     <string name="eq_finder_title">Encontrar el ecualizador a tu gusto</string>
     <string name="eq_finder_entry_desc">Comparaciones de escucha a ciegas ajustan el ecualizador a tu gusto</string>
     <string name="eq_finder_entry_resume">Hay una prueba guardada. Ábrela para continuar.</string>
-    <string name="eq_finder_entry_unavailable">Ahora mismo no se puede usar; los motivos aparecen arriba.</string>
+    <string name="eq_finder_entry_unavailable">El procesamiento de audio no está disponible ahora mismo para estos auriculares.</string>
     <string name="eq_finder_entry_disconnected">Conecta estos auriculares para empezar.</string>
     <string name="eq_finder_song">Canción</string>
     <string name="eq_finder_song_none">Elige una canción que conozcas bien</string>

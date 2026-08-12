@@ -244,7 +244,7 @@
     <string name="eq_finder_title">Dobierz korektor do swojego gustu</string>
     <string name="eq_finder_entry_desc">Ślepe porównania słuchowe dopasowują korektor do Twojego gustu</string>
     <string name="eq_finder_entry_resume">Czeka zapisany test. Otwórz, aby kontynuować.</string>
-    <string name="eq_finder_entry_unavailable">Teraz nie da się z tego korzystać — powody są wyżej.</string>
+    <string name="eq_finder_entry_unavailable">Przetwarzanie dźwięku jest teraz niedostępne dla tych słuchawek.</string>
     <string name="eq_finder_entry_disconnected">Podłącz te słuchawki, aby zacząć.</string>
     <string name="eq_finder_song">Utwór</string>
     <string name="eq_finder_song_none">Wybierz dobrze znany utwór</string>

@@ -240,7 +240,7 @@
     <string name="eq_finder_title">अपनी पसंद का इक्वलाइज़र खोजें</string>
     <string name="eq_finder_entry_desc">बिना बताए सुनने की तुलनाएँ इक्वलाइज़र को आपकी पसंद के अनुसार ढालती हैं</string>
     <string name="eq_finder_entry_resume">एक सहेजा हुआ परीक्षण मौजूद है। जारी रखने के लिए खोलें।</string>
-    <string name="eq_finder_entry_unavailable">अभी उपयोग नहीं हो सकता — कारण ऊपर दिखाए गए हैं।</string>
+    <string name="eq_finder_entry_unavailable">इन ईयरफ़ोन के लिए ऑडियो प्रोसेसिंग अभी उपलब्ध नहीं है।</string>
     <string name="eq_finder_entry_disconnected">शुरू करने के लिए ये ईयरफ़ोन कनेक्ट करें।</string>
     <string name="eq_finder_song">गाना</string>
     <string name="eq_finder_song_none">कोई ऐसा गाना चुनें जिसे आप अच्छी तरह जानते हों</string>

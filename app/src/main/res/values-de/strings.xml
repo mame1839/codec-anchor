@@ -240,7 +240,7 @@
     <string name="eq_finder_title">Equalizer nach Gehör finden</string>
     <string name="eq_finder_entry_desc">Blinde Hörvergleiche formen den Equalizer nach dem eigenen Geschmack</string>
     <string name="eq_finder_entry_resume">Ein gespeicherter Test wartet. Zum Fortsetzen öffnen.</string>
-    <string name="eq_finder_entry_unavailable">Zurzeit nicht nutzbar — die Gründe stehen oben.</string>
+    <string name="eq_finder_entry_unavailable">Die Audioverarbeitung ist für diese Kopfhörer zurzeit nicht nutzbar.</string>
     <string name="eq_finder_entry_disconnected">Zum Starten diese Kopfhörer verbinden.</string>
     <string name="eq_finder_song">Titel</string>
     <string name="eq_finder_song_none">Einen gut bekannten Titel wählen</string>

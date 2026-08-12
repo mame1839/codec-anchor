@@ -238,7 +238,7 @@
     <string name="eq_finder_title">找出合你口味的等化器</string>
     <string name="eq_finder_entry_desc">盲聽比較會依你的喜好塑造等化器</string>
     <string name="eq_finder_entry_resume">有一個已儲存的測試。開啟即可繼續。</string>
-    <string name="eq_finder_entry_unavailable">目前無法使用——原因見上方。</string>
+    <string name="eq_finder_entry_unavailable">這副耳機目前無法使用音訊處理。</string>
     <string name="eq_finder_entry_disconnected">連接這副耳機即可開始。</string>
     <string name="eq_finder_song">歌曲</string>
     <string name="eq_finder_song_none">選一首你很熟的歌</string>

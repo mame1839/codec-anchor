@@ -238,7 +238,7 @@
     <string name="eq_finder_title">หาอีควอไลเซอร์ที่ถูกใจ</string>
     <string name="eq_finder_entry_desc">การเปรียบเทียบฟังแบบไม่เห็นค่า ช่วยปรับอีควอไลเซอร์ให้ตรงรสนิยมของคุณ</string>
     <string name="eq_finder_entry_resume">มีการทดสอบที่บันทึกไว้ เปิดเพื่อทำต่อ</string>
-    <string name="eq_finder_entry_unavailable">ตอนนี้ยังใช้ไม่ได้ — เหตุผลแสดงอยู่ด้านบน</string>
+    <string name="eq_finder_entry_unavailable">ตอนนี้ยังใช้การประมวลผลเสียงกับหูฟังคู่นี้ไม่ได้</string>
     <string name="eq_finder_entry_disconnected">เชื่อมต่อหูฟังคู่นี้เพื่อเริ่ม</string>
     <string name="eq_finder_song">เพลง</string>
     <string name="eq_finder_song_none">เลือกเพลงที่คุณคุ้นเคย</string>

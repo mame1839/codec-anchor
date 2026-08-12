@@ -238,7 +238,7 @@
     <string name="eq_finder_title">Tìm bộ chỉnh âm hợp ý</string>
     <string name="eq_finder_entry_desc">So sánh nghe giấu kín giúp chỉnh bộ chỉnh âm theo sở thích của bạn</string>
     <string name="eq_finder_entry_resume">Có bài kiểm tra đã lưu. Mở để tiếp tục.</string>
-    <string name="eq_finder_entry_unavailable">Hiện chưa dùng được — lý do hiển thị ở trên.</string>
+    <string name="eq_finder_entry_unavailable">Hiện chưa dùng được xử lý âm thanh cho tai nghe này.</string>
     <string name="eq_finder_entry_disconnected">Kết nối tai nghe này để bắt đầu.</string>
     <string name="eq_finder_song">Bài hát</string>
     <string name="eq_finder_song_none">Chọn một bài hát bạn thuộc</string>

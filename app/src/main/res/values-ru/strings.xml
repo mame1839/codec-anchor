@@ -244,7 +244,7 @@
     <string name="eq_finder_title">Подобрать эквалайзер по вкусу</string>
     <string name="eq_finder_entry_desc">Слепые сравнения на слух подстраивают эквалайзер под ваш вкус</string>
     <string name="eq_finder_entry_resume">Есть сохранённый тест. Откройте, чтобы продолжить.</string>
-    <string name="eq_finder_entry_unavailable">Сейчас недоступно — причины указаны выше.</string>
+    <string name="eq_finder_entry_unavailable">Обработка звука для этих наушников сейчас недоступна.</string>
     <string name="eq_finder_entry_disconnected">Подключите эти наушники, чтобы начать.</string>
     <string name="eq_finder_song">Композиция</string>
     <string name="eq_finder_song_none">Выберите хорошо знакомую композицию</string>

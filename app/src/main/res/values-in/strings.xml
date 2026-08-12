@@ -238,7 +238,7 @@
     <string name="eq_finder_title">Temukan ekualiser sesuai selera</string>
     <string name="eq_finder_entry_desc">Perbandingan dengar tersamar membentuk ekualiser sesuai selera Anda</string>
     <string name="eq_finder_entry_resume">Ada tes tersimpan. Buka untuk melanjutkan.</string>
-    <string name="eq_finder_entry_unavailable">Belum bisa dipakai sekarang — alasannya tertera di atas.</string>
+    <string name="eq_finder_entry_unavailable">Pemrosesan audio untuk earphone ini belum bisa dipakai sekarang.</string>
     <string name="eq_finder_entry_disconnected">Hubungkan earphone ini untuk memulai.</string>
     <string name="eq_finder_song">Lagu</string>
     <string name="eq_finder_song_none">Pilih lagu yang Anda kenal baik</string>

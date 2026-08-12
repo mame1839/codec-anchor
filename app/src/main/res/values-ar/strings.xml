@@ -248,7 +248,7 @@
     <string name="eq_finder_title">العثور على المعادل الذي يعجبك</string>
     <string name="eq_finder_entry_desc">مقارنات استماع معماة تشكّل المعادل حسب ذوقك</string>
     <string name="eq_finder_entry_resume">هناك اختبار محفوظ بانتظارك. افتح للمتابعة.</string>
-    <string name="eq_finder_entry_unavailable">غير قابل للاستخدام الآن — الأسباب مذكورة أعلاه.</string>
+    <string name="eq_finder_entry_unavailable">معالجة الصوت غير متاحة لهذه السماعات الآن.</string>
     <string name="eq_finder_entry_disconnected">وصّل هذه السماعات للبدء.</string>
     <string name="eq_finder_song">الأغنية</string>
     <string name="eq_finder_song_none">اختر أغنية تعرفها جيدًا</string>

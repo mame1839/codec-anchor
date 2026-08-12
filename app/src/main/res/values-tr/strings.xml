@@ -240,7 +240,7 @@
     <string name="eq_finder_title">Zevkine uygun ekolayzırı bul</string>
     <string name="eq_finder_entry_desc">Kör dinleme karşılaştırmaları ekolayzırı zevkine göre biçimlendirir</string>
     <string name="eq_finder_entry_resume">Kayıtlı bir test bekliyor. Devam etmek için aç.</string>
-    <string name="eq_finder_entry_unavailable">Şu anda kullanılamıyor — nedenleri yukarıda.</string>
+    <string name="eq_finder_entry_unavailable">Ses işleme şu anda bu kulaklık için kullanılamıyor.</string>
     <string name="eq_finder_entry_disconnected">Başlamak için bu kulaklığı bağla.</string>
     <string name="eq_finder_song">Şarkı</string>
     <string name="eq_finder_song_none">İyi bildiğin bir şarkı seç</string>

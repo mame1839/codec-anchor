@@ -242,7 +242,7 @@
     <string name="eq_finder_title">Trouver l\'égaliseur à votre goût</string>
     <string name="eq_finder_entry_desc">Des comparaisons d\'écoute à l\'aveugle façonnent l\'égaliseur selon vos goûts</string>
     <string name="eq_finder_entry_resume">Un test enregistré vous attend. Ouvrez pour continuer.</string>
-    <string name="eq_finder_entry_unavailable">Inutilisable pour le moment — les raisons sont indiquées plus haut.</string>
+    <string name="eq_finder_entry_unavailable">Le traitement audio est actuellement indisponible pour ces écouteurs.</string>
     <string name="eq_finder_entry_disconnected">Connectez ces écouteurs pour commencer.</string>
     <string name="eq_finder_song">Morceau</string>
     <string name="eq_finder_song_none">Choisissez un morceau que vous connaissez bien</string>
