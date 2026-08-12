@@ -260,7 +260,7 @@ void ca_params_poll(CaCtx* c) {
 
     // 世代が動いていなければ何もしない。ここは目安なので素で読んでよい
     // (途中まで書かれた並びを掴んでも、下の seqlock が弾く)。
-    const uint32_t gen = __atomic_load_n(&src->generation, __ATOMIC_RELAXED);
+    const uint32_t gen = caeq::paramsGeneration(src);
     if (gen == 0 || gen == c->param_gen) return;
 
     ca_eq_slot_t snap;

@@ -1553,6 +1553,8 @@ void runFirSections(catest::Report& r);
 void runFirAlignmentSection(catest::Report& r);
 // 検分 (eqfir-gate) が足した見張り (28)。ca_eq_fir_gate_test.cpp。
 void runFirGateSections(catest::Report& r);
+// 共有メモリ v4 の境界 (30)。ca_eq_shm_test.cpp。
+void runShmSections(catest::Report& r);
 
 int main(int argc, char** argv) {
     (void)argc;
@@ -1582,6 +1584,7 @@ int main(int argc, char** argv) {
     runFirSections(r);          // 19〜27
     runFirGateSections(r);      // 28 (検分が足した節)
     runFirAlignmentSection(r);  // 29
+    runShmSections(r);          // 30
 
     std::printf("\n%d / %d 件が通った。\n", r.total() - r.failures(), r.total());
     return r.failures() == 0 ? 0 : 1;
