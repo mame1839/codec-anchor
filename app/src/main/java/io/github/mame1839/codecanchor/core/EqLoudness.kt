@@ -1,8 +1,6 @@
 package io.github.mame1839.codecanchor.core
 
 import kotlin.math.cos
-import kotlin.math.exp
-import kotlin.math.ln
 import kotlin.math.log10
 import kotlin.math.max
 import kotlin.math.pow
@@ -21,12 +19,12 @@ import kotlin.math.sin
  */
 object EqLoudness {
 
-    /** 評価グリッド: 20 Hz〜20 kHz 対数等間隔 401 点 ([EqSolver.autoPreampDb10] と同じ密度)。 */
-    val GRID_HZ: DoubleArray = run {
-        val lo = ln(20.0)
-        val hi = ln(20_000.0)
-        DoubleArray(401) { exp(lo + (hi - lo) * it / 400) }
-    }
+    /**
+     * 評価グリッド。**定義は [EqCurveGrid] ただ 1 箇所** — プリアンプ
+     * ([EqSolver.autoPreampDb10]) も「高精度」へ送る曲線も同じ格子を引く。
+     * ここで作り直すと、同じ格子が 3 箇所に散る。
+     */
+    val GRID_HZ: DoubleArray = EqCurveGrid.HZ
 
     /** スペクトルの床。最大値からこれより下と非有限は床に置き換え、ゼロ和・NaN を作らない。 */
     private const val SPECTRUM_FLOOR_DOWN_DB = 100.0

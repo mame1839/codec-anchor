@@ -202,6 +202,11 @@
     <string name="eq_mode_parametric_desc">Możesz ustawić pasmo tam, gdzie chcesz</string>
     <string name="eq_band_count">Liczba pasm</string>
     <string name="eq_band_count_desc">To nie jest ustawienie wydajności: telefon liczy tyle samo przy każdej liczbie pasm.</string>
+    <string name="eq_precision">Dokładność krzywej</string>
+    <string name="eq_precision_standard">Standardowa (zalecana)</string>
+    <string name="eq_precision_standard_desc">Między pasmami krzywa nieco odbiega</string>
+    <string name="eq_precision_high">Wysoka dokładność</string>
+    <string name="eq_precision_high_desc">Dokładniej podąża za linią łączącą pasma</string>
     <string name="eq_band_none">Nie ma jeszcze żadnego pasma. Dodaj je albo wczytaj plik AutoEQ.</string>
     <string name="eq_band_add">Dodaj pasmo</string>
     <string name="eq_band_remove">Usuń to pasmo</string>

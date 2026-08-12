@@ -196,6 +196,11 @@
     <string name="eq_mode_parametric_desc">วางแต่ละแบนด์ได้ตามต้องการ</string>
     <string name="eq_band_count">จำนวนแบนด์</string>
     <string name="eq_band_count_desc">นี่ไม่ใช่การตั้งค่าเรื่องความเร็ว เครื่องทำงานหนักเท่ากันไม่ว่าจะมีกี่แบนด์</string>
+    <string name="eq_precision">ความแม่นยำของเส้นโค้ง</string>
+    <string name="eq_precision_standard">มาตรฐาน (แนะนำ)</string>
+    <string name="eq_precision_standard_desc">ระหว่างแบนด์ เส้นโค้งจะเบี่ยงเล็กน้อย</string>
+    <string name="eq_precision_high">ความแม่นยำสูง</string>
+    <string name="eq_precision_high_desc">ตามเส้นที่ลากผ่านแบนด์ได้ใกล้เคียงกว่า</string>
     <string name="eq_band_none">ยังไม่มีแบนด์ เพิ่มสักอันหรือนำเข้าไฟล์ AutoEQ</string>
     <string name="eq_band_add">เพิ่มแบนด์</string>
     <string name="eq_band_remove">ลบแบนด์นี้</string>

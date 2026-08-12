@@ -2,9 +2,11 @@ package io.github.mame1839.codecanchor
 
 import io.github.mame1839.codecanchor.core.EqBand
 import io.github.mame1839.codecanchor.core.EqBandType
+import io.github.mame1839.codecanchor.core.EqMode
 import io.github.mame1839.codecanchor.core.EqParams
 import io.github.mame1839.codecanchor.core.EqParamsExit
 import io.github.mame1839.codecanchor.core.EqParamsOutcome
+import io.github.mame1839.codecanchor.core.EqPrecision
 import io.github.mame1839.codecanchor.core.EqSettings
 import io.github.mame1839.codecanchor.core.EqSolver
 import io.github.mame1839.codecanchor.core.EqUnits
@@ -155,6 +157,55 @@ class EqParamsTest {
         val command = EqParams.command(REAL_DIR, graphic)
         assertTrue(command, command.startsWith("'$REAL_DIR/libcaeqset.so' "))
         assertTrue(command.contains("--auto-slot"))
+    }
+
+    // --- 処理方式と目標曲線 -------------------------------------------------
+
+    /**
+     * **方式は毎回送る。**`caeqset` の既定は標準なので、送らない回があるとそこで
+     * 高精度が黙って外れる。
+     */
+    @Test
+    fun theProcessingModeIsAlwaysSent() {
+        assertTrue(EqParams.arguments(graphic).contains("--std"))
+        assertTrue(EqParams.arguments(graphic.copy(precision = EqPrecision.HIGH)).contains("--hp"))
+        // どちらか一方だけ。
+        assertEquals(1, EqParams.arguments(graphic).count { it == "--std" || it == "--hp" })
+    }
+
+    /**
+     * パラメトリックでは高精度を要求しない。biquad が定義どおりの厳密値なので、
+     * FIR にしても近似が入るだけ。**選択そのものは保存に残る**ので、グラフィックへ
+     * 戻せば `--hp` が復活する。
+     */
+    @Test
+    fun parametricNeverAsksForHighPrecision() {
+        val parametric = graphic.copy(mode = EqMode.PARAMETRIC, precision = EqPrecision.HIGH)
+        assertTrue(EqParams.arguments(parametric).contains("--std"))
+        assertEquals(EqPrecision.HIGH, parametric.precision)
+        assertFalse(parametric.firRequested)
+    }
+
+    @Test
+    fun theCurvePathIsQuotedAndOnlySentForHighPrecision() {
+        val path = "/data/user/0/io.github.mame1839.codecanchor/cache/eq_curve.txt"
+        val high = EqParams.command(REAL_DIR, graphic.copy(precision = EqPrecision.HIGH), path)
+        assertTrue(high, high.endsWith(" --curve '$path'"))
+
+        // 標準のときは付けない — 読まれない曲線で世代だけが動き、FIR が組み直される。
+        assertFalse(EqParams.command(REAL_DIR, graphic, path).contains("--curve"))
+        // 渡さなければ当然付かない。
+        assertFalse(
+            EqParams.command(REAL_DIR, graphic.copy(precision = EqPrecision.HIGH)).contains("--curve"),
+        )
+    }
+
+    /** 曲線のパスが変な形なら、**曲線だけ落として bands は送る** (音まで止めない)。 */
+    @Test
+    fun anOddCurvePathDropsOnlyTheCurve() {
+        assertTrue(EqParams.isSafePath("/data/user/0/io.github.mame1839.codecanchor/cache/eq_curve.txt"))
+        assertFalse(EqParams.isSafePath("/data/user/0/pkg/cache/x'; rm -rf /; '"))
+        assertFalse(EqParams.isSafePath("/data/user/0/pkg/cache/with space"))
     }
 
     // --- nativeLibraryDir の検査 -------------------------------------------

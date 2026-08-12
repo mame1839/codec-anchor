@@ -198,6 +198,11 @@
     <string name="eq_mode_parametric_desc">Her bandı istediğiniz yere koyabilirsiniz</string>
     <string name="eq_band_count">Bant sayısı</string>
     <string name="eq_band_count_desc">Bu bir performans ayarı değildir: bant sayısı kaç olursa olsun telefon aynı işi yapar.</string>
+    <string name="eq_precision">Eğri doğruluğu</string>
+    <string name="eq_precision_standard">Standart (önerilir)</string>
+    <string name="eq_precision_standard_desc">Bantlar arasında eğri biraz sapar</string>
+    <string name="eq_precision_high">Yüksek doğruluk</string>
+    <string name="eq_precision_high_desc">Bantları birleştiren çizgiyi daha yakından izler</string>
     <string name="eq_band_none">Henüz bant yok. Bir tane ekleyin veya bir AutoEQ dosyası alın.</string>
     <string name="eq_band_add">Bant ekle</string>
     <string name="eq_band_remove">Bu bandı kaldır</string>

@@ -196,6 +196,11 @@
     <string name="eq_mode_parametric_desc">Tiap pita bisa ditaruh sesuka Anda</string>
     <string name="eq_band_count">Jumlah pita</string>
     <string name="eq_band_count_desc">Ini bukan setelan kecepatan: ponsel bekerja sama beratnya berapa pun jumlah pitanya.</string>
+    <string name="eq_precision">Akurasi kurva</string>
+    <string name="eq_precision_standard">Standar (disarankan)</string>
+    <string name="eq_precision_standard_desc">Di antara pita, kurva sedikit menyimpang</string>
+    <string name="eq_precision_high">Akurasi tinggi</string>
+    <string name="eq_precision_high_desc">Lebih dekat mengikuti garis yang menghubungkan pita</string>
     <string name="eq_band_none">Belum ada pita. Tambahkan satu, atau impor berkas AutoEQ.</string>
     <string name="eq_band_add">Tambah pita</string>
     <string name="eq_band_remove">Hapus pita ini</string>

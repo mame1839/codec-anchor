@@ -36,6 +36,7 @@ import io.github.mame1839.codecanchor.core.DeviceProfile
 import io.github.mame1839.codecanchor.core.EqBand
 import io.github.mame1839.codecanchor.core.EqBandType
 import io.github.mame1839.codecanchor.core.EqMode
+import io.github.mame1839.codecanchor.core.EqPrecision
 import io.github.mame1839.codecanchor.core.EqSettings
 import io.github.mame1839.codecanchor.core.EqSlotBook
 import io.github.mame1839.codecanchor.core.EqSolver
@@ -161,6 +162,23 @@ fun EqSection(vm: MainViewModel, mac: String, profile: DeviceProfile) {
                     options = EqSettings.BAND_COUNTS.map { it to eqCountText(it) },
                     selected = eq.bandCount,
                     onSelect = { value -> vm.updateEq(mac) { reband(it, value) } },
+                )
+
+                // **グラフィックにだけ出す。**パラメトリックは fc と Q をユーザが決めていて
+                // biquad が定義どおりの厳密値なので、切り替えても何も変わらない
+                // (「切り替えたのに変わらない」を生むトグルを出さない)。
+                ChoiceRow(
+                    title = stringResource(R.string.eq_precision),
+                    options = listOf(
+                        EqPrecision.STANDARD to stringResource(R.string.eq_precision_standard),
+                        EqPrecision.HIGH to stringResource(R.string.eq_precision_high),
+                    ),
+                    optionDescriptions = mapOf(
+                        EqPrecision.STANDARD to stringResource(R.string.eq_precision_standard_desc),
+                        EqPrecision.HIGH to stringResource(R.string.eq_precision_high_desc),
+                    ),
+                    selected = eq.precision,
+                    onSelect = { value -> vm.updateEq(mac) { it.copy(precision = value) } },
                 )
             }
 

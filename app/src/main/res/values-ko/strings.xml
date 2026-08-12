@@ -196,6 +196,11 @@
     <string name="eq_mode_parametric_desc">밴드를 원하는 위치에 놓을 수 있습니다</string>
     <string name="eq_band_count">밴드 수</string>
     <string name="eq_band_count_desc">성능 설정이 아닙니다. 밴드 수와 관계없이 휴대전화가 하는 계산량은 같습니다.</string>
+    <string name="eq_precision">곡선 정확도</string>
+    <string name="eq_precision_standard">표준 (권장)</string>
+    <string name="eq_precision_standard_desc">밴드와 밴드 사이에서 곡선이 조금 어긋납니다</string>
+    <string name="eq_precision_high">높은 정확도</string>
+    <string name="eq_precision_high_desc">밴드를 이은 선에 더 가깝게 재현합니다</string>
     <string name="eq_band_none">아직 밴드가 없습니다. 하나 추가하거나 AutoEQ 파일을 읽어 오세요.</string>
     <string name="eq_band_add">밴드 추가</string>
     <string name="eq_band_remove">이 밴드 삭제</string>

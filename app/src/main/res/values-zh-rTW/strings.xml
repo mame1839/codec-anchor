@@ -196,6 +196,11 @@
     <string name="eq_mode_parametric_desc">頻段可以放在任意位置</string>
     <string name="eq_band_count">頻段數量</string>
     <string name="eq_band_count_desc">這不是效能選項：無論多少個頻段，手機的運算量都相同。</string>
+    <string name="eq_precision">曲線精度</string>
+    <string name="eq_precision_standard">標準（建議）</string>
+    <string name="eq_precision_standard_desc">頻段之間的曲線會略有偏差</string>
+    <string name="eq_precision_high">高精度</string>
+    <string name="eq_precision_high_desc">更貼近連接各頻段的折線</string>
     <string name="eq_band_none">還沒有頻段。請新增一個，或讀取 AutoEQ 檔案。</string>
     <string name="eq_band_add">新增頻段</string>
     <string name="eq_band_remove">刪除這個頻段</string>

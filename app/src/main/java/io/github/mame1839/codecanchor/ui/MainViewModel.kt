@@ -35,11 +35,13 @@ import io.github.mame1839.codecanchor.core.DeviceProfile
 import io.github.mame1839.codecanchor.core.DeviceSlots
 import io.github.mame1839.codecanchor.core.DeviceStatus
 import io.github.mame1839.codecanchor.core.EqAvailability
+import io.github.mame1839.codecanchor.core.EqCurveGrid
 import io.github.mame1839.codecanchor.core.EqDelivery
 import io.github.mame1839.codecanchor.core.EqDevices
 import io.github.mame1839.codecanchor.core.EqDevicesOutcome
 import io.github.mame1839.codecanchor.core.EqDevicesResult
 import io.github.mame1839.codecanchor.core.EqParams
+import io.github.mame1839.codecanchor.core.EqParamsOutcome
 import io.github.mame1839.codecanchor.core.EqParamsResult
 import io.github.mame1839.codecanchor.core.EqPreset
 import io.github.mame1839.codecanchor.core.EqRoute
@@ -58,6 +60,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import java.io.File
 
 enum class ModuleState { CHECKING, ACTIVE, INACTIVE }
 
@@ -97,6 +100,24 @@ data class EqParamsReport(
  * 効き、こちらは共有メモリへ押す値にだけ効く。
  */
 data class EqSessionPreview(val mac: String, val settings: EqSettings)
+
+/** 共有メモリへ書き込みが通った曲線。**同じものを送り直さない**判断だけに使う。 */
+private data class SentCurve(val mac: String, val text: String)
+
+/**
+ * 曲線を送るまでの静止時間。**最後の操作からこれだけ静かになってから 1 回だけ送る。**
+ *
+ * 送るたびに `.so` は FIR を組み直す (0.3〜0.6 s)。摘みを 1 本ずつ動かすたびに組み直させると
+ * 完成が先送りされ続けるので、まとめて 1 回にする。長すぎると「切り替えたのにすぐ変わらない」に
+ * なるので、組み直しそのものの時間 (上記) より短く取る。
+ */
+private const val EQ_CURVE_DEBOUNCE_MS = 400L
+
+/**
+ * 曲線を渡すファイル。**cacheDir に固定名で置く** — root で走る `caeqset` が読める場所で、
+ * 名前が固定なら `EqParams.isSafePath` を必ず通る (端末ごとに変わるのは前半の cacheDir だけ)。
+ */
+private const val EQ_CURVE_FILE = "eq_curve.txt"
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -217,6 +238,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var eqPushJob: Job? = null
     private var eqPushQueued = false
 
+    // 「高精度」の曲線だけは手が止まってから送る (理由は scheduleEqCurvePush)。
+    private var eqCurveJob: Job? = null
+
+    /** 最後に書き込みが通った曲線。**一致したときだけ送らない** (詳しくは pushEqCurve)。 */
+    private var eqSentCurve: SentCurve? = null
+
     // 一覧のカードが recomposition ごとに読むので、設定を変えたときだけ計算する (hash は JSON を組み直す)。
     private var configHash = config.hash()
 
@@ -303,10 +330,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * 2 本が同じ枠に重なると壊れる。走っている間に来た依頼は「最後の 1 つ」だけを後で流す
      * (溜めると古い値が後から着地する)。
      */
-    fun pushEqParams() {
+    fun pushEqParams(settingsChangedOnly: Boolean = false) {
         // 登録の実行中は audioserver が落ちていて枠が無い。終わったら setEqRegistered が押し直す。
         if (eqRegisterRunning != null) return
         if (eqOwner == null) return
+        // **既定は「曲線を送り直す」側。**押し直しの理由 (前面復帰・出口の変化・登録の完了・
+        // 探索セッションの出入り) はどれも共有メモリが作り直されている / 枠が移っている
+        // 可能性を含む。設定を変えただけのときだけ [eqSentCurve] を信じる。
+        if (!settingsChangedOnly) eqSentCurve = null
+        scheduleEqCurvePush()
         if (eqPushJob?.isActive == true) {
             eqPushQueued = true
             return
@@ -324,6 +356,61 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 eqParamsReport = EqParamsReport(mac = target, result = result)
             } while (eqPushQueued)
         }
+    }
+
+    /**
+     * 「高精度」の目標曲線を送り直す予約。**手が止まってから 1 回だけ。**
+     *
+     * 曲線を送ると `.so` は FIR を組み直す (0.3〜0.6 s、そのあいだは biquad で鳴る)。
+     * 摘みを 1 本ずつ動かすたびに組み直させると完成が先送りされ続けるので、最後の操作から
+     * [EQ_CURVE_DEBOUNCE_MS] 静かになるまで待つ。**bands は上の即時の押し込みで届いている**
+     * ので、待っているあいだも音は摘みどおりに鳴る (biquad interim)。
+     *
+     * **標準のときは何もしない。**予約だけ取り消して、`--curve` を伴わない押し込みに任せる。
+     */
+    private fun scheduleEqCurvePush() {
+        eqCurveJob?.cancel()
+        val target = eqOwner ?: return
+        if (!eqSettingsToPush(target).firRequested) return
+        eqCurveJob = viewModelScope.launch {
+            delay(EQ_CURVE_DEBOUNCE_MS)
+            pushEqCurve()
+        }
+    }
+
+    /**
+     * 曲線を書き出して `caeqset --curve` で送る。**押し込みの本体 ([pushEqParams]) と同じ
+     * 直列化に乗せる** — `caeqset` はプロセスをまたぐ排他を持たないので、2 本が同じ枠に
+     * 重なると seqlock ごと壊れる。
+     *
+     * **前に送ったものと同じ曲線なら送らない。**送れば世代が動いて FIR が組み直され、
+     * 鳴っている音が 0.3〜0.6 s のあいだ biquad に戻る。プリアンプだけを動かしたときに
+     * それが起きないようにするための記憶で、**合致しなければ必ず送る側に倒す**
+     * (送りすぎは組み直し 1 回で済むが、送り損ねると「高精度にしたのに変わらない」が
+     * 黙って残り、次に曲線を触るまで直らない)。
+     */
+    private suspend fun pushEqCurve() {
+        eqPushJob?.join()
+        if (eqRegisterRunning != null) return
+        val target = eqOwner ?: return
+        val settings = eqSettingsToPush(target)
+        if (!settings.firRequested) return
+        val curve = EqCurveGrid.graphicCurveDb(settings.bands)
+        // 非有限が混ざった曲線は直しようがない。送れば `.so` が枠の更新を丸ごと捨てて
+        // bands まで消えるので、**送らずに biquad のまま鳴らす**ほうが害が小さい。
+        if (!EqCurveGrid.valid(curve)) return
+        val text = EqCurveGrid.encode(curve)
+        if (eqSentCurve == SentCurve(target, text)) return
+        val result = withContext(Dispatchers.IO) {
+            val file = File(context.cacheDir, EQ_CURVE_FILE)
+            runCatching { file.writeText(text) }
+                .map { EqParams.apply(nativeLibraryDir, settings, file) }
+                .getOrElse {
+                    EqParamsResult(EqParamsOutcome.BAD_INPUT, EqParams.NO_EXIT_CODE, "", it.message.orEmpty())
+                }
+        }
+        eqSentCurve = if (result.outcome == EqParamsOutcome.APPLIED) SentCurve(target, text) else null
+        eqParamsReport = EqParamsReport(mac = target, result = result)
     }
 
     /**
@@ -660,7 +747,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         // 選択中スロットへの write-through。二重保持 (選択中スロットの中身 = profile.eq) の
         // 食い違いを変更の入口で潰す。configBroken のときは profileFor が空の config を見るので走らない。
         config.profileFor(mac)?.let { saveSlots(slots.reconciledWith(it.mac, it.eq)) }
-        if (EqDevices.normalizeMac(mac) == eqOwner) pushEqParams()
+        if (EqDevices.normalizeMac(mac) == eqOwner) pushEqParams(settingsChangedOnly = true)
     }
 
     // プリセットは設定とは別のファイルに持つ。同じ名前で保存し直したら差し替える。

@@ -1,5 +1,6 @@
 package io.github.mame1839.codecanchor.core
 
+import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.util.concurrent.TimeUnit
@@ -167,6 +168,13 @@ object EqParams {
     fun isSafeDirectory(dir: String): Boolean = SAFE_DIR.matches(dir) && !dir.contains("..")
 
     /**
+     * 曲線のファイルのパス。**[SAFE_DIR] と同じ形**を要求する — 単引用符で包んで
+     * `su -c` の 1 本の文字列に載せるので、危ないのは `'` だけだが、そこだけを弾く形にすると
+     * 「なぜか失敗する」の原因が増える。呼び出し側が作る名前は固定なので狭くて困らない。
+     */
+    fun isSafePath(path: String): Boolean = isSafeDirectory(path)
+
+    /**
      * 設定を `caeqset` の引数へ。**ここが単体テストの主対象。**
      *
      * ⚠️ **[EqSettings.bands] は「解いた後」の値。**バンド間干渉の補正は `ui/EqSection.kt` の
@@ -175,11 +183,18 @@ object EqParams {
      *
      * プリアンプは `preampAuto` のとき [EqSolver.autoPreampDb10] で解く。**値を保存しない**のが
      * 既存の設計 (`preampDb10` は手動で決めた値の置き場) なので、出どころを 2 つにしない。
+     *
+     * **処理方式 (`--std` / `--hp`) は曲線と独立に毎回送る。**`caeqset` の既定は標準なので、
+     * 送らない回があるとそこで高精度が黙って外れる。
+     *
+     * **曲線はここに含めない。**パスはクォートしないと `su -c` の 1 本の文字列に載せられず、
+     * それは [SAFE_ARGUMENT] の前提 (どの引数も裸で並べられる) から外れる。組み立ては [command]。
      */
     fun arguments(eq: EqSettings): List<String> {
         if (!eq.enabled) return listOf("--auto-slot", "--off")
         val preamp = if (eq.preampAuto) EqSolver.autoPreampDb10(eq.bands) else eq.preampDb10
         val args = mutableListOf("--auto-slot", "--on", "--preamp", decimal(preamp, EqUnits.GAIN_SCALE))
+        args += if (eq.firRequested) "--hp" else "--std"
         eq.bands.take(EqSettings.MAX_BANDS).forEach { band ->
             args += "--band"
             args += listOf(
@@ -192,14 +207,32 @@ object EqParams {
         return args
     }
 
-    /** `su -c` に渡す 1 本の文字列。実行ファイルの絶対パスだけクォートする。 */
-    fun command(nativeLibraryDir: String, eq: EqSettings): String =
-        (listOf("'$nativeLibraryDir/$EXECUTABLE'") + arguments(eq)).joinToString(" ")
+    /**
+     * `su -c` に渡す 1 本の文字列。**パスだけクォートする** (実行ファイルと曲線のファイル)。
+     * ほかの引数は [SAFE_ARGUMENT] の形しか取らないので裸で並ぶ。
+     *
+     * [curvePath] は**曲線が変わったときだけ**渡すこと — 渡すたびに `.so` 側の曲線の世代が
+     * 動いて FIR が組み直され、0.3〜0.6 s は biquad で鳴る。**高精度を要求していない設定
+     * ([EqSettings.firRequested]) には付けない** — 読まれない曲線で世代だけが動く。
+     */
+    fun command(nativeLibraryDir: String, eq: EqSettings, curvePath: String? = null): String {
+        val head = listOf("'$nativeLibraryDir/$EXECUTABLE'")
+        val curve =
+            if (curvePath != null && eq.firRequested) listOf("--curve", "'$curvePath'") else emptyList()
+        return (head + arguments(eq) + curve).joinToString(" ")
+    }
 
     /**
      * 書きに行く。**同期で走るので、呼び出し側がワーカースレッドに置くこと。**
+     *
+     * [curveFile] を渡すと曲線も送る。**中身を書くのは呼び出し側** — ここは
+     * 「読める場所にあるか」だけを見る。root で走る `caeqset` はアプリの cacheDir を読める。
      */
-    fun apply(nativeLibraryDir: String, eq: EqSettings): EqParamsResult {
+    fun apply(
+        nativeLibraryDir: String,
+        eq: EqSettings,
+        curveFile: File? = null,
+    ): EqParamsResult {
         if (!isSafeDirectory(nativeLibraryDir)) {
             return EqParamsResult(
                 outcome = EqParamsOutcome.BAD_INPUT,
@@ -208,7 +241,10 @@ object EqParams {
                 stderr = "nativeLibraryDir が受け付けられない形: $nativeLibraryDir",
             )
         }
-        return execute(command(nativeLibraryDir, eq))
+        // 曲線のパスが受け付けられない形なら、**曲線だけ落として bands は送る。**
+        // 全体を失敗にすると、曲線が送れないだけで音まで止まる。
+        val curvePath = curveFile?.absolutePath?.takeIf { isSafePath(it) }
+        return execute(command(nativeLibraryDir, eq, curvePath))
     }
 
     /**

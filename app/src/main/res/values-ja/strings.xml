@@ -196,6 +196,11 @@
     <string name="eq_mode_parametric_desc">好きな位置にバンドを置けます</string>
     <string name="eq_band_count">バンド数</string>
     <string name="eq_band_count_desc">処理の重さは変わりません。</string>
+    <string name="eq_precision">曲線の再現</string>
+    <string name="eq_precision_standard">標準 (推奨)</string>
+    <string name="eq_precision_standard_desc">バンドとバンドのあいだで曲線がわずかにずれます</string>
+    <string name="eq_precision_high">高精度</string>
+    <string name="eq_precision_high_desc">バンドを結んだ線により近い形で鳴ります</string>
     <string name="eq_band_none">バンドがありません。追加するか、AutoEQ のファイルを読み込んでください。</string>
     <string name="eq_band_add">バンドを追加</string>
     <string name="eq_band_remove">このバンドを削除</string>
