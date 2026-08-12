@@ -111,9 +111,9 @@ fun bidiIsolate(text: String): String = if (text.isEmpty()) text else "\u2068$te
 // LocalContext.current.resources を書くと lint の LocalContextResourcesRead が新規の警告になり、
 // baseline (ファイルパスで照合する) に無いのでビルドが落ちるため。
 
-/** 0.1 dB 単位の値。正の値にだけ + を付ける。 */
-fun eqGainText(db10: Int, format: String): String =
-    bidiIsolate(format.format(Locale.getDefault(), decimal(db10 / 10.0, 1, 1, signed = db10 > 0)))
+/** 0.1 dB 単位の値。既定では正の値にだけ + を付ける (差の大きさのような無符号量は signed=false)。 */
+fun eqGainText(db10: Int, format: String, signed: Boolean = db10 > 0): String =
+    bidiIsolate(format.format(Locale.getDefault(), decimal(db10 / 10.0, 1, 1, signed = signed)))
 
 /** 1 kHz 以上は kHz にする。1250 なら "1.25 kHz"、16000 なら "16 kHz"。 */
 fun eqFrequencyText(hz: Int, hzFormat: String, kiloFormat: String): String =

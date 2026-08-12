@@ -236,6 +236,11 @@
     <string name="eq_finder_entry_resume">Un test enregistré vous attend. Ouvrez pour continuer.</string>
     <string name="eq_finder_entry_unavailable">Le traitement audio est actuellement indisponible pour ces écouteurs.</string>
     <string name="eq_finder_entry_disconnected">Connectez ces écouteurs pour commencer.</string>
+    <string name="eq_finder_material">Son utilisé pour le test</string>
+    <string name="eq_finder_material_loop">Un passage d\'un morceau en boucle</string>
+    <string name="eq_finder_material_live">La musique en cours de lecture</string>
+    <string name="eq_finder_material_live_desc">Le son n\'est pas mesuré : l\'égalisation du volume est moins précise qu\'avec un passage en boucle.</string>
+    <string name="eq_finder_no_music">Lancez un morceau dans votre appli de musique pour commencer.</string>
     <string name="eq_finder_song">Morceau</string>
     <string name="eq_finder_song_none">Choisissez un morceau que vous connaissez bien</string>
     <string name="eq_finder_song_loading">Lecture du fichier…</string>
@@ -273,6 +278,7 @@
     <string name="eq_finder_suspend">Enregistrer et quitter</string>
     <string name="eq_finder_paused_disconnected">En pause : les écouteurs ne sont pas connectés. Le test reprend dès leur retour.</string>
     <string name="eq_finder_paused_focus">En pause : une autre appli a pris le son.</string>
+    <string name="eq_finder_paused_no_music">En pause : la musique s\'est arrêtée. Relancez la lecture dans votre appli de musique.</string>
     <string name="eq_finder_resume_playback">Reprendre</string>
     <string name="eq_finder_result_curve_cd">Courbe de l\'égaliseur avant et après</string>
     <string name="eq_finder_before">Avant</string>
@@ -284,6 +290,7 @@
     <string name="eq_finder_validated_lose">Lors de la vérification à l\'aveugle finale, le point de départ a tenu bon. La différence est de toute façon minime.</string>
     <string name="eq_finder_not_validated">Le test s\'est terminé avant la vérification à l\'aveugle finale ; le résultat n\'a donc pas été vérifié.</string>
     <string name="eq_finder_consistency">Vos réponses ont un peu fluctué. Un tour de plus affinerait le résultat.</string>
+    <string name="eq_finder_band_error">S\'écarte d\'au plus %1$s de la courbe entendue</string>
     <string name="eq_finder_bake_failed">Le résultat demande plus de bandes libres qu\'il n\'en reste à l\'égaliseur. Supprimez quelques bandes, puis concluez à nouveau.</string>
     <string name="eq_finder_apply">Appliquer et enregistrer</string>
     <string name="eq_finder_discard">Abandonner</string>

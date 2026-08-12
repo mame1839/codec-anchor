@@ -232,6 +232,11 @@
     <string name="eq_finder_entry_resume">มีการทดสอบที่บันทึกไว้ เปิดเพื่อทำต่อ</string>
     <string name="eq_finder_entry_unavailable">ตอนนี้ยังใช้การประมวลผลเสียงกับหูฟังคู่นี้ไม่ได้</string>
     <string name="eq_finder_entry_disconnected">เชื่อมต่อหูฟังคู่นี้เพื่อเริ่ม</string>
+    <string name="eq_finder_material">เสียงที่ใช้ทดสอบ</string>
+    <string name="eq_finder_material_loop">วนซ้ำท่อนหนึ่งของเพลง</string>
+    <string name="eq_finder_material_live">เพลงที่กำลังเล่นอยู่ตอนนี้</string>
+    <string name="eq_finder_material_live_desc">ไม่มีการวัดเสียง การปรับความดังให้เท่ากันจึงแม่นยำน้อยกว่าแบบวนซ้ำท่อนเพลง</string>
+    <string name="eq_finder_no_music">เปิดเพลงในแอปเพลงของคุณเพื่อเริ่ม</string>
     <string name="eq_finder_song">เพลง</string>
     <string name="eq_finder_song_none">เลือกเพลงที่คุณคุ้นเคย</string>
     <string name="eq_finder_song_loading">กำลังอ่านไฟล์…</string>
@@ -267,6 +272,7 @@
     <string name="eq_finder_suspend">บันทึกแล้วออก</string>
     <string name="eq_finder_paused_disconnected">หยุดชั่วคราว: หูฟังไม่ได้เชื่อมต่อ การทดสอบจะไปต่อเมื่อหูฟังกลับมา</string>
     <string name="eq_finder_paused_focus">หยุดชั่วคราว: แอปอื่นใช้เสียงอยู่</string>
+    <string name="eq_finder_paused_no_music">หยุดชั่วคราว: เพลงหยุดแล้ว กดเล่นในแอปเพลงของคุณ</string>
     <string name="eq_finder_resume_playback">เล่นต่อ</string>
     <string name="eq_finder_result_curve_cd">เส้นโค้งอีควอไลเซอร์ก่อนและหลัง</string>
     <string name="eq_finder_before">ก่อน</string>
@@ -278,6 +284,7 @@
     <string name="eq_finder_validated_lose">ในการตรวจแบบไม่เห็นค่ารอบสุดท้าย จุดเริ่มต้นก็ยังสูสี ยังไงความต่างก็เล็กน้อย</string>
     <string name="eq_finder_not_validated">การทดสอบจบก่อนการตรวจแบบไม่เห็นค่ารอบสุดท้าย ผลจึงยังไม่ได้รับการยืนยัน</string>
     <string name="eq_finder_consistency">คำตอบแกว่งเล็กน้อย ทำอีกรอบจะช่วยให้ผลแม่นขึ้น</string>
+    <string name="eq_finder_band_error">ต่างจากเส้นโค้งที่คุณฟังไม่เกิน %1$s</string>
     <string name="eq_finder_bake_failed">ผลลัพธ์ต้องใช้แบนด์ว่างมากกว่าที่เหลือในอีควอไลเซอร์ ลบบางแบนด์แล้วจบใหม่อีกครั้ง</string>
     <string name="eq_finder_apply">ใช้และบันทึก</string>
     <string name="eq_finder_discard">ทิ้ง</string>

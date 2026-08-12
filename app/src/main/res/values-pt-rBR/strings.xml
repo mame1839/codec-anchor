@@ -236,6 +236,11 @@
     <string name="eq_finder_entry_resume">Há um teste salvo. Abra para continuar.</string>
     <string name="eq_finder_entry_unavailable">O processamento de áudio não está disponível agora para estes fones.</string>
     <string name="eq_finder_entry_disconnected">Conecte estes fones para começar.</string>
+    <string name="eq_finder_material">Som usado no teste</string>
+    <string name="eq_finder_material_loop">Um trecho de uma música em loop</string>
+    <string name="eq_finder_material_live">A música que está tocando agora</string>
+    <string name="eq_finder_material_live_desc">O som não é medido, então o ajuste de volume é menos preciso do que com um trecho em loop.</string>
+    <string name="eq_finder_no_music">Toque uma música no seu aplicativo de música para começar.</string>
     <string name="eq_finder_song">Música</string>
     <string name="eq_finder_song_none">Escolha uma música que você conhece bem</string>
     <string name="eq_finder_song_loading">Lendo o arquivo…</string>
@@ -273,6 +278,7 @@
     <string name="eq_finder_suspend">Salvar e sair</string>
     <string name="eq_finder_paused_disconnected">Pausado: os fones não estão conectados. O teste continua quando eles voltarem.</string>
     <string name="eq_finder_paused_focus">Pausado: outro aplicativo tomou o som.</string>
+    <string name="eq_finder_paused_no_music">Pausado: a música parou. Aperte play no seu aplicativo de música.</string>
     <string name="eq_finder_resume_playback">Retomar</string>
     <string name="eq_finder_result_curve_cd">Curva do equalizador antes e depois</string>
     <string name="eq_finder_before">Antes</string>
@@ -284,6 +290,7 @@
     <string name="eq_finder_validated_lose">Na verificação às cegas final, o ponto de partida se manteve bem. A diferença é pequena de qualquer forma.</string>
     <string name="eq_finder_not_validated">O teste terminou antes da verificação às cegas final, então o resultado não foi verificado.</string>
     <string name="eq_finder_consistency">Suas respostas oscilaram um pouco. Mais uma rodada afinaria o resultado.</string>
+    <string name="eq_finder_band_error">Desvia no máximo %1$s da curva que você ouviu</string>
     <string name="eq_finder_bake_failed">O resultado precisa de mais bandas livres do que restam no equalizador. Remova algumas bandas e conclua de novo.</string>
     <string name="eq_finder_apply">Aplicar e salvar</string>
     <string name="eq_finder_discard">Descartar</string>

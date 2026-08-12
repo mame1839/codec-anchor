@@ -234,6 +234,11 @@
     <string name="eq_finder_entry_resume">Kayıtlı bir test bekliyor. Devam etmek için aç.</string>
     <string name="eq_finder_entry_unavailable">Ses işleme şu anda bu kulaklık için kullanılamıyor.</string>
     <string name="eq_finder_entry_disconnected">Başlamak için bu kulaklığı bağla.</string>
+    <string name="eq_finder_material">Test için kullanılacak ses</string>
+    <string name="eq_finder_material_loop">Bir şarkıdan döngüye alınmış bölüm</string>
+    <string name="eq_finder_material_live">Şu anda çalan müzik</string>
+    <string name="eq_finder_material_live_desc">Ses ölçülmediği için ses düzeyi eşitleme, döngüye alınmış bölüme göre daha az hassastır.</string>
+    <string name="eq_finder_no_music">Başlamak için müzik uygulamanda bir şarkı çal.</string>
     <string name="eq_finder_song">Şarkı</string>
     <string name="eq_finder_song_none">İyi bildiğin bir şarkı seç</string>
     <string name="eq_finder_song_loading">Dosya okunuyor…</string>
@@ -270,6 +275,7 @@
     <string name="eq_finder_suspend">Kaydet ve çık</string>
     <string name="eq_finder_paused_disconnected">Duraklatıldı: kulaklık bağlı değil. Kulaklık dönünce test sürer.</string>
     <string name="eq_finder_paused_focus">Duraklatıldı: sesi başka bir uygulama devraldı.</string>
+    <string name="eq_finder_paused_no_music">Duraklatıldı: müzik durdu. Müzik uygulamanda çalmaya devam et.</string>
     <string name="eq_finder_resume_playback">Sürdür</string>
     <string name="eq_finder_result_curve_cd">Ekolayzırın önce ve sonra eğrisi</string>
     <string name="eq_finder_before">Önce</string>
@@ -281,6 +287,7 @@
     <string name="eq_finder_validated_lose">Sondaki kör doğrulamada başlangıç noktası da geri kalmadı. Fark zaten küçük.</string>
     <string name="eq_finder_not_validated">Test, sondaki kör doğrulamadan önce bitti; sonuç doğrulanmadı.</string>
     <string name="eq_finder_consistency">Yanıtlar biraz dalgalandı. Bir tur daha sonucu keskinleştirir.</string>
+    <string name="eq_finder_band_error">Duyduğun eğriden en fazla %1$s sapar</string>
     <string name="eq_finder_bake_failed">Sonuç, ekolayzırda kalandan daha fazla boş bant istiyor. Birkaç bandı kaldırıp yeniden bitir.</string>
     <string name="eq_finder_apply">Uygula ve kaydet</string>
     <string name="eq_finder_discard">Vazgeç</string>

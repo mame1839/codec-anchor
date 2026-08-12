@@ -232,6 +232,11 @@
     <string name="eq_finder_entry_resume">中断したテストがあります。開くと続きからできます。</string>
     <string name="eq_finder_entry_unavailable">いまはこのイヤホンで音響処理が使えない状態です。</string>
     <string name="eq_finder_entry_disconnected">このイヤホンを接続すると始められます。</string>
+    <string name="eq_finder_material">テストに使う音</string>
+    <string name="eq_finder_material_loop">曲の一節をループ再生</string>
+    <string name="eq_finder_material_live">いま流れている音楽</string>
+    <string name="eq_finder_material_live_desc">曲を測らずに音量を合わせるため、精度はループ再生より下がります。</string>
+    <string name="eq_finder_no_music">音楽アプリで曲を再生すると始められます。</string>
     <string name="eq_finder_song">曲</string>
     <string name="eq_finder_song_none">よく知っている曲を選んでください</string>
     <string name="eq_finder_song_loading">ファイルを読んでいます…</string>
@@ -267,6 +272,7 @@
     <string name="eq_finder_suspend">保存して戻る</string>
     <string name="eq_finder_paused_disconnected">一時停止中: イヤホンが接続されていません。接続が戻ると続きます。</string>
     <string name="eq_finder_paused_focus">一時停止中: 別のアプリが音を使っています。</string>
+    <string name="eq_finder_paused_no_music">一時停止中: 音楽が止まっています。音楽アプリで再生すると続きます。</string>
     <string name="eq_finder_resume_playback">再開</string>
     <string name="eq_finder_result_curve_cd">適用前と適用後のイコライザーの曲線</string>
     <string name="eq_finder_before">適用前</string>
@@ -278,6 +284,7 @@
     <string name="eq_finder_validated_lose">最後の目隠し確認では、開始時の音も引けを取りませんでした。差はどちらにしても小さいものです。</string>
     <string name="eq_finder_not_validated">最後の目隠し確認の前に終えたため、結果は検証されていません。</string>
     <string name="eq_finder_consistency">回答のブレが大きめでした。もう一巡すると精度が上がります。</string>
+    <string name="eq_finder_band_error">聴いた曲線との差は最大 %1$s</string>
     <string name="eq_finder_bake_failed">結果を書き込むにはバンドの空きが足りません。バンドをいくつか削除してから、もう一度確定してください。</string>
     <string name="eq_finder_apply">適用して保存</string>
     <string name="eq_finder_discard">破棄</string>

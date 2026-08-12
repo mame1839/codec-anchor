@@ -232,6 +232,11 @@
     <string name="eq_finder_entry_resume">Ada tes tersimpan. Buka untuk melanjutkan.</string>
     <string name="eq_finder_entry_unavailable">Pemrosesan audio untuk earphone ini belum bisa dipakai sekarang.</string>
     <string name="eq_finder_entry_disconnected">Hubungkan earphone ini untuk memulai.</string>
+    <string name="eq_finder_material">Suara untuk tes</string>
+    <string name="eq_finder_material_loop">Bagian lagu yang diputar berulang</string>
+    <string name="eq_finder_material_live">Musik yang sedang diputar sekarang</string>
+    <string name="eq_finder_material_live_desc">Suaranya tidak diukur, jadi penyetaraan volume kurang presisi dibanding bagian lagu yang diputar berulang.</string>
+    <string name="eq_finder_no_music">Putar lagu di aplikasi musik Anda untuk memulai.</string>
     <string name="eq_finder_song">Lagu</string>
     <string name="eq_finder_song_none">Pilih lagu yang Anda kenal baik</string>
     <string name="eq_finder_song_loading">Membaca berkas…</string>
@@ -267,6 +272,7 @@
     <string name="eq_finder_suspend">Simpan dan keluar</string>
     <string name="eq_finder_paused_disconnected">Terjeda: earphone tidak terhubung. Tes berlanjut saat earphone kembali.</string>
     <string name="eq_finder_paused_focus">Terjeda: aplikasi lain mengambil alih suara.</string>
+    <string name="eq_finder_paused_no_music">Terjeda: musik berhenti. Putar lagi di aplikasi musik Anda.</string>
     <string name="eq_finder_resume_playback">Lanjutkan</string>
     <string name="eq_finder_result_curve_cd">Kurva ekualiser sebelum dan sesudah</string>
     <string name="eq_finder_before">Sebelum</string>
@@ -278,6 +284,7 @@
     <string name="eq_finder_validated_lose">Pada pemeriksaan tersamar terakhir, titik awal tetap bertahan. Bedanya memang kecil.</string>
     <string name="eq_finder_not_validated">Tes berakhir sebelum pemeriksaan tersamar terakhir, jadi hasil belum terverifikasi.</string>
     <string name="eq_finder_consistency">Jawaban agak berubah-ubah. Satu putaran lagi akan mempertajam hasil.</string>
+    <string name="eq_finder_band_error">Menyimpang paling banyak %1$s dari kurva yang Anda dengar</string>
     <string name="eq_finder_bake_failed">Hasil butuh pita kosong lebih banyak daripada yang tersisa di ekualiser. Hapus beberapa pita, lalu selesaikan lagi.</string>
     <string name="eq_finder_apply">Terapkan dan simpan</string>
     <string name="eq_finder_discard">Buang</string>

@@ -274,6 +274,11 @@
     <string name="eq_finder_entry_resume">A saved test is waiting. Open to continue.</string>
     <string name="eq_finder_entry_unavailable">Audio processing is not usable for these earphones right now.</string>
     <string name="eq_finder_entry_disconnected">Connect these earphones to start.</string>
+    <string name="eq_finder_material">Sound for the test</string>
+    <string name="eq_finder_material_loop">A looped passage from a song</string>
+    <string name="eq_finder_material_live">The music you are playing now</string>
+    <string name="eq_finder_material_live_desc">The sound is not measured, so loudness matching is less precise than with a looped passage.</string>
+    <string name="eq_finder_no_music">Play a song in your music app to start.</string>
     <string name="eq_finder_song">Song</string>
     <string name="eq_finder_song_none">Choose a song you know well</string>
     <string name="eq_finder_song_loading">Reading the file…</string>
@@ -310,6 +315,7 @@
     <string name="eq_finder_suspend">Save and leave</string>
     <string name="eq_finder_paused_disconnected">Paused: the earphones are not connected. The test continues when they come back.</string>
     <string name="eq_finder_paused_focus">Paused: another app took over the sound.</string>
+    <string name="eq_finder_paused_no_music">Paused: the music stopped. Press play in your music app to continue.</string>
     <string name="eq_finder_resume_playback">Resume</string>
     <string name="eq_finder_result_curve_cd">Curve of the equaliser before and after</string>
     <string name="eq_finder_before">Before</string>
@@ -321,6 +327,7 @@
     <string name="eq_finder_validated_lose">In the blind check at the end, your starting point held up. The difference is small either way.</string>
     <string name="eq_finder_not_validated">The test ended before the final blind check, so the result was not verified.</string>
     <string name="eq_finder_consistency">Your answers wavered a little. Running the test once more would sharpen the result.</string>
+    <string name="eq_finder_band_error">Up to %1$s away from the curve you heard</string>
     <string name="eq_finder_bake_failed">The result needs more free bands than the equaliser has left. Remove some bands, then finish again.</string>
     <string name="eq_finder_apply">Apply and save</string>
     <string name="eq_finder_discard">Discard</string>

@@ -232,6 +232,11 @@
     <string name="eq_finder_entry_resume">有一个已保存的测试。打开即可继续。</string>
     <string name="eq_finder_entry_unavailable">这副耳机目前无法使用音频处理。</string>
     <string name="eq_finder_entry_disconnected">连接这副耳机即可开始。</string>
+    <string name="eq_finder_material">测试用的声音</string>
+    <string name="eq_finder_material_loop">循环播放歌曲片段</string>
+    <string name="eq_finder_material_live">正在播放的音乐</string>
+    <string name="eq_finder_material_live_desc">不对声音做测量，音量对齐的精度低于循环播放。</string>
+    <string name="eq_finder_no_music">在音乐应用里播放一首歌即可开始。</string>
     <string name="eq_finder_song">歌曲</string>
     <string name="eq_finder_song_none">选一首你很熟的歌</string>
     <string name="eq_finder_song_loading">正在读取文件…</string>
@@ -267,6 +272,7 @@
     <string name="eq_finder_suspend">保存并退出</string>
     <string name="eq_finder_paused_disconnected">已暂停：耳机未连接。耳机回来后测试会继续。</string>
     <string name="eq_finder_paused_focus">已暂停：其他应用占用了声音。</string>
+    <string name="eq_finder_paused_no_music">已暂停：音乐停了。请在音乐应用里继续播放。</string>
     <string name="eq_finder_resume_playback">继续播放</string>
     <string name="eq_finder_result_curve_cd">均衡器前后对比曲线</string>
     <string name="eq_finder_before">之前</string>
@@ -278,6 +284,7 @@
     <string name="eq_finder_validated_lose">在最后的盲听核验中，起点也没有落败。反正差别很小。</string>
     <string name="eq_finder_not_validated">测试在最后的盲听核验之前就结束了，因此结果未经核验。</string>
     <string name="eq_finder_consistency">你的回答有些摇摆。再做一轮能让结果更准。</string>
+    <string name="eq_finder_band_error">与试听曲线的差最大 %1$s</string>
     <string name="eq_finder_bake_failed">写入结果所需的空余频段比均衡器剩下的多。删掉几个频段后再确定一次。</string>
     <string name="eq_finder_apply">应用并保存</string>
     <string name="eq_finder_discard">丢弃</string>

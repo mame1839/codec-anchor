@@ -90,7 +90,12 @@ enum class EqFinderCandidate { A, B }
 
 enum class EqFinderAnswer { A, SAME, B }
 
-enum class EqFinderPause { NONE, DISCONNECTED, FOCUS_LOST }
+/**
+ * [NO_MUSIC] はライブ題材 (いま流れている音楽) 専用。自動で立てて自動で下ろし、
+ * 再開ボタンは出さない — 他人のアプリの再生はこちらから再開できない。
+ * [FOCUS_LOST] は逆にライブでは到達しない (プレイヤーを使わず、フォーカスも取らない)。
+ */
+enum class EqFinderPause { NONE, DISCONNECTED, FOCUS_LOST, NO_MUSIC }
 
 /** 探索する軸。表示名だけの区別で、周波数や種別はエンジン側が持つ。 */
 enum class EqFinderAxisKind { BASS, TREBLE, MID }
@@ -102,6 +107,8 @@ enum class EqFinderAxisKind { BASS, TREBLE, MID }
  * (保存された曲が開けないときだけ、選び直しの行が出る)。
  */
 data class EqFinderIntroUi(
+    /** 題材: false = 曲の一節のループ再生 (既定)、true = いま流れている音楽。 */
+    val materialLive: Boolean = false,
     val songName: String? = null,
     val loading: Boolean = false,
     val loadFailed: Boolean = false,
@@ -113,7 +120,7 @@ data class EqFinderIntroUi(
     val includeMid: Boolean = false,
     val fineTuneVisible: Boolean = false,
     val fineTune: Boolean = false,
-    /** null なら始められる。文字列は理由 1 行 (接続が無い等)。 */
+    /** null なら始められる。文字列は理由 1 行 (接続が無い・ライブで音楽が無音等)。 */
     val startBlockedReason: String? = null,
     val resume: EqFinderResumeUi? = null,
 )
@@ -129,6 +136,8 @@ enum class EqFinderResumeBlocked { SETTINGS_CHANGED, SONG_CHANGED }
 
 data class EqFinderResumeUi(
     val done: Int,
+    /** 保存された記録の題材。ノートの出し分けに使う (選択ではなく記録が真)。 */
+    val live: Boolean = false,
     val blocked: EqFinderResumeBlocked? = null,
 )
 
@@ -149,8 +158,20 @@ data class EqFinderTrialUi(
 data class EqFinderAxisDelta(val kind: EqFinderAxisKind, val deltaDb10: Int)
 
 /**
- * 結果画面の状態。[beforeDb] / [afterDb] は [eqFinderResponseDb] で標本化した応答
- * (data class にしないのは、配列の equals が参照比較で意味を持たないため)。
+ * 焼き込みのバンド数の選択肢 1 つ。[maxErrorDb10] は試聴した応答 (base + オーバーレイ) と
+ * 焼き込み後の応答の max|差| (0.1 dB 単位に丸め済み) — 副題に出す忠実度。
+ */
+data class EqFinderBandChoice(val count: Int, val maxErrorDb10: Int)
+
+/**
+ * 結果画面のうち、**セッションが決めて以後変わらない**もの。[beforeDb] / [afterDb] は
+ * [eqFinderResponseDb] で標本化した応答 (data class にしないのは、配列の equals が
+ * 参照比較で意味を持たないため)。
+ *
+ * ⚠️ **適用の途中で変わる状態 (焼き込みの失敗・プリセットの提案) をここに入れないこと。**
+ * 混ぜると「旗を 1 つ変えるために全フィールドを写す」形になり、フィールドが増えたときの
+ * 写し忘れが「適用したらバンド数の選択肢が消える」ような静かな壊れ方になる。
+ * 変わるものはコントローラの状態として持ち、[EqFinderResultContent] へ別の引数で渡す。
  */
 class EqFinderResultUi(
     val axes: List<EqFinderAxisDelta>,
@@ -159,9 +180,8 @@ class EqFinderResultUi(
     val consistencyWarning: Boolean,
     /** 検証段で結果が開始点に勝ったか。null = 検証まで進まずに終えた。 */
     val startBeaten: Boolean?,
-    val bakeFailed: Boolean = false,
-    /** 適用が済んで、プリセットとしても保存するかを聞いている。 */
-    val presetOffer: Boolean = false,
+    /** 焼き込みのバンド数の選択肢。null = 出さない (パラメトリック — fc/Q は手作業の成果物)。 */
+    val bandChoices: List<EqFinderBandChoice>? = null,
 )
 
 // ---------------------------------------------------------------------------
@@ -298,6 +318,7 @@ internal fun EqFinderScaffold(
 @Composable
 internal fun EqFinderIntroContent(
     ui: EqFinderIntroUi,
+    onMaterial: (Boolean) -> Unit,
     onPickSong: () -> Unit,
     onStartMs: (Int) -> Unit,
     onStartMsChosen: () -> Unit,
@@ -311,15 +332,33 @@ internal fun EqFinderIntroContent(
     val resume = ui.resume
     if (resume != null) {
         ResumeCard(ui, resume, onResume, onStartOver)
-        NotesCard()
+        NotesCard(live = resume.live)
         return
     }
 
     SettingsCard {
-        SongRow(ui, onPickSong)
-        if (ui.loaded) {
-            RowDivider()
-            PassageRows(ui, onStartMs, onStartMsChosen, onPreviewToggle)
+        ChoiceRow(
+            title = stringResource(R.string.eq_finder_material),
+            options = listOf(
+                false to stringResource(R.string.eq_finder_material_loop),
+                true to stringResource(R.string.eq_finder_material_live),
+            ),
+            selected = ui.materialLive,
+            onSelect = onMaterial,
+            // 精度が下がることは選ぶ瞬間に正直に出す (選んだ後はノートの同じ 1 行が引き継ぐ)。
+            optionDescriptions = mapOf(
+                true to stringResource(R.string.eq_finder_material_live_desc),
+            ),
+        )
+    }
+
+    if (!ui.materialLive) {
+        SettingsCard {
+            SongRow(ui, onPickSong)
+            if (ui.loaded) {
+                RowDivider()
+                PassageRows(ui, onStartMs, onStartMsChosen, onPreviewToggle)
+            }
         }
     }
 
@@ -339,11 +378,12 @@ internal fun EqFinderIntroContent(
         }
     }
 
-    NotesCard()
+    NotesCard(live = ui.materialLive)
 
     Button(
         onClick = onBegin,
-        enabled = ui.loaded && !ui.loading && ui.startBlockedReason == null,
+        // ライブに一節は要らない。音楽が無ければ startBlockedReason が塞ぐ。
+        enabled = (ui.materialLive || ui.loaded) && !ui.loading && ui.startBlockedReason == null,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Text(stringResource(R.string.eq_finder_begin))
@@ -519,7 +559,7 @@ private fun PassageRows(
 }
 
 @Composable
-private fun NotesCard() {
+private fun NotesCard(live: Boolean) {
     SettingsCard {
         Text(
             text = stringResource(R.string.eq_finder_notes),
@@ -529,6 +569,14 @@ private fun NotesCard() {
         )
         NoticeRow(icon = R.drawable.ic_info, text = stringResource(R.string.eq_finder_note_volume))
         NoticeRow(icon = R.drawable.ic_headphones, text = stringResource(R.string.eq_finder_note_earphones))
+        if (live) {
+            // 題材の選択肢の説明と同じ 1 行。ライブは曲を測らないので、音量合わせの系統誤差と
+            // A/B 間で曲が進む非定常の分だけ精度が下がる — 始める前に正直に出す。
+            NoticeRow(
+                icon = R.drawable.ic_info,
+                text = stringResource(R.string.eq_finder_material_live_desc),
+            )
+        }
         NoticeRow(
             icon = R.drawable.ic_info,
             text = stringResource(R.string.eq_finder_note_length),
@@ -612,14 +660,16 @@ internal fun EqFinderTrialContent(
             NoticeRow(
                 icon = R.drawable.ic_warning,
                 text = stringResource(
-                    if (ui.pause == EqFinderPause.DISCONNECTED) {
-                        R.string.eq_finder_paused_disconnected
-                    } else {
-                        R.string.eq_finder_paused_focus
+                    when (ui.pause) {
+                        EqFinderPause.DISCONNECTED -> R.string.eq_finder_paused_disconnected
+                        EqFinderPause.NO_MUSIC -> R.string.eq_finder_paused_no_music
+                        else -> R.string.eq_finder_paused_focus
                     },
                 ),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
             )
+            // 再開ボタンはフォーカス喪失だけ。切断は接続が戻れば勝手に続き、
+            // ライブの無音は他人のアプリなのでこちらから再開できない。
             if (ui.pause == EqFinderPause.FOCUS_LOST) {
                 OutlinedButton(
                     onClick = onResumePlayback,
@@ -697,9 +747,16 @@ private fun RowScope.AnswerButton(text: String, enabled: Boolean, onClick: () ->
 // 結果
 // ---------------------------------------------------------------------------
 
+@Suppress("LongParameterList")
 @Composable
 internal fun EqFinderResultContent(
     ui: EqFinderResultUi,
+    selectedBandCount: Int,
+    onBandCount: (Int) -> Unit,
+    /** 焼き込みが入らなかった (パラメトリックが満杯)。 */
+    bakeFailed: Boolean,
+    /** 適用が済んで、プリセットとしても保存するかを聞いている。 */
+    presetOffer: Boolean,
     onApply: () -> Unit,
     onDiscard: () -> Unit,
     onSavePreset: (String) -> Unit,
@@ -772,7 +829,30 @@ internal fun EqFinderResultContent(
         }
     }
 
-    if (ui.bakeFailed) {
+    // 焼き込みのバンド数 (グラフィックのみ)。選んだ数は保存物にだけ効く — いま鳴っている音も
+    // 上の曲線 (afterDb) もオーバーレイの目標のままで、差は選択肢の副題の数字が言う
+    // (「摘みと曲線の差は仕様」と同じ整理)。押し直さないのは、バンド構成が変わる push が
+    // クリックレス切替の条件を外れて、耳で選んだ after と別物の聴感になるため。
+    val choices = ui.bandChoices
+    if (choices != null) {
+        SettingsCard {
+            val dbUnit = stringResource(R.string.eq_unit_db)
+            ChoiceRow(
+                title = stringResource(R.string.eq_band_count),
+                options = choices.map { it.count to eqCountText(it.count) },
+                selected = selectedBandCount,
+                onSelect = onBandCount,
+                optionDescriptions = choices.associate { choice ->
+                    choice.count to stringResource(
+                        R.string.eq_finder_band_error,
+                        eqGainText(choice.maxErrorDb10, dbUnit, signed = false),
+                    )
+                },
+            )
+        }
+    }
+
+    if (bakeFailed) {
         Text(
             text = stringResource(R.string.eq_finder_bake_failed),
             style = MaterialTheme.typography.bodyMedium,
@@ -813,7 +893,7 @@ internal fun EqFinderResultContent(
         )
     }
 
-    if (ui.presetOffer) {
+    if (presetOffer) {
         var name by rememberSaveable { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = onDismissPresetOffer,

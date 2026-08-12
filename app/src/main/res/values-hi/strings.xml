@@ -234,6 +234,11 @@
     <string name="eq_finder_entry_resume">एक सहेजा हुआ परीक्षण मौजूद है। जारी रखने के लिए खोलें।</string>
     <string name="eq_finder_entry_unavailable">इन ईयरफ़ोन के लिए ऑडियो प्रोसेसिंग अभी उपलब्ध नहीं है।</string>
     <string name="eq_finder_entry_disconnected">शुरू करने के लिए ये ईयरफ़ोन कनेक्ट करें।</string>
+    <string name="eq_finder_material">टेस्ट के लिए आवाज़</string>
+    <string name="eq_finder_material_loop">गाने का एक हिस्सा दोहराकर बजाना</string>
+    <string name="eq_finder_material_live">अभी चल रहा संगीत</string>
+    <string name="eq_finder_material_live_desc">आवाज़ मापी नहीं जाती, इसलिए वॉल्यूम मिलाना दोहराए गए हिस्से जितना सटीक नहीं होता।</string>
+    <string name="eq_finder_no_music">शुरू करने के लिए अपने म्यूज़िक ऐप में कोई गाना चलाएँ।</string>
     <string name="eq_finder_song">गाना</string>
     <string name="eq_finder_song_none">कोई ऐसा गाना चुनें जिसे आप अच्छी तरह जानते हों</string>
     <string name="eq_finder_song_loading">फ़ाइल पढ़ी जा रही है…</string>
@@ -270,6 +275,7 @@
     <string name="eq_finder_suspend">सहेजकर लौटें</string>
     <string name="eq_finder_paused_disconnected">रुका हुआ: ईयरफ़ोन कनेक्ट नहीं हैं। उनके लौटते ही परीक्षण आगे बढ़ेगा।</string>
     <string name="eq_finder_paused_focus">रुका हुआ: किसी दूसरे ऐप ने आवाज़ ले ली है।</string>
+    <string name="eq_finder_paused_no_music">रुका हुआ: संगीत बंद हो गया है। अपने म्यूज़िक ऐप में फिर से चलाएँ।</string>
     <string name="eq_finder_resume_playback">फिर चलाएँ</string>
     <string name="eq_finder_result_curve_cd">पहले और बाद के इक्वलाइज़र का वक्र</string>
     <string name="eq_finder_before">पहले</string>
@@ -281,6 +287,7 @@
     <string name="eq_finder_validated_lose">आख़िरी अंधी जाँच में शुरुआती बिंदु भी टिका रहा। फ़र्क़ वैसे भी छोटा है।</string>
     <string name="eq_finder_not_validated">परीक्षण आख़िरी अंधी जाँच से पहले ख़त्म हुआ, इसलिए नतीजे की पुष्टि नहीं हुई।</string>
     <string name="eq_finder_consistency">जवाब थोड़े डगमगाए। एक और दौर से नतीजा और सटीक होगा।</string>
+    <string name="eq_finder_band_error">सुने गए कर्व से ज़्यादा से ज़्यादा %1$s का अंतर</string>
     <string name="eq_finder_bake_failed">नतीजे के लिए इक्वलाइज़र में जितने खाली बैंड बचे हैं उससे ज़्यादा चाहिए। कुछ बैंड हटाकर फिर पूरा करें।</string>
     <string name="eq_finder_apply">लागू करके सहेजें</string>
     <string name="eq_finder_discard">छोड़ें</string>
