@@ -280,8 +280,8 @@
     <string name="eq_finder_start_over">البدء من جديد</string>
     <string name="eq_finder_start_over_title">هل تريد حذف الاختبار المحفوظ؟</string>
     <string name="eq_finder_start_over_body">ستُحذف الإجابات المعطاة حتى الآن. المعادل نفسه لن يتغيّر.</string>
-    <string name="eq_finder_resume_missing">تعذّر فتح الأغنية المحفوظة. اختر الملف نفسه مرة أخرى للمتابعة.</string>
-    <string name="eq_finder_resume_changed">هذا المقطع ليس مقطع الاختبار المحفوظ. الإجابات السابقة كانت عن الصوت القديم، لذا قد تقل دقة النتيجة.</string>
+    <string name="eq_finder_resume_blocked_settings">تغيّر المعادل بعد حفظ هذا الاختبار، لذا لا يمكن المتابعة. البدء من جديد ينطلق من الإعدادات الحالية.</string>
+    <string name="eq_finder_resume_blocked_song">لم يعد بالإمكان فتح المقطع المحفوظ كما كان، لذا لا يمكن متابعة هذا الاختبار.</string>
     <string name="eq_finder_trial_hint">انقر A وB للتبديل فورًا. قارن كما تشاء.</string>
     <string name="eq_finder_answer_locked">استمع إلى الاثنين قبل الإجابة.</string>
     <string name="eq_finder_answer_a">A أفضل</string>

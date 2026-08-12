@@ -274,8 +274,8 @@
     <string name="eq_finder_start_over">Zacznij od nowa</string>
     <string name="eq_finder_start_over_title">Usunąć zapisany test?</string>
     <string name="eq_finder_start_over_body">Dotychczasowe odpowiedzi zostaną usunięte. Sam korektor się nie zmieni.</string>
-    <string name="eq_finder_resume_missing">Nie udało się otworzyć zapisanego utworu. Wybierz ten sam plik ponownie, aby kontynuować.</string>
-    <string name="eq_finder_resume_changed">Ten fragment nie jest tym z zapisanego testu. Dotychczasowe odpowiedzi dotyczyły starego brzmienia, więc wynik może być mniej dokładny.</string>
+    <string name="eq_finder_resume_blocked_settings">Po zapisaniu testu korektor został zmieniony, więc nie można kontynuować. Zaczynając od nowa, szukasz od obecnych ustawień.</string>
+    <string name="eq_finder_resume_blocked_song">Zapisanego fragmentu nie da się już otworzyć w dawnej postaci, więc tego testu nie można kontynuować.</string>
     <string name="eq_finder_trial_hint">Dotykaj A i B, aby przełączać natychmiast. Porównuj, ile chcesz.</string>
     <string name="eq_finder_answer_locked">Posłuchaj obu, zanim odpowiesz.</string>
     <string name="eq_finder_answer_a">A brzmi lepiej</string>

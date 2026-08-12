@@ -271,8 +271,8 @@
     <string name="eq_finder_start_over">Ricomincia da capo</string>
     <string name="eq_finder_start_over_title">Eliminare il test salvato?</string>
     <string name="eq_finder_start_over_body">Le risposte date finora vengono eliminate. L\'equalizzatore in sé non cambia.</string>
-    <string name="eq_finder_resume_missing">Impossibile aprire il brano salvato. Scegli di nuovo lo stesso file per continuare.</string>
-    <string name="eq_finder_resume_changed">Questo passaggio non è quello del test salvato. Le risposte già date riguardavano il vecchio suono, quindi il risultato può essere meno preciso.</string>
+    <string name="eq_finder_resume_blocked_settings">L\'equalizzatore è cambiato dopo il salvataggio di questo test, quindi non può continuare. Ricominciando si parte dalle impostazioni attuali.</string>
+    <string name="eq_finder_resume_blocked_song">Il passaggio salvato non si può più aprire com\'era, quindi questo test non può continuare.</string>
     <string name="eq_finder_trial_hint">Tocca A e B per passare all\'istante. Confronta quante volte vuoi.</string>
     <string name="eq_finder_answer_locked">Ascolta entrambi prima di rispondere.</string>
     <string name="eq_finder_answer_a">Meglio A</string>

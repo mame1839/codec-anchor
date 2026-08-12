@@ -268,8 +268,8 @@
     <string name="eq_finder_start_over">Von vorn beginnen</string>
     <string name="eq_finder_start_over_title">Gespeicherten Test löschen?</string>
     <string name="eq_finder_start_over_body">Die bisherigen Antworten werden gelöscht. Der Equalizer selbst bleibt unverändert.</string>
-    <string name="eq_finder_resume_missing">Der gespeicherte Titel ließ sich nicht öffnen. Zum Fortsetzen dieselbe Datei erneut wählen.</string>
-    <string name="eq_finder_resume_changed">Dieser Ausschnitt ist nicht der des gespeicherten Tests. Die bisherigen Antworten bezogen sich auf den alten Klang, das Ergebnis kann dadurch ungenauer werden.</string>
+    <string name="eq_finder_resume_blocked_settings">Der Equalizer wurde nach dem Speichern dieses Tests geändert, daher kann er nicht fortgesetzt werden. Ein Neustart sucht ab den jetzigen Einstellungen.</string>
+    <string name="eq_finder_resume_blocked_song">Der gespeicherte Ausschnitt lässt sich nicht mehr unverändert öffnen, daher kann dieser Test nicht fortgesetzt werden.</string>
     <string name="eq_finder_trial_hint">A und B antippen, um sofort umzuschalten. Beliebig oft vergleichen.</string>
     <string name="eq_finder_answer_locked">Erst beide anhören, dann antworten.</string>
     <string name="eq_finder_answer_a">A ist besser</string>

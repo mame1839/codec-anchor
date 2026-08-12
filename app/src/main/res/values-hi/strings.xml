@@ -268,8 +268,8 @@
     <string name="eq_finder_start_over">फिर से शुरू करें</string>
     <string name="eq_finder_start_over_title">सहेजा हुआ परीक्षण हटाएँ?</string>
     <string name="eq_finder_start_over_body">अब तक दिए गए जवाब हट जाएँगे। इक्वलाइज़र खुद नहीं बदलेगा।</string>
-    <string name="eq_finder_resume_missing">सहेजा हुआ गाना खोला नहीं जा सका। जारी रखने के लिए वही फ़ाइल फिर चुनें।</string>
-    <string name="eq_finder_resume_changed">यह हिस्सा सहेजे हुए परीक्षण वाला नहीं है। अब तक के जवाब पुरानी आवाज़ के बारे में थे, इसलिए नतीजा कम सटीक हो सकता है।</string>
+    <string name="eq_finder_resume_blocked_settings">यह परीक्षण सहेजने के बाद इक्वलाइज़र बदल गया, इसलिए जारी नहीं रखा जा सकता। फिर से शुरू करने पर मौजूदा सेटिंग से खोज होगी।</string>
+    <string name="eq_finder_resume_blocked_song">सहेजा हुआ हिस्सा अब पहले जैसा नहीं खुलता, इसलिए यह परीक्षण जारी नहीं रह सकता।</string>
     <string name="eq_finder_trial_hint">तुरंत बदलने के लिए A और B छुएँ। जितनी बार चाहें तुलना करें।</string>
     <string name="eq_finder_answer_locked">जवाब देने से पहले दोनों सुनें।</string>
     <string name="eq_finder_answer_a">A बेहतर है</string>

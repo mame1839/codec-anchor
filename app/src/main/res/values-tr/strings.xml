@@ -268,8 +268,8 @@
     <string name="eq_finder_start_over">Baştan başla</string>
     <string name="eq_finder_start_over_title">Kayıtlı test silinsin mi?</string>
     <string name="eq_finder_start_over_body">Şimdiye dek verilen yanıtlar silinir. Ekolayzırın kendisi değişmez.</string>
-    <string name="eq_finder_resume_missing">Kayıtlı şarkı açılamadı. Devam etmek için aynı dosyayı yeniden seç.</string>
-    <string name="eq_finder_resume_changed">Bu bölüm, kayıtlı testin kullandığı bölüm değil. Önceki yanıtlar eski sese aitti; sonuç daha az isabetli olabilir.</string>
+    <string name="eq_finder_resume_blocked_settings">Bu test kaydedildikten sonra ekolayzır değişti; bu yüzden devam edemez. Baştan başlamak şu anki ayarlardan arar.</string>
+    <string name="eq_finder_resume_blocked_song">Kayıtlı bölüm artık olduğu gibi açılamıyor; bu yüzden bu test devam edemez.</string>
     <string name="eq_finder_trial_hint">Anında geçiş için A ve B\'ye dokun. İstediğin kadar karşılaştır.</string>
     <string name="eq_finder_answer_locked">Yanıtlamadan önce ikisini de dinle.</string>
     <string name="eq_finder_answer_a">A daha iyi</string>

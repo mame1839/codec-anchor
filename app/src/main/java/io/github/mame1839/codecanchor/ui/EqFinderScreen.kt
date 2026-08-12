@@ -118,12 +118,18 @@ data class EqFinderIntroUi(
     val resume: EqFinderResumeUi? = null,
 )
 
+/**
+ * 「続きから」を出せない理由。null なら再開できる。
+ *
+ * どちらも**黙って続けると回答と結果の意味が壊れる**食い違い — 設定が変わっていれば、
+ * 探索は古い土台の上で進むのに確定はその古い土台で現行設定を上書きする (中間の編集が消える)。
+ * 一節が変わっていれば、これまでの回答は別の音についてのもの。だから警告ではなく遮断にする。
+ */
+enum class EqFinderResumeBlocked { SETTINGS_CHANGED, SONG_CHANGED }
+
 data class EqFinderResumeUi(
     val done: Int,
-    /** 保存された曲が開けない。同じファイルを選び直せば続けられる。 */
-    val songMissing: Boolean = false,
-    /** 選び直した一節が保存時と違う (回答済みの分は別の音についてのもの)。 */
-    val changed: Boolean = false,
+    val blocked: EqFinderResumeBlocked? = null,
 )
 
 /**
@@ -304,7 +310,7 @@ internal fun EqFinderIntroContent(
 ) {
     val resume = ui.resume
     if (resume != null) {
-        ResumeCard(ui, resume, onResume, onStartOver, onPickSong)
+        ResumeCard(ui, resume, onResume, onStartOver)
         NotesCard()
         return
     }
@@ -359,7 +365,6 @@ private fun ResumeCard(
     resume: EqFinderResumeUi,
     onResume: () -> Unit,
     onStartOver: () -> Unit,
-    onPickSong: () -> Unit,
 ) {
     var confirmStartOver by rememberSaveable { mutableStateOf(false) }
 
@@ -375,12 +380,16 @@ private fun ResumeCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        if (resume.songMissing) {
-            NoticeRow(icon = R.drawable.ic_warning, text = stringResource(R.string.eq_finder_resume_missing))
-            SongRow(ui, onPickSong)
-        }
-        if (resume.changed) {
-            NoticeRow(icon = R.drawable.ic_warning, text = stringResource(R.string.eq_finder_resume_changed))
+        if (resume.blocked != null) {
+            NoticeRow(
+                icon = R.drawable.ic_warning,
+                text = stringResource(
+                    when (resume.blocked) {
+                        EqFinderResumeBlocked.SETTINGS_CHANGED -> R.string.eq_finder_resume_blocked_settings
+                        EqFinderResumeBlocked.SONG_CHANGED -> R.string.eq_finder_resume_blocked_song
+                    },
+                ),
+            )
         }
         Row(
             modifier = Modifier
@@ -391,12 +400,15 @@ private fun ResumeCard(
             OutlinedButton(onClick = { confirmStartOver = true }, modifier = Modifier.weight(1f)) {
                 Text(stringResource(R.string.eq_finder_start_over))
             }
-            Button(
-                onClick = onResume,
-                enabled = !resume.songMissing && !ui.loading && ui.startBlockedReason == null,
-                modifier = Modifier.weight(1f),
-            ) {
-                Text(stringResource(R.string.action_continue))
+            // 遮断されたら「続ける」は出さない。押せないボタンを残すと、直せば押せるように読める。
+            if (resume.blocked == null) {
+                Button(
+                    onClick = onResume,
+                    enabled = !ui.loading && ui.startBlockedReason == null,
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text(stringResource(R.string.action_continue))
+                }
             }
         }
         if (ui.startBlockedReason != null) {

@@ -265,8 +265,8 @@
     <string name="eq_finder_start_over">重新開始</string>
     <string name="eq_finder_start_over_title">要刪除已儲存的測試嗎？</string>
     <string name="eq_finder_start_over_body">已給出的回答會被刪除。等化器本身不會變。</string>
-    <string name="eq_finder_resume_missing">無法開啟已儲存的歌曲。重新選擇同一個檔案即可繼續。</string>
-    <string name="eq_finder_resume_changed">這個片段和已儲存測試用的不一樣。先前的回答針對的是舊的聲音，結果可能沒那麼準。</string>
+    <string name="eq_finder_resume_blocked_settings">儲存這個測試之後等化器被改動過，無法繼續。重新開始會從目前設定出發。</string>
+    <string name="eq_finder_resume_blocked_song">儲存的片段已無法按原樣開啟，這個測試無法繼續。</string>
     <string name="eq_finder_trial_hint">點按 A 和 B 可立即切換。想比幾次都行。</string>
     <string name="eq_finder_answer_locked">請先把兩個都聽過再回答。</string>
     <string name="eq_finder_answer_a">A 比較好</string>

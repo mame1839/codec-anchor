@@ -274,8 +274,8 @@
     <string name="eq_finder_start_over">Начать заново</string>
     <string name="eq_finder_start_over_title">Удалить сохранённый тест?</string>
     <string name="eq_finder_start_over_body">Все ответы будут удалены. Сам эквалайзер не изменится.</string>
-    <string name="eq_finder_resume_missing">Не удалось открыть сохранённую композицию. Выберите тот же файл ещё раз, чтобы продолжить.</string>
-    <string name="eq_finder_resume_changed">Этот отрывок не тот, что был в сохранённом тесте. Прежние ответы относились к старому звуку, поэтому результат может быть менее точным.</string>
+    <string name="eq_finder_resume_blocked_settings">После сохранения теста эквалайзер был изменён, поэтому продолжить нельзя. Начав заново, вы будете искать от текущих настроек.</string>
+    <string name="eq_finder_resume_blocked_song">Сохранённый отрывок больше не открывается в прежнем виде, поэтому продолжить тест нельзя.</string>
     <string name="eq_finder_trial_hint">Нажимайте A и B, чтобы мгновенно переключаться. Сравнивайте сколько угодно раз.</string>
     <string name="eq_finder_answer_locked">Прослушайте оба варианта, прежде чем отвечать.</string>
     <string name="eq_finder_answer_a">A лучше</string>

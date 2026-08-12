@@ -271,8 +271,8 @@
     <string name="eq_finder_start_over">Recommencer à zéro</string>
     <string name="eq_finder_start_over_title">Supprimer le test enregistré ?</string>
     <string name="eq_finder_start_over_body">Les réponses données jusqu\'ici seront supprimées. L\'égaliseur lui-même ne change pas.</string>
-    <string name="eq_finder_resume_missing">Le morceau enregistré n\'a pas pu être ouvert. Choisissez à nouveau le même fichier pour continuer.</string>
-    <string name="eq_finder_resume_changed">Ce passage n\'est pas celui du test enregistré. Les réponses déjà données portaient sur l\'ancien son ; le résultat peut être moins précis.</string>
+    <string name="eq_finder_resume_blocked_settings">L\'égaliseur a été modifié après l\'enregistrement de ce test ; impossible de le reprendre. Recommencer repart des réglages actuels.</string>
+    <string name="eq_finder_resume_blocked_song">Le passage enregistré ne peut plus être ouvert tel quel ; ce test ne peut pas reprendre.</string>
     <string name="eq_finder_trial_hint">Touchez A et B pour basculer instantanément. Comparez autant de fois que vous voulez.</string>
     <string name="eq_finder_answer_locked">Écoutez les deux avant de répondre.</string>
     <string name="eq_finder_answer_a">A est mieux</string>

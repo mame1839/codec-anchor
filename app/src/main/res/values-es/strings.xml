@@ -271,8 +271,8 @@
     <string name="eq_finder_start_over">Empezar de cero</string>
     <string name="eq_finder_start_over_title">¿Eliminar la prueba guardada?</string>
     <string name="eq_finder_start_over_body">Se eliminan las respuestas dadas hasta ahora. El ecualizador en sí no cambia.</string>
-    <string name="eq_finder_resume_missing">No se pudo abrir la canción guardada. Vuelve a elegir el mismo archivo para continuar.</string>
-    <string name="eq_finder_resume_changed">Este fragmento no es el de la prueba guardada. Las respuestas anteriores eran sobre el sonido antiguo, así que el resultado puede ser menos preciso.</string>
+    <string name="eq_finder_resume_blocked_settings">El ecualizador cambió después de guardar esta prueba, así que no puede continuar. Al empezar de cero se parte de los ajustes actuales.</string>
+    <string name="eq_finder_resume_blocked_song">El fragmento guardado ya no se puede abrir tal como era, así que esta prueba no puede continuar.</string>
     <string name="eq_finder_trial_hint">Toca A y B para cambiar al instante. Compara cuantas veces quieras.</string>
     <string name="eq_finder_answer_locked">Escucha ambos antes de responder.</string>
     <string name="eq_finder_answer_a">A suena mejor</string>

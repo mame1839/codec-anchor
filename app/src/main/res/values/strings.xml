@@ -307,8 +307,8 @@
     <string name="eq_finder_start_over">Start over</string>
     <string name="eq_finder_start_over_title">Delete the saved test?</string>
     <string name="eq_finder_start_over_body">The answers you have given are deleted. The equaliser itself does not change.</string>
-    <string name="eq_finder_resume_missing">The saved song could not be opened. Pick the same file again to continue.</string>
-    <string name="eq_finder_resume_changed">This passage is not the one the saved test was using. The answers so far were about the old sound, so the result may be less accurate.</string>
+    <string name="eq_finder_resume_blocked_settings">The equaliser was changed after this test was saved, so it cannot continue. Starting over searches from the current settings.</string>
+    <string name="eq_finder_resume_blocked_song">The saved passage can no longer be opened as it was, so this test cannot continue.</string>
     <string name="eq_finder_trial_hint">Tap A and B to switch instantly. Compare as many times as you like.</string>
     <string name="eq_finder_answer_locked">Listen to both before you answer.</string>
     <string name="eq_finder_answer_a">A is better</string>

@@ -265,8 +265,8 @@
     <string name="eq_finder_start_over">เริ่มใหม่</string>
     <string name="eq_finder_start_over_title">ลบการทดสอบที่บันทึกไว้ไหม</string>
     <string name="eq_finder_start_over_body">คำตอบที่ให้ไว้จะถูกลบ ส่วนอีควอไลเซอร์เองไม่เปลี่ยน</string>
-    <string name="eq_finder_resume_missing">เปิดเพลงที่บันทึกไว้ไม่ได้ เลือกไฟล์เดิมอีกครั้งเพื่อทำต่อ</string>
-    <string name="eq_finder_resume_changed">ท่อนนี้ไม่ใช่ท่อนของการทดสอบที่บันทึกไว้ คำตอบก่อนหน้าเป็นของเสียงเดิม ผลจึงอาจแม่นยำน้อยลง</string>
+    <string name="eq_finder_resume_blocked_settings">อีควอไลเซอร์ถูกเปลี่ยนหลังบันทึกการทดสอบนี้ จึงทำต่อไม่ได้ การเริ่มใหม่จะค้นหาจากค่าปัจจุบัน</string>
+    <string name="eq_finder_resume_blocked_song">ท่อนเพลงที่บันทึกไว้เปิดแบบเดิมไม่ได้แล้ว การทดสอบนี้จึงทำต่อไม่ได้</string>
     <string name="eq_finder_trial_hint">แตะ A และ B เพื่อสลับทันที เปรียบเทียบได้กี่ครั้งก็ได้</string>
     <string name="eq_finder_answer_locked">ฟังทั้งสองก่อนแล้วค่อยตอบ</string>
     <string name="eq_finder_answer_a">A ดีกว่า</string>

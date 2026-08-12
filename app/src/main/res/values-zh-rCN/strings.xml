@@ -265,8 +265,8 @@
     <string name="eq_finder_start_over">重新开始</string>
     <string name="eq_finder_start_over_title">要删除已保存的测试吗？</string>
     <string name="eq_finder_start_over_body">已给出的回答会被删除。均衡器本身不会变。</string>
-    <string name="eq_finder_resume_missing">无法打开已保存的歌曲。重新选择同一个文件即可继续。</string>
-    <string name="eq_finder_resume_changed">这个片段和已保存测试用的不一样。之前的回答针对的是旧的声音，结果可能没那么准。</string>
+    <string name="eq_finder_resume_blocked_settings">保存这个测试之后均衡器被改动过，无法继续。重新开始会从当前设置出发。</string>
+    <string name="eq_finder_resume_blocked_song">保存的片段已无法按原样打开，这个测试无法继续。</string>
     <string name="eq_finder_trial_hint">点按 A 和 B 可立即切换。想比多少次都行。</string>
     <string name="eq_finder_answer_locked">请先把两个都听过再回答。</string>
     <string name="eq_finder_answer_a">A 更好</string>

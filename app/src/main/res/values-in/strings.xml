@@ -265,8 +265,8 @@
     <string name="eq_finder_start_over">Mulai dari awal</string>
     <string name="eq_finder_start_over_title">Hapus tes tersimpan?</string>
     <string name="eq_finder_start_over_body">Jawaban yang sudah diberikan akan dihapus. Ekualisernya sendiri tidak berubah.</string>
-    <string name="eq_finder_resume_missing">Lagu tersimpan tidak bisa dibuka. Pilih berkas yang sama sekali lagi untuk melanjutkan.</string>
-    <string name="eq_finder_resume_changed">Bagian ini bukan bagian dari tes tersimpan. Jawaban sebelumnya tentang suara lama, jadi hasil bisa kurang akurat.</string>
+    <string name="eq_finder_resume_blocked_settings">Ekualiser berubah setelah tes ini disimpan, jadi tidak bisa dilanjutkan. Memulai dari awal akan mencari dari setelan sekarang.</string>
+    <string name="eq_finder_resume_blocked_song">Bagian yang tersimpan tidak bisa lagi dibuka seperti semula, jadi tes ini tidak bisa dilanjutkan.</string>
     <string name="eq_finder_trial_hint">Ketuk A dan B untuk berpindah seketika. Bandingkan sesering yang Anda mau.</string>
     <string name="eq_finder_answer_locked">Dengarkan keduanya sebelum menjawab.</string>
     <string name="eq_finder_answer_a">A lebih baik</string>

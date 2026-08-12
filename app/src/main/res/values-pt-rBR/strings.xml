@@ -271,8 +271,8 @@
     <string name="eq_finder_start_over">Recomeçar do zero</string>
     <string name="eq_finder_start_over_title">Excluir o teste salvo?</string>
     <string name="eq_finder_start_over_body">As respostas dadas até agora são excluídas. O equalizador em si não muda.</string>
-    <string name="eq_finder_resume_missing">Não foi possível abrir a música salva. Escolha o mesmo arquivo de novo para continuar.</string>
-    <string name="eq_finder_resume_changed">Este trecho não é o do teste salvo. As respostas anteriores eram sobre o som antigo, então o resultado pode ficar menos preciso.</string>
+    <string name="eq_finder_resume_blocked_settings">O equalizador mudou depois que este teste foi salvo, então ele não pode continuar. Recomeçar parte das configurações atuais.</string>
+    <string name="eq_finder_resume_blocked_song">O trecho salvo não pode mais ser aberto como era, então este teste não pode continuar.</string>
     <string name="eq_finder_trial_hint">Toque em A e B para alternar na hora. Compare quantas vezes quiser.</string>
     <string name="eq_finder_answer_locked">Ouça os dois antes de responder.</string>
     <string name="eq_finder_answer_a">A é melhor</string>

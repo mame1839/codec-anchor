@@ -37,6 +37,7 @@ import io.github.mame1839.codecanchor.ui.EqFinderIntroContent
 import io.github.mame1839.codecanchor.ui.EqFinderPause
 import io.github.mame1839.codecanchor.ui.EqFinderResultContent
 import io.github.mame1839.codecanchor.ui.EqFinderResultUi
+import io.github.mame1839.codecanchor.ui.EqFinderResumeBlocked
 import io.github.mame1839.codecanchor.ui.EqFinderResumeUi
 import io.github.mame1839.codecanchor.ui.EqFinderTrialContent
 import io.github.mame1839.codecanchor.ui.EqFinderTrialUi
@@ -266,15 +267,29 @@ class EqFinderScreenTest {
         assertTrue(startedOver)
     }
 
+    // 遮断された再開に「続ける」を出すと、黙って壊れた前提の上で回答が続く
+    // (設定ずれ = 中間の編集が確定で消える / 一節ずれ = 回答が別の音のもの)。
     @Test
-    fun aMissingSongBlocksContinuingUntilItIsPickedAgain() {
+    fun aResumeBlockedByChangedSettingsOnlyOffersStartingOver() {
         showIntro(
-            EqFinderIntroUi(resume = EqFinderResumeUi(done = 5, songMissing = true)),
+            EqFinderIntroUi(
+                resume = EqFinderResumeUi(done = 5, blocked = EqFinderResumeBlocked.SETTINGS_CHANGED),
+            ),
         )
-        onText(R.string.eq_finder_resume_missing).assertExists()
-        onText(R.string.action_continue).assertIsNotEnabled()
-        // 選び直しの行はこのときだけ出る。
-        onText(R.string.eq_finder_song).assertExists()
+        onText(R.string.eq_finder_resume_blocked_settings).assertExists()
+        compose.onNodeWithText(string(R.string.action_continue)).assertDoesNotExist()
+        onText(R.string.eq_finder_start_over).assertExists()
+    }
+
+    @Test
+    fun aResumeBlockedByAChangedSongOnlyOffersStartingOver() {
+        showIntro(
+            EqFinderIntroUi(
+                resume = EqFinderResumeUi(done = 5, blocked = EqFinderResumeBlocked.SONG_CHANGED),
+            ),
+        )
+        onText(R.string.eq_finder_resume_blocked_song).assertExists()
+        compose.onNodeWithText(string(R.string.action_continue)).assertDoesNotExist()
     }
 
     // ------------------------------------------------------------------

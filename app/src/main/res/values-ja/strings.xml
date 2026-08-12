@@ -265,8 +265,8 @@
     <string name="eq_finder_start_over">最初からやり直す</string>
     <string name="eq_finder_start_over_title">保存したテストを削除しますか？</string>
     <string name="eq_finder_start_over_body">これまでの回答が削除されます。イコライザーの設定は変わりません。</string>
-    <string name="eq_finder_resume_missing">保存した曲が開けませんでした。同じファイルをもう一度選ぶと続けられます。</string>
-    <string name="eq_finder_resume_changed">この一節は保存したテストのものと違います。これまでの回答は前の音についてのものなので、結果の精度が下がることがあります。</string>
+    <string name="eq_finder_resume_blocked_settings">保存したあとにイコライザーの設定が変わったため、続きからはできません。最初からやり直すと、いまの設定を出発点に探します。</string>
+    <string name="eq_finder_resume_blocked_song">保存したときの一節をそのままの形で開けないため、このテストは続けられません。</string>
     <string name="eq_finder_trial_hint">A と B をタップすると即座に切り替わります。何度でも聴き比べられます。</string>
     <string name="eq_finder_answer_locked">両方を聴いてから答えてください。</string>
     <string name="eq_finder_answer_a">A が良い</string>

@@ -265,8 +265,8 @@
     <string name="eq_finder_start_over">Làm lại từ đầu</string>
     <string name="eq_finder_start_over_title">Xóa bài kiểm tra đã lưu?</string>
     <string name="eq_finder_start_over_body">Các câu trả lời đã cho sẽ bị xóa. Bản thân bộ chỉnh âm không đổi.</string>
-    <string name="eq_finder_resume_missing">Không mở được bài hát đã lưu. Chọn lại đúng tệp đó để tiếp tục.</string>
-    <string name="eq_finder_resume_changed">Đoạn này không phải đoạn của bài kiểm tra đã lưu. Các câu trả lời trước là về âm thanh cũ, nên kết quả có thể kém chính xác hơn.</string>
+    <string name="eq_finder_resume_blocked_settings">Bộ chỉnh âm đã thay đổi sau khi lưu bài kiểm tra này nên không thể tiếp tục. Làm lại từ đầu sẽ tìm từ thiết lập hiện tại.</string>
+    <string name="eq_finder_resume_blocked_song">Đoạn nhạc đã lưu không còn mở được như cũ nên bài kiểm tra này không thể tiếp tục.</string>
     <string name="eq_finder_trial_hint">Chạm A và B để chuyển ngay lập tức. So sánh bao nhiêu lần tùy thích.</string>
     <string name="eq_finder_answer_locked">Nghe cả hai rồi hãy trả lời.</string>
     <string name="eq_finder_answer_a">A hay hơn</string>
