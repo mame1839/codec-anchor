@@ -973,6 +973,73 @@ void runShmSections(Report& r) {
                     static_cast<int>(pl.firState()), pl.curveGeneration());
             delete w;
         }
+
+        // (8) **どの経路で作業領域を得たかが、音に一切出ないこと。**
+        //
+        // ⚠️ **reserveForCurrent の抜けを一般に捕まえる唯一の釘。**
+        // 個々のフィールド (`taps_` / `pre_len_` / `p_cur_`) を別々に見張ると、
+        // **次に足したフィールドが漏れる。**実際 `pre_len_` は釘が無く、
+        // 丸ごと消す変異が 347/347 のまま通っていた (この節を足す前の自己監査で発見)。
+        // 消えると preamp のランプが 10 ms から即時になり、クリックが約 50 dB 悪化する
+        // (eq-spec.md の「クリック対策」: 瞬時 -64.6 / ランプ -114.3 dBFS) —
+        // **どのカウンタにも状態にも出ないので、出力を突き合わせる以外に見る手が無い。**
+        {
+            const std::vector<float> curve = tiltCurve(-6.0f, 6.0f);
+            caeq::Params p0, p1;
+            p0.band_count = 1;
+            p0.preamp_db  = -2.0;
+            p0.bands[0] = caeq::Band{caeq::BandType::kPeaking, 1000.0, 1.0, 6.0};
+            p1 = p0;
+            p1.preamp_db = -9.0;   // 途中で動かす。ランプ長が違えば軌跡が変わる
+
+            // A: 最初から capable (configure が確保する)。
+            // B: capable=false で configure したあと true (setFirCapable が確保する)。
+            caeq::EqPipeline a, b;
+            a.configure(48000.0, 2, caeq::Structure::kTdf2);
+            b.setFirCapable(false);
+            b.configure(48000.0, 2, caeq::Structure::kTdf2);
+            b.setFirCapable(true);
+
+            caeq::EqPipeline* pls[2] = {&a, &b};
+            for (caeq::EqPipeline* pl : pls) {
+                pl->snapParams(p0);
+                pl->setActive(true);
+                pl->setFirEnabled(true);
+                pl->setCurve(curve.data(), 1);
+                pl->warmUp();
+            }
+            r.check(a.firAvailable() && b.firAvailable() &&
+                        a.arenaBytes() == b.arenaBytes() &&
+                        a.designTaps() == b.designTaps() && a.designM() == b.designM(),
+                    "両経路とも同じ作業領域 (%zu KB / taps %d / M %d)", a.arenaBytes() / 1024,
+                    a.designTaps(), a.designM());
+
+            catest::Rng rng(4242);
+            std::vector<float> in(1920), out_a(1920), out_b(1920);
+            bool same = true;
+            int first_diff = -1;
+            for (int blk = 0; blk < 80; blk++) {
+                for (size_t i = 0; i < in.size(); i++) {
+                    in[i] = static_cast<float>(0.2 * rng.uniform());
+                }
+                // FIR が鳴り始めたあとで preamp を動かす (ランプの軌跡を見るため)。
+                if (blk == 40) { a.setParams(p1); b.setParams(p1); }
+                a.process(in.data(), out_a.data(), 960, false);
+                b.process(in.data(), out_b.data(), 960, false);
+                for (size_t i = 0; i < in.size() && same; i++) {
+                    if (out_a[i] != out_b[i]) { same = false; first_diff = blk; }
+                }
+            }
+            r.check(same && a.firState() == caeq::EqPipeline::FirState::kFir &&
+                        b.firState() == caeq::EqPipeline::FirState::kFir,
+                    "80 ブロック (preamp のランプを含む) を通して出力がビット同一 "
+                    "%s— 確保の経路が音に出ない",
+                    first_diff >= 0 ? "でない (最初の差はブロック " : "");
+            r.check(a.rebuilds() == b.rebuilds() && a.fallbacks() == b.fallbacks() &&
+                        a.curveGeneration() == b.curveGeneration(),
+                    "診断カウンタも一致 (rebuilds %u / 落下 %u / 曲線 gen %u)", a.rebuilds(),
+                    a.fallbacks(), a.curveGeneration());
+        }
     }
 
     // --- 10e. 書き手の枠選びと読み手の確保が同じ述語を見ていること -------------
