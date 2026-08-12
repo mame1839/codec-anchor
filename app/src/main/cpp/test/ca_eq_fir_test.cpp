@@ -1855,9 +1855,12 @@ void checkFuzz(Report& r) {
                 std::vector<double> k(31);
                 for (int i = 0; i < 31; i++) {
                     k[static_cast<size_t>(i)] =
-                        static_cast<double>(u[static_cast<size_t>(i)]) * 44.0;  // 時々不正
+                        static_cast<double>(u[static_cast<size_t>(i)]) * 30.0;
                 }
                 std::vector<float> c = curveFromKnobs(k.data());
+                // 4 本に 1 本は汚す。全部を汚すと有効な曲線が採用されず FIR が一度も
+                // 立ち上がらない (= ファズが興味のある状態を素通りする) ので、大半は有効。
+                if ((b % 4) == 3) c[rnd() % 401] = std::nanf("");
                 pl.setCurve(c.data(), ++gen);
             }
             const int p = ps[(b / 25) % 4];  // 数十ブロックごとに P が化ける
@@ -1888,10 +1891,14 @@ void checkFuzz(Report& r) {
         }
         r.check(finite, "乱れた運転 400 ブロック (P 変化・NaN 注入・reset・トグル): "
                         "非有限が入力位置の外へ増殖しない");
-        r.note("  カウンタ: rebuilds=%u fallbacks=%u unfitSize=%u unfitBudget=%u "
-               "rejected=%u scrubbed=%u",
-               pl.rebuilds(), pl.fallbacks(), pl.unfitSizeCount(), pl.unfitBudgetCount(),
-               pl.curveRejected(), pl.scrubbedSamples());
+        // ファズが興味のある状態を実際に通ったことの見張り。ここが 0 のままだと
+        // 「何も起きない運転」を眺めて通過したことになる (最初にそれをやった)。
+        r.check(pl.rebuilds() >= 2 && pl.fallbacks() >= 1 && pl.unfitSizeCount() >= 1 &&
+                    pl.curveRejected() >= 1,
+                "ファズが FIR の稼働と落下を実際に通った (rebuilds=%u fallbacks=%u "
+                "unfitSize=%u rejected=%u scrubbed=%u)",
+                pl.rebuilds(), pl.fallbacks(), pl.unfitSizeCount(), pl.curveRejected(),
+                pl.scrubbedSamples());
     }
 }
 
