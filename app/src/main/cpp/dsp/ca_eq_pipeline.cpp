@@ -187,8 +187,18 @@ void EqPipeline::configure(double sample_rate, int channels, Structure structure
 // (段 1 のブロッカー 1 は「区画を触る経路が検査済み側に寄っていなかった」ことが
 //  原因だった。経路を増やさない形が一番安全。)
 void EqPipeline::setFirCapable(bool capable) {
-    // **同じ値なら完全な no-op。**`.so` は枠を宛てられるたびに true を撃つので、
-    // ここで畳むと鳴っている FIR が毎回落ちる (configure の冪等と同じ性質)。
+    // **`false → false` で下へ落とさないこと。**`releaseArena()` は arena だけでなく
+    // `curve_dirty_` / `have_curve_` も落とすので、**まだ採用していない曲線が捨てられる。**
+    // fs 変化には SET_CONFIG → `PollState::param_gen = 0` の戻しがあるが、capability の
+    // 変更には無いので **poll は再送せず (世代が同じなら早期 return)、ユーザが曲線を
+    // 触るまで高精度が黙って戻らない。**釘は 30 節 (7)。
+    //
+    // (`true → true` 側は下の `arena_ == nullptr` で弾かれるので、こちらは冗長。
+    //  変異試験でも通ってしまうので、そちらを load-bearing と書かないこと。)
+    //
+    // ⚠️ 落とし穴の根は `releaseArena()` が「作業領域を解放する」と「曲線を忘れる」を
+    // 束ねていること。曲線は arena と独立したデータなので概念的には分けられるが、
+    // fs 変化の往復 (31 節) が今の束ね方の上で通っているので、いま解くのは割に合わない。
     if (capable == fir_capable_) return;
     fir_capable_ = capable;
     if (!capable) {

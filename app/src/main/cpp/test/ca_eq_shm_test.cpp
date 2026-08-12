@@ -934,6 +934,45 @@ void runShmSections(Report& r) {
                     "biquad が実際に鳴っている (素通しに落ちていない。差の総和 %.3g)", energy);
             delete w;
         }
+
+        // (7) 冗長な false→false が、まだ採用していない曲線を捨てないこと。
+        //
+        // ⚠️ **ここが冪等の門が本当に効いている唯一の場所。**`releaseArena()` は arena
+        // だけでなく `curve_dirty_` / `have_curve_` も落とすので、門が無いと 2 回目の
+        // false で届いていた曲線が消える。**poll は再送しない** (世代が同じなら早期
+        // return) ので、ユーザが曲線を触るまで高精度が黙って戻らない。
+        // **契約が「いつでも何度でも呼んでよい」なので、呼び手が増えたときに踏む。**
+        {
+            ShmWithCanary* w = newCanaryShm();
+            caeq::EqPipeline pl;
+            pl.setFirCapable(false);
+            pl.configure(48000.0, 2, caeq::Structure::kTdf2);
+            pl.setClock(&fakeClock);
+            caeq::PollState st;
+            Driver drv(pl, 960, 2);
+
+            // capable=false のまま曲線が届く (poll は capability を見ない)。
+            writeSlot(&w->m.params[0], 1u, 1u, good.data(),
+                      CA_EQ_FLAG_ENABLED | CA_EQ_FLAG_HIGH_PRECISION, -2.0);
+            caeq::pollSlot(&w->m.params[0], &st, &pl, true);
+            drv.step();
+
+            pl.setFirCapable(false);   // **冗長な 2 回目。**契約上これは許される
+            pl.setFirCapable(true);
+            pl.warmUp();
+
+            // **曲線を送り直さずに**回す。poll も世代が同じなので送らない。
+            for (int b = 0; b < 60 && pl.firState() != caeq::EqPipeline::FirState::kFir; b++) {
+                caeq::pollSlot(&w->m.params[0], &st, &pl, true);
+                drv.step();
+            }
+            r.check(pl.firState() == caeq::EqPipeline::FirState::kFir &&
+                        pl.curveGeneration() == 1u,
+                    "冗長な false のあとでも、届いていた曲線で FIR に到達する "
+                    "(送り直さずに。state=%d gen=%u)",
+                    static_cast<int>(pl.firState()), pl.curveGeneration());
+            delete w;
+        }
     }
 
     // --- 10e. 書き手の枠選びと読み手の確保が同じ述語を見ていること -------------
