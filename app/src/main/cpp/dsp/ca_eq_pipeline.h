@@ -96,6 +96,18 @@ public:
     // fs が変わったら arena を組み直し、FIR の状態は捨てる (taps / M / FDL すべて fs 依存)。
     void configure(double sample_rate, int channels, Structure structure);
 
+    // このインスタンスが FIR の作業領域 (arena) を持ってよいか。
+    // **許可であって要求ではない** — true にしても FIR は始まらない
+    // (始めるのは共有メモリの高精度フラグ = setFirEnabled)。
+    //
+    // **いつ呼んでもよい。**configure の前でも後でも、何度でも。順序に依存しない。
+    // 同じ値での呼び出しは完全な no-op なので、鳴っている FIR が畳まれることはない。
+    //
+    // ⚠️ **既定を false にしないこと。**呼び忘れた `.so` では高精度が黙って効かなくなる。
+    // 既定 true なら呼び忘れは「使わない arena を持つ」だけで、機能は死なない。
+    // **失敗する向きは必ず「動くが無駄」側へ倒す** (TERM.md: 自分を無効化する型を作らない)。
+    void setFirCapable(bool capable);
+
     bool setParams(const Params& p);   // Eq へ転送 + FIR 側 preamp の追跡 (10 ms ランプ)
     bool snapParams(const Params& p);  // Eq へ転送 + preamp 即時反映
     void setActive(bool active);       // Eq へ転送 + FIR 側 wet (Eq と同じ意味論)
@@ -147,7 +159,16 @@ public:
     uint32_t designFailures() const { return design_failures_; }  // 設計器が非有限で止まった回数
     uint32_t unfitSizeCount() const { return unfit_size_; }  // P が大きさで不適
     uint32_t unfitBudgetCount() const { return unfit_budget_; }  // P が予算で不適
+    // 曲線が検査に落ちて採用されなかった回数。
+    // **本番では上がらない** — 共有メモリの読み手 (dsp/ca_eq_poll.h) が、枠の更新を
+    // 丸ごと採るか丸ごと捨てるかを決めるために `curveValid` を先に通すため。
+    // ここは**その poll を通らない呼び手 (ハーネス・将来の別経路) のための最後の砦**で、
+    // 死んだコードではない。検査の定義は `caeq::curveValid` ただ 1 つで、
+    // 呼び出し側が 2 つあるだけ (数えている事象が違う —
+    // poll 側 = 枠の更新ごと棄却、こちら = 曲線の採用直前)。
     uint32_t curveRejected() const { return curve_rejected_; }
+    // FIR の作業領域を持ってよいインスタンスか (setFirCapable の現在値)。診断が読む。
+    bool     firCapable() const { return fir_capable_; }
     uint32_t scrubbedSamples() const { return kernel_.scrubbedSamples(); }
     uint64_t maxSliceNs() const { return max_slice_ns_; }
     uint32_t curveGeneration() const { return active_gen_; }  // いま鳴っている曲線の世代
@@ -167,13 +188,19 @@ public:
 
 private:
     // FIR を畳む理由。**カウンタの意味を決めるのはここ 1 箇所。**
+    // 「数えるか」と「Eq を起こすか」は独立していて、下の 3 通りで組み合わせが尽きる。
     enum class Drop : uint8_t {
-        kHard,   // 端末側の都合 (P/fs/ch 変化・RESET・arena 喪失)。鳴っていたなら落下
-        kQuiet,  // 音の経路が変わらない (準備中の取り止め・DISABLE 完了・モード OFF 完了)
+        kHard,     // 端末側の都合 (P/fs/ch 変化・RESET・arena 喪失)。落下として数える + 起こす
+        kHandoff,  // このインスタンスが FIR の宿主でなくなった。数えないが**起こす**
+        kQuiet,    // 音の経路が変わらない (準備中の取り止め・DISABLE 完了・モード OFF 完了)
     };
 
     void releaseArena();
     void reserveArena();
+    // いまの fs_ / ch_ で arena を組む。**configure と setFirCapable の両方から呼ぶ** —
+    // 組み直しに要るものを 1 箇所に集めておかないと、後から確保した経路でだけ
+    // 初期化が抜ける (`p_cur_` を戻し忘れると evaluateBlock が走らず FIR が永久に始まらない)。
+    void reserveForCurrent();
     void invalidateFir(Drop reason);    // FDL 失効 → kBiquad (準備からやり直し)
     bool evaluateBlock(int frames);     // P の合法/予算判定。変化時だけ判定し直す
     void adoptCurveIfDirty();           // dirty なら検査 → designer 再始動
@@ -215,6 +242,9 @@ private:
 
     FirState state_ = FirState::kBiquad;
     bool fir_enabled_ = false;
+    // **既定 true。**setFirCapable の説明を参照 — 呼び忘れが「黙って効かない」に
+    // ならない向きへ倒してある。
+    bool fir_capable_ = true;
     bool p_ok_        = false;
     int  p_cur_       = 0;      // 0 = まだブロックを見ていない
     int64_t budget_ns_ = 0;

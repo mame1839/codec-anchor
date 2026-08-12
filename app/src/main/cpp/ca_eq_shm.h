@@ -89,8 +89,17 @@ typedef struct ca_slot_s {
     uint32_t param_rejected;  /* 検査に落ちて丸ごと捨てた回数 */
     /* create_effect に渡された sessionId。**書き手が「イヤホン側の枠」を選ぶ唯一の手掛かり。**
      * CA_AUDIO_SESSION_DEVICE なら <deviceEffects> 経由 = A2DP のスレッド。
-     * <postprocess> 経由のインスタンスは別の値で**同時に居るのが通常の構成**なので、
-     * 「使用中の枠が 2 つある = イヤホンが 2 台」と読むと必ず誤判定する。 */
+     *
+     * **<postprocess> にも登録した端末では、別の値の枠が同時に立つ。**そのとき
+     * 「使用中の枠が 2 つある = イヤホンが 2 台」と読むと誤判定する。
+     * **登録するかどうかを決めるのは `module/common/setup.sh` の `ca_want_pp`。**
+     *
+     * ⚠️ **ここに既定値を書かないこと。**以前は「同時に居るのが**通常の構成**」と
+     * 書いてあった — `<postprocess>` の既定が 1 だった頃の記述で、既定をオフに
+     * 変えたときに直し損ねたもの。**その 1 文が、非 DEVICE インスタンスの無駄な確保を
+     * 「常時起きる恒久的な純損失」と誤判定させ、実装の優先順位の判断まで動かした**
+     * (2026-08-13)。コードもテストも正しく動いていたので、どの計器にも掛からなかった。
+     * **既定は変わる。値を写さず、決めている場所を指すこと。** */
     int32_t  session_id;
     /* --- ここまでが版 3 の 128 B (並びを動かさないこと) ------------------- */
 
@@ -146,10 +155,14 @@ CA_STATIC_ASSERT(offsetof(ca_slot_t, fir_state) == 128,
 #define CA_FIR_STATE_FIR      3u
 #define CA_FIR_STATE_FADE_OUT 4u
 
-/* fir_flags。「要求されているのに始まらない」の理由を切り分けるための 3 ビット。 */
+/* fir_flags。「要求されているのに始まらない」の理由を切り分けるためのビット。 */
 #define CA_FIR_F_REQUESTED  0x1u  /* 共有メモリの flags で高精度が指示されている */
-#define CA_FIR_F_ARENA      0x2u  /* 作業領域を確保できている (ch <= 2 のときだけ) */
+#define CA_FIR_F_ARENA      0x2u  /* 作業領域を確保できている */
 #define CA_FIR_F_BLOCK_OK   0x4u  /* いまのブロック長で FIR を回せる */
+/* このインスタンスに設定が宛てられうる (= FIR の宿主になれる)。判定は
+ * caeq::sessionCanBeAddressed。**退路経路 (<postprocess> / session 0) のインスタンスは
+ * ここが落ちる**ので、そこで高精度が効かないことの理由がこのビットで読める。 */
+#define CA_FIR_F_ADDRESSABLE 0x8u
 
 /* ---------------------------------------------------------------------------
  * パラメータの領域。**向きが上の統計と逆で、書き手が外 (設定を持っている側)、
@@ -209,11 +222,18 @@ typedef struct ca_eq_slot_s {
      * **IR ではなく曲線を運ぶ**理由は eq-fir-design.md §1 (アプリは fs を知らない)。
      * 検査は「各点が有限かつ |dB| <= 40」で、1 点でも外れたら枠の更新ごと捨てる。 */
     float    curve_db[caeq::kCurvePoints];
-    /* 残りが pad。**フィールドを足すなら、その分だけこの式の引き算を増やす。**
-     * kCurvePoints や CA_EQ_MAX_BANDS を動かしたときは pad が自動で伸び縮みし、
-     * 入り切らなくなれば配列長が負になってコンパイルが止まる。 */
-    uint8_t  pad[CA_EQ_PARAM_SLOT_BYTES - 28 - 16 * CA_EQ_MAX_BANDS
-                 - 4 * caeq::kCurvePoints];
+    /* 先の版のための余白。**長さは固定の数で書くこと。**
+     *
+     * ⚠️ ここを「宣言した大きさ − 中身」の式で書くと、**kCurvePoints や
+     * CA_EQ_MAX_BANDS を動かしても pad が黙って伸び縮みして sizeof が変わらず、
+     * 下の CA_STATIC_ASSERT が 1 本も発火しない。**
+     * **実際に式で書いていて、検分で見つかった** (2026-08-13)。格子の点数は特に危険で、
+     * どのオフセットも動かさないので `offsetof` の釘も素通りする。
+     * 格子と band 数は Kotlin の送り手・モジュールが作るファイルの大きさまで繋がる
+     * 取り決めなので、動かしたことに誰も気づかないのが一番高くつく。
+     * **フィールドを足すときは、この数を手で減らす。**減らし忘れれば sizeof が
+     * 2176 を超えて下の釘が止める。 */
+    uint8_t  pad[48];
 } ca_eq_slot_t;
 
 CA_STATIC_ASSERT(sizeof(ca_eq_slot_t) == CA_EQ_PARAM_SLOT_BYTES,

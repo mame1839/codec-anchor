@@ -466,6 +466,12 @@ extern "C" int32_t ca_command(effect_handle_t self, uint32_t cmd, uint32_t cmdSi
             }
             c->param_slot = static_cast<uint32_t>(v);
             c->poll.param_gen = 0;   // 新しい枠なので、次のブロックで読み直す
+            // **明示的に枠を宛てられた = このインスタンスは FIR の宿主になれる。**
+            // ハンドルを持つ保持者からの経路 (hold-process.md の退路段) では、
+            // session が DEVICE でないインスタンスにも枠が宛てられる。
+            // ここで引き上げないと、その構成でだけ高精度が黙って効かない。
+            // (同じ値なら no-op なので、毎回撃っても鳴っている FIR は畳まれない。)
+            c->dsp.setFirCapable(true);
             CA_LOGI("SET_PARAM slot=%d ctx=%p", v, static_cast<void*>(c));
             *static_cast<int*>(pReply) = 0;
             return 0;
@@ -548,8 +554,14 @@ extern "C" int32_t ca_lib_create(const effect_uuid_t* uuid, int32_t sessionId, i
     // スライスの実測。**進め方は費用モデルが決めるので、時計は測るだけ** —
     // 渡さなくても音は同じで、診断の µs が出なくなるだけ。
     c->dsp.setClock(ca_now_ns);
-    // SET_CONFIG が来るまでの暫定。**ここで 2ch を仮定するので arena が一度作られ、
-    // 12ch のインスタンスでは SET_CONFIG で解放される** (作り直しは制御スレッド)。
+    // **FIR の作業領域を持ってよいインスタンスか。**FIR が乗るのは書き手が設定を
+    // 宛てられる枠だけなので、そうでないインスタンス (退路経路の <postprocess> /
+    // session 0) は 791 KB を一度も使わずに抱え続けることになる。
+    // **判定は書き手の枠選びと同じ述語** (caeq::sessionCanBeAddressed)。
+    // ⚠️ **configure より先に呼ぶ** — 後だと暫定の arena が一度作られてしまう。
+    // (setter 自体は順序非依存なので、これは無駄を省くためだけの順序。)
+    c->dsp.setFirCapable(caeq::sessionCanBeAddressed(sessionId));
+    // SET_CONFIG が来るまでの暫定。
     c->dsp.configure(48000.0, 2, kStructure);
     // 初回のページフォルトと係数の初期化を process() の外へ出す。
     c->dsp.warmUp();

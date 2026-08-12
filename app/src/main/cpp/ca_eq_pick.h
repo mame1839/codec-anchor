@@ -62,6 +62,26 @@ inline ShmState shmState(const ca_shm_t* m) {
 }
 
 /**
+ * このインスタンスに設定が宛てられうるか。
+ *
+ * ⚠️ **書き手の枠選び (`pickDeviceSlot`) と、読み手が FIR の作業領域を確保するかの判断が、
+ * この 1 つの述語を見る。**別々に書くと、宛てられるのに作業領域を持たない
+ * (= 高精度が黙って効かない) インスタンスか、その逆ができる。
+ *
+ * いまの答えは「`<deviceEffects>` 経由だけ」。`.so` の descriptor は
+ * DEVICE / `<postprocess>` / session 0 の 3 経路すべてで動くように作ってあり
+ * (`eq-spec.md` §3)、**DEVICE が通らない端末で退路へ落ちる可能性は設計に織り込まれている。**
+ * そのとき書き手が退路の枠も選べるようにするなら、**ここを 1 箇所変えれば両側が追随する。**
+ *
+ * ⚠️ **これが false のインスタンスでも、`EFFECT_CMD_SET_PARAM` (`CA_PARAM_ID_SLOT`) で
+ * 枠を宛てられることがある** — ハンドルを持つ保持者からの経路 (`hold-process.md` の退路段)。
+ * `.so` はそこで作業領域を引き上げるので、この述語だけで固定しないこと。
+ */
+inline bool sessionCanBeAddressed(int32_t session_id) {
+    return session_id == CA_AUDIO_SESSION_DEVICE;
+}
+
+/**
  * 「高精度 (最小位相 FIR) を頼んだのに biquad のまま」の理由。
  *
  * ⚠️ **理由の判定をリーダの表示コードに書かないこと。**この製品で繰り返し出ている
@@ -71,6 +91,10 @@ inline ShmState shmState(const ca_shm_t* m) {
 enum class FirWhy {
     kRunning = 0,     /* FIR が鳴っている。理由は要らない */
     kNotRequested,    /* 標準モード。**異常ではない** */
+    /** このインスタンスには設定が宛てられない (退路経路)。**作業領域を持たないのは設計どおり**で、
+     *  確保の失敗ではない。**kNoArena より先に言う** — 「作業領域が無い」と出すと、
+     *  読んだ人が確保の失敗を疑って別の場所を探しに行く。 */
+    kNotAddressable,
     kNoArena,         /* 作業領域が無い = 3ch 以上のインスタンスか確保に失敗 */
     kBlockUnfit,      /* このスレッドのブロック長では回せない */
     kNoCurve,         /* 曲線がまだ届いていない */
@@ -86,6 +110,7 @@ enum class FirWhy {
 inline FirWhy firWhy(const ca_slot_t& s, const ca_eq_slot_t* q) {
     if (s.fir_state == CA_FIR_STATE_FIR) return FirWhy::kRunning;
     if ((s.fir_flags & CA_FIR_F_REQUESTED) == 0u) return FirWhy::kNotRequested;
+    if ((s.fir_flags & CA_FIR_F_ADDRESSABLE) == 0u) return FirWhy::kNotAddressable;
     if ((s.fir_flags & CA_FIR_F_ARENA) == 0u) return FirWhy::kNoArena;
     if ((s.fir_flags & CA_FIR_F_BLOCK_OK) == 0u) return FirWhy::kBlockUnfit;
     if (q != nullptr && q->curve_gen == 0u) return FirWhy::kNoCurve;
@@ -134,9 +159,13 @@ typedef bool (*PidAliveFn)(uint64_t pid, void* user);
  * 掃除しないので、audio HAL が落ちて再起動すると前の枠が使用中のまま残る (実測で確認済み)。
  *
  * ⚠️ **`session_id` を見ないと、イヤホンが 1 台でも複数の枠が生きて見える。**
- * `<postprocess>` への登録が既定で有効 (`module/common/setup.sh` の `CA_PP=1`) なので、
- * スピーカー / spatializer のスレッドにも同じエフェクトが挿さる。そちらへ書くと
- * **イヤホンの設定がスピーカーに掛かる。**
+ * `<postprocess>` にも登録した端末では、スピーカー / spatializer のスレッドにも同じ
+ * エフェクトが挿さる。そちらへ書くと**イヤホンの設定がスピーカーに掛かる。**
+ * **登録するかどうかを決めるのは `module/common/setup.sh` の `ca_want_pp`。**
+ *
+ * ⚠️ **ここに既定値を書かないこと。**以前は「既定で**有効** (`CA_PP=1`)」と書いてあり、
+ * `ca_eq_shm.h` の同じ型の記述と合わせて実装の優先順位の判断を動かした (2026-08-13)。
+ * **既定は変わる。値を写さず、決めている場所を指すこと。**
  */
 inline SlotPickResult pickDeviceSlot(const ca_shm_t* m, PidAliveFn alive, void* user) {
     SlotPickResult r{SlotPick::kNone, 0u, 0u, 0u, 0u, 0u};
@@ -151,7 +180,8 @@ inline SlotPickResult pickDeviceSlot(const ca_shm_t* m, PidAliveFn alive, void* 
         // pid が 0 の枠は attach の途中。次に呼べば埋まっているので、いまは無いものとして扱う。
         if (s.pid == 0) continue;
         if (!alive(s.pid, user)) { r.stale_count++; continue; }
-        if (s.session_id != CA_AUDIO_SESSION_DEVICE) { r.other_count++; continue; }
+        // **読み手が作業領域を確保するかの判断と同じ述語を見る** (sessionCanBeAddressed)。
+        if (!sessionCanBeAddressed(s.session_id)) { r.other_count++; continue; }
         // 読みに行く枠が決まっていない (CA_PARAM_SLOT_NONE) インスタンスは、書いても素通しのまま。
         if (s.param_slot >= static_cast<uint32_t>(CA_SHM_SLOTS)) continue;
         r.live_count++;

@@ -143,6 +143,18 @@ void EqPipeline::reserveArena() {
     }
 }
 
+void EqPipeline::reserveForCurrent() {
+    taps_ = firTapsFor(fs_);
+    m_    = firDefaultM(fs_);
+    reserveArena();
+    pre_len_ = static_cast<int64_t>(eq_.rampMillis() * fs_ / 1000.0 + 0.5);
+    // **`p_cur_` を 0 に戻すことが要点。**process() は `frames != p_cur_` のときしか
+    // evaluateBlock を呼ばないので、戻さないと `p_ok_` が false のまま据え置かれ、
+    // arena はあるのに FIR が永久に始まらない。
+    p_cur_ = 0;
+    p_ok_  = false;
+}
+
 void EqPipeline::configure(double sample_rate, int channels, Structure structure) {
     eq_.configure(sample_rate, channels, structure);
     // Eq と同じ受け方で、FIR 側の可否だけここで決める。
@@ -150,8 +162,11 @@ void EqPipeline::configure(double sample_rate, int channels, Structure structure
     int ch = channels;
     if (ch < 1) ch = 1;
 
-    // arena は ch ≤ 2 のときだけ (eq-fir-design.md §2 — 12ch の spatializer には作らない)。
-    if (ch > 2) {
+    // arena を持つのは「宿主になれる」インスタンスの ch ≤ 2 のときだけ
+    // (eq-fir-design.md §2 — 12ch の spatializer には作らない)。
+    // **`fs_` / `ch_` はこの経路でも必ず入れる** — 後から setFirCapable(true) が
+    // 来たときに、ここが空だとその場で確保できない。
+    if (ch > 2 || !fir_capable_) {
         releaseArena();
         fs_ = sample_rate;
         ch_ = ch;
@@ -161,15 +176,33 @@ void EqPipeline::configure(double sample_rate, int channels, Structure structure
         return;  // 冪等 — SET_CONFIG は同じ値で何度も来る
     }
     releaseArena();
-    fs_   = sample_rate;
-    ch_   = ch;
-    taps_ = firTapsFor(fs_);
-    m_    = firDefaultM(fs_);
-    reserveArena();
+    fs_ = sample_rate;
+    ch_ = ch;
+    reserveForCurrent();
+}
 
-    pre_len_ = static_cast<int64_t>(eq_.rampMillis() * fs_ / 1000.0 + 0.5);
-    p_cur_ = 0;
-    p_ok_  = false;
+// **`process()` も遷移の状態機械も 1 行も変えない。**保つ不変条件は
+// 「`!fir_capable_` ⟹ `arena_ == nullptr`」の 1 本だけで、`can_hold` が既に
+// `arena_ != nullptr` を見ているので、オーディオ経路には条件が 1 つも増えない。
+// (段 1 のブロッカー 1 は「区画を触る経路が検査済み側に寄っていなかった」ことが
+//  原因だった。経路を増やさない形が一番安全。)
+void EqPipeline::setFirCapable(bool capable) {
+    // **同じ値なら完全な no-op。**`.so` は枠を宛てられるたびに true を撃つので、
+    // ここで畳むと鳴っている FIR が毎回落ちる (configure の冪等と同じ性質)。
+    if (capable == fir_capable_) return;
+    fir_capable_ = capable;
+    if (!capable) {
+        // 鳴っていたなら Eq を起こしてから畳む。**落下 (fallbacks_) には数えない** —
+        // あのカウンタは「この機種では FIR が保てない」を読むための値で、
+        // 枠の宛先が動いたのはそれではない。
+        invalidateFir(Drop::kHandoff);
+        releaseArena();
+        return;
+    }
+    // configure より先に呼ばれたら fs_ がまだ無い。フラグだけ持って configure に任せる。
+    // **後から呼ばれた場合はここで確保する** — configure は同じ fs/ch なら冪等に
+    // return するので、次の configure を待つと永久に確保されない (順序依存の罠)。
+    if (fs_ > 0.0 && ch_ >= 1 && ch_ <= 2 && arena_ == nullptr) reserveForCurrent();
 }
 
 bool EqPipeline::setParams(const Params& p) {
@@ -247,10 +280,14 @@ bool EqPipeline::idle() const {
 
 void EqPipeline::invalidateFir(Drop reason) {
     // FIR の分け前が実際に音に出ていたか。**カウンタも Eq の起こし方もここで決まる。**
+    // **「数える」と「起こす」は別の問い。**kQuiet だけが起こさない —
+    // あれは Eq が既に自分で降りている場面 (DISABLE 完了・モード OFF 完了) か、
+    // まだ音に出ていない場面 (準備中の取り止め) なので、起こすと二重に鳴る。
+    // 逆に kHandoff で起こさないと、**駐機中 (wet 0) の Eq へ渡して素通しの段差になる。**
     const bool was_audible = (state_ == FirState::kFadeIn || state_ == FirState::kFir ||
                               state_ == FirState::kFadeOut);
-    if (reason == Drop::kHard && was_audible) {
-        fallbacks_++;
+    if (reason == Drop::kHard && was_audible) fallbacks_++;
+    if (reason != Drop::kQuiet && was_audible) {
         // kFir では Eq を 1 度も回していないので内部状態が古い。ゼロにしてから
         // 自身の wet で立ち上げる (pipeline 側にゲートを持たない — 真は Eq の wet 1 つ)。
         if (state_ == FirState::kFir) eq_.reset();
