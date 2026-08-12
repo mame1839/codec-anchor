@@ -12,6 +12,10 @@
 #include <unistd.h>
 #include <android/log.h>
 #include "aosp/audio_effect.h"
+// 枠の宛先の述語 (sessionCanBeAddressed) を書き手と共有するため。
+// **`ca_eq.cpp` はホストのハーネスに入らない**ので、ここの include 漏れは
+// Android のビルドでしか出ない。
+#include "ca_eq_pick.h"
 #include "ca_eq_shm.h"
 #include "dsp/ca_eq_dsp.h"
 #include "dsp/ca_eq_params.h"
