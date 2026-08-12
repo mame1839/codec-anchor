@@ -1,5 +1,10 @@
 package io.github.mame1839.codecanchor
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithText
 import io.github.mame1839.codecanchor.bridge.EqFinderSaved
 import io.github.mame1839.codecanchor.bridge.EqFinderStore
 import io.github.mame1839.codecanchor.core.EqBand
@@ -10,6 +15,7 @@ import io.github.mame1839.codecanchor.core.EqLoudness
 import io.github.mame1839.codecanchor.core.EqMode
 import io.github.mame1839.codecanchor.core.EqSettings
 import io.github.mame1839.codecanchor.ui.EqFinderController
+import io.github.mame1839.codecanchor.ui.EqFinderEntryCard
 import io.github.mame1839.codecanchor.ui.EqFinderResumeBlocked
 import io.github.mame1839.codecanchor.ui.MainViewModel
 import io.github.mame1839.codecanchor.ui.axisKind
@@ -25,6 +31,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -185,5 +192,37 @@ class EqFinderControllerTest {
         val c = controller(vm)
         assertNull("別の機器の記録が「続きから」に化けた", c.saved)
         assertNull(c.resumeBlocked())
+    }
+
+    // ------------------------------------------------------------------
+    // 入口の門
+    // ------------------------------------------------------------------
+
+    /**
+     * 使えない状態の入口は、理由を出して押せない。
+     *
+     * Robolectric ではエフェクトが登録されないので `eqAvailability` は必ず不可 —
+     * つまりここで確かめられるのは閉じた側だけ。**開く側 (OK + 接続一致で押せる) は
+     * JVM では作れない状態なので、実機で確かめる。**
+     */
+    @get:Rule
+    val compose = createComposeRule()
+
+    @Test
+    fun theEntryCardExplainsItselfInsteadOfOpening() {
+        val vm = MainViewModel(RuntimeEnvironment.getApplication())
+        vm.ensureProfile(mac)
+        var opened = false
+        compose.setContent {
+            MaterialTheme {
+                EqFinderEntryCard(vm, mac, onOpen = { opened = true })
+            }
+        }
+        compose.onNodeWithText(
+            RuntimeEnvironment.getApplication().getString(R.string.eq_finder_entry_unavailable),
+        ).assertExists()
+        // 行は disabled (OnClick の定義自体は disabled でも残るので、有効かどうかで見る)。
+        compose.onNode(hasClickAction()).assertIsNotEnabled()
+        assertFalse(opened)
     }
 }
