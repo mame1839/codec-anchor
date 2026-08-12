@@ -1,11 +1,14 @@
 package io.github.mame1839.codecanchor
 
+import io.github.mame1839.codecanchor.core.AutoEqParser
 import io.github.mame1839.codecanchor.core.EqBand
 import io.github.mame1839.codecanchor.core.EqSolver
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlin.math.abs
+import kotlin.math.exp
+import kotlin.math.ln
 
 class EqSolverTest {
 
@@ -380,5 +383,69 @@ class EqSolverTest {
         assertTrue("シェルフが NaN を返した", db.isFinite())
         val bands = listOf(EqBand(freqHz = 100, q100 = 400, gainDb10 = 400, type = 1))
         assertTrue(EqSolver.autoPreampDb10(bands) <= 0)
+    }
+
+    // ---- 取り込みの曲線フィット (fitCurve) ----
+
+    // 実現可能で滑らかな曲線 (既知のバンドの応答 + 一定オフセット) はフィットがそのまま
+    // 当てる。上限 0.2 dB は量子化 (0.1 dB 刻み) 込みの実測 0.10 dB の 2 倍。
+    // AutoEQ の実カーブと同じく滑らかな形で見る — バンドごとに符号が暴れる櫛は固定基底の
+    // 不動点から外れて 0.47 dB 残る (取り込みの対象がそういう形なら誤差はそれでよい)。
+    // フィットが壊れて素朴な値 (中心サンプル) に落ちると、中心での実現値 (裾込み) を
+    // バンドゲインに入れてしまい数 dB ずれるので、機構の退行はここで割れる。
+    @Test
+    fun fitReproducesARealizableCurve() {
+        val freqs = EqSolver.centerFrequencies(31)
+        val trueBands = freqs.mapIndexed { i, hz ->
+            val bump = 3.0 * exp(-((i - 10.0) / 4.0).let { it * it }) -
+                2.0 * exp(-((i - 22.0) / 5.0).let { it * it })
+            EqBand(freqHz = hz, q100 = 141, gainDb10 = Math.round(bump * 10).toInt())
+        }
+        val curve = { hz: Double -> EqSolver.combinedResponseDb(trueBands, hz) - 7.0 }
+        val fit = EqSolver.fitCurve(curve, freqs, EqSolver.defaultQ(31))
+        var worst = 0.0
+        for (i in 0..400) {
+            val hz = exp(ln(20.0) + (ln(20_000.0) - ln(20.0)) * i / 400.0)
+            val realized = EqSolver.combinedResponseDb(fit.bands, hz) + fit.offsetDb
+            worst = maxOf(worst, abs(realized - curve(hz)))
+        }
+        assertTrue("最悪 $worst dB", worst <= 0.2)
+        // オフセットは曲線の広帯域成分の側に残る (バンドに吸われて摘みがずれない)
+        assertTrue("offset=${fit.offsetDb}", abs(fit.offsetDb + 7.0) <= 1.5)
+    }
+
+    // 上限 (20 dB) を超える解になる目標は、solve() と同じ規則で Q を上げて解き直す。
+    @Test
+    fun fitEscalatesTheQWhenTheSolutionWouldExceedTheLimit() {
+        val freqs = EqSolver.centerFrequencies(31)
+        val points = freqs.mapIndexed { i, hz ->
+            hz.toDouble() to if (i % 2 == 0) 12.0 else -12.0
+        }
+        val fit = EqSolver.fitCurve(
+            { hz -> AutoEqParser.interpolate(points, hz) },
+            freqs,
+            EqSolver.defaultQ(31),
+        )
+        val defaultQ100 = (EqSolver.defaultQ(31) * 100).toInt()
+        assertTrue("q100=${fit.bands.first().q100}", fit.bands.all { it.q100 > defaultQ100 })
+        assertTrue(fit.bands.all { abs(it.gainDb10) <= 200 })
+    }
+
+    // Q を上限まで上げても収まらない目標は、素朴な値 (中心サンプル) に戻す。
+    // 中心の値そのもの (±25 dB) が解の上限 20 dB を超えているのが素朴経路の証拠 —
+    // フィットの解はクランプされるので、200 超のゲインはフィットからは出ない。
+    @Test
+    fun fitFallsBackToNaiveSamplingWhenEscalationFails() {
+        val freqs = EqSolver.centerFrequencies(31)
+        val points = freqs.mapIndexed { i, hz ->
+            hz.toDouble() to if (i % 2 == 0) 25.0 else -25.0
+        }
+        val fit = EqSolver.fitCurve(
+            { hz -> AutoEqParser.interpolate(points, hz) },
+            freqs,
+            EqSolver.defaultQ(31),
+        )
+        assertEquals((EqSolver.defaultQ(31) * 100).toInt(), fit.bands.first().q100)
+        assertTrue(fit.bands.any { abs(it.gainDb10) > 200 })
     }
 }

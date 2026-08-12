@@ -27,6 +27,8 @@
 
     <string name="cd_refresh_status">ตรวจสอบสถานะอีกครั้ง</string>
     <string name="cd_back">ย้อนกลับ</string>
+    <string name="cd_eq_slot_menu">ตัวเลือกของช่อง</string>
+    <string name="cd_eq_slot_add">เพิ่มช่อง</string>
     <string name="state_expanded">ขยายอยู่</string>
     <string name="state_collapsed">ยุบอยู่</string>
 
@@ -37,13 +39,9 @@
 
     <string name="section_general">การตั้งค่าทั่วไป</string>
     <string name="toggle_auto_apply">ใช้การตั้งค่าโดยอัตโนมัติ</string>
-    <string name="toggle_auto_apply_desc">เมื่อปิด จะไม่มีการเปลี่ยนแปลงกับอุปกรณ์ใด</string>
     <string name="toggle_enforce">ย้อนการเปลี่ยนแปลงจากระบบหรือแอปอื่น</string>
-    <string name="toggle_enforce_desc">ถ้าระบบหรือแอปอื่นเปลี่ยนโคเดก จะเปลี่ยนกลับเป็นค่าที่ตรึงไว้</string>
     <string name="toggle_notify">แจ้งเมื่อโคเดกเปลี่ยน</string>
-    <string name="toggle_notify_desc">แสดงข้อความสั้น ๆ เมื่อโคเดกถูกเปลี่ยน</string>
     <string name="toggle_verbose">บันทึกล็อกแบบละเอียด</string>
-    <string name="toggle_verbose_desc">สำหรับตรวจหาสาเหตุที่อุปกรณ์ไม่ยอมเปลี่ยน</string>
 
     <string name="permission_title">ต้องมีสิทธิ์ Bluetooth</string>
     <string name="permission_body">เมื่อให้สิทธิ์ แอปจะอ่านอุปกรณ์ที่จับคู่ไว้และชื่อของอุปกรณ์ได้</string>
@@ -80,7 +78,7 @@
     <string name="eq_unavailable_device">หูฟังคู่นี้ยังไม่ได้ลงทะเบียนสำหรับการประมวลผลเสียง สิ่งที่ตั้งค่าไว้ที่นี่จึงไม่มีผลกับเสียงที่ได้ยิน</string>
 
     <string name="eq_device_register">ใช้การประมวลผลเสียงกับหูฟังคู่นี้</string>
-    <string name="eq_device_register_desc">เพิ่มหูฟังคู่นี้ลงในการตั้งค่าเสียงของเครื่อง เสียงจะหยุดชั่วขณะระหว่างที่กำลังใช้ค่า</string>
+    <string name="eq_device_register_desc">เสียงจะหยุดชั่วขณะระหว่างที่กำลังใช้ค่า</string>
     <string name="eq_device_confirm_on_title">เปิดการประมวลผลเสียงสำหรับหูฟังคู่นี้ไหม</string>
     <string name="eq_device_confirm_off_title">ปิดการประมวลผลเสียงสำหรับหูฟังคู่นี้ไหม</string>
     <string name="eq_device_confirm_body">บริการเสียงของเครื่องจะรีสตาร์ท เสียงที่กำลังเล่นอยู่ตอนนี้จึงเงียบไปสองสามวินาที การเชื่อมต่อ Bluetooth ยังคงอยู่ และการตั้งค่าอีควอไลเซอร์ของคุณจะยังคงอยู่ไม่ว่าผลจะเป็นอย่างไร</string>
@@ -120,7 +118,6 @@
     <string name="profile_no_target">ยังไม่ได้ตรึงค่าใด</string>
 
     <string name="section_backup">การสำรองข้อมูล</string>
-    <string name="backup_body">บันทึกการตั้งค่าทั้งหมดเป็นไฟล์ JSON</string>
     <string name="backup_export">ส่งออก</string>
     <string name="backup_import">นำเข้า</string>
     <string name="backup_confirm_title">นำเข้าข้อมูลสำรองไหม</string>
@@ -133,7 +130,6 @@
     <string name="msg_backup_failed">อ่านไฟล์ไม่ได้</string>
 
     <string name="detail_auto_apply">ใช้กับหูฟังนี้</string>
-    <string name="detail_auto_apply_desc">เปลี่ยนไปใช้การตั้งค่าด้านล่างทุกครั้งที่หูฟังเชื่อมต่อ</string>
     <string name="detail_current_codec">โคเดกปัจจุบัน: %1$s</string>
     <string name="ldac_bitrate_offload">ไม่สามารถอ่านบิตเรตที่ใช้จริงได้ เนื่องจากเปิดใช้งานการถ่ายโอนงานด้วยฮาร์ดแวร์ของ Bluetooth A2DP อยู่</string>
     <string name="detail_note">ผลล่าสุด: %1$s</string>
@@ -160,9 +156,7 @@
     <string name="adv_force">บังคับให้เปลี่ยน</string>
     <string name="adv_force_desc">ลองชุดค่าที่อุปกรณ์ไม่ได้ประกาศว่ารองรับด้วย</string>
     <string name="adv_via_sbc">เปลี่ยนผ่าน SBC</string>
-    <string name="adv_via_sbc_desc">ลดไปที่ SBC ก่อน แล้วจึงเปลี่ยนเป็นโคเดกที่เลือก</string>
     <string name="adv_auto_hd">เปิดเสียง HD อัตโนมัติ</string>
-    <string name="adv_auto_hd_desc">เปิดเสียง HD เมื่อระบบปิดไว้</string>
     <string name="adv_delay">รอก่อนใช้ค่า</string>
     <string name="adv_delay_desc">อุปกรณ์บางรุ่นไม่ยอมเปลี่ยนทันทีหลังเชื่อมต่อ</string>
     <string name="adv_retries">จำนวนครั้งที่ลอง</string>
@@ -194,14 +188,14 @@
     </plurals>
     <string name="eq_summary_unavailable">ตอนนี้ยังใช้ไม่ได้ เปิดดูเพื่อทราบเหตุผล</string>
     <string name="eq_enabled">อีควอไลเซอร์</string>
-    <string name="eq_enabled_desc">ปรับแต่งเสียงของหูฟังคู่นี้</string>
     <string name="eq_latency_zero">ดีเลย์ที่เพิ่มขึ้น: 0 มิลลิวินาที</string>
     <string name="eq_mode">วิธีปรับ</string>
-    <string name="eq_mode_desc">แบบกราฟิกจะตรึงแต่ละแบนด์ไว้ที่ความถี่ตายตัว ส่วนแบบพาราเมตริกให้คุณวางแต่ละแบนด์ได้ตามต้องการ</string>
     <string name="eq_mode_graphic">กราฟิก</string>
+    <string name="eq_mode_graphic_desc">แต่ละแบนด์ตรึงอยู่ที่ความถี่ตายตัว</string>
     <string name="eq_mode_parametric">พาราเมตริก</string>
+    <string name="eq_mode_parametric_desc">วางแต่ละแบนด์ได้ตามต้องการ</string>
     <string name="eq_band_count">จำนวนแบนด์</string>
-    <string name="eq_band_count_desc">ยิ่งมีแบนด์มาก ยิ่งไล่ตามเส้นโค้งที่ละเอียดได้ใกล้เคียงขึ้น นี่ไม่ใช่การตั้งค่าเรื่องความเร็ว เพราะเครื่องทำงานหนักเท่ากันทั้งสองแบบ</string>
+    <string name="eq_band_count_desc">นี่ไม่ใช่การตั้งค่าเรื่องความเร็ว เครื่องทำงานหนักเท่ากันไม่ว่าจะมีกี่แบนด์</string>
     <string name="eq_band_none">ยังไม่มีแบนด์ เพิ่มสักอันหรือนำเข้าไฟล์ AutoEQ</string>
     <string name="eq_band_add">เพิ่มแบนด์</string>
     <string name="eq_band_remove">ลบแบนด์นี้</string>
@@ -222,9 +216,17 @@
     <string name="eq_reset_title">รีเซ็ตทั้งหมดเป็นศูนย์ไหม</string>
     <string name="eq_reset_body">เกนทั้งหมดและพรีแอมป์ที่ตั้งเองจะกลับเป็น 0 เดซิเบล และอีควอไลเซอร์จะไม่เปลี่ยนเสียงอีก แบนด์ยังอยู่ที่เดิม แต่เส้นโค้งตอนนี้จะหายไปถ้ายังไม่ได้บันทึกเป็นพรีเซ็ต</string>
 
+    <string name="eq_slot_flat">แบน</string>
+    <string name="eq_slot_default">กำหนดเอง %1$d</string>
+    <string name="eq_slot_rename">เปลี่ยนชื่อ</string>
+    <string name="eq_slot_rename_title">ชื่อช่อง</string>
+    <string name="eq_slot_duplicate">ทำสำเนา</string>
+    <string name="eq_slot_save_preset">บันทึกเป็นพรีเซ็ต</string>
+    <string name="eq_slot_delete_title">ลบช่องไหม</string>
+    <string name="eq_slot_delete_body">ลบ \"%1$s\" ถ้ากำลังฟังช่องนี้อยู่ เสียงจะกลับไปเป็นแบน</string>
+
     <string name="eq_presets">พรีเซ็ต</string>
-    <string name="eq_preset_empty">ยังไม่ได้บันทึกอะไรไว้</string>
-    <string name="eq_preset_save">บันทึกการตั้งค่านี้</string>
+    <string name="eq_preset_empty">ยังไม่ได้บันทึกอะไรไว้ บันทึกได้จากเมนูของช่องที่ใช้อยู่</string>
     <string name="eq_preset_save_title">ชื่อพรีเซ็ต</string>
     <string name="eq_preset_name">ชื่อ</string>
     <string name="eq_preset_apply">ใช้งาน</string>
@@ -233,16 +235,20 @@
     <string name="eq_preset_delete_title">ลบพรีเซ็ตไหม</string>
     <string name="eq_preset_delete_body">ลบ \"%1$s\" ส่วนที่ตั้งไว้กับหูฟังแล้วยังคงอยู่เหมือนเดิม</string>
     <string name="eq_autoeq_import">นำเข้า AutoEQ</string>
-    <string name="eq_autoeq_desc">อ่านไฟล์ ParametricEQ.txt หรือ GraphicEQ.txt ของ AutoEQ แล้วแทนที่การตั้งค่าด้านบน</string>
+    <string name="eq_autoeq_desc">อ่านไฟล์ ParametricEQ.txt หรือ GraphicEQ.txt ของ AutoEQ แล้วโหลดเป็นช่องใหม่</string>
     <string name="eq_curve_desc">เส้นโค้งแสดงว่าการตั้งค่านี้เปลี่ยนเสียงอย่างไร</string>
     <string name="eq_finder_title">หาอีควอไลเซอร์ที่ถูกใจ</string>
     <string name="eq_finder_entry_desc">การเปรียบเทียบฟังแบบไม่เห็นค่า ช่วยปรับอีควอไลเซอร์ให้ตรงรสนิยมของคุณ</string>
     <string name="eq_finder_entry_resume">มีการทดสอบที่บันทึกไว้ เปิดเพื่อทำต่อ</string>
     <string name="eq_finder_entry_unavailable">ตอนนี้ยังใช้การประมวลผลเสียงกับหูฟังคู่นี้ไม่ได้</string>
     <string name="eq_finder_entry_disconnected">เชื่อมต่อหูฟังคู่นี้เพื่อเริ่ม</string>
+    <string name="eq_finder_material">เสียงที่ใช้ทดสอบ</string>
+    <string name="eq_finder_material_loop">วนซ้ำท่อนหนึ่งของเพลง</string>
+    <string name="eq_finder_material_live">เพลงที่กำลังเล่นอยู่ตอนนี้</string>
+    <string name="eq_finder_material_live_desc">ไม่มีการวัดเสียง การปรับความดังให้เท่ากันจึงแม่นยำน้อยกว่าแบบวนซ้ำท่อนเพลง</string>
+    <string name="eq_finder_no_music">เปิดเพลงในแอปเพลงของคุณเพื่อเริ่ม</string>
     <string name="eq_finder_song">เพลง</string>
     <string name="eq_finder_song_none">เลือกเพลงที่คุณคุ้นเคย</string>
-    <string name="eq_finder_song_desc">ท่อนสั้น ๆ ของเพลงจะวนซ้ำระหว่างเปรียบเทียบ เลือกจากไฟล์เสียงในเครื่อง</string>
     <string name="eq_finder_song_loading">กำลังอ่านไฟล์…</string>
     <string name="eq_finder_song_failed">อ่านไฟล์นี้ไม่ได้ เลือกไฟล์อื่น</string>
     <string name="eq_finder_passage">ท่อนเพลง</string>
@@ -252,7 +258,6 @@
     <string name="eq_finder_include_mid">สำรวจย่านเสียงกลางด้วย</string>
     <string name="eq_finder_include_mid_desc">เพิ่มแกนที่สามรอบ ๆ เสียงร้อง คำถามจะเพิ่มขึ้นเล็กน้อย</string>
     <string name="eq_finder_fine_tune">ปรับละเอียดจากค่าปัจจุบัน</string>
-    <string name="eq_finder_fine_tune_desc">เริ่มจากอีควอไลเซอร์ปัจจุบันแล้วขยับทีละนิด</string>
     <string name="eq_finder_notes">ก่อนเริ่ม</string>
     <string name="eq_finder_note_volume">การทดสอบจะเบากว่าปกติเล็กน้อย ปรับระดับเสียงให้ฟังสบายหลังจากเริ่มแล้ว และอย่าเปลี่ยนจนกว่าจะจบ</string>
     <string name="eq_finder_note_earphones">ฟังด้วยหูฟังคู่นี้ในที่เงียบ</string>
@@ -277,6 +282,7 @@
     <string name="eq_finder_suspend">บันทึกแล้วออก</string>
     <string name="eq_finder_paused_disconnected">หยุดชั่วคราว: หูฟังไม่ได้เชื่อมต่อ การทดสอบจะไปต่อเมื่อหูฟังกลับมา</string>
     <string name="eq_finder_paused_focus">หยุดชั่วคราว: แอปอื่นใช้เสียงอยู่</string>
+    <string name="eq_finder_paused_no_music">หยุดชั่วคราว: เพลงหยุดแล้ว กดเล่นในแอปเพลงของคุณ</string>
     <string name="eq_finder_resume_playback">เล่นต่อ</string>
     <string name="eq_finder_result_curve_cd">เส้นโค้งอีควอไลเซอร์ก่อนและหลัง</string>
     <string name="eq_finder_before">ก่อน</string>
@@ -288,11 +294,10 @@
     <string name="eq_finder_validated_lose">ในการตรวจแบบไม่เห็นค่ารอบสุดท้าย จุดเริ่มต้นก็ยังสูสี ยังไงความต่างก็เล็กน้อย</string>
     <string name="eq_finder_not_validated">การทดสอบจบก่อนการตรวจแบบไม่เห็นค่ารอบสุดท้าย ผลจึงยังไม่ได้รับการยืนยัน</string>
     <string name="eq_finder_consistency">คำตอบแกว่งเล็กน้อย ทำอีกรอบจะช่วยให้ผลแม่นขึ้น</string>
+    <string name="eq_finder_band_error">ต่างจากเส้นโค้งที่คุณฟังไม่เกิน %1$s</string>
     <string name="eq_finder_bake_failed">ผลลัพธ์ต้องใช้แบนด์ว่างมากกว่าที่เหลือในอีควอไลเซอร์ ลบบางแบนด์แล้วจบใหม่อีกครั้ง</string>
     <string name="eq_finder_apply">ใช้และบันทึก</string>
     <string name="eq_finder_discard">ทิ้ง</string>
     <string name="eq_finder_discard_title">ทิ้งผลลัพธ์ไหม</string>
     <string name="eq_finder_discard_body">อีควอไลเซอร์จะกลับเป็นเหมือนเดิม และคำตอบจะถูกลบ</string>
-    <string name="eq_finder_preset_title">บันทึกเป็นชุดการตั้งค่าไว้ด้วยไหม</string>
-    <string name="eq_finder_preset_skip">ยังก่อน</string>
 </resources>

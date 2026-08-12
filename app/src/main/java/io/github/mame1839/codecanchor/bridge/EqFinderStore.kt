@@ -41,10 +41,21 @@ class EqFinderStore(context: Context) {
  *
  * [base] はセッション開始時点の EQ 設定の写し。候補はこの上に重ねるので、中断中に本体の設定が
  * 変わっても、再開後の候補と確定結果は回答時に鳴っていた音と同じものを指し続ける。
+ *
+ * ### 題材の区別は optional なキーで持つ (版は上げない)
+ *
+ * [live] = true (題材が「いま流れている音楽」) の記録は一節を持たないので、
+ * [uri] は null・[startMs]/[lengthMs] は 0・[pcmHash] は 0 (= 照合しない、既存の意味)。
+ * encode はキー自体を書かない。**キーの無い v1 の記録はループとして読める** (後方互換)、
+ * そして**ライブの記録をこのキーを知らない旧ビルドが読むと uri 欠けで「保存なし」に劣化する**
+ * (壊れた再開を出すのではなく、安全側に倒れる)。
  */
 data class EqFinderSaved(
     val mac: String,
-    val uri: String,
+    /** 題材: false = 曲の一節のループ再生、true = いま流れている音楽。 */
+    val live: Boolean = false,
+    /** 一節の URI。ループでは必須、ライブでは null。 */
+    val uri: String?,
     val startMs: Int,
     val lengthMs: Int,
     val includeMid: Boolean,
@@ -58,9 +69,13 @@ data class EqFinderSaved(
     fun encode(): String = JSONObject().apply {
         put("v", VERSION)
         put("mac", mac)
-        put("uri", uri)
-        put("start", startMs)
-        put("len", lengthMs)
+        // ループの記録は v1 と同じキー並びのまま (旧ビルドでもそのまま読める)。
+        if (live) put("live", true)
+        uri?.let { put("uri", it) }
+        if (!live) {
+            put("start", startMs)
+            put("len", lengthMs)
+        }
         put("mid", includeMid)
         put("fine", fineTune)
         put("done", done)
@@ -78,11 +93,14 @@ data class EqFinderSaved(
         fun decode(text: String?): EqFinderSaved? = runCatching {
             val o = JSONObject(text ?: return null)
             if (o.optInt("v", 0) != VERSION) return null
+            val live = o.optBoolean("live", false)
             EqFinderSaved(
                 mac = o.optString("mac").takeIf { it.isNotEmpty() } ?: return null,
-                uri = o.optString("uri").takeIf { it.isNotEmpty() } ?: return null,
-                startMs = o.optInt("start", 0).coerceAtLeast(0),
-                lengthMs = o.optInt("len", 0).takeIf { it > 0 } ?: return null,
+                live = live,
+                // ライブに一節は無い。紛れ込んだ uri は捨てて、動きを材料キーだけで決める。
+                uri = if (live) null else (o.optString("uri").takeIf { it.isNotEmpty() } ?: return null),
+                startMs = if (live) 0 else o.optInt("start", 0).coerceAtLeast(0),
+                lengthMs = if (live) 0 else (o.optInt("len", 0).takeIf { it > 0 } ?: return null),
                 includeMid = o.optBoolean("mid", false),
                 fineTune = o.optBoolean("fine", false),
                 done = o.optInt("done", 0).coerceAtLeast(0),

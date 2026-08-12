@@ -53,7 +53,31 @@ const val EQ_GAIN_STEP = 1
 
 // 縦軸の候補。**連続に伸ばさない** — ドラッグのあいだ軸が毎フレーム動くと、
 // 触っていないバンドの点まで揺れて、何が変わったのか読めなくなる。
+// 12 超の段はパラメトリックのバンドの重ね上げと、強い取り込みプリセットで実際に要る。
 internal val PLOT_RANGES_DB = listOf(12.0, 18.0, 24.0, 40.0)
+
+/**
+ * 曲線が段の目盛り (±段) を越えて食み出せる量。[plotFraction] が ±(段 + これ) を枠の
+ * 物理端に写すので、**段の選択 ([plotRange]) と描画余白が同じ 1 つの値で決まり、
+ * 「選ばれた段では描く物すべてが物理枠の中」が構成から成り立つ** — 軸が育つのは、
+ * 曲線がそのままでは枠の外へ出るとき、そのときだけ。
+ *
+ * 値の根拠 (2026-08-12 実測。摘みが可動域いっぱい ±12 のときの合成応答の |最大|):
+ * ```
+ *   全バンド +12                12.36〜12.57 dB (5/10/15/31 バンド。中心間の膨らみ + 量子化)
+ *   交互 ±12                    12.02〜12.04 dB
+ *   隣接 2 本だけ +12           13.61〜13.87 dB (最悪は 10 バンドの 13.8744)
+ *   +12/+12/x/+12/+12 (x 掃引)  12.51〜13.85 dB (実機で軸が跳ねた形。x=-8.3/-8.4 の
+ *                               Q エスカレーション境界で応答自体が 13.77 → 12.51 と崖になる)
+ *   ±12 で挟んだ +12 ペア       15.01 dB (5 バンド)
+ * ```
+ * 2.5 は「13.88 までの形 (全部 +12・ペア・実機の再現形) を段 12 に収めて崖ごと吸収し
+ * (余裕 0.6 dB)、15.01 の形は段 18 へ上げる」の境界。これより小さいとペアの形が
+ * 12/18 を行き来し、大きいと ±12 の目盛りが枠の中央へ寄って絵が痩せる
+ * (段 12 で ±12 の目盛りは枠の 12/14.5 = 82.8% に広がる。旧実装は全 +12 が段 18 に
+ * 跳ねて 66.7% しか使えなかった)。
+ */
+internal const val PLOT_OVERSHOOT_DB = 2.5
 
 // 対数軸の両端 (パラメトリック)。可聴帯域。
 internal const val AXIS_LO_HZ = 20.0
@@ -214,7 +238,7 @@ private fun GraphicPlot(
     val density = LocalDensity.current
     val totalHeight = PLOT_HEIGHT + LABEL_GAP * 2 + with(density) { (rowHeight * 2).toDp() }
 
-    val range = rememberPlotRange(response, bands, dragging = active >= 0)
+    val range = rememberPlotRange(graphicPlotRange(response, bands.size), dragging = active >= 0)
     val ticks = rememberDbTicks(range, measurer, labelStyle)
 
     Canvas(
@@ -341,7 +365,7 @@ private fun ParametricPlot(
 
     val perBand = remember(bands) { parametricResponse(bands) }
     val composite = remember(perBand) { sumColumns(perBand) }
-    val range = rememberPlotRange(composite, bands, dragging = active >= 0)
+    val range = rememberPlotRange(parametricPlotRange(composite, bands), dragging = active >= 0)
 
     val ticks = rememberDbTicks(range, measurer, labelStyle)
     val tickLabels = remember(labelStyle, kiloShort) {
@@ -491,33 +515,35 @@ private fun DrawScope.drawDbTicks(
 /**
  * dB を枠の中の縦位置に直す。0 が上端、1 が下端。
  *
+ * 枠の物理端に写るのは ±段ではなく **±(段 + [PLOT_OVERSHOOT_DB])**。±段の目盛りは
+ * その分だけ内側に来るので、摘みを可動域いっぱい (±12) に振っても点と線が縁に
+ * 張り付かず、段選びが許した食み出し (中心間の膨らみ) もそのまま枠の中に描ける。
+ * 段 12 なら ±12 の目盛りが枠の 82.8% に広がり、上下に 8.6% ずつの余白が残る。
+ *
  * **2 つの絵と試験がこれ 1 つを見る。**式を写して置くと、片方だけ直したときに
  * 目盛りと曲線が別の軸で描かれる (見た目はもっともらしいままなので気づけない)。
  */
-internal fun plotFraction(db: Double, range: Double): Float = ((1.0 - db / range) / 2.0).toFloat()
+internal fun plotFraction(db: Double, range: Double): Float =
+    ((1.0 - db / (range + PLOT_OVERSHOOT_DB)) / 2.0).toFloat()
 
 /**
  * ドラッグ中は段を下げない。
  *
- * 段は曲線のピークで決まるので、**摘みを下げると段も下がることがある。**段が下がると
+ * 段は摘みと曲線のピークで決まるので、**摘みを下げると段も下がることがある。**段が下がると
  * 絵全体が拡大するので、**指を下げているのに線と点が上へ動く。**
  *
- * ホストで確かめた再現 (`EqCurveTest.theAxisIsHeldWhileAKnobIsMoving`。製品の Q=1.0):
+ * ホストで確かめた再現 (`EqCurveTest.theAxisIsHeldWhileAKnobIsMoving`):
  *
  * ```
- * 10 バンド Q=1.0、125 Hz と 250 Hz だけ +9.0 dB (他は 0 dB)
- *   合成のピーク 12.154 dB          → 段 18 dB
- *   125 Hz を +8.5 dB へ下げる
- *   合成のピーク 11.956 dB          → 段 12 dB
- *   点の縦位置 0.250 → 0.146 = 枠の 10.4% ぶん上へ (132 dp の絵で 14 dp)
+ * パラメトリックで 1 kHz に 2 本重ねる (Q=1.41)。+12 dB と +9.0 dB → 合成 21.0 dB で段 24
+ *   +9.0 dB の摘みを +8.5 dB へ下げる → 合成 20.5 dB で段 18
+ *   下げた摘みの点   0.330 → 0.293 = 枠の 3.7% ぶん上へ
+ *   触っていない +12 の点 0.274 → 0.207 = 枠の 6.6% ぶん上へ (132 dp の絵で 9 dp)
  * ```
  *
- * **よく出るのは 18 → 12。**段 12 dB は摘みの可動域 (±12 dB) が下から支えているので、
- * 合成のピークが 12 を割った瞬間に必ず一段落ちる。無作為な 10 バンドの状態から 1 本を
- * 0.5 dB 下げる試行を 20 万回まわすと、段が落ちるのが 1401 件、**そのうち 1187 件 (85%) で
- * 点が指と逆に動いた。**
- *
- * 上げるほうは止めない — 止めると曲線が枠から出る。指を離した時点で本来の段へ戻す。
+ * グラフィックでも起こる (±12 で挟んだ +12 ペアなど、曲線が段 12 + 許容を超える形から
+ * 膨らみを下げていくとき)。上げるほうは止めない — 止めると曲線が枠から出る。
+ * 指を離した時点で本来の段へ戻す。
  */
 internal fun holdRange(computed: Double, held: Double, dragging: Boolean): Double =
     if (dragging) max(computed, held) else computed
@@ -528,8 +554,7 @@ internal fun holdRange(computed: Double, held: Double, dragging: Boolean): Doubl
  * 絵はもっともらしいまま)。`EqAxisHoldTest` が本物の composition で回している。
  */
 @Composable
-internal fun rememberPlotRange(response: DoubleArray, bands: List<EqBand>, dragging: Boolean): Double {
-    val computed = plotRange(response, bands)
+internal fun rememberPlotRange(computed: Double, dragging: Boolean): Double {
     // **観測される状態にしない。**構成の中で書き戻すので、mutableStateOf だと書いた時点で
     // 再構成が予約されて回り続ける。段を変える再構成はドラッグの値そのものが起こすので、
     // ここは前回の値を覚えておくだけでよい。
@@ -608,19 +633,44 @@ internal fun sumColumns(series: List<DoubleArray>): DoubleArray =
     DoubleArray(SAMPLES) { i -> series.sumOf { it[i] } }
 
 /**
- * 縦軸の範囲。曲線とバンドのゲインの両方が収まる段を選ぶ。
+ * 縦軸の段。**材料は画面に描かれるものだけ** — 摘み (点とラベル) と曲線。
+ *
+ * 摘みは段に厳密に収める (点は目盛りの内側にあるべきもの)。曲線は段 + [PLOT_OVERSHOOT_DB]
+ * まで食み出してよい ([plotFraction] がそこまでを枠の中に写す)。つまり段が上がるのは、
+ * 摘みが段を超えたときか、曲線がそのままでは物理枠の外に出るときだけ。
  *
  * 段にしてあるのは、連続に伸ばすとドラッグのあいだ軸が毎フレーム動いて、
- * 触っていないバンドの点まで揺れるため。既定の ±12 dB を超えるのは、
- * 隣り合うバンドが重なって合成が持ち上がったときと、取り込んだプリセットが強いときだけ。
+ * 触っていないバンドの点まで揺れるため。
  */
-internal fun plotRange(response: DoubleArray, bands: List<EqBand>): Double {
-    val peak = max(
-        response.maxOfOrNull { abs(it) } ?: 0.0,
-        bands.maxOfOrNull { abs(it.gainDb10.toDouble() / EqUnits.GAIN_SCALE) } ?: 0.0,
-    )
-    return PLOT_RANGES_DB.firstOrNull { peak <= it } ?: PLOT_RANGES_DB.last()
-}
+internal fun plotRange(knobPeakDb: Double, curvePeakDb: Double): Double =
+    PLOT_RANGES_DB.firstOrNull { knobPeakDb <= it && curvePeakDb <= it + PLOT_OVERSHOOT_DB }
+        ?: PLOT_RANGES_DB.last()
+
+/**
+ * グラフィックの段。摘み = その中心で実際に鳴る音量 ([centreGainsDb10]。丸めた表示値) で、
+ * 曲線は [graphicResponse]。
+ *
+ * **解いた後のフィルタの生ゲイン (`bands[].gainDb10`) を材料にしてはいけない。**
+ * 摘みの意味変更 (2026-08-12) 以降、生ゲインは画面のどこにも描かれない内部値になった。
+ * 実機で出た不具合: 摘み +12/+12/x/+12/+12 (5 バンド) の x を -8.3 → -8.4 と 0.1 dB
+ * 動かすと、Q エスカレーションで生ゲインの最大が 19.9 → 13.7 に崖落ちして、
+ * **見えない値のせいで軸が 24 ⇄ 18 で跳ねた** (`EqCurveTest.theAxisIgnoresInvisibleSolverGains`)。
+ */
+internal fun graphicPlotRange(response: DoubleArray, bandCount: Int): Double = plotRange(
+    knobPeakDb = (centreGainsDb10(response, bandCount).maxOfOrNull { abs(it) } ?: 0) /
+        EqUnits.GAIN_SCALE.toDouble(),
+    curvePeakDb = response.maxOfOrNull { abs(it) } ?: 0.0,
+)
+
+/**
+ * パラメトリックの段。摘み = バンドの生ゲイン (こちらではそれが摘みの値で、バンドごとの
+ * 細い線のピークと点の上限でもある。peaking は fc で |ゲイン|、シェルフは漸近で |ゲイン|)。
+ * 曲線は合成応答。
+ */
+internal fun parametricPlotRange(composite: DoubleArray, bands: List<EqBand>): Double = plotRange(
+    knobPeakDb = bands.maxOfOrNull { abs(it.gainDb10.toDouble()) / EqUnits.GAIN_SCALE } ?: 0.0,
+    curvePeakDb = composite.maxOfOrNull { abs(it) } ?: 0.0,
+)
 
 /** 横線を引く dB。0 を必ず含めた 5 本。 */
 internal fun gridValues(range: Double): List<Double> = listOf(range, range / 2, 0.0, -range / 2, -range)

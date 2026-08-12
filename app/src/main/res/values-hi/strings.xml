@@ -28,6 +28,8 @@
 
     <string name="cd_refresh_status">स्थिति फिर जाँचें</string>
     <string name="cd_back">पीछे</string>
+    <string name="cd_eq_slot_menu">स्लॉट के विकल्प</string>
+    <string name="cd_eq_slot_add">स्लॉट जोड़ें</string>
     <string name="state_expanded">फैला हुआ</string>
     <string name="state_collapsed">समेटा हुआ</string>
 
@@ -38,13 +40,9 @@
 
     <string name="section_general">सामान्य सेटिंग</string>
     <string name="toggle_auto_apply">सेटिंग अपने आप लागू करें</string>
-    <string name="toggle_auto_apply_desc">बंद रहने पर किसी भी डिवाइस पर कुछ नहीं बदला जाता</string>
     <string name="toggle_enforce">सिस्टम या दूसरे ऐप के बदलाव पलट दें</string>
-    <string name="toggle_enforce_desc">सिस्टम या कोई दूसरा ऐप कोडेक बदले, तो उसे तय किए मान पर लौटा दिया जाता है</string>
     <string name="toggle_notify">कोडेक बदलने पर बताएँ</string>
-    <string name="toggle_notify_desc">कोडेक बदलते समय छोटा संदेश दिखाता है</string>
     <string name="toggle_verbose">विस्तृत लॉग लिखें</string>
-    <string name="toggle_verbose_desc">जो डिवाइस नहीं बदलते, उनकी जाँच के लिए</string>
 
     <string name="permission_title">Bluetooth की अनुमति चाहिए</string>
     <string name="permission_body">अनुमति देने पर ऐप आपके जोड़े गए डिवाइस और उनके नाम पढ़ सकता है।</string>
@@ -81,7 +79,7 @@
     <string name="eq_unavailable_device">इन ईयरफ़ोन के लिए ऑडियो प्रोसेसिंग रजिस्टर नहीं है, इसलिए यहाँ जो भी सेट किया जाए, वह आवाज़ तक नहीं पहुँचता।</string>
 
     <string name="eq_device_register">इन ईयरफ़ोन के साथ ऑडियो प्रोसेसिंग इस्तेमाल करें</string>
-    <string name="eq_device_register_desc">इन ईयरफ़ोन को फ़ोन की ऑडियो सेटिंग में जोड़ता है। लागू होते समय आवाज़ पल भर के लिए रुक जाती है।</string>
+    <string name="eq_device_register_desc">लागू होते समय आवाज़ पल भर के लिए रुक जाती है।</string>
     <string name="eq_device_confirm_on_title">इन ईयरफ़ोन के लिए ऑडियो प्रोसेसिंग चालू करें?</string>
     <string name="eq_device_confirm_off_title">इन ईयरफ़ोन के लिए ऑडियो प्रोसेसिंग बंद करें?</string>
     <string name="eq_device_confirm_body">फ़ोन की ऑडियो सर्विस फिर शुरू होती है, इसलिए अभी जो भी चल रहा है वह कुछ सेकंड के लिए शांत हो जाता है। Bluetooth जुड़ा रहता है, और आपकी इक्वलाइज़र सेटिंग हर हाल में बनी रहती है।</string>
@@ -121,7 +119,6 @@
     <string name="profile_no_target">अभी कुछ तय नहीं किया गया</string>
 
     <string name="section_backup">बैकअप</string>
-    <string name="backup_body">सारी सेटिंग एक JSON फ़ाइल में सहेजता है।</string>
     <string name="backup_export">एक्सपोर्ट</string>
     <string name="backup_import">इंपोर्ट</string>
     <string name="backup_confirm_title">बैकअप इंपोर्ट करें?</string>
@@ -134,7 +131,6 @@
     <string name="msg_backup_failed">फ़ाइल पढ़ी नहीं जा सकी</string>
 
     <string name="detail_auto_apply">इस ईयरफ़ोन पर लागू करें</string>
-    <string name="detail_auto_apply_desc">जब भी ईयरफ़ोन कनेक्ट हो, नीचे दी गई सेटिंग पर बदल देता है</string>
     <string name="detail_current_codec">मौजूदा कोडेक: %1$s</string>
     <string name="ldac_bitrate_offload">Bluetooth A2DP हार्डवेयर ऑफ़लोड चालू होने के कारण प्रभावी बिटरेट पढ़ा नहीं जा सकता।</string>
     <string name="detail_note">पिछला नतीजा: %1$s</string>
@@ -161,9 +157,7 @@
     <string name="adv_force">ज़बरदस्ती बदलें</string>
     <string name="adv_force_desc">जिन संयोजनों की घोषणा डिवाइस नहीं करता, वे भी आज़माता है</string>
     <string name="adv_via_sbc">SBC के रास्ते बदलें</string>
-    <string name="adv_via_sbc_desc">पहले SBC पर उतरता है, फिर आपके चुने कोडेक पर जाता है</string>
     <string name="adv_auto_hd">HD ऑडियो अपने आप चालू करें</string>
-    <string name="adv_auto_hd_desc">सिस्टम में HD ऑडियो बंद हो, तो उसे चालू कर देता है</string>
     <string name="adv_delay">लागू करने से पहले रुकें</string>
     <string name="adv_delay_desc">कुछ डिवाइस कनेक्ट होते ही बदलाव नहीं मानते</string>
     <string name="adv_retries">कोशिशों की संख्या</string>
@@ -196,14 +190,14 @@
     </plurals>
     <string name="eq_summary_unavailable">अभी इस्तेमाल नहीं हो सकता। कारण देखने के लिए खोलें।</string>
     <string name="eq_enabled">इक्वलाइज़र</string>
-    <string name="eq_enabled_desc">इन ईयरफ़ोन की आवाज़ को ढालता है</string>
     <string name="eq_latency_zero">अतिरिक्त विलंब: 0 ms</string>
     <string name="eq_mode">संपादन का तरीक़ा</string>
-    <string name="eq_mode_desc">ग्राफ़िक में हर बैंड एक तय आवृत्ति पर रहता है। पैरामीट्रिक में आप हर बैंड को जहाँ चाहें रख सकते हैं।</string>
     <string name="eq_mode_graphic">ग्राफ़िक</string>
+    <string name="eq_mode_graphic_desc">हर बैंड एक तय आवृत्ति पर रहता है</string>
     <string name="eq_mode_parametric">पैरामीट्रिक</string>
+    <string name="eq_mode_parametric_desc">हर बैंड को जहाँ चाहें रख सकते हैं</string>
     <string name="eq_band_count">बैंड की संख्या</string>
-    <string name="eq_band_count_desc">जितने ज़्यादा बैंड, उतनी बारीक़ी से घुमावदार वक्र का पीछा किया जा सकता है। यह गति की सेटिंग नहीं है: फ़ोन दोनों हालात में उतना ही काम करता है।</string>
+    <string name="eq_band_count_desc">यह गति की सेटिंग नहीं है: बैंड चाहे जितने हों, फ़ोन उतना ही काम करता है।</string>
     <string name="eq_band_none">अभी कोई बैंड नहीं है। एक जोड़ें, या AutoEQ फ़ाइल पढ़वाएँ।</string>
     <string name="eq_band_add">बैंड जोड़ें</string>
     <string name="eq_band_remove">यह बैंड हटाएँ</string>
@@ -224,9 +218,17 @@
     <string name="eq_reset_title">सब कुछ शून्य पर लौटाएँ?</string>
     <string name="eq_reset_body">हर गेन और हाथ से तय किया गया प्रीऐम्प 0 dB पर लौट जाएगा, और इक्वलाइज़र ध्वनि को बदलना बंद कर देगा। बैंड अपनी जगह बने रहेंगे, पर अभी का वक्र प्रीसेट के रूप में सहेजा न हो तो वापस नहीं मिलेगा।</string>
 
+    <string name="eq_slot_flat">सपाट</string>
+    <string name="eq_slot_default">कस्टम %1$d</string>
+    <string name="eq_slot_rename">नाम बदलें</string>
+    <string name="eq_slot_rename_title">स्लॉट का नाम</string>
+    <string name="eq_slot_duplicate">डुप्लिकेट बनाएँ</string>
+    <string name="eq_slot_save_preset">प्रीसेट के रूप में सहेजें</string>
+    <string name="eq_slot_delete_title">स्लॉट मिटाएँ?</string>
+    <string name="eq_slot_delete_body">\"%1$s\" हटा देता है। अगर आप अभी इसे सुन रहे हैं, तो आवाज़ वापस सपाट पर चली जाती है।</string>
+
     <string name="eq_presets">प्रीसेट</string>
-    <string name="eq_preset_empty">अभी कुछ भी सहेजा नहीं गया</string>
-    <string name="eq_preset_save">ये सेटिंग सहेजें</string>
+    <string name="eq_preset_empty">अभी कुछ भी सहेजा नहीं गया। जिस स्लॉट का उपयोग कर रहे हैं, उसके मेन्यू से सहेज सकते हैं।</string>
     <string name="eq_preset_save_title">प्रीसेट का नाम</string>
     <string name="eq_preset_name">नाम</string>
     <string name="eq_preset_apply">लागू करें</string>
@@ -235,16 +237,20 @@
     <string name="eq_preset_delete_title">प्रीसेट मिटाएँ?</string>
     <string name="eq_preset_delete_body">\"%1$s\" हटा देता है। आपके ईयरफ़ोन पर जो पहले से लगा है, वह वैसा ही रहता है।</string>
     <string name="eq_autoeq_import">AutoEQ पढ़वाएँ</string>
-    <string name="eq_autoeq_desc">AutoEQ की ParametricEQ.txt या GraphicEQ.txt पढ़ता है और ऊपर की सेटिंग बदल देता है।</string>
+    <string name="eq_autoeq_desc">AutoEQ की ParametricEQ.txt या GraphicEQ.txt पढ़ता है और उसे नए स्लॉट में लोड करता है।</string>
     <string name="eq_curve_desc">यह वक्र दिखाता है कि ये सेटिंग ध्वनि को कैसे बदलती हैं</string>
     <string name="eq_finder_title">अपनी पसंद का इक्वलाइज़र खोजें</string>
     <string name="eq_finder_entry_desc">बिना बताए सुनने की तुलनाएँ इक्वलाइज़र को आपकी पसंद के अनुसार ढालती हैं</string>
     <string name="eq_finder_entry_resume">एक सहेजा हुआ परीक्षण मौजूद है। जारी रखने के लिए खोलें।</string>
     <string name="eq_finder_entry_unavailable">इन ईयरफ़ोन के लिए ऑडियो प्रोसेसिंग अभी उपलब्ध नहीं है।</string>
     <string name="eq_finder_entry_disconnected">शुरू करने के लिए ये ईयरफ़ोन कनेक्ट करें।</string>
+    <string name="eq_finder_material">टेस्ट के लिए आवाज़</string>
+    <string name="eq_finder_material_loop">गाने का एक हिस्सा दोहराकर बजाना</string>
+    <string name="eq_finder_material_live">अभी चल रहा संगीत</string>
+    <string name="eq_finder_material_live_desc">आवाज़ मापी नहीं जाती, इसलिए वॉल्यूम मिलाना दोहराए गए हिस्से जितना सटीक नहीं होता।</string>
+    <string name="eq_finder_no_music">शुरू करने के लिए अपने म्यूज़िक ऐप में कोई गाना चलाएँ।</string>
     <string name="eq_finder_song">गाना</string>
     <string name="eq_finder_song_none">कोई ऐसा गाना चुनें जिसे आप अच्छी तरह जानते हों</string>
-    <string name="eq_finder_song_desc">तुलना के दौरान उसका एक छोटा हिस्सा दोहराया जाता है। फ़ोन की ऑडियो फ़ाइलों में से चुना जाता है।</string>
     <string name="eq_finder_song_loading">फ़ाइल पढ़ी जा रही है…</string>
     <string name="eq_finder_song_failed">वह फ़ाइल पढ़ी नहीं जा सकी। कोई दूसरी चुनें।</string>
     <string name="eq_finder_passage">हिस्सा</string>
@@ -254,7 +260,6 @@
     <string name="eq_finder_include_mid">मध्य रेंज भी खोजें</string>
     <string name="eq_finder_include_mid_desc">आवाज़ों के आस-पास एक तीसरी धुरी जोड़ता है। कुछ सवाल बढ़ जाते हैं।</string>
     <string name="eq_finder_fine_tune">मौजूदा सेटिंग बारीकी से सुधारें</string>
-    <string name="eq_finder_fine_tune_desc">मौजूदा इक्वलाइज़र से शुरू करके छोटे कदमों में आगे बढ़ता है।</string>
     <string name="eq_finder_notes">शुरू करने से पहले</string>
     <string name="eq_finder_note_volume">परीक्षण सामान्य से थोड़ा धीमा बजता है। शुरू होने के बाद आरामदायक आवाज़ सेट करें और अंत तक न बदलें।</string>
     <string name="eq_finder_note_earphones">इन ईयरफ़ोन से, किसी शांत जगह पर सुनें।</string>
@@ -280,6 +285,7 @@
     <string name="eq_finder_suspend">सहेजकर लौटें</string>
     <string name="eq_finder_paused_disconnected">रुका हुआ: ईयरफ़ोन कनेक्ट नहीं हैं। उनके लौटते ही परीक्षण आगे बढ़ेगा।</string>
     <string name="eq_finder_paused_focus">रुका हुआ: किसी दूसरे ऐप ने आवाज़ ले ली है।</string>
+    <string name="eq_finder_paused_no_music">रुका हुआ: संगीत बंद हो गया है। अपने म्यूज़िक ऐप में फिर से चलाएँ।</string>
     <string name="eq_finder_resume_playback">फिर चलाएँ</string>
     <string name="eq_finder_result_curve_cd">पहले और बाद के इक्वलाइज़र का वक्र</string>
     <string name="eq_finder_before">पहले</string>
@@ -291,11 +297,10 @@
     <string name="eq_finder_validated_lose">आख़िरी अंधी जाँच में शुरुआती बिंदु भी टिका रहा। फ़र्क़ वैसे भी छोटा है।</string>
     <string name="eq_finder_not_validated">परीक्षण आख़िरी अंधी जाँच से पहले ख़त्म हुआ, इसलिए नतीजे की पुष्टि नहीं हुई।</string>
     <string name="eq_finder_consistency">जवाब थोड़े डगमगाए। एक और दौर से नतीजा और सटीक होगा।</string>
+    <string name="eq_finder_band_error">सुने गए कर्व से ज़्यादा से ज़्यादा %1$s का अंतर</string>
     <string name="eq_finder_bake_failed">नतीजे के लिए इक्वलाइज़र में जितने खाली बैंड बचे हैं उससे ज़्यादा चाहिए। कुछ बैंड हटाकर फिर पूरा करें।</string>
     <string name="eq_finder_apply">लागू करके सहेजें</string>
     <string name="eq_finder_discard">छोड़ें</string>
     <string name="eq_finder_discard_title">नतीजा छोड़ दें?</string>
     <string name="eq_finder_discard_body">इक्वलाइज़र पहले जैसा हो जाएगा और जवाब हट जाएँगे।</string>
-    <string name="eq_finder_preset_title">इसे प्रीसेट के रूप में भी सहेजें?</string>
-    <string name="eq_finder_preset_skip">अभी नहीं</string>
 </resources>

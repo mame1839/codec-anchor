@@ -27,6 +27,8 @@
 
     <string name="cd_refresh_status">상태 다시 확인</string>
     <string name="cd_back">뒤로</string>
+    <string name="cd_eq_slot_menu">슬롯 옵션</string>
+    <string name="cd_eq_slot_add">슬롯 추가</string>
     <string name="state_expanded">확장됨</string>
     <string name="state_collapsed">축소됨</string>
 
@@ -37,13 +39,9 @@
 
     <string name="section_general">전체 설정</string>
     <string name="toggle_auto_apply">자동으로 적용</string>
-    <string name="toggle_auto_apply_desc">끄면 어떤 기기도 변경하지 않습니다</string>
     <string name="toggle_enforce">다른 앱의 변경을 되돌리기</string>
-    <string name="toggle_enforce_desc">시스템이나 다른 앱이 코덱을 바꾸면 설정한 내용으로 되돌립니다</string>
     <string name="toggle_notify">코덱이 바뀌면 알리기</string>
-    <string name="toggle_notify_desc">전환된 뒤에 짧은 메시지를 표시합니다</string>
     <string name="toggle_verbose">자세한 로그 남기기</string>
-    <string name="toggle_verbose_desc">전환되지 않는 기기를 살펴볼 때 사용합니다</string>
 
     <string name="permission_title">블루투스 권한이 필요합니다</string>
     <string name="permission_body">허용하면 페어링된 기기와 이름을 읽을 수 있습니다.</string>
@@ -80,7 +78,7 @@
     <string name="eq_unavailable_device">이 이어폰은 음향 처리에 등록되어 있지 않아 여기서 설정한 내용이 소리에 반영되지 않습니다.</string>
 
     <string name="eq_device_register">이 이어폰에 음향 처리 사용하기</string>
-    <string name="eq_device_register_desc">이 이어폰을 휴대전화의 오디오 설정에 추가합니다. 적용하는 동안 소리가 잠시 끊깁니다.</string>
+    <string name="eq_device_register_desc">적용하는 동안 소리가 잠시 끊깁니다.</string>
     <string name="eq_device_confirm_on_title">이 이어폰의 음향 처리를 켤까요?</string>
     <string name="eq_device_confirm_off_title">이 이어폰의 음향 처리를 끌까요?</string>
     <string name="eq_device_confirm_body">휴대전화의 오디오 서비스가 다시 시작되어 지금 재생 중인 소리가 몇 초간 끊깁니다. 블루투스는 계속 연결되어 있으며, 이퀄라이저 설정은 어느 쪽이든 그대로 유지됩니다.</string>
@@ -120,7 +118,6 @@
     <string name="profile_no_target">아직 고정한 항목이 없습니다</string>
 
     <string name="section_backup">백업</string>
-    <string name="backup_body">모든 설정을 JSON 파일로 내보냅니다.</string>
     <string name="backup_export">내보내기</string>
     <string name="backup_import">가져오기</string>
     <string name="backup_confirm_title">백업을 가져올까요</string>
@@ -133,7 +130,6 @@
     <string name="msg_backup_failed">파일을 읽을 수 없었습니다</string>
 
     <string name="detail_auto_apply">이 이어폰에 자동으로 적용</string>
-    <string name="detail_auto_apply_desc">연결될 때 아래 설정으로 전환합니다</string>
     <string name="detail_current_codec">현재 코덱: %1$s</string>
     <string name="ldac_bitrate_offload">Bluetooth A2DP 하드웨어 오프로드가 켜져 있어 실제 비트레이트를 읽을 수 없습니다.</string>
     <string name="detail_note">최근 결과: %1$s</string>
@@ -160,9 +156,7 @@
     <string name="adv_force">강제 적용</string>
     <string name="adv_force_desc">기기가 지원한다고 알리지 않은 조합도 시도합니다</string>
     <string name="adv_via_sbc">SBC를 거쳐 전환</string>
-    <string name="adv_via_sbc_desc">먼저 SBC로 내린 다음 선택한 코덱으로 바꿉니다</string>
     <string name="adv_auto_hd">HD 오디오를 자동으로 켜기</string>
-    <string name="adv_auto_hd_desc">시스템에서 HD 오디오가 꺼져 있으면 켭니다</string>
     <string name="adv_delay">적용까지 기다리는 시간</string>
     <string name="adv_delay_desc">연결 직후에는 전환을 받지 않는 기기가 있습니다</string>
     <string name="adv_retries">재시도 횟수</string>
@@ -194,14 +188,14 @@
     </plurals>
     <string name="eq_summary_unavailable">지금은 사용할 수 없습니다. 이유는 열어서 확인하세요.</string>
     <string name="eq_enabled">이퀄라이저</string>
-    <string name="eq_enabled_desc">이 이어폰의 소리를 다듬습니다</string>
     <string name="eq_latency_zero">추가 지연: 0 ms</string>
     <string name="eq_mode">편집 방식</string>
-    <string name="eq_mode_desc">그래픽은 각 밴드를 고정된 주파수에 둡니다. 파라메트릭은 밴드를 원하는 위치에 놓을 수 있습니다.</string>
     <string name="eq_mode_graphic">그래픽</string>
+    <string name="eq_mode_graphic_desc">각 밴드가 고정된 주파수에 놓입니다</string>
     <string name="eq_mode_parametric">파라메트릭</string>
+    <string name="eq_mode_parametric_desc">밴드를 원하는 위치에 놓을 수 있습니다</string>
     <string name="eq_band_count">밴드 수</string>
-    <string name="eq_band_count_desc">밴드가 많을수록 세밀한 곡선을 더 가깝게 따라갑니다. 성능 설정이 아닙니다. 어느 쪽이든 휴대전화가 하는 계산량은 같습니다.</string>
+    <string name="eq_band_count_desc">성능 설정이 아닙니다. 밴드 수와 관계없이 휴대전화가 하는 계산량은 같습니다.</string>
     <string name="eq_band_none">아직 밴드가 없습니다. 하나 추가하거나 AutoEQ 파일을 읽어 오세요.</string>
     <string name="eq_band_add">밴드 추가</string>
     <string name="eq_band_remove">이 밴드 삭제</string>
@@ -222,9 +216,17 @@
     <string name="eq_reset_title">모두 0으로 되돌릴까요?</string>
     <string name="eq_reset_body">모든 게인과 수동 프리앰프가 0 dB로 돌아가고, 이퀄라이저는 더 이상 소리를 바꾸지 않습니다. 밴드는 제자리에 남지만, 지금의 곡선은 프리셋으로 저장해 두지 않았다면 되돌릴 수 없습니다.</string>
 
+    <string name="eq_slot_flat">플랫</string>
+    <string name="eq_slot_default">사용자 %1$d</string>
+    <string name="eq_slot_rename">이름 바꾸기</string>
+    <string name="eq_slot_rename_title">슬롯 이름</string>
+    <string name="eq_slot_duplicate">복제</string>
+    <string name="eq_slot_save_preset">프리셋으로 저장</string>
+    <string name="eq_slot_delete_title">슬롯을 삭제할까요?</string>
+    <string name="eq_slot_delete_body">\"%1$s\"을(를) 삭제합니다. 지금 듣고 있는 슬롯이면 소리는 플랫으로 돌아갑니다.</string>
+
     <string name="eq_presets">프리셋</string>
-    <string name="eq_preset_empty">아직 저장한 것이 없습니다</string>
-    <string name="eq_preset_save">지금 설정을 저장</string>
+    <string name="eq_preset_empty">아직 저장한 것이 없습니다. 사용 중인 슬롯의 메뉴에서 저장할 수 있습니다.</string>
     <string name="eq_preset_save_title">프리셋 이름</string>
     <string name="eq_preset_name">이름</string>
     <string name="eq_preset_apply">적용</string>
@@ -233,16 +235,20 @@
     <string name="eq_preset_delete_title">프리셋을 삭제할까요?</string>
     <string name="eq_preset_delete_body">\"%1$s\"을(를) 삭제합니다. 이어폰에 이미 적용된 설정은 그대로 남습니다.</string>
     <string name="eq_autoeq_import">AutoEQ 가져오기</string>
-    <string name="eq_autoeq_desc">AutoEQ의 ParametricEQ.txt 또는 GraphicEQ.txt를 읽어 위의 설정을 바꿉니다.</string>
+    <string name="eq_autoeq_desc">AutoEQ의 ParametricEQ.txt 또는 GraphicEQ.txt를 읽어 새 슬롯으로 불러옵니다.</string>
     <string name="eq_curve_desc">이 설정이 소리를 어떻게 바꾸는지 나타내는 곡선</string>
     <string name="eq_finder_title">취향에 맞는 EQ 찾기</string>
     <string name="eq_finder_entry_desc">블라인드 청취 비교로 이퀄라이저를 취향에 맞게 다듬습니다</string>
     <string name="eq_finder_entry_resume">저장된 테스트가 있습니다. 열면 이어서 할 수 있습니다.</string>
     <string name="eq_finder_entry_unavailable">지금은 이 이어폰에서 오디오 처리를 사용할 수 없습니다.</string>
     <string name="eq_finder_entry_disconnected">이 이어폰을 연결하면 시작할 수 있습니다.</string>
+    <string name="eq_finder_material">테스트에 쓸 소리</string>
+    <string name="eq_finder_material_loop">곡의 한 부분을 반복 재생</string>
+    <string name="eq_finder_material_live">지금 재생 중인 음악</string>
+    <string name="eq_finder_material_live_desc">소리를 측정하지 않고 음량을 맞추므로, 정확도는 반복 재생보다 떨어집니다.</string>
+    <string name="eq_finder_no_music">음악 앱에서 곡을 재생하면 시작할 수 있습니다.</string>
     <string name="eq_finder_song">곡</string>
     <string name="eq_finder_song_none">잘 아는 곡을 선택하세요</string>
-    <string name="eq_finder_song_desc">비교하는 동안 곡의 짧은 구간이 반복 재생됩니다. 휴대전화의 오디오 파일에서 선택합니다.</string>
     <string name="eq_finder_song_loading">파일을 읽는 중…</string>
     <string name="eq_finder_song_failed">이 파일을 읽을 수 없습니다. 다른 파일을 선택하세요.</string>
     <string name="eq_finder_passage">구간</string>
@@ -252,7 +258,6 @@
     <string name="eq_finder_include_mid">중음역도 탐색</string>
     <string name="eq_finder_include_mid_desc">목소리 대역에 세 번째 축을 더합니다. 질문이 조금 늘어납니다.</string>
     <string name="eq_finder_fine_tune">현재 설정 미세 조정</string>
-    <string name="eq_finder_fine_tune_desc">지금의 이퀄라이저에서 시작해 작은 폭으로 움직입니다.</string>
     <string name="eq_finder_notes">시작하기 전에</string>
     <string name="eq_finder_note_volume">테스트는 평소보다 소리가 조금 작게 재생됩니다. 시작한 뒤에 편한 음량으로 맞추고, 끝날 때까지 바꾸지 마세요.</string>
     <string name="eq_finder_note_earphones">이 이어폰으로, 조용한 곳에서 들어 주세요.</string>
@@ -277,6 +282,7 @@
     <string name="eq_finder_suspend">저장하고 나가기</string>
     <string name="eq_finder_paused_disconnected">일시정지: 이어폰이 연결되어 있지 않습니다. 다시 연결되면 이어집니다.</string>
     <string name="eq_finder_paused_focus">일시정지: 다른 앱이 소리를 가져갔습니다.</string>
+    <string name="eq_finder_paused_no_music">일시정지: 음악이 멈췄습니다. 음악 앱에서 다시 재생해 주세요.</string>
     <string name="eq_finder_resume_playback">다시 시작</string>
     <string name="eq_finder_result_curve_cd">적용 전과 후의 이퀄라이저 곡선</string>
     <string name="eq_finder_before">적용 전</string>
@@ -288,11 +294,10 @@
     <string name="eq_finder_validated_lose">마지막 블라인드 확인에서는 시작 시점도 밀리지 않았습니다. 어느 쪽이든 차이는 작습니다.</string>
     <string name="eq_finder_not_validated">마지막 블라인드 확인 전에 끝나서 결과가 검증되지 않았습니다.</string>
     <string name="eq_finder_consistency">답변이 조금 흔들렸습니다. 한 번 더 돌리면 정확도가 올라갑니다.</string>
+    <string name="eq_finder_band_error">들었던 곡선과의 차이는 최대 %1$s</string>
     <string name="eq_finder_bake_failed">결과를 넣기에는 남은 밴드가 부족합니다. 밴드를 몇 개 삭제한 뒤 다시 확정하세요.</string>
     <string name="eq_finder_apply">적용하고 저장</string>
     <string name="eq_finder_discard">버리기</string>
     <string name="eq_finder_discard_title">결과를 버릴까요?</string>
     <string name="eq_finder_discard_body">이퀄라이저는 원래 설정으로 돌아가고 답변은 삭제됩니다.</string>
-    <string name="eq_finder_preset_title">프리셋으로도 저장할까요?</string>
-    <string name="eq_finder_preset_skip">나중에</string>
 </resources>

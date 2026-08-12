@@ -28,6 +28,8 @@
 
     <string name="cd_refresh_status">Durumu yeniden kontrol et</string>
     <string name="cd_back">Geri</string>
+    <string name="cd_eq_slot_menu">Yuva seçenekleri</string>
+    <string name="cd_eq_slot_add">Yuva ekle</string>
     <string name="state_expanded">Genişletildi</string>
     <string name="state_collapsed">Daraltıldı</string>
 
@@ -38,13 +40,9 @@
 
     <string name="section_general">Genel ayarlar</string>
     <string name="toggle_auto_apply">Ayarları otomatik uygula</string>
-    <string name="toggle_auto_apply_desc">Kapalıyken hiçbir cihazda bir şey değiştirilmez</string>
     <string name="toggle_enforce">Sistemin veya diğer uygulamaların değişikliklerini geri al</string>
-    <string name="toggle_enforce_desc">Sistem veya başka bir uygulama kodeği değiştirirse, sabitlediğiniz değere döndürür</string>
     <string name="toggle_notify">Kodek değişimini bildir</string>
-    <string name="toggle_notify_desc">Kodek değiştiğinde kısa bir mesaj gösterir</string>
     <string name="toggle_verbose">Ayrıntılı günlük tut</string>
-    <string name="toggle_verbose_desc">Geçiş yapmayan cihazları incelemek için</string>
 
     <string name="permission_title">Bluetooth izni gerekiyor</string>
     <string name="permission_body">İzin verdiğinizde uygulama eşleştirilmiş cihazlarınızı ve adlarını okuyabilir.</string>
@@ -81,7 +79,7 @@
     <string name="eq_unavailable_device">Bu kulaklık ses işleme için kayıtlı değil, bu yüzden burada ayarladığınız hiçbir şey sese yansımaz.</string>
 
     <string name="eq_device_register">Bu kulaklıkla ses işleme kullan</string>
-    <string name="eq_device_register_desc">Bu kulaklığı telefonun ses ayarlarına ekler. Uygulanırken ses bir an için kesilir.</string>
+    <string name="eq_device_register_desc">Uygulanırken ses bir an için kesilir.</string>
     <string name="eq_device_confirm_on_title">Bu kulaklık için ses işleme açılsın mı?</string>
     <string name="eq_device_confirm_off_title">Bu kulaklık için ses işleme kapatılsın mı?</string>
     <string name="eq_device_confirm_body">Telefonun ses hizmeti yeniden başlar, bu yüzden şu anda çalan her şey birkaç saniyeliğine sessize düşer. Bluetooth bağlı kalır ve ekolayzır ayarlarınız her durumda korunur.</string>
@@ -121,7 +119,6 @@
     <string name="profile_no_target">Henüz bir şey sabitlenmedi</string>
 
     <string name="section_backup">Yedekleme</string>
-    <string name="backup_body">Tüm ayarları bir JSON dosyasına kaydeder.</string>
     <string name="backup_export">Dışa aktar</string>
     <string name="backup_import">İçe aktar</string>
     <string name="backup_confirm_title">Yedek içe aktarılsın mı?</string>
@@ -134,7 +131,6 @@
     <string name="msg_backup_failed">Dosya okunamadı</string>
 
     <string name="detail_auto_apply">Bu kulaklığa uygula</string>
-    <string name="detail_auto_apply_desc">Her bağlandığında aşağıdaki ayarlara geçer</string>
     <string name="detail_current_codec">Mevcut kodek: %1$s</string>
     <string name="ldac_bitrate_offload">Bluetooth A2DP donanım aktarımı etkin olduğu için gerçek bit hızı okunamıyor.</string>
     <string name="detail_note">Son sonuç: %1$s</string>
@@ -161,9 +157,7 @@
     <string name="adv_force">Geçişi zorla</string>
     <string name="adv_force_desc">Cihazın bildirmediği kombinasyonları da dener</string>
     <string name="adv_via_sbc">SBC üzerinden geçiş yap</string>
-    <string name="adv_via_sbc_desc">Önce SBC\'ye düşer, sonra seçtiğiniz kodeğe geçer</string>
     <string name="adv_auto_hd">HD sesi otomatik aç</string>
-    <string name="adv_auto_hd_desc">Sistemde HD ses kapalıysa açar</string>
     <string name="adv_delay">Uygulamadan önce bekleme</string>
     <string name="adv_delay_desc">Bazı cihazlar bağlandıktan hemen sonra geçiş yapmaz</string>
     <string name="adv_retries">Deneme sayısı</string>
@@ -196,14 +190,14 @@
     </plurals>
     <string name="eq_summary_unavailable">Şu anda kullanılamıyor. Nedenini görmek için açın.</string>
     <string name="eq_enabled">Ekolayzır</string>
-    <string name="eq_enabled_desc">Bu kulaklığın sesini biçimlendirir</string>
     <string name="eq_latency_zero">Eklenen gecikme: 0 ms</string>
     <string name="eq_mode">Düzenleme biçimi</string>
-    <string name="eq_mode_desc">Grafik modda her bant sabit bir frekansta durur. Parametrik modda her bandı istediğiniz yere koyabilirsiniz.</string>
     <string name="eq_mode_graphic">Grafik</string>
+    <string name="eq_mode_graphic_desc">Her bant sabit bir frekansta durur</string>
     <string name="eq_mode_parametric">Parametrik</string>
+    <string name="eq_mode_parametric_desc">Her bandı istediğiniz yere koyabilirsiniz</string>
     <string name="eq_band_count">Bant sayısı</string>
-    <string name="eq_band_count_desc">Bant sayısı arttıkça ayrıntılı bir eğri daha yakından izlenir. Bu bir performans ayarı değildir: telefon her iki durumda da aynı işi yapar.</string>
+    <string name="eq_band_count_desc">Bu bir performans ayarı değildir: bant sayısı kaç olursa olsun telefon aynı işi yapar.</string>
     <string name="eq_band_none">Henüz bant yok. Bir tane ekleyin veya bir AutoEQ dosyası alın.</string>
     <string name="eq_band_add">Bant ekle</string>
     <string name="eq_band_remove">Bu bandı kaldır</string>
@@ -224,9 +218,17 @@
     <string name="eq_reset_title">Tümü sıfırlansın mı?</string>
     <string name="eq_reset_body">Tüm kazançlar ve elle ayarlanan ön yükseltme 0 dB\'ye döner, ekolayzır artık sesi değiştirmez. Bantlar yerlerinde kalır ama şu anki eğri, hazır ayar olarak kaydedilmediyse geri gelmez.</string>
 
+    <string name="eq_slot_flat">Düz</string>
+    <string name="eq_slot_default">Özel %1$d</string>
+    <string name="eq_slot_rename">Yeniden adlandır</string>
+    <string name="eq_slot_rename_title">Yuvanın adı</string>
+    <string name="eq_slot_duplicate">Çoğalt</string>
+    <string name="eq_slot_save_preset">Hazır ayar olarak kaydet</string>
+    <string name="eq_slot_delete_title">Yuva silinsin mi?</string>
+    <string name="eq_slot_delete_body">“%1$s” silinir. Şu anda onu dinliyorsanız, ses Düz ayarına döner.</string>
+
     <string name="eq_presets">Hazır ayarlar</string>
-    <string name="eq_preset_empty">Henüz kaydedilmiş bir şey yok</string>
-    <string name="eq_preset_save">Bu ayarları kaydet</string>
+    <string name="eq_preset_empty">Henüz kaydedilmiş bir şey yok. Kullandığınız yuvanın menüsünden kaydedebilirsiniz.</string>
     <string name="eq_preset_save_title">Hazır ayarın adı</string>
     <string name="eq_preset_name">Ad</string>
     <string name="eq_preset_apply">Uygula</string>
@@ -235,16 +237,20 @@
     <string name="eq_preset_delete_title">Hazır ayar silinsin mi?</string>
     <string name="eq_preset_delete_body">“%1$s” silinir. Kulaklığınızda hâlihazırda ayarlı olan şeyler olduğu gibi kalır.</string>
     <string name="eq_autoeq_import">AutoEQ al</string>
-    <string name="eq_autoeq_desc">AutoEQ\'nun ParametricEQ.txt veya GraphicEQ.txt dosyasını okur ve yukarıdaki ayarların yerine koyar.</string>
+    <string name="eq_autoeq_desc">AutoEQ\'nun ParametricEQ.txt veya GraphicEQ.txt dosyasını okur ve yeni bir yuvaya yükler.</string>
     <string name="eq_curve_desc">Bu ayarların sesi nasıl değiştirdiğini gösteren eğri</string>
     <string name="eq_finder_title">Zevkine uygun ekolayzırı bul</string>
     <string name="eq_finder_entry_desc">Kör dinleme karşılaştırmaları ekolayzırı zevkine göre biçimlendirir</string>
     <string name="eq_finder_entry_resume">Kayıtlı bir test bekliyor. Devam etmek için aç.</string>
     <string name="eq_finder_entry_unavailable">Ses işleme şu anda bu kulaklık için kullanılamıyor.</string>
     <string name="eq_finder_entry_disconnected">Başlamak için bu kulaklığı bağla.</string>
+    <string name="eq_finder_material">Test için kullanılacak ses</string>
+    <string name="eq_finder_material_loop">Bir şarkıdan döngüye alınmış bölüm</string>
+    <string name="eq_finder_material_live">Şu anda çalan müzik</string>
+    <string name="eq_finder_material_live_desc">Ses ölçülmediği için ses düzeyi eşitleme, döngüye alınmış bölüme göre daha az hassastır.</string>
+    <string name="eq_finder_no_music">Başlamak için müzik uygulamanda bir şarkı çal.</string>
     <string name="eq_finder_song">Şarkı</string>
     <string name="eq_finder_song_none">İyi bildiğin bir şarkı seç</string>
-    <string name="eq_finder_song_desc">Karşılaştırma sırasında şarkıdan kısa bir bölüm tekrarlanır. Telefondaki ses dosyalarından seçilir.</string>
     <string name="eq_finder_song_loading">Dosya okunuyor…</string>
     <string name="eq_finder_song_failed">Bu dosya okunamadı. Başka bir dosya seç.</string>
     <string name="eq_finder_passage">Bölüm</string>
@@ -254,7 +260,6 @@
     <string name="eq_finder_include_mid">Orta frekansları da keşfet</string>
     <string name="eq_finder_include_mid_desc">Vokallerin çevresine üçüncü bir eksen ekler. Birkaç soru daha.</string>
     <string name="eq_finder_fine_tune">Mevcut ayarlara ince ayar yap</string>
-    <string name="eq_finder_fine_tune_desc">Şu anki ekolayzırdan başlar ve küçük adımlarla ilerler.</string>
     <string name="eq_finder_notes">Başlamadan önce</string>
     <string name="eq_finder_note_volume">Test normalden biraz daha kısık çalar. Rahat bir ses düzeyini test başladıktan sonra ayarla ve sonuna kadar değiştirme.</string>
     <string name="eq_finder_note_earphones">Bu kulaklıkla, sessiz bir yerde dinle.</string>
@@ -280,6 +285,7 @@
     <string name="eq_finder_suspend">Kaydet ve çık</string>
     <string name="eq_finder_paused_disconnected">Duraklatıldı: kulaklık bağlı değil. Kulaklık dönünce test sürer.</string>
     <string name="eq_finder_paused_focus">Duraklatıldı: sesi başka bir uygulama devraldı.</string>
+    <string name="eq_finder_paused_no_music">Duraklatıldı: müzik durdu. Müzik uygulamanda çalmaya devam et.</string>
     <string name="eq_finder_resume_playback">Sürdür</string>
     <string name="eq_finder_result_curve_cd">Ekolayzırın önce ve sonra eğrisi</string>
     <string name="eq_finder_before">Önce</string>
@@ -291,11 +297,10 @@
     <string name="eq_finder_validated_lose">Sondaki kör doğrulamada başlangıç noktası da geri kalmadı. Fark zaten küçük.</string>
     <string name="eq_finder_not_validated">Test, sondaki kör doğrulamadan önce bitti; sonuç doğrulanmadı.</string>
     <string name="eq_finder_consistency">Yanıtlar biraz dalgalandı. Bir tur daha sonucu keskinleştirir.</string>
+    <string name="eq_finder_band_error">Duyduğun eğriden en fazla %1$s sapar</string>
     <string name="eq_finder_bake_failed">Sonuç, ekolayzırda kalandan daha fazla boş bant istiyor. Birkaç bandı kaldırıp yeniden bitir.</string>
     <string name="eq_finder_apply">Uygula ve kaydet</string>
     <string name="eq_finder_discard">Vazgeç</string>
     <string name="eq_finder_discard_title">Sonuçtan vazgeçilsin mi?</string>
     <string name="eq_finder_discard_body">Ekolayzır eski hâline döner ve yanıtlar silinir.</string>
-    <string name="eq_finder_preset_title">Hazır ayar olarak da kaydedilsin mi?</string>
-    <string name="eq_finder_preset_skip">Şimdi değil</string>
 </resources>

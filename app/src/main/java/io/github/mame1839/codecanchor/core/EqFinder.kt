@@ -665,12 +665,26 @@ object EqFinderMaterialize {
     /**
      * 確定結果の焼き込み。入らないときは null (呼び出し側がエラー表示)。
      *
-     * - パラメトリック: ゲイン 0 でない軸のバンドを追記。[EqSettings.MAX_BANDS] を超えるなら null
-     * - グラフィック: バンド中心での今の応答にオーバーレイの応答を足した値を目標にして
-     *   [EqSolver.solveBands] で解き直す (仕様書 §4)。バンドが並びどおりなら今の応答は
-     *   [EqSolver.graphicTargetsDb10] と同じ値で、バンドが空 (未設定) なら目標は
-     *   オーバーレイの応答そのもの。Q は保存値ではなく [EqSolver.defaultQ] から取り直す —
+     * **不変条件: 適用した設定は試聴した音と同じ応答を持たなければならない。**
+     * 試聴の土台は「enabled なら bands、切ってあれば素の音」(セッション開始時の
+     * baseBands の規則) なので、焼き込みも同じ土台から作る。enabled=false の bands を
+     * 応答に含めると、切ってあった旧カーブが適用の瞬間に復活し、耳で選んだ after とは
+     * 別の音が保存される。
+     *
+     * - パラメトリック: ゲイン 0 でない軸のバンドを追記。base が切ってあった場合は、
+     *   既存バンドの fc/Q (手作業の成果物) を保ったままゲインを 0 にして残す — 応答は
+     *   厳密に試聴と同じ (ゲイン 0 のバンドは音を変えない)。
+     *   合計が [EqSettings.MAX_BANDS] を超えるなら null
+     * - グラフィック: バンド中心での土台の応答にオーバーレイの応答を足した値を目標にして
+     *   [EqSolver.solveBands] で解き直す (仕様書 §4)。バンドが並びどおりなら土台の応答は
+     *   [EqSolver.graphicTargetsDb10] と同じ値で、土台が素の音なら目標はオーバーレイの
+     *   応答そのもの。Q は保存値ではなく [EqSolver.defaultQ] から取り直す —
      *   エスカレートした Q を種にしない規則 ([EqSolver.withGraphicTarget] と同じ)
+     *
+     * base が切ってあった場合、鳴っていなかった旧カーブのデータはこの**戻り値からは**消える
+     * (グラフィックは摘みごと解き直し、パラメトリックはゲインが 0 になる)。データ自体は残る —
+     * 適用は開始点のスロットを書き換えず新しいスロットへ着地するので、旧カーブは
+     * 開始点のスロットにそのまま在る (`llmdocs/eq-slot-design.md` §1)。
      *
      * 焼き込み後は enabled=true、そして preampAuto=true に戻す。セッション中のプリアンプは
      * 聴感等価 ([EqLoudness]) の一時値で、恒久設定に残すと「なし」側と揃えるための
@@ -685,7 +699,12 @@ object EqFinderMaterialize {
         return when (settings.mode) {
             EqMode.PARAMETRIC -> {
                 val added = overlay.filter { it.gainDb10 != 0 }
-                val bands = settings.bands + added
+                val kept = if (settings.enabled) {
+                    settings.bands
+                } else {
+                    settings.bands.map { it.copy(gainDb10 = 0) }
+                }
+                val bands = kept + added
                 if (bands.size > EqSettings.MAX_BANDS) {
                     null
                 } else {
@@ -693,10 +712,11 @@ object EqFinderMaterialize {
                 }
             }
             else -> {
+                val baseBands = if (settings.enabled) settings.bands else emptyList()
                 val freqs = EqSolver.centerFrequencies(settings.bandCount)
                 val target = DoubleArray(freqs.size) { i ->
                     val hz = freqs[i].toDouble()
-                    EqSolver.combinedResponseDb(settings.bands, hz) +
+                    EqSolver.combinedResponseDb(baseBands, hz) +
                         EqSolver.combinedResponseDb(overlay, hz)
                 }
                 settings.copy(
