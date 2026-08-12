@@ -7,16 +7,41 @@
 //     (worker スレッドは作らない — eq-fir-design.md §3)
 //   - FirKernel が畳み込る。このクラスは遷移・予算・診断・混合だけを持つ
 //
+// **混合の規約 (ここが遷移の芯。2 つの wet を別々に持たない根拠):**
+//
+//   out = eq_out + (fir·preamp − dry) · fir_wet_ · fir_mix_
+//
+//   - `eq_out` は Eq の出力そのもの。Eq は内部で out = dry + (bq − dry)·eq_wet を作るので、
+//     **biquad の分け前は Eq が持つ wet ただ 1 つ**で表される。pipeline は Eq の wet を
+//     複製せず、`eq_.setActive()` で向きを指示するだけ。
+//   - `fir_wet_` は FIR 経路の enable/disable (Eq の wet と同じ意味論・同じ長さ)。
+//   - `fir_mix_` は 2 つのエンジンの間の乗り移り (0 = biquad だけ、1 = FIR だけ)。
+//
+//   フェード中は eq_wet が 1→0 に降り、fir_mix_ が 0→1 に昇る。両方 10 ms の線形なので
+//   和はそのままクロスフェードになる (中点で 0.5·bq + 0.5·fir)。
+//
+//   **この形にした理由 (検分で 2 件の不具合として現れた):**
+//   pipeline 側に biquad 用の wet を別に持つと、kFir のあいだ Eq の内部 wet が 1.0 で
+//   止まったまま置き去りになる。DISABLE で素通しに着いた後に biquad へ渡すと、
+//   Eq がそこから自前のフェードを 1→0 で始めて**消えたはずの EQ が丸ごと戻る。**
+//   真を 1 つ (Eq の wet) に決め、pipeline は向きだけ指示することで原理的に消える。
+//
 // 遷移 (フェードはすべて 10 ms):
 //   biquad ──(FIR 要求 ∧ P 合法 ∧ 予算内 ∧ 曲線あり)──> 準備
 //     準備中: biquad が鳴る。入力側 (FDL push) は常時回し、designer をスライスで進める
-//   準備 ──(designer 完了 ∧ FDL fill = K ∧ 尻尾温め 1 ブロック)──> 出力クロスフェード ──> FIR
+//   準備 ──(designer 完了 ∧ FDL fill = K ∧ 尻尾温め 1 ブロック)──> kFadeIn ──> FIR
 //     **AND 条件が揃うまで出力へ混ぜない** — FDL が浅いまま鳴らすと畳み込みの
-//     途中結果 (履歴ゼロ扱い) が耳に出る
+//     途中結果 (履歴ゼロ扱い) が耳に出る。入口で eq_.setActive(false) を出し、
+//     Eq 自身のフェードアウトが biquad 側の降りを担う
 //   FIR ──(曲線変更)──> designer を裏の面へ再始動 → 完成後に面クロスフェード (FDL は共有)
-//   FIR ──(P 変化 / fs 変化 / RESET / idle 復帰)──> FDL 失効 → biquad へ落下
-//     (FIR の出力は即座に作れなくなるので、biquad を**ゼロ状態 + 10 ms フェードイン**で
-//     立ち上げる。落下のクリックはハーネスで実測する)
+//   FIR ──(モード OFF)──> kFadeOut (**対称なクロスフェード**)。ここでは FIR が健在なので
+//     作れる。入口で eq_.setActive(active_) + eq_.reset() を出し、Eq の立ち上がりが
+//     biquad 側の昇りを担う。**落下ではないので fallbacks_ に数えない** (mode_offs_)
+//   FIR ──(P 変化 / fs 変化 / ch 変化 / RESET)──> FDL 失効 → biquad へ落下 (fallbacks_)
+//     FIR の出力は即座に作れないので対称フェードは作れない。Eq をゼロ状態から
+//     自身の wet で立ち上げる。落下のクリックはハーネスで実測する
+//   FIR ──(DISABLE が素通しに着いた)──> biquad。**Eq は既に wet 0 で止まっている**ので
+//     受け渡しで音が動かない。落下でもモード OFF でもないので何も数えない
 //
 // 確保は configure() (制御スレッド) の arena 1 本だけ。**ch ≤ 2 のときだけ確保する**
 // — 12ch の spatializer インスタンスには作らない (FIR フラグが来ても biquad + カウンタ)。
@@ -56,6 +81,7 @@ public:
         kPrepare = 1,  // biquad が鳴っていて、designer + FDL 温めが走っている
         kFadeIn  = 2,  // biquad → FIR の出力クロスフェード中
         kFir     = 3,  // FIR が鳴っている (面フェード含む)
+        kFadeOut = 4,  // FIR → biquad の出力クロスフェード中 (モード OFF。FIR は健在)
     };
 
     // --- 制御スレッド ------------------------------------------------------
@@ -100,7 +126,13 @@ public:
     int      fdlFill() const { return kernel_.fill(); }
     uint32_t rebuilds() const { return rebuilds_; }          // designer の起動回数
     uint32_t faceFades() const { return face_fades_; }       // FIR→FIR の差し替え回数
-    uint32_t fallbacks() const { return fallbacks_; }        // FIR→biquad の落下回数
+    // **鳴っていた FIR が端末側の都合で止まり biquad へ乗り換わった回数。**
+    // 現地診断で「この機種では FIR が保てない」を読むための値なので、
+    // ユーザ操作 (モード OFF) も、音の経路が変わらない事象 (設計器の失敗・準備中の
+    // 取り止め・DISABLE の完了) も**混ぜない。**混ざるとこのカウンタの役目が消える。
+    uint32_t fallbacks() const { return fallbacks_; }
+    uint32_t modeOffs() const { return mode_offs_; }         // ユーザがモードを切った回数
+    uint32_t designFailures() const { return design_failures_; }  // 設計器が非有限で止まった回数
     uint32_t unfitSizeCount() const { return unfit_size_; }  // P が大きさで不適
     uint32_t unfitBudgetCount() const { return unfit_budget_; }  // P が予算で不適
     uint32_t curveRejected() const { return curve_rejected_; }
@@ -115,20 +147,30 @@ public:
 #ifdef CA_EQ_DSP_TEST_HOOKS
     // ハーネス専用: FIR 側 wet の現在値 (フェード曲線の同一性テストが読む)。
     double firWet() const { return fir_wet_; }
+    // ハーネス専用: 設計器へ直接触る (到達しない失敗経路を撃つため)。
+    FirDesigner& designerForTest() { return designer_; }
+    // ハーネス専用: arena の基底 (整列の不変条件を実測するため)。
+    const void* arenaBaseForTest() const { return arena_; }
 #endif
 
 private:
+    // FIR を畳む理由。**カウンタの意味を決めるのはここ 1 箇所。**
+    enum class Drop : uint8_t {
+        kHard,   // 端末側の都合 (P/fs/ch 変化・RESET・arena 喪失)。鳴っていたなら落下
+        kQuiet,  // 音の経路が変わらない (準備中の取り止め・DISABLE 完了・モード OFF 完了)
+    };
+
     void releaseArena();
     void reserveArena();
-    void invalidateFir();               // FDL 失効 → kBiquad (準備からやり直し)
+    void invalidateFir(Drop reason);    // FDL 失効 → kBiquad (準備からやり直し)
     bool evaluateBlock(int frames);     // P の合法/予算判定。変化時だけ判定し直す
     void adoptCurveIfDirty();           // dirty なら検査 → designer 再始動
     void startDesigner(int face);
     void stepPrepare(int frames);       // 準備中のスライス (setup 構築 / designer)
+    void stepDesigner();                // kFir 中のスライス (失敗の後始末を 1 箇所に)
+    // 混合の規約はファイル冒頭。bq == nullptr なら「biquad の分け前ゼロ」= 素の dry が土台。
     void mixFirOut(const float* in, float* out, int frames, bool accumulate,
-                   const float* bq, float v0, float dv);
-    // biquad 経路 + 落下後の 10 ms 立ち上げ (bq_gate_ < 1 のあいだ dry と混ぜる)
-    void processBiquadGated(const float* in, float* out, int frames, bool accumulate);
+                   const float* bq, double mix0, double dmix);
 
     Eq eq_;
     FirKernel   kernel_;
@@ -167,19 +209,22 @@ private:
     // 曲線 (401 点 ×2: poll が書く pending と、designer が読む active)
     float    pending_curve_[kCurvePoints] = {};
     float    active_curve_[kCurvePoints]  = {};
-    uint32_t pending_gen_ = 0;
-    uint32_t active_gen_  = 0;
-    bool     curve_dirty_ = false;
-    bool     have_curve_  = false;
+    uint32_t pending_gen_  = 0;   // poll が置いた最新
+    uint32_t adopting_gen_ = 0;   // designer がいま組んでいる世代
+    uint32_t active_gen_   = 0;   // **鳴っている**世代 (フェード完了で昇格。0 = FIR 未稼働)
+    bool     curve_dirty_  = false;
+    bool     have_curve_   = false;
+    // 採用した曲線で設計器が失敗した。**同じ曲線で組み直しても同じ結果**なので、
+    // 新しい世代が来るまで再挑戦しない (失敗ループを構造で塞ぐ)。
+    bool     curve_failed_ = false;
 
     int  active_face_    = 0;
     bool face_fading_    = false;
     bool tail_warmed_    = false;
-    // フェードの位置 (フレーム単位で進める)。v: biquad→FIR、w: 面 A→B、
-    // bq_gate_: FIR からの落下後に biquad をゼロ状態から立ち上げるゲート
-    double engine_v_ = 0.0;
-    double face_w_   = 0.0;
-    double bq_gate_  = 1.0;
+    // 2 つのエンジンの間の乗り移り (0 = biquad だけ、1 = FIR だけ)。biquad 側の分け前は
+    // Eq が持つ wet なので、ここには**片側だけ**を持つ (両側を持つと同期が要る = 不具合 2)。
+    double fir_mix_ = 0.0;
+    double face_w_  = 0.0;
 
     // FIR 側の wet / preamp。**Eq と同じ意味論** (wet は 1/n 刻みの線形、n = ms·fs/1000)。
     // 同一性はハーネス 26 節が Eq の実出力と突き合わせる。
@@ -195,12 +240,14 @@ private:
     uint64_t (*now_ns_)() = nullptr;
     uint64_t max_slice_ns_ = 0;
 
-    uint32_t rebuilds_       = 0;
-    uint32_t face_fades_     = 0;
-    uint32_t fallbacks_      = 0;
-    uint32_t unfit_size_     = 0;
-    uint32_t unfit_budget_   = 0;
-    uint32_t curve_rejected_ = 0;
+    uint32_t rebuilds_        = 0;
+    uint32_t face_fades_      = 0;
+    uint32_t fallbacks_       = 0;
+    uint32_t mode_offs_       = 0;
+    uint32_t design_failures_ = 0;
+    uint32_t unfit_size_      = 0;
+    uint32_t unfit_budget_    = 0;
+    uint32_t curve_rejected_  = 0;
 };
 
 }  // namespace caeq

@@ -54,7 +54,21 @@ inline bool convBlockSizeValid(int p) {
 // n の setup を置くのに必要なバイト数 (initInPlace 用)。n が大きいほど大きい (単調)。
 size_t fftSetupBytes(int n);
 
-// 16 バイト整列か。PFFFT は NDEBUG だと整列を検査しないので、配線側の検分に使う。
+// --- 整列の不変条件 ---------------------------------------------------------
+//
+// ⚠️ **PFFFT は process 経路でも assert で整列を見る** (pffft_transform_internal /
+// pffft_zconvolve_accumulate)。この製品は NDEBUG を定義しないので assert は生きたまま
+// `.so` に載り、崩れると audio HAL が abort() する = 端末全体が無音になる。
+// **assert に到達しないことをこちら側の不変条件で保証する** (pffft.c 冒頭の「assert の扱い」)。
+//
+// 不変条件 (これが成り立つ限り、派生ポインタも必ず 16 バイト整列):
+//   1. FFT に渡す**基底**のバッファは 16 B 整列 (arena は 64 B で切る)。
+//      FirDesigner::start / FirKernel::bind が fftAligned で検査し、崩れていたら
+//      false を返す → 呼び出し側は FIR を使わずカウンタを進めて biquad へ落ちる。
+//   2. fftSizeValid(n) ⟹ n は 32 の倍数。convBlockSizeValid(P) ⟹ 2P は 32 の倍数。
+//   3. 1 と 2 から、要素数 n の倍数で進む派生ポインタ (FDL の枠 idx·n、分割スペクトルの
+//      k·n、data 末尾の m−n) はすべて n·4 = 128 バイトの倍数だけずれる → 整列は保たれる。
+// ハーネス 29 節がこの不変条件 (派生ポインタの実測 + 崩したときに拒否されること) を釘付け。
 inline bool fftAligned(const void* p) {
     return (reinterpret_cast<size_t>(p) & 15u) == 0;
 }

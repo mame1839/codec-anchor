@@ -148,6 +148,16 @@ public:
     Phase phase() const { return phase_; }
     int  partitions() const { return k_total_; }
 
+    // 直近の step() が**費用モデル上**消費した ns。決定的で環境に依らないので、
+    // 「1 スライスが予算を超えない」の会計はこの値で行う (壁時計は環境で揺れる)。
+    int64_t lastStepModelNs() const { return last_step_ns_; }
+
+#ifdef CA_EQ_DSP_TEST_HOOKS
+    // ハーネス専用。**検査を通った曲線からは到達しない**非有限の経路を実際に撃つ。
+    // 窓の工程で NaN を作らせ、本物の検出経路 (windowRange の isfinite) を通す。
+    void injectNonFinite() { inject_nan_ = true; }
+#endif
+
     // 完成した IR の先頭 taps 本 (= data の先頭)。done() のときだけ意味を持つ。
     // kPartition 工程は data の末尾 2P 本しか触らない (m ≥ 2·taps ∧ 2P ≤ taps なので
     // 重ならない) から、完成後も残っている。ハーネスの照合と診断用。
@@ -171,6 +181,10 @@ private:
     bool  failed_  = false;
     int   pos_     = 0;  // いまの工程内の位置 (ビン / 要素 / タップ / 分割)
     int   k_total_ = 0;
+    int64_t last_step_ns_ = 0;
+#ifdef CA_EQ_DSP_TEST_HOOKS
+    bool  inject_nan_ = false;
+#endif
 };
 
 }  // namespace caeq

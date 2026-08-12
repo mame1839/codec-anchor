@@ -73,6 +73,22 @@
       オーディオ HAL 常駐側では確保を arena の 1 回に限定したいため。
       in-place で作った setup を pffft_destroy_setup に渡してはいけない (free を呼ぶ)。
    3. 宣言 2 つを pffft.h の末尾近くの節に追加した。
+   4. CA_PFFFT_NO_ASSERT を定義すると assert を no-op にする指令を足した (下記)。
+
+   ⚠️ **assert の扱い (段 2 で `.so` に載せるときの必読事項)**
+
+   このファイルは process 経路 (pffft_transform_internal / pffft_zconvolve_accumulate)
+   でも assert で整列を見る。**Codec Anchor の release/debug はどちらも NDEBUG を
+   定義していない**ので、assert はそのまま生き、条件が崩れると audio HAL が abort() する
+   = 端末全体が無音になる。「フック側は例外を投げない」より悪い壊れ方なので、
+   二段で塞いである:
+
+     主 — caeq 側が assert に到達しない不変条件を持つ (dsp/ca_eq_fft.h の「整列の不変条件」)。
+          崩れていたら FIR を使わずカウンタを進めて biquad へ落ちる。
+     保険 — Android のビルドで **このファイルの TU にだけ** CA_PFFFT_NO_ASSERT を定義する
+          (app/src/main/cpp/CMakeLists.txt に
+           `set_source_files_properties(dsp/pffft/pffft.c PROPERTIES COMPILE_DEFINITIONS CA_PFFFT_NO_ASSERT=1)`)。
+          **ホストのハーネスでは定義しない** — 開発時に整列のバグを握り潰さないため。
    ------------------------------------------------------------------------- */
 
 #ifndef _USE_MATH_DEFINES
@@ -84,6 +100,13 @@
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>
+
+/* Codec Anchor 改変 4: 冒頭の「assert の扱い」を参照。abort() は端末を無音にするので、
+   Android のビルドでは定義して no-op にする。ホストのハーネスでは定義しない。 */
+#if defined(CA_PFFFT_NO_ASSERT)
+#  undef assert
+#  define assert(expr) ((void)0)
+#endif
 
 /* detect compiler flavour */
 #if defined(_MSC_VER)

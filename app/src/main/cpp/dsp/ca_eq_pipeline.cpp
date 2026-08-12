@@ -12,7 +12,7 @@ constexpr double kXfadeMs = 10.0;
 
 inline size_t align64(size_t v) { return (v + 63u) & ~static_cast<size_t>(63u); }
 
-inline float clamp01f(float v) { return v < 0.0f ? 0.0f : (v > 1.0f ? 1.0f : v); }
+inline double clamp01(double v) { return v < 0.0 ? 0.0 : (v > 1.0 ? 1.0 : v); }
 
 // 2P の setup 構築 (in-place) の費用モデル。sincos が支配する O(N)。
 // 係数はホスト実測を上に丸めた保守値 (fircost と同じ流儀。会計はハーネス 25 節)。
@@ -27,7 +27,8 @@ void EqPipeline::releaseArena() {
     // 順序が要点: invalidateFir (中の kernel.reset が tail へ memset する) は
     // arena が生きているうちに。その後 unbind してから解放する — 逆にすると
     // 解放済みの領域へ書いて heap を壊す (実際に踏んだ)。
-    invalidateFir();
+    // **arena が消えるのは端末側の都合 (fs/ch 変化) なので落下扱い。**
+    invalidateFir(Drop::kHard);
     kernel_.unbind();
     plan_m_.release();
     plan_2p_.release();
@@ -36,9 +37,24 @@ void EqPipeline::releaseArena() {
         arena_ = nullptr;
     }
     arena_bytes_ = 0;
+    // **区画へのポインタを残さない。**残すと解放済みの領域を指したままになり、
+    // 「null なら触らない」という書き方の柵が全部死んだ枝になる。
+    mem_setup_m_  = nullptr;
+    mem_setup_2p_ = nullptr;
+    bytes_setup_2p_ = 0;
+    buf_data_    = nullptr;
+    buf_work_    = nullptr;
+    buf_fdl_     = nullptr;
+    buf_filt_[0] = nullptr;
+    buf_filt_[1] = nullptr;
+    buf_tail_    = nullptr;
+    buf_stage_   = nullptr;
+    buf_acc_     = nullptr;
+    buf_acc2_    = nullptr;
+    buf_fir_y_   = nullptr;
+    buf_bq_y_    = nullptr;
     have_curve_  = false;
     curve_dirty_ = false;
-    bq_gate_     = 1.0;  // 落下の途中で arena が消えても null の bq_y を触らない
 }
 
 // 最悪の合法 P に対する K·2P (floats)。FDL とフィルタ面の予約はこれで測る。
@@ -167,13 +183,24 @@ bool EqPipeline::snapParams(const Params& p) {
 }
 
 void EqPipeline::setActive(bool active) {
-    eq_.setActive(active);
     active_ = active;
+    // kFir / kFadeIn のあいだ Eq は「降りる側」として止めてある。ここで起こすと
+    // FIR と biquad が二重に鳴るので、向きの指示は遷移側に任せる
+    // (DISABLE は fir_wet_ が担い、素通しに着いてから Eq へ渡る)。
+    if (state_ == FirState::kBiquad || state_ == FirState::kPrepare ||
+        state_ == FirState::kFadeOut) {
+        eq_.setActive(active);
+    }
 }
 
 void EqPipeline::reset() {
+    // EFFECT_CMD_RESET。履歴は全部無効になるので FIR も畳む。**端末側の都合なので落下。**
     eq_.reset();
-    invalidateFir();
+    if (state_ == FirState::kFir || state_ == FirState::kFadeIn ||
+        state_ == FirState::kFadeOut) {
+        eq_.setActive(active_);  // kFir では Eq を止めてある — 起こしてから渡す
+    }
+    invalidateFir(Drop::kHard);
 }
 
 void EqPipeline::warmUp() {
@@ -198,34 +225,42 @@ void EqPipeline::setCurve(const float* db401, uint32_t generation) {
 }
 
 bool EqPipeline::idle() const {
+    // 完全な素通しか。**両方のエンジンが黙っていること**が条件 —
+    // 片方だけ見ると、もう片方のフェードが残っているうちに -ENODATA を返す。
     if (state_ == FirState::kBiquad) return eq_.idle();
-    return !active_ && fir_wet_ == 0.0;
+    return !active_ && fir_wet_ == 0.0 && eq_.idle();
 }
 
-void EqPipeline::invalidateFir() {
-    if (state_ == FirState::kFir) {
-        // FIR 稼働中は biquad を並走させていない — 状態が古い。ゼロにして
-        // 10 ms のゲートで立ち上げる (「落下時はゼロ状態 + 10 ms フェードイン」)。
+void EqPipeline::invalidateFir(Drop reason) {
+    // FIR の分け前が実際に音に出ていたか。**カウンタも Eq の起こし方もここで決まる。**
+    const bool was_audible = (state_ == FirState::kFadeIn || state_ == FirState::kFir ||
+                              state_ == FirState::kFadeOut);
+    if (reason == Drop::kHard && was_audible) {
         fallbacks_++;
-        eq_.reset();
-        bq_gate_ = 0.0;
-    } else if (state_ == FirState::kFadeIn) {
-        // フェード中は biquad も毎ブロック回っていて状態が新しい — そのまま続ける。
-        // v が畳まれるぶんの段差は残る (落下のクリックとしてハーネスで実測する)。
-        fallbacks_++;
+        // kFir では Eq を 1 度も回していないので内部状態が古い。ゼロにしてから
+        // 自身の wet で立ち上げる (pipeline 側にゲートを持たない — 真は Eq の wet 1 つ)。
+        if (state_ == FirState::kFir) eq_.reset();
+        eq_.setActive(active_);
     }
     kernel_.reset();
     designer_.abort();
     tail_warmed_ = false;
     face_fading_ = false;
-    engine_v_    = 0.0;
+    fir_mix_     = 0.0;
     face_w_      = 0.0;
+    active_gen_  = 0;   // 何も鳴っていない
     state_       = FirState::kBiquad;
 }
 
 // P (ブロック長) が変わった。合法か・予算に収まるかを判定し直す。
+//
+// **arena の区画 (fir_y / bq_y / stage / acc は kMaxConvBlock を上限に予約してある) を
+// 守る不変条件はここが唯一の門。**`p_ok_` が立っているあいだだけ arena のバッファに
+// frames 分を書いてよい。上限を超える frames は必ずここで p_ok_ を落とすので、
+// biquad だけの経路 (out へ直接書く) に落ちて arena には触れない。
 bool EqPipeline::evaluateBlock(int frames) {
-    if (state_ != FirState::kBiquad) invalidateFir();  // 履歴は P に紐づく — 丸ごと失効
+    // 履歴は P に紐づく — 丸ごと失効。**大きさが理由なので落下 (端末側の都合) 扱い。**
+    if (state_ != FirState::kBiquad) invalidateFir(Drop::kHard);
     p_cur_ = frames;
     p_ok_  = false;
     if (arena_ == nullptr) return false;
@@ -254,13 +289,34 @@ void EqPipeline::adoptCurveIfDirty() {
         return;  // 前の曲線 (と鳴っている面) を保つ
     }
     std::memcpy(active_curve_, pending_curve_, sizeof(active_curve_));
-    active_gen_ = pending_gen_;
-    have_curve_ = true;
-    // 再始動 (FDL は生かす)。kFir なら裏の面へ、準備中なら同じ面へ組み直す。
-    const int face = (state_ == FirState::kFir || state_ == FirState::kFadeIn)
+    adopting_gen_ = pending_gen_;
+    have_curve_   = true;
+    curve_failed_ = false;  // 新しい曲線なので再挑戦してよい
+    // 再始動 (FDL は生かす)。鳴っている面があるなら裏の面へ、無ければ同じ面へ組み直す。
+    const int face = (state_ == FirState::kFir || state_ == FirState::kFadeIn ||
+                      state_ == FirState::kFadeOut)
                          ? 1 - active_face_
                          : active_face_;
     startDesigner(face);
+}
+
+// 設計器を 1 スライス進め、失敗したら後始末する。**失敗は「音の経路が変わらない」事象**
+// (準備中なら biquad のまま、kFir なら表の面が鳴り続ける) なので落下には数えない。
+// 同じ曲線での再挑戦も封じる — 数学的に同じ結果になるので、回し続けると成果ゼロのまま
+// 毎ブロック FFT を焼き続けることになる (電池と診断の両方を壊す)。
+void EqPipeline::stepDesigner() {
+    if (!designer_.running()) return;
+    const uint64_t t0 = now_ns_ != nullptr ? now_ns_() : 0;
+    designer_.step(budget_ns_);
+    if (now_ns_ != nullptr) {
+        const uint64_t dt = now_ns_() - t0;
+        if (dt > max_slice_ns_) max_slice_ns_ = dt;
+    }
+    if (designer_.failed()) {
+        designer_.abort();
+        design_failures_++;
+        curve_failed_ = true;
+    }
 }
 
 void EqPipeline::startDesigner(int face) {
@@ -302,22 +358,20 @@ void EqPipeline::stepPrepare(int frames) {
             unfit_size_++;
         }
     } else if (designer_.running()) {
-        designer_.step(budget_ns_);
-        if (designer_.failed()) {
-            // 検査済み曲線からは数学的に出ないはずの非有限。曲線を捨てて biquad に留まる
-            // (同じ曲線で作り直しても同じ結果 — ループさせない)。
-            designer_.abort();
-            have_curve_ = false;
-            fallbacks_++;
-        }
+        stepDesigner();
     } else if (!designer_.done()) {
         adoptCurveIfDirty();
-        if (!designer_.running() && have_curve_ && state_ == FirState::kBiquad) {
+        if (!designer_.running() && have_curve_ && !curve_failed_) {
             startDesigner(active_face_);
         }
     }
+    // **準備を続ける根拠が無くなったら kPrepare から出る。**設計器が失敗して
+    // 再挑戦も封じられている状態で留まると、毎ブロック FDL に 2P FFT を ch 本
+    // 焼き続けながら永久に完成しない (かつ firState() が「準備中」と嘘をつく)。
     if (designer_.running() || designer_.done()) {
         state_ = FirState::kPrepare;
+    } else if (curve_failed_ || !have_curve_) {
+        state_ = FirState::kBiquad;
     }
 
     if (now_ns_ != nullptr) {
@@ -328,8 +382,12 @@ void EqPipeline::stepPrepare(int frames) {
 
 // FIR 側の出力の混合。bq が非 null なら biquad → FIR のクロスフェード中で、
 // v = v0 + i·dv (0→1) で乗り移る。wet / preamp は Eq と同じ意味論で 1 フレームずつ進める。
+// 混合の規約 (ファイル冒頭):
+//   out = eq_out + (fir·preamp − dry) · fir_wet_ · fir_mix_
+// bq == nullptr は「biquad の分け前ゼロ」= eq_out が dry そのもの (kFir。Eq は wet 0 で
+// 止めてあり、回してすらいない)。mix は mix0 + i·dmix を [0,1] に留めた値。
 void EqPipeline::mixFirOut(const float* in, float* out, int frames, bool accumulate,
-                           const float* bq, float v0, float dv) {
+                           const float* bq, double mix0, double dmix) {
     const int ch = ch_;
     for (int i = 0; i < frames; i++) {
         // preamp のランプ (Eq の pre_cur_ 補間と同じ線形)
@@ -340,8 +398,8 @@ void EqPipeline::mixFirOut(const float* in, float* out, int frames, bool accumul
         } else {
             pre_cur_ = pre_to_;
         }
-        // wet (Eq の processChunk と同じ「使ってから進める」)
-        const double wet = fir_wet_;
+        // FIR 経路の wet (Eq の processChunk と同じ「使ってから進める」)
+        const double wet    = fir_wet_;
         const double target = active_ ? 1.0 : 0.0;
         if (fir_wet_ < target) {
             fir_wet_ += fir_wet_step_;
@@ -350,22 +408,20 @@ void EqPipeline::mixFirOut(const float* in, float* out, int frames, bool accumul
             fir_wet_ -= fir_wet_step_;
             if (fir_wet_ < target) fir_wet_ = target;
         }
-        float v = 1.0f;
-        if (bq != nullptr) v = clamp01f(v0 + static_cast<float>(i) * dv);
+        const double mix   = clamp01(mix0 + static_cast<double>(i) * dmix);
+        const double share = wet * mix;
 
         const size_t base = static_cast<size_t>(i) * static_cast<size_t>(ch);
         for (int c = 0; c < ch; c++) {
             const size_t at  = base + static_cast<size_t>(c);
             // dry 側の NaN を潰す。kernel は FDL に入る前に潰している (= y は有限) が、
-            // wet < 1 の混合で dry がそのまま出る経路が残る。
+            // share < 1 の混合で dry がそのまま出る経路が残る。
             const float raw  = in[at];
             const double dry = std::isfinite(raw) ? static_cast<double>(raw) : 0.0;
             const double y   = static_cast<double>(buf_fir_y_[at]) * pre_cur_;
-            double mixed     = dry + (y - dry) * wet;
-            if (bq != nullptr) {
-                const double b = static_cast<double>(bq[at]);
-                mixed = b + (mixed - b) * static_cast<double>(v);
-            }
+            // 土台は Eq の出力 (既に dry + (bq − dry)·eq_wet が入っている)。
+            const double eq_out = (bq != nullptr) ? static_cast<double>(bq[at]) : dry;
+            const double mixed  = eq_out + (y - dry) * share;
             if (accumulate) {
                 out[at] += static_cast<float>(mixed);
             } else {
@@ -373,65 +429,55 @@ void EqPipeline::mixFirOut(const float* in, float* out, int frames, bool accumul
             }
         }
     }
-}
-
-// biquad 経路。落下 (bq_gate_ < 1) の間だけ dry から 10 ms で立ち上げる。
-void EqPipeline::processBiquadGated(const float* in, float* out, int frames,
-                                    bool accumulate) {
-    if (bq_gate_ >= 1.0 || buf_bq_y_ == nullptr) {
-        eq_.process(in, out, frames, accumulate);
-        return;
-    }
-    eq_.process(in, buf_bq_y_, frames, false);
-    const double dg = 1.0 / (kXfadeMs * fs_ / 1000.0);
-    const int    ch = ch_;
-    for (int i = 0; i < frames; i++) {
-        double g = bq_gate_ + dg * static_cast<double>(i);
-        if (g > 1.0) g = 1.0;
-        const size_t base = static_cast<size_t>(i) * static_cast<size_t>(ch);
-        for (int c = 0; c < ch; c++) {
-            const size_t at  = base + static_cast<size_t>(c);
-            // dry 側の NaN もここで潰す (Eq は内部で潰すが、dry と混ぜた瞬間に戻ってくる)。
-            const float raw  = in[at];
-            const double dry = std::isfinite(raw) ? static_cast<double>(raw) : 0.0;
-            const double mixed = dry + (static_cast<double>(buf_bq_y_[at]) - dry) * g;
-            if (accumulate) {
-                out[at] += static_cast<float>(mixed);
-            } else {
-                out[at] = static_cast<float>(mixed);
-            }
-        }
-    }
-    bq_gate_ += dg * static_cast<double>(frames);
-    if (bq_gate_ > 1.0) bq_gate_ = 1.0;
 }
 
 void EqPipeline::process(const float* in, float* out, int frames, bool accumulate) {
     if (in == nullptr || out == nullptr || frames <= 0) return;
 
+    // **arena の区画を守る門。**ここを通った後、p_ok_ が立っていれば frames は
+    // kMaxConvBlock 以下であることが保証される (evaluateBlock の説明)。
     if (frames != p_cur_) evaluateBlock(frames);
 
-    // 開始条件と継続条件を分ける。active_ は開始側にだけ入れる — DISABLE は
-    // kFir の wet フェードで抜ける (即落とすと 10 ms のフェードアウトが消えて段差になる)。
-    const bool want_keep  = fir_enabled_ && arena_ != nullptr && p_ok_;
-    const bool want_start = want_keep && active_;
+    // 「FIR を保てるか」と「新たに始めてよいか」を分ける。DISABLE (active_ が false) は
+    // 即座に畳まず、fir_wet_ のフェードアウトを完走させてから静かに降りる。
+    const bool can_hold = arena_ != nullptr && p_ok_;
+    const bool want_fir = can_hold && fir_enabled_;
+    // 使える曲線: 採用済みで失敗していないもの、または**まだ採用していない新着**
+    // (採用は準備の中で行う。ここで have_curve_ だけを見ると、最初の 1 本が
+    // 「採用されないと始まらない / 始まらないと採用されない」で永久に立ち上がらない)。
+    const bool curve_usable = (have_curve_ && !curve_failed_) || curve_dirty_;
+    const bool can_start    = want_fir && active_ && curve_usable;
 
-    if (!want_keep && state_ != FirState::kBiquad) invalidateFir();
+    // 端末側の都合で保てなくなった (P/fs/ch 変化・arena 喪失)。鳴っていたなら落下。
+    if (!can_hold && state_ != FirState::kBiquad) invalidateFir(Drop::kHard);
+    // ユーザがモードを切った。FIR は健在なので**対称なフェードで降りる。**
+    if (can_hold && !fir_enabled_) {
+        if (state_ == FirState::kFir || state_ == FirState::kFadeIn) {
+            mode_offs_++;
+            eq_.reset();              // kFir では回していないので状態が古い
+            eq_.setActive(active_);   // Eq 自身の wet が biquad 側の昇りを担う
+            state_  = FirState::kFadeOut;
+        } else if (state_ == FirState::kPrepare) {
+            invalidateFir(Drop::kQuiet);  // まだ音に出ていない — 静かに捨てる
+        }
+    }
 
     switch (state_) {
     case FirState::kBiquad:
     case FirState::kPrepare: {
-        processBiquadGated(in, out, frames, accumulate);
+        // **biquad だけの経路は out へ直接書く。**arena のバッファを経由しないので、
+        // frames がどれだけ大きくても区画外へ出ない (ブロッカー 1 の根本)。
+        eq_.process(in, out, frames, accumulate);
         // fir_wet_ は FIR の混合ループでしか進まないので、ここでも軌跡を揃えておく
-        // (次に FIR 経路へ入るときの初期値。同一性テストが Eq と突き合わせる)。
+        // (次に FIR 経路へ入るときの初期値)。
         const double target = active_ ? 1.0 : 0.0;
         const double step   = fir_wet_step_ * static_cast<double>(frames);
         if (fir_wet_ < target) fir_wet_ = fir_wet_ + step > target ? target : fir_wet_ + step;
         if (fir_wet_ > target) fir_wet_ = fir_wet_ - step < target ? target : fir_wet_ - step;
 
         if (state_ == FirState::kPrepare) {
-            if (!want_start) {
-                invalidateFir();  // まだ音に出ていない — 静かに捨てる
+            if (!can_start) {
+                invalidateFir(Drop::kQuiet);  // まだ音に出ていない — 静かに捨てる
                 break;
             }
             adoptCurveIfDirty();  // 準備中に新しい曲線が来たら組み直す (rebuilds++)
@@ -447,42 +493,47 @@ void EqPipeline::process(const float* in, float* out, int frames, bool accumulat
             }
             if (designer_.done() && kernel_.ready() && tail_warmed_) {
                 designer_.abort();  // 面は組み上がった — 状態機械としては空へ
-                engine_v_ = 0.0;
-                state_    = FirState::kFadeIn;
+                fir_mix_ = 0.0;
+                // Eq 自身のフェードアウトが biquad 側の降りを担う。**pipeline 側に
+                // biquad 用の wet を持たない**ので、kFir で置き去りになる状態が無い。
+                eq_.setActive(false);
+                state_ = FirState::kFadeIn;
             }
-        } else if (want_start) {
+        } else if (can_start) {
             stepPrepare(frames);  // setup 構築 → designer 起動 (state が kPrepare へ)
         }
         break;
     }
-    case FirState::kFadeIn: {
+    case FirState::kFadeIn:
+    case FirState::kFadeOut: {
+        const bool in_ = state_ == FirState::kFadeIn;
         eq_.process(in, buf_bq_y_, frames, false);
         kernel_.processBlock(in, buf_fir_y_, active_face_, -1, 0.0f, 0.0f);
-        const double dv = 1.0 / (kXfadeMs * fs_ / 1000.0);
-        mixFirOut(in, out, frames, accumulate, buf_bq_y_, static_cast<float>(engine_v_),
-                  static_cast<float>(dv));
-        engine_v_ += dv * static_cast<double>(frames);
-        if (engine_v_ >= 1.0) state_ = FirState::kFir;
+        const double d = (in_ ? 1.0 : -1.0) / (kXfadeMs * fs_ / 1000.0);
+        mixFirOut(in, out, frames, accumulate, buf_bq_y_, fir_mix_, d);
+        fir_mix_ += d * static_cast<double>(frames);
+        if (in_ && fir_mix_ >= 1.0) {
+            fir_mix_ = 1.0;
+            // Eq は自身のフェードで wet 0 に着いている。**ここで状態をゼロにして
+            // park する** — 次に起こすとき (落下・モード OFF) 古い状態から始めない。
+            if (eq_.idle()) {
+                eq_.reset();
+                active_gen_ = adopting_gen_;  // この世代が鳴り始めた
+                state_      = FirState::kFir;
+            }
+        } else if (!in_ && fir_mix_ <= 0.0) {
+            // 対称フェード完了。音は完全に biquad — 落下ではないので数えない。
+            invalidateFir(Drop::kQuiet);
+        }
         break;
     }
     case FirState::kFir: {
         adoptCurveIfDirty();
-        if (designer_.running()) {
-            const uint64_t t0 = now_ns_ != nullptr ? now_ns_() : 0;
-            designer_.step(budget_ns_);
-            if (now_ns_ != nullptr) {
-                const uint64_t dt = now_ns_() - t0;
-                if (dt > max_slice_ns_) max_slice_ns_ = dt;
-            }
-            if (designer_.failed()) {
-                designer_.abort();
-                have_curve_ = curve_dirty_;  // 新しい曲線が来ていれば次で試す
-                fallbacks_++;
-            } else if (designer_.done()) {
-                designer_.abort();
-                face_fading_ = true;
-                face_w_      = 0.0;
-            }
+        stepDesigner();
+        if (designer_.done()) {
+            designer_.abort();
+            face_fading_ = true;
+            face_w_      = 0.0;
         }
         const double dw = 1.0 / (kXfadeMs * fs_ / 1000.0);
         if (face_fading_) {
@@ -493,17 +544,17 @@ void EqPipeline::process(const float* in, float* out, int frames, bool accumulat
                 active_face_ = 1 - active_face_;
                 face_fading_ = false;
                 face_fades_++;
+                active_gen_  = adopting_gen_;  // 新しい面が鳴り切った
             }
         } else {
             kernel_.processBlock(in, buf_fir_y_, active_face_, -1, 0.0f, 0.0f);
         }
-        mixFirOut(in, out, frames, accumulate, nullptr, 1.0f, 0.0f);
+        mixFirOut(in, out, frames, accumulate, nullptr, 1.0, 0.0);
         if (!active_ && fir_wet_ == 0.0) {
             // 完全な素通しに到達 (Eq::idle 相当)。以後 process が来ない期間に履歴が
             // 腐るので、FDL はここで失効させる。次の有効化は準備からやり直し。
-            // 音は既に dry なので「落下」ではない — 数えず、ゲートも要らない。
-            state_ = FirState::kBiquad;
-            invalidateFir();
+            // **Eq は wet 0 で止まっている**ので、受け渡しで音が動かない (ブロッカー 2)。
+            invalidateFir(Drop::kQuiet);
         }
         break;
     }

@@ -1,6 +1,7 @@
 #include "ca_eq_fir.h"
 
 #include <cmath>
+#include <limits>
 
 namespace caeq {
 namespace {
@@ -137,7 +138,15 @@ void FirDesigner::windowRange(int from, int to) {
             break;
         }
         }
-        const float h = static_cast<float>(w) * data_[n] * inv;
+        float h = static_cast<float>(w) * data_[n] * inv;
+#ifdef CA_EQ_DSP_TEST_HOOKS
+        // **1 回だけ**撃つ。撃ちっぱなしにすると次の設計も必ず失敗し、
+        // 「新しい曲線が来たら再挑戦できる」を試験できなくなる。
+        if (inject_nan_ && n == 0) {
+            h = std::numeric_limits<float>::quiet_NaN();
+            inject_nan_ = false;
+        }
+#endif
         if (!std::isfinite(h)) failed_ = true;
         data_[n] = h;
     }
@@ -159,11 +168,20 @@ void FirDesigner::partitionOne(int k) {
 }
 
 bool FirDesigner::step(int64_t budget_ns) {
+    last_step_ns_ = 0;
     if (phase_ == Phase::kIdle) return false;
     if (phase_ == Phase::kDone) return true;
 
+    const int64_t start_left = budget_ns;
     int64_t left  = budget_ns;
     bool    first = true;
+    // 抜けるときに「モデル上いくら使ったか」を残す (ハーネス 26 節の会計)。
+    struct Spend {
+        int64_t* out;
+        const int64_t* left;
+        int64_t start;
+        ~Spend() { *out = start - *left; }
+    } spend{&last_step_ns_, &left, start_left};
 
     // 予算が尽きるまで工程を進める。不可分工程は「この呼び出しでまだ何もしていない」か
     // 「残り予算に収まる」ときだけ実行する — 予算の過小をスライスの肥大ではなく
@@ -260,6 +278,13 @@ bool FirDesigner::step(int64_t budget_ns) {
             pos_ += n;
             left -= static_cast<int64_t>(n) * fircost::kWindowNsPerTap;
             first = false;
+            // **非有限を見つけたらそこで止める。**先へ進めても NaN を面へ FFT するだけで、
+            // その面は使えない (ヘッダの「失敗として止まる」はこの分岐が担保する)。
+            if (failed_) {
+                phase_ = Phase::kDone;
+                pos_   = 0;
+                return true;
+            }
             if (pos_ >= total) {
                 phase_ = Phase::kPartition;
                 pos_   = 0;

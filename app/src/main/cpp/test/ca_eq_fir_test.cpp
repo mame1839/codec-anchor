@@ -1456,9 +1456,15 @@ void checkPipeline(Report& r) {
         r.check(same, "FIR 未要求の pipeline = 素の Eq とビット同一 (既存経路は無傷)");
     }
 
-    {   // wet フェードの意味論が Eq と同一 (フェード曲線の突き合わせ)
+    {   // wet フェードの意味論が Eq と同一 (フェード曲線の突き合わせ)。
         // Eq: preamp +12 dB / バンドなし → 出力 = dry + (3.981·dry − dry)·wet
         // pipeline: FIR 平ら +12 dB 曲線 / preamp 0 → 同じ式。フェード軌跡を直接比べる。
+        //
+        // ⚠️ **この試験の biquad はユニティ (band_count = 0) で回っている。**
+        // 「FIR 側の wet が Eq の wet と同じ軌跡か」だけを見るのが目的で、biquad が
+        // 鳴っていると比較対象に biquad の応答が混ざって式が成り立たないため。
+        // **受け渡し (biquad が EQ を鳴らし直さないか) はこの構成では原理的に見えない** —
+        // そちらは下の「意味のある biquad での DISABLE」と 28.1 が見る。
         std::vector<double> k12(31, 12.0);
         std::vector<float> flat12 = curveFromKnobs(k12.data());
         caeq::EqPipeline pl;
@@ -1495,7 +1501,170 @@ void checkPipeline(Report& r) {
             }
         }
         r.check(worst < 2e-4,
-                "DISABLE フェードの軌跡が Eq と一致 (平ら +12 dB 相当で最大差 %.1e)", worst);
+                "DISABLE フェードの軌跡が Eq と一致 (ユニティ biquad、平ら +12 dB 相当で"
+                "最大差 %.1e)",
+                worst);
+    }
+
+    {   // **意味のある biquad での DISABLE。**上の試験がユニティで回っている穴を埋める
+        // (28.1 と同じ性質を、こちらは fs/P を変えた条件で張る)。DISABLE のフェードが
+        // 終わった後は、biquad が鳴っていても出力が dry と厳密に一致すること。
+        caeq::EqPipeline pl;
+        pl.configure(44100.0, 2, caeq::Structure::kTdf2);
+        caeq::Params bq;
+        bq.band_count = 31;
+        bq.preamp_db  = 0.0;
+        for (int i = 0; i < 31; i++) {
+            bq.bands[i] = caeq::Band{caeq::BandType::kPeaking,
+                                     caeq::curvePointHz(cagold::kKnobGridIdx[i]), 4.32,
+                                     cagold::kDunuKnobDb[i]};
+        }
+        pl.snapParams(bq);
+        pl.setActive(true);
+        pl.setFirEnabled(true);
+        pl.setCurve(dunu.data(), 1);
+        PipeDriver drv(pl, 512, 2);
+        const int reached = drv.runUntil(caeq::EqPipeline::FirState::kFir, 120);
+        pl.setActive(false);
+        double worst_after = 0.0;
+        for (int b = 0; b < 8; b++) {
+            std::vector<float> x = lcgFloats(770 + static_cast<uint64_t>(b), 512 * 2);
+            std::vector<float> dry = x;
+            pl.process(x.data(), x.data(), 512, false);
+            if (b == 0) continue;  // フェードそのもののブロック
+            for (size_t i = 0; i < x.size(); i++) {
+                worst_after = std::fmax(worst_after,
+                                        std::fabs(static_cast<double>(x[i]) -
+                                                  static_cast<double>(dry[i])));
+            }
+        }
+        r.check(reached > 0 && worst_after < 1e-6,
+                "31 バンドの biquad でも DISABLE 後は完全な素通し (44.1k P=512、最大差 %.1e)",
+                worst_after);
+    }
+
+    {   // **arena の区画を超えるブロック長。**検分でここが穴だった (kFir 中に
+        // 上限超えのブロックが来ると、落下経路の biquad が arena の区画へ
+        // frames·ch を書いて外へ出た)。いまは biquad だけの経路が out へ直接書くので
+        // arena に触れない。上限の前後を跨いで釘を打つ。
+        for (int big : {caeq::kMaxConvBlock * 2, caeq::kMaxConvBlock + 32, 8192, 6144}) {
+            caeq::EqPipeline pl;
+            pl.configure(48000.0, 2, caeq::Structure::kTdf2);
+            caeq::Params bq;
+            bq.band_count = 31;
+            bq.preamp_db  = 0.0;
+            for (int i = 0; i < 31; i++) {
+                bq.bands[i] = caeq::Band{caeq::BandType::kPeaking,
+                                         caeq::curvePointHz(cagold::kKnobGridIdx[i]), 4.32,
+                                         cagold::kDunuKnobDb[i]};
+            }
+            pl.snapParams(bq);
+            pl.setActive(true);
+            pl.setFirEnabled(true);
+            pl.setCurve(dunu.data(), 1);
+            PipeDriver drv(pl, 960, 2);
+            const int reached = drv.runUntil(caeq::EqPipeline::FirState::kFir, 80);
+            // 鳴っている FIR に、上限を超えるブロックを叩き込む
+            std::vector<float> x(static_cast<size_t>(big) * 2, 0.01f);
+            std::vector<float> y(x.size(), 0.0f);
+            pl.process(x.data(), y.data(), big, false);
+            bool finite = true;
+            for (float v : y) finite = finite && std::isfinite(v);
+            r.check(reached > 0 && finite &&
+                        pl.firState() == caeq::EqPipeline::FirState::kBiquad &&
+                        pl.unfitSizeCount() >= 1,
+                    "P=%-5d (> 上限 %d) が来ても区画外へ出ない。biquad が鳴り、"
+                    "大きさの不適に数える",
+                    big, caeq::kMaxConvBlock);
+        }
+    }
+
+    {   // モード OFF は対称なクロスフェードで降りる (落下ではない)。
+        // **P=128 (2.7 ms) で回す** — 10 ms のフェードが 1 ブロックに収まると
+        // 途中の状態を観測できず、「フェードしている」ことを試験できない。
+        caeq::EqPipeline pl;
+        pl.configure(48000.0, 2, caeq::Structure::kTdf2);
+        pl.snapParams(flat);
+        pl.setActive(true);
+        pl.setFirEnabled(true);
+        pl.setCurve(dunu.data(), 1);
+        PipeDriver drv(pl, 128, 2);
+        const int reached = drv.runUntil(caeq::EqPipeline::FirState::kFir, 400);
+        pl.setFirEnabled(false);
+        drv.noiseBlock();
+        const bool fading = pl.firState() == caeq::EqPipeline::FirState::kFadeOut;
+        int settled = -1;
+        for (int b = 0; b < 20; b++) {
+            drv.noiseBlock();
+            if (pl.firState() == caeq::EqPipeline::FirState::kBiquad) {
+                settled = b;
+                break;
+            }
+        }
+        r.check(reached > 0 && fading && settled >= 0,
+                "モード OFF は kFadeOut を経て %d ブロック (%.1f ms) で biquad へ",
+                settled + 2, (settled + 2) * 128000.0 / 48000.0);
+        r.check(pl.modeOffs() == 1 && pl.fallbacks() == 0,
+                "モード OFF は modeOffs=1 / fallbacks=0 (診断の意味を混ぜない)");
+    }
+
+    {   // 設計器の失敗 (検査済み曲線からは到達しない潜在経路をハーネスから撃つ)。
+        // kPrepare に留まり続けない・落下に数えない・同じ曲線で回し続けない。
+        caeq::EqPipeline pl;
+        pl.configure(48000.0, 2, caeq::Structure::kTdf2);
+        pl.snapParams(flat);
+        pl.setActive(true);
+        pl.setFirEnabled(true);
+        pl.setCurve(dunu.data(), 1);
+        PipeDriver drv(pl, 960, 2);
+        drv.noiseBlock();  // setup 構築 → designer 起動
+        pl.designerForTest().injectNonFinite();
+        for (int b = 0; b < 30; b++) drv.noiseBlock();
+        r.check(pl.firState() == caeq::EqPipeline::FirState::kBiquad,
+                "設計器が失敗したら kPrepare から出る (state=%d)",
+                static_cast<int>(pl.firState()));
+        r.check(pl.designFailures() == 1 && pl.fallbacks() == 0 && pl.modeOffs() == 0,
+                "設計器の失敗は designFailures だけ (音の経路は変わっていない)");
+        const uint32_t rb = pl.rebuilds();
+        for (int b = 0; b < 20; b++) drv.noiseBlock();
+        r.check(pl.rebuilds() == rb,
+                "同じ曲線では組み直さない (成果ゼロの FFT を焼き続けない。rebuilds=%u)", rb);
+        // 新しい世代が来たら再挑戦する
+        pl.setCurve(alt.data(), 77);
+        const int back = drv.runUntil(caeq::EqPipeline::FirState::kFir, 80);
+        r.check(back > 0 && pl.rebuilds() > rb, "新しい曲線が来たら再挑戦して FIR に戻る");
+    }
+
+    {   // active_gen_ は「鳴っている世代」。準備中や面フェード中に先走らない。
+        // ここも P=128 — 面フェード (10 ms) の途中を観測するため。
+        caeq::EqPipeline pl;
+        pl.configure(48000.0, 2, caeq::Structure::kTdf2);
+        pl.snapParams(flat);
+        pl.setActive(true);
+        pl.setFirEnabled(true);
+        pl.setCurve(dunu.data(), 11);
+        PipeDriver drv(pl, 128, 2);
+        drv.noiseBlock();
+        const uint32_t during_prepare = pl.curveGeneration();
+        const int reached = drv.runUntil(caeq::EqPipeline::FirState::kFir, 400);
+        const uint32_t after_fade = pl.curveGeneration();
+        pl.setCurve(alt.data(), 22);
+        // 面フェードが始まってから、完了する前に読む
+        uint32_t during_face = 0;
+        for (int b = 0; b < 40; b++) {
+            drv.noiseBlock();
+            during_face = pl.curveGeneration();
+            if (pl.faceFades() > 0) break;   // 完了したら抜ける (読むのは完了前の値)
+            if (b >= 1) break;               // 設計は 1〜2 ブロックで終わる
+        }
+        for (int b = 0; b < 80 && pl.faceFades() == 0; b++) drv.noiseBlock();
+        const uint32_t after_face = pl.curveGeneration();
+        r.check(reached > 0 && during_prepare == 0 && after_fade == 11,
+                "準備中は 0、鳴り始めたら 11 (準備中 %u / 到達後 %u)", during_prepare,
+                after_fade);
+        r.check(during_face == 11 && after_face == 22,
+                "面フェード中は前の世代のまま、鳴り切ってから 22 (%u -> %u)", during_face,
+                after_face);
     }
 
     {   // クリックの実測 (記録)。tones を流し、イベント後を 3 kHz HP で見る
@@ -1655,8 +1824,11 @@ void checkFftTiming(Report& r) {
                                         n >= 16384 ? 50 : 300);
             if (meas > static_cast<double>(caeq::fircost::fftNs(n))) conservative = false;
         }
-        r.check(conservative,
-                "費用モデル fircost::fftNs がホスト実測の上界 (予算の会計が安全側)");
+        // **check ではなく note。**これは環境依存の較正値で、計装ビルドや遅いマシンでは
+        // 正しいコードでも破れる (ASan で実際に破れた)。会計の正しさは 26 節が
+        // 決定的な量 (モデル消費) で見ているので、ここは較正のずれを人が読むための値。
+        r.note("  費用モデル fircost::fftNs はホスト実測の%s (計装ビルドでは破れてよい)",
+               conservative ? "上界" : "**下**回り — 較正がずれている");
     }
 }
 
@@ -1669,10 +1841,109 @@ void checkAccounting(Report& r) {
 
     std::vector<float> dunu = curveFromKnobs(cagold::kDunuKnobDb);
 
-    // 設計器: step(budget(P)) で回して、1 回の step の実測最大が予算に収まるか。
-    // 費用モデルが保守側 (実測の上) にある限り、実測 ≤ モデル消費 ≤ 予算 が成り立つ。
-    r.note("設計器のスライス会計 (fs=48k, taps=8192, M=%d):", caeq::firDefaultM(48000.0));
-    bool all_fit = true;
+    // --- 1. 会計 (決定的・環境非依存) ---------------------------------------
+    //
+    // **壁時計に対する assert は置かない。**正しいコードでも計装ビルド (ASan) や
+    // 負荷で落ち、逆に速いマシンならモデルが狂っていても通る = 両方向に外れる。
+    // 見張るのは「コードが実際に制御している量」= 費用モデル上の消費。
+    //   モデル消費 ≤ 予算 + 不可分クォンタム 1 個
+    // が step() の契約 (予算を使い切っていても、始めた不可分工程は必ず終える)。
+    r.note("設計器の会計 (モデル上の消費。決定的な値):");
+    bool model_ok = true;
+    struct AcctCase { double fs; int taps; int m; };
+    const AcctCase accts[] = {{48000.0, 8192, caeq::firDefaultM(48000.0)},
+                              {96000.0, 16384, caeq::firDefaultM(96000.0)}};
+    for (const AcctCase& ac : accts) {
+        for (int p : {128, 512, 960, 1024, 2048}) {
+            const int64_t budget =
+                static_cast<int64_t>(caeq::kSliceBudgetFrac * p / ac.fs * 1e9);
+            // 最大の不可分クォンタム: M の FFT か、分割 1 つ (2P の FFT + 詰め替え)
+            const int64_t q_m = caeq::fircost::fftNs(ac.m);
+            const int64_t q_p = caeq::fircost::fftNs(2 * p) +
+                                static_cast<int64_t>(2 * p) * caeq::fircost::kCopyNsPerElem;
+            const int64_t quantum = q_m > q_p ? q_m : q_p;
+            FirBuild fb(ac.m, p, ac.taps);
+            fb.plan_m.init(ac.m);
+            fb.plan_2p.init(2 * p);
+            caeq::FirDesignSpec s;
+            s.curve_db = dunu.data();
+            s.fs       = ac.fs;
+            s.taps     = ac.taps;
+            s.m        = ac.m;
+            s.block    = p;
+            s.taper    = caeq::firDefaultTaper(ac.taps);
+            fb.d.start(s, &fb.plan_m, &fb.plan_2p, fb.data.p, fb.work.p, fb.filt.p);
+            int64_t worst_model = 0, total_model = 0;
+            int     steps       = 0;
+            bool    done        = false;
+            while (!done) {
+                done = fb.d.step(budget);
+                const int64_t spent = fb.d.lastStepModelNs();
+                if (spent > worst_model) worst_model = spent;
+                total_model += spent;
+                steps++;
+            }
+            const bool fit = worst_model <= budget + quantum;
+            model_ok = model_ok && fit;
+            r.note("  %5.1fk P=%-5d 予算 %7.1f µs + クォンタム %6.1f µs: %2d step、"
+                   "最大 %7.1f µs、設計全体 %6.2f ms%s",
+                   ac.fs / 1000.0, p, budget / 1000.0, quantum / 1000.0, steps,
+                   worst_model / 1000.0, static_cast<double>(total_model) / 1e6,
+                   fit ? "" : "  ← 超過");
+        }
+    }
+    r.check(model_ok,
+            "モデル消費 ≤ 予算 + 不可分クォンタム 1 個 (step() の契約。環境に依らない)");
+
+    // --- 2. 実行時の可否判定を釘付け (時計を使わない) -------------------------
+    //
+    // 「最大の不可分クォンタムが予算に収まるか」は evaluateBlock が実行時に判定して
+    // いるので、そこを直接叩く。時計ではなくカウンタ (unfitBudget) で見る。
+    {
+        std::vector<float> curve = dunu;
+        auto budgetFit = [&](double fs, int p) {
+            caeq::EqPipeline pl;
+            pl.configure(fs, 2, caeq::Structure::kTdf2);
+            caeq::Params fl;
+            pl.snapParams(fl);
+            pl.setActive(true);
+            pl.setFirEnabled(true);
+            pl.setCurve(curve.data(), 1);
+            std::vector<float> io(static_cast<size_t>(p) * 2, 0.01f);
+            pl.process(io.data(), io.data(), p, false);
+            return pl.unfitBudgetCount() == 0;
+        };
+        // 48k: 合法 P の下限付近を掃いて境界を出す
+        int lowest_ok_48 = 0;
+        for (int p = 16; p <= 4096; p += 16) {
+            if (!caeq::convBlockSizeValid(p)) continue;
+            if (budgetFit(48000.0, p)) {
+                lowest_ok_48 = p;
+                break;
+            }
+        }
+        int lowest_ok_96 = 0;
+        for (int p = 16; p <= 4096; p += 16) {
+            if (!caeq::convBlockSizeValid(p)) continue;
+            if (budgetFit(96000.0, p)) {
+                lowest_ok_96 = p;
+                break;
+            }
+        }
+        r.note("  予算が通る最小の P: 48k で %d (%.2f ms) / 96k で %d (%.2f ms)",
+               lowest_ok_48, lowest_ok_48 * 1000.0 / 48000.0, lowest_ok_96,
+               lowest_ok_96 * 1000.0 / 96000.0);
+        // 実測ブロック長 (512/960/1024/2048) は全部この下限より上にいること。
+        r.check(lowest_ok_48 > 0 && lowest_ok_48 <= 512 && lowest_ok_96 > 0 &&
+                    lowest_ok_96 <= 512,
+                "実測で来るブロック長 (512 以上) はすべて予算内 — 最大クォンタムが収まる");
+        r.check(!budgetFit(96000.0, 32) && budgetFit(96000.0, 512),
+                "小さすぎる P は予算で弾き、実用域は通す (判定が実際に効いている)");
+    }
+
+    // --- 3. 壁時計は参考値 (note) + 桁違いの退行だけ拾う緩い天井 ---------------
+    r.note("壁時計の実測 (**環境で揺れる。ASan や負荷で数倍になる**。参考値):");
+    double worst_ratio = 0.0;
     for (int p : {128, 512, 960, 1024, 2048}) {
         const int64_t budget =
             static_cast<int64_t>(caeq::kSliceBudgetFrac * p / 48000.0 * 1e9);
@@ -1685,6 +1956,7 @@ void checkAccounting(Report& r) {
         s.taps     = 8192;
         s.m        = caeq::firDefaultM(48000.0);
         s.block    = p;
+        s.taper    = caeq::firDefaultTaper(8192);
         fb.d.start(s, &fb.plan_m, &fb.plan_2p, fb.data.p, fb.work.p, fb.filt.p);
         double worst_step = 0.0, total = 0.0;
         int    steps      = 0;
@@ -1697,42 +1969,16 @@ void checkAccounting(Report& r) {
             total += dt;
             steps++;
         }
-        const bool fit = worst_step <= static_cast<double>(budget);
-        all_fit        = all_fit && fit;
-        r.note("  P=%-5d 予算 %7.1f µs: %2d step、最大 %7.1f µs、合計 %6.2f ms "
-               "(= 完成まで %d ブロック %.0f ms)%s",
-               p, budget / 1000.0, steps, worst_step / 1000.0, total / 1e6, steps,
-               steps * p * 1000.0 / 48000.0, fit ? "" : "  ← 超過");
+        worst_ratio = std::fmax(worst_ratio, worst_step / static_cast<double>(budget));
+        r.note("  P=%-5d 予算 %7.1f µs: %2d step、最大 %7.1f µs (予算比 %.2fx)、"
+               "合計 %6.2f ms",
+               p, budget / 1000.0, steps, worst_step / 1000.0,
+               worst_step / static_cast<double>(budget), total / 1e6);
     }
-    r.check(all_fit, "全 P でスライスの実測最大 ≤ 予算 (ホスト。実機の再較正は段 4)");
-
-    {   // 96k (taps=16384, M=32768) の代表点
-        const int p = 960;
-        const int64_t budget =
-            static_cast<int64_t>(caeq::kSliceBudgetFrac * p / 96000.0 * 1e9);
-        FirBuild fb(32768, p, 16384);
-        fb.plan_m.init(32768);
-        fb.plan_2p.init(2 * p);
-        caeq::FirDesignSpec s;
-        s.curve_db = dunu.data();
-        s.fs       = 96000.0;
-        s.taps     = 16384;
-        s.m        = 32768;
-        s.block    = p;
-        fb.d.start(s, &fb.plan_m, &fb.plan_2p, fb.data.p, fb.work.p, fb.filt.p);
-        double worst_step = 0.0;
-        int    steps      = 0;
-        bool   done       = false;
-        while (!done) {
-            const double t0 = nowNs();
-            done            = fb.d.step(budget);
-            worst_step      = std::fmax(worst_step, nowNs() - t0);
-            steps++;
-        }
-        r.check(worst_step <= static_cast<double>(budget),
-                "96k P=960: 最大 step %.1f µs ≤ 予算 %.1f µs (%d step = %.0f ms)",
-                worst_step / 1000.0, budget / 1000.0, steps, steps * p * 1000.0 / 96000.0);
-    }
+    // 天井は桁違いの退行だけを拾う値。計装ビルドの 2〜10 倍では鳴らない。
+    r.check(worst_ratio < 20.0,
+            "壁時計が予算の 20 倍を超えない (桁違いの退行だけを拾う緩い天井。実測 %.2fx)",
+            worst_ratio);
 
     // 畳み込みの定常 ns/frame (2ch)。これが「聴いているあいだずっと」の値。
     r.note("畳み込みの定常 (taps=8192, 2ch。比較: biquad 31 バンド 2ch は既存 11 節):");
@@ -1902,6 +2148,137 @@ void checkFuzz(Report& r) {
     }
 }
 
+// --------------------------------------------------------------------------
+// 29. 整列の不変条件 (pffft の assert に到達しないこと)
+// --------------------------------------------------------------------------
+
+void checkAlignment(Report& r) {
+    r.section("29. 整列の不変条件 (pffft は process 経路でも assert で見る)");
+
+    r.note("PFFFT は pffft_transform_internal / pffft_zconvolve_accumulate でも");
+    r.note("  assert(VALIGNED(...)) を持つ。**この製品は NDEBUG を定義しない**ので、");
+    r.note("  整列が崩れると audio HAL が abort() = 端末全体が無音。到達しないことを");
+    r.note("  こちら側の不変条件で保証する (dsp/ca_eq_fft.h の「整列の不変条件」)。");
+
+    {   // 1. 合法サイズなら要素数の倍数のずれが必ず 16 B 整列を保つ
+        bool ok = true;
+        int checked = 0;
+        for (int p = 16; p <= 4096; p += 16) {
+            if (!caeq::convBlockSizeValid(p)) continue;
+            const int n = 2 * p;
+            if ((static_cast<size_t>(n) * sizeof(float)) % 16u != 0) ok = false;
+            checked++;
+        }
+        r.check(ok && checked > 40,
+                "合法 P すべてで 2P·sizeof(float) が 16 の倍数 (%d 通り) — "
+                "FDL/分割スペクトルの k·n ずらしが整列を壊さない",
+                checked);
+        ok = true;
+        for (int m : {8192, 16384, 32768, 65536}) {
+            if (!caeq::fftSizeValid(m)) ok = false;
+            if ((static_cast<size_t>(m) * sizeof(float)) % 16u != 0) ok = false;
+        }
+        r.check(ok, "M も同様 (data 末尾 m−n の詰め替え先が整列)");
+    }
+
+    {   // 2. 実際に走っている kernel / designer の派生ポインタを全部見る
+        const int p = 960, taps = 8192, m = caeq::firDefaultM(48000.0);
+        std::vector<float> curve = curveFromKnobs(cagold::kDunuKnobDb);
+        FirBuild fb(m, p, taps);
+        fb.build(curve.data(), 48000.0, taps, m, p);
+        KernelRig rig(p, taps, 2);
+        rig.bind();
+        const int n = 2 * p;
+        const int k = caeq::firPartitions(taps, p);
+        bool aligned = caeq::fftAligned(fb.data.p) && caeq::fftAligned(fb.work.p) &&
+                       caeq::fftAligned(fb.filt.p) && caeq::fftAligned(rig.fdl.p) &&
+                       caeq::fftAligned(rig.acc.p) && caeq::fftAligned(rig.acc2.p) &&
+                       caeq::fftAligned(rig.stage.p) && caeq::fftAligned(rig.work.p);
+        int derived = 0;
+        for (int c = 0; c < 2; c++) {
+            for (int i = 0; i < k; i++) {
+                const float* slot = rig.fdl.p + (static_cast<size_t>(c) *
+                                                     static_cast<size_t>(k) +
+                                                 static_cast<size_t>(i)) *
+                                                    static_cast<size_t>(n);
+                if (!caeq::fftAligned(slot)) aligned = false;
+                derived++;
+            }
+        }
+        for (int i = 0; i < k; i++) {
+            const float* seg =
+                fb.filt.p + static_cast<size_t>(i) * static_cast<size_t>(n);
+            if (!caeq::fftAligned(seg)) aligned = false;
+            derived++;
+        }
+        // designer が詰め替えに使う data 末尾
+        if (!caeq::fftAligned(fb.data.p + (m - n))) aligned = false;
+        derived++;
+        r.check(aligned, "稼働中の派生ポインタ %d 本すべてが 16 B 整列 (基底 + k·n + m−n)",
+                derived);
+    }
+
+    {   // 3. 崩れていたら「使わない」— 落ちるのではなく biquad へ落ちること
+        const int p = 512, taps = 8192;
+        KernelRig rig(p, taps, 1);
+        caeq::FirKernel::Buffers b;
+        b.fdl     = rig.fdl.p;
+        b.filt[0] = rig.filt0.p;
+        b.filt[1] = rig.filt1.p;
+        b.tail    = rig.tail.p;
+        b.stage   = rig.stage.p;
+        b.acc     = rig.acc.p;
+        b.acc2    = rig.acc2.p;
+        b.work    = rig.work.p;
+        int refused = 0;
+        float* const orig[7] = {b.fdl, b.filt[0], b.filt[1], b.stage, b.acc, b.acc2, b.work};
+        float** const slots[7] = {&b.fdl, &b.filt[0], &b.filt[1], &b.stage,
+                                  &b.acc, &b.acc2,    &b.work};
+        for (int i = 0; i < 7; i++) {
+            *slots[i] = orig[i] + 1;  // 4 バイトずらす = 整列が崩れる
+            caeq::FirKernel k;
+            if (!k.bind(&rig.plan, p, taps, 1, b)) refused++;
+            *slots[i] = orig[i];
+        }
+        r.check(refused == 7,
+                "FFT に渡す 7 本のどれが崩れても bind が断る (%d/7) — assert へ行かせない",
+                refused);
+
+        // designer 側も同じ (基底 3 本)
+        caeq::FftPlan pm, p2;
+        pm.init(caeq::firDefaultM(48000.0));
+        p2.init(2 * p);
+        std::vector<float> curve = curveFromKnobs(cagold::kDunuKnobDb);
+        AlignedBuf data(static_cast<size_t>(caeq::firDefaultM(48000.0)) + 4),
+            work(static_cast<size_t>(caeq::firDefaultM(48000.0)) + 4),
+            filt(static_cast<size_t>(caeq::firPartitions(taps, p)) *
+                     static_cast<size_t>(2 * p) + 4);
+        caeq::FirDesignSpec s;
+        s.curve_db = curve.data();
+        s.fs       = 48000.0;
+        s.taps     = taps;
+        s.m        = caeq::firDefaultM(48000.0);
+        s.block    = p;
+        s.taper    = caeq::firDefaultTaper(taps);
+        caeq::FirDesigner d;
+        int drefused = 0;
+        if (!d.start(s, &pm, &p2, data.p + 1, work.p, filt.p)) drefused++;
+        if (!d.start(s, &pm, &p2, data.p, work.p + 1, filt.p)) drefused++;
+        if (!d.start(s, &pm, &p2, data.p, work.p, filt.p + 1)) drefused++;
+        r.check(drefused == 3, "designer も 3 本すべてで断る (%d/3)", drefused);
+    }
+
+    {   // 4. 崩れた状態で FIR を要求しても、音は biquad で鳴り続ける
+        //    (arena は pipeline が自前で 64 B 整列に切るので、ここは kernel/designer の
+        //     契約が守られていることの確認 = 上の 3 が担保)。
+        r.note("pipeline の arena は 64 B 整列で切り出す (reserveArena の align64)。");
+        caeq::EqPipeline pl;
+        pl.configure(48000.0, 2, caeq::Structure::kTdf2);
+        r.check(pl.firAvailable() && caeq::fftAligned(pl.arenaBaseForTest()),
+                "arena の基底が 16 B 整列 (実測)");
+    }
+}
+
 }  // namespace
 
 // ca_eq_test.cpp の main から呼ばれる入口。
@@ -1915,4 +2292,5 @@ void runFirSections(Report& r) {
     checkFftTiming(r);
     checkAccounting(r);
     checkFuzz(r);
+    checkAlignment(r);
 }

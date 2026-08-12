@@ -142,17 +142,36 @@ void runFirGateSections(Report& r) {
         for (int i = 0; i < 3; i++) pl.process(in.data(), out.data(), 960, false);
         pl.setFirEnabled(false);
         pl.process(in.data(), out.data(), 960, false);
-        r.check(pl.fallbacks() == 0,
-                "準備中の取り止めは落下に数えない (fallbacks=%u)", pl.fallbacks());
+        r.check(pl.fallbacks() == 0 && pl.modeOffs() == 0,
+                "準備中の取り止めはどちらにも数えない (fallbacks=%u modeOffs=%u)",
+                pl.fallbacks(), pl.modeOffs());
 
-        // (b) 本当に鳴っている状態からの落下は 1 回
+        // (b) **eqfir の設計判断 3 でこの節の契約が変わった** (差し戻し時の指示)。
+        // 元はモード OFF も「落下」に数える形だったが、`fallbacks_` は
+        // 「端末に落とされた」の診断値で、ユーザ操作が混ざると現地診断で役目を果たさない。
+        // → モード OFF は modeOffs_ に分け、fallbacks_ は動かさない。
+        // 検分の意図 (原因の別がカウンタで見分けられること) はそのまま強めてある。
         pl.setFirEnabled(true);
         runToFir(pl, 960, 2);
-        const uint32_t before = pl.fallbacks();
+        const uint32_t fb_before = pl.fallbacks();
+        const uint32_t mo_before = pl.modeOffs();
         pl.setFirEnabled(false);
         pl.process(in.data(), out.data(), 960, false);
-        r.check(pl.fallbacks() == before + 1,
-                "鳴っている FIR からの落下は 1 回数える (%u -> %u)", before, pl.fallbacks());
+        r.check(pl.modeOffs() == mo_before + 1 && pl.fallbacks() == fb_before,
+                "鳴っている FIR からのモード OFF は modeOffs だけ進む "
+                "(modeOffs %u->%u / fallbacks %u->%u)",
+                mo_before, pl.modeOffs(), fb_before, pl.fallbacks());
+
+        // (c) 本物の落下 (端末側の都合 = P 変化) は fallbacks_ を進める。
+        pl.setFirEnabled(true);
+        runToFir(pl, 960, 2);
+        const uint32_t fb2 = pl.fallbacks();
+        const uint32_t mo2 = pl.modeOffs();
+        std::vector<float> in1024(1024 * 2, 0.01f), out1024(1024 * 2, 0.0f);
+        pl.process(in1024.data(), out1024.data(), 1024, false);
+        r.check(pl.fallbacks() == fb2 + 1 && pl.modeOffs() == mo2,
+                "P 変化による落下は fallbacks だけ進む (fallbacks %u->%u / modeOffs %u->%u)",
+                fb2, pl.fallbacks(), mo2, pl.modeOffs());
     }
 
     // --- 28.3 ブロック長の上限ちょうど ---------------------------------------
