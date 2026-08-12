@@ -37,13 +37,9 @@
 
     <string name="section_general">一般設定</string>
     <string name="toggle_auto_apply">自動套用設定</string>
-    <string name="toggle_auto_apply_desc">關閉時不會變更任何裝置</string>
     <string name="toggle_enforce">還原系統或其他應用程式的變更</string>
-    <string name="toggle_enforce_desc">系統或其他應用程式變更編解碼器時，切換回鎖定的內容</string>
     <string name="toggle_notify">編解碼器變更時提示</string>
-    <string name="toggle_notify_desc">切換編解碼器後顯示簡短訊息</string>
     <string name="toggle_verbose">輸出詳細記錄</string>
-    <string name="toggle_verbose_desc">用於追查無法切換的裝置</string>
 
     <string name="permission_title">需要藍牙權限</string>
     <string name="permission_body">授予後，應用程式就能讀取已配對的裝置及其名稱。</string>
@@ -80,7 +76,7 @@
     <string name="eq_unavailable_device">這副耳機還沒有註冊音訊處理，因此這裡設定的任何內容都不會影響聲音。</string>
 
     <string name="eq_device_register">對這副耳機使用音訊處理</string>
-    <string name="eq_device_register_desc">把這副耳機加入手機的音訊設定。套用期間聲音會中斷片刻。</string>
+    <string name="eq_device_register_desc">套用期間聲音會中斷片刻。</string>
     <string name="eq_device_confirm_on_title">要為這副耳機開啟音訊處理嗎</string>
     <string name="eq_device_confirm_off_title">要為這副耳機關閉音訊處理嗎</string>
     <string name="eq_device_confirm_body">手機的音訊服務會重新啟動，此刻正在播放的聲音會中斷幾秒鐘。藍牙連線不受影響，等化器設定無論如何都會保留。</string>
@@ -120,7 +116,6 @@
     <string name="profile_no_target">還沒有鎖定任何項目</string>
 
     <string name="section_backup">備份</string>
-    <string name="backup_body">將所有設定儲存為 JSON 檔案。</string>
     <string name="backup_export">匯出</string>
     <string name="backup_import">匯入</string>
     <string name="backup_confirm_title">要匯入備份嗎？</string>
@@ -133,7 +128,6 @@
     <string name="msg_backup_failed">無法讀取檔案</string>
 
     <string name="detail_auto_apply">套用到這副耳機</string>
-    <string name="detail_auto_apply_desc">每次連線時切換為下方的設定</string>
     <string name="detail_current_codec">目前的編解碼器：%1$s</string>
     <string name="ldac_bitrate_offload">由於已啟用藍牙 A2DP 硬體卸載，因此無法讀取實際位元率。</string>
     <string name="detail_note">最近的結果：%1$s</string>
@@ -160,9 +154,7 @@
     <string name="adv_force">強制切換</string>
     <string name="adv_force_desc">也嘗試裝置沒有宣告支援的組合</string>
     <string name="adv_via_sbc">經由 SBC 切換</string>
-    <string name="adv_via_sbc_desc">先降到 SBC，再切換到你選擇的編解碼器</string>
     <string name="adv_auto_hd">自動開啟 HD 音訊</string>
-    <string name="adv_auto_hd_desc">系統關閉 HD 音訊時自動開啟</string>
     <string name="adv_delay">套用前的等待時間</string>
     <string name="adv_delay_desc">有些裝置剛連線時不接受切換</string>
     <string name="adv_retries">重試次數</string>
@@ -194,14 +186,14 @@
     </plurals>
     <string name="eq_summary_unavailable">目前無法使用。開啟後可查看原因。</string>
     <string name="eq_enabled">等化器</string>
-    <string name="eq_enabled_desc">調整這副耳機的聲音</string>
     <string name="eq_latency_zero">額外延遲：0 ms</string>
     <string name="eq_mode">調整方式</string>
-    <string name="eq_mode_desc">圖示等化器把每個頻段固定在特定頻率上。參數等化器可以把頻段放在任意位置。</string>
     <string name="eq_mode_graphic">圖示</string>
+    <string name="eq_mode_graphic_desc">每個頻段固定在特定頻率上</string>
     <string name="eq_mode_parametric">參數</string>
+    <string name="eq_mode_parametric_desc">頻段可以放在任意位置</string>
     <string name="eq_band_count">頻段數量</string>
-    <string name="eq_band_count_desc">頻段越多，越能貼近細緻的曲線。這不是效能選項：兩種情況下手機的運算量相同。</string>
+    <string name="eq_band_count_desc">這不是效能選項：無論多少個頻段，手機的運算量都相同。</string>
     <string name="eq_band_none">還沒有頻段。請新增一個，或讀取 AutoEQ 檔案。</string>
     <string name="eq_band_add">新增頻段</string>
     <string name="eq_band_remove">刪除這個頻段</string>
@@ -242,7 +234,6 @@
     <string name="eq_finder_entry_disconnected">連接這副耳機即可開始。</string>
     <string name="eq_finder_song">歌曲</string>
     <string name="eq_finder_song_none">選一首你很熟的歌</string>
-    <string name="eq_finder_song_desc">比較期間會循環播放這首歌的一小段。從手機裡的音訊檔案中選擇。</string>
     <string name="eq_finder_song_loading">正在讀取檔案…</string>
     <string name="eq_finder_song_failed">無法讀取該檔案。請另選一個。</string>
     <string name="eq_finder_passage">片段</string>
@@ -252,7 +243,6 @@
     <string name="eq_finder_include_mid">也探索中頻</string>
     <string name="eq_finder_include_mid_desc">在人聲附近增加第三個維度。問題會多幾題。</string>
     <string name="eq_finder_fine_tune">微調目前設定</string>
-    <string name="eq_finder_fine_tune_desc">從現在的等化器出發，以小步幅調整。</string>
     <string name="eq_finder_notes">開始之前</string>
     <string name="eq_finder_note_volume">測試的音量會比平常略小。開始後再把音量調到舒適的程度，之後到結束都不要再動。</string>
     <string name="eq_finder_note_earphones">請在安靜的地方，用這副耳機聆聽。</string>

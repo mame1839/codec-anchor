@@ -333,7 +333,6 @@ internal fun EqFinderIntroContent(
         if (ui.fineTuneVisible) {
             SwitchRow(
                 title = stringResource(R.string.eq_finder_fine_tune),
-                description = stringResource(R.string.eq_finder_fine_tune_desc),
                 checked = ui.fineTune,
                 onChange = onFineTune,
             )
@@ -454,7 +453,6 @@ private fun SongRow(ui: EqFinderIntroUi, onPickSong: () -> Unit) {
             ui.songName != null -> ui.songName
             else -> stringResource(R.string.eq_finder_song_none)
         },
-        description = stringResource(R.string.eq_finder_song_desc),
         onClick = onPickSong,
     )
     if (ui.loadFailed) {

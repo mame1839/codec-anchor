@@ -37,13 +37,9 @@
 
     <string name="section_general">전체 설정</string>
     <string name="toggle_auto_apply">자동으로 적용</string>
-    <string name="toggle_auto_apply_desc">끄면 어떤 기기도 변경하지 않습니다</string>
     <string name="toggle_enforce">다른 앱의 변경을 되돌리기</string>
-    <string name="toggle_enforce_desc">시스템이나 다른 앱이 코덱을 바꾸면 설정한 내용으로 되돌립니다</string>
     <string name="toggle_notify">코덱이 바뀌면 알리기</string>
-    <string name="toggle_notify_desc">전환된 뒤에 짧은 메시지를 표시합니다</string>
     <string name="toggle_verbose">자세한 로그 남기기</string>
-    <string name="toggle_verbose_desc">전환되지 않는 기기를 살펴볼 때 사용합니다</string>
 
     <string name="permission_title">블루투스 권한이 필요합니다</string>
     <string name="permission_body">허용하면 페어링된 기기와 이름을 읽을 수 있습니다.</string>
@@ -80,7 +76,7 @@
     <string name="eq_unavailable_device">이 이어폰은 음향 처리에 등록되어 있지 않아 여기서 설정한 내용이 소리에 반영되지 않습니다.</string>
 
     <string name="eq_device_register">이 이어폰에 음향 처리 사용하기</string>
-    <string name="eq_device_register_desc">이 이어폰을 휴대전화의 오디오 설정에 추가합니다. 적용하는 동안 소리가 잠시 끊깁니다.</string>
+    <string name="eq_device_register_desc">적용하는 동안 소리가 잠시 끊깁니다.</string>
     <string name="eq_device_confirm_on_title">이 이어폰의 음향 처리를 켤까요?</string>
     <string name="eq_device_confirm_off_title">이 이어폰의 음향 처리를 끌까요?</string>
     <string name="eq_device_confirm_body">휴대전화의 오디오 서비스가 다시 시작되어 지금 재생 중인 소리가 몇 초간 끊깁니다. 블루투스는 계속 연결되어 있으며, 이퀄라이저 설정은 어느 쪽이든 그대로 유지됩니다.</string>
@@ -120,7 +116,6 @@
     <string name="profile_no_target">아직 고정한 항목이 없습니다</string>
 
     <string name="section_backup">백업</string>
-    <string name="backup_body">모든 설정을 JSON 파일로 내보냅니다.</string>
     <string name="backup_export">내보내기</string>
     <string name="backup_import">가져오기</string>
     <string name="backup_confirm_title">백업을 가져올까요</string>
@@ -133,7 +128,6 @@
     <string name="msg_backup_failed">파일을 읽을 수 없었습니다</string>
 
     <string name="detail_auto_apply">이 이어폰에 자동으로 적용</string>
-    <string name="detail_auto_apply_desc">연결될 때 아래 설정으로 전환합니다</string>
     <string name="detail_current_codec">현재 코덱: %1$s</string>
     <string name="ldac_bitrate_offload">Bluetooth A2DP 하드웨어 오프로드가 켜져 있어 실제 비트레이트를 읽을 수 없습니다.</string>
     <string name="detail_note">최근 결과: %1$s</string>
@@ -160,9 +154,7 @@
     <string name="adv_force">강제 적용</string>
     <string name="adv_force_desc">기기가 지원한다고 알리지 않은 조합도 시도합니다</string>
     <string name="adv_via_sbc">SBC를 거쳐 전환</string>
-    <string name="adv_via_sbc_desc">먼저 SBC로 내린 다음 선택한 코덱으로 바꿉니다</string>
     <string name="adv_auto_hd">HD 오디오를 자동으로 켜기</string>
-    <string name="adv_auto_hd_desc">시스템에서 HD 오디오가 꺼져 있으면 켭니다</string>
     <string name="adv_delay">적용까지 기다리는 시간</string>
     <string name="adv_delay_desc">연결 직후에는 전환을 받지 않는 기기가 있습니다</string>
     <string name="adv_retries">재시도 횟수</string>
@@ -194,14 +186,14 @@
     </plurals>
     <string name="eq_summary_unavailable">지금은 사용할 수 없습니다. 이유는 열어서 확인하세요.</string>
     <string name="eq_enabled">이퀄라이저</string>
-    <string name="eq_enabled_desc">이 이어폰의 소리를 다듬습니다</string>
     <string name="eq_latency_zero">추가 지연: 0 ms</string>
     <string name="eq_mode">편집 방식</string>
-    <string name="eq_mode_desc">그래픽은 각 밴드를 고정된 주파수에 둡니다. 파라메트릭은 밴드를 원하는 위치에 놓을 수 있습니다.</string>
     <string name="eq_mode_graphic">그래픽</string>
+    <string name="eq_mode_graphic_desc">각 밴드가 고정된 주파수에 놓입니다</string>
     <string name="eq_mode_parametric">파라메트릭</string>
+    <string name="eq_mode_parametric_desc">밴드를 원하는 위치에 놓을 수 있습니다</string>
     <string name="eq_band_count">밴드 수</string>
-    <string name="eq_band_count_desc">밴드가 많을수록 세밀한 곡선을 더 가깝게 따라갑니다. 성능 설정이 아닙니다. 어느 쪽이든 휴대전화가 하는 계산량은 같습니다.</string>
+    <string name="eq_band_count_desc">성능 설정이 아닙니다. 밴드 수와 관계없이 휴대전화가 하는 계산량은 같습니다.</string>
     <string name="eq_band_none">아직 밴드가 없습니다. 하나 추가하거나 AutoEQ 파일을 읽어 오세요.</string>
     <string name="eq_band_add">밴드 추가</string>
     <string name="eq_band_remove">이 밴드 삭제</string>
@@ -242,7 +234,6 @@
     <string name="eq_finder_entry_disconnected">이 이어폰을 연결하면 시작할 수 있습니다.</string>
     <string name="eq_finder_song">곡</string>
     <string name="eq_finder_song_none">잘 아는 곡을 선택하세요</string>
-    <string name="eq_finder_song_desc">비교하는 동안 곡의 짧은 구간이 반복 재생됩니다. 휴대전화의 오디오 파일에서 선택합니다.</string>
     <string name="eq_finder_song_loading">파일을 읽는 중…</string>
     <string name="eq_finder_song_failed">이 파일을 읽을 수 없습니다. 다른 파일을 선택하세요.</string>
     <string name="eq_finder_passage">구간</string>
@@ -252,7 +243,6 @@
     <string name="eq_finder_include_mid">중음역도 탐색</string>
     <string name="eq_finder_include_mid_desc">목소리 대역에 세 번째 축을 더합니다. 질문이 조금 늘어납니다.</string>
     <string name="eq_finder_fine_tune">현재 설정 미세 조정</string>
-    <string name="eq_finder_fine_tune_desc">지금의 이퀄라이저에서 시작해 작은 폭으로 움직입니다.</string>
     <string name="eq_finder_notes">시작하기 전에</string>
     <string name="eq_finder_note_volume">테스트는 평소보다 소리가 조금 작게 재생됩니다. 시작한 뒤에 편한 음량으로 맞추고, 끝날 때까지 바꾸지 마세요.</string>
     <string name="eq_finder_note_earphones">이 이어폰으로, 조용한 곳에서 들어 주세요.</string>

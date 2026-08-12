@@ -150,6 +150,8 @@ fun <T> ChoiceRow(
     onSelect: (T) -> Unit,
     modifier: Modifier = Modifier,
     description: String? = null,
+    // 選択肢の下に出す 1 行。行に常時出す説明ではなく、選ぶ瞬間にだけ読ませたいものはこちらへ。
+    optionDescriptions: Map<T, String> = emptyMap(),
     enabled: Boolean = true,
 ) {
     var open by rememberSaveable { mutableStateOf(false) }
@@ -209,7 +211,16 @@ fun <T> ChoiceRow(
                         ) {
                             RadioButton(selected = value == selected, onClick = null)
                             Spacer(Modifier.width(8.dp))
-                            Text(label, style = MaterialTheme.typography.bodyLarge)
+                            Column {
+                                Text(label, style = MaterialTheme.typography.bodyLarge)
+                                optionDescriptions[value]?.let {
+                                    Text(
+                                        text = it,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            }
                         }
                     }
                 }

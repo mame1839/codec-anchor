@@ -13,7 +13,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -49,26 +48,22 @@ fun SettingsTab(vm: MainViewModel, contentPadding: PaddingValues) {
         SettingsCard(title = stringResource(R.string.section_general)) {
             SwitchRow(
                 title = stringResource(R.string.toggle_auto_apply),
-                description = stringResource(R.string.toggle_auto_apply_desc),
                 checked = vm.config.enabled,
                 onChange = { value -> vm.update { it.copy(enabled = value) } },
             )
             SwitchRow(
                 title = stringResource(R.string.toggle_enforce),
-                description = stringResource(R.string.toggle_enforce_desc),
                 checked = vm.config.enforce,
                 onChange = { value -> vm.update { it.copy(enforce = value) } },
                 enabled = vm.config.enabled,
             )
             SwitchRow(
                 title = stringResource(R.string.toggle_notify),
-                description = stringResource(R.string.toggle_notify_desc),
                 checked = vm.config.notifyChanges,
                 onChange = { value -> vm.update { it.copy(notifyChanges = value) } },
             )
             SwitchRow(
                 title = stringResource(R.string.toggle_verbose),
-                description = stringResource(R.string.toggle_verbose_desc),
                 checked = vm.config.verbose,
                 onChange = { value -> vm.update { it.copy(verbose = value) } },
             )
@@ -96,12 +91,6 @@ private fun BackupCard(vm: MainViewModel) {
     val fileName = stringResource(R.string.backup_filename, stamp)
 
     SettingsCard(title = stringResource(R.string.section_backup)) {
-        Text(
-            text = stringResource(R.string.backup_body),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-        )
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),

@@ -37,13 +37,9 @@
 
     <string name="section_general">Cài đặt chung</string>
     <string name="toggle_auto_apply">Tự động áp dụng cài đặt</string>
-    <string name="toggle_auto_apply_desc">Khi tắt, không thiết bị nào bị thay đổi</string>
     <string name="toggle_enforce">Hoàn tác thay đổi của hệ thống hoặc ứng dụng khác</string>
-    <string name="toggle_enforce_desc">Nếu hệ thống hoặc ứng dụng khác đổi codec, chuyển lại như đã cố định</string>
     <string name="toggle_notify">Thông báo khi codec thay đổi</string>
-    <string name="toggle_notify_desc">Hiện một thông báo ngắn khi codec được chuyển</string>
     <string name="toggle_verbose">Ghi nhật ký chi tiết</string>
-    <string name="toggle_verbose_desc">Dùng để tìm hiểu các thiết bị không chuyển được</string>
 
     <string name="permission_title">Cần quyền Bluetooth</string>
     <string name="permission_body">Cấp quyền để ứng dụng đọc được các thiết bị đã ghép nối và tên của chúng.</string>
@@ -80,7 +76,7 @@
     <string name="eq_unavailable_device">Tai nghe này chưa được đăng ký để xử lý âm thanh, nên mọi thứ đặt ở đây đều không ảnh hưởng đến âm thanh.</string>
 
     <string name="eq_device_register">Dùng xử lý âm thanh với tai nghe này</string>
-    <string name="eq_device_register_desc">Thêm tai nghe này vào cài đặt âm thanh của điện thoại. Âm thanh sẽ ngắt một lúc trong khi áp dụng.</string>
+    <string name="eq_device_register_desc">Âm thanh sẽ ngắt một lúc trong khi áp dụng.</string>
     <string name="eq_device_confirm_on_title">Bật xử lý âm thanh cho tai nghe này?</string>
     <string name="eq_device_confirm_off_title">Tắt xử lý âm thanh cho tai nghe này?</string>
     <string name="eq_device_confirm_body">Dịch vụ âm thanh của điện thoại sẽ khởi động lại, nên bất cứ thứ gì đang phát sẽ im lặng trong vài giây. Bluetooth vẫn giữ kết nối, và cài đặt bộ chỉnh âm của bạn vẫn được giữ nguyên dù kết quả thế nào.</string>
@@ -120,7 +116,6 @@
     <string name="profile_no_target">Chưa cố định giá trị nào</string>
 
     <string name="section_backup">Sao lưu</string>
-    <string name="backup_body">Lưu toàn bộ cài đặt vào một tệp JSON.</string>
     <string name="backup_export">Xuất</string>
     <string name="backup_import">Nhập</string>
     <string name="backup_confirm_title">Nhập bản sao lưu?</string>
@@ -133,7 +128,6 @@
     <string name="msg_backup_failed">Không đọc được tệp</string>
 
     <string name="detail_auto_apply">Áp dụng cho tai nghe này</string>
-    <string name="detail_auto_apply_desc">Chuyển sang các cài đặt bên dưới mỗi lần tai nghe kết nối</string>
     <string name="detail_current_codec">Codec hiện tại: %1$s</string>
     <string name="ldac_bitrate_offload">Không thể đọc bitrate thực tế vì tính năng giảm tải phần cứng Bluetooth A2DP đang được bật.</string>
     <string name="detail_note">Kết quả gần nhất: %1$s</string>
@@ -160,9 +154,7 @@
     <string name="adv_force">Buộc chuyển đổi</string>
     <string name="adv_force_desc">Thử cả những tổ hợp mà thiết bị không khai báo</string>
     <string name="adv_via_sbc">Chuyển qua SBC</string>
-    <string name="adv_via_sbc_desc">Hạ về SBC trước, rồi mới sang codec bạn chọn</string>
     <string name="adv_auto_hd">Tự động bật âm thanh HD</string>
-    <string name="adv_auto_hd_desc">Bật âm thanh HD khi hệ thống đang tắt nó</string>
     <string name="adv_delay">Chờ trước khi áp dụng</string>
     <string name="adv_delay_desc">Một số thiết bị không nhận chuyển đổi ngay sau khi kết nối</string>
     <string name="adv_retries">Số lần thử</string>
@@ -194,14 +186,14 @@
     </plurals>
     <string name="eq_summary_unavailable">Hiện chưa dùng được. Mở ra để xem lý do.</string>
     <string name="eq_enabled">Bộ chỉnh âm</string>
-    <string name="eq_enabled_desc">Chỉnh chất âm của tai nghe này</string>
     <string name="eq_latency_zero">Độ trễ thêm vào: 0 ms</string>
     <string name="eq_mode">Cách chỉnh</string>
-    <string name="eq_mode_desc">Kiểu đồ họa giữ mỗi dải ở một tần số cố định. Kiểu tham số cho bạn đặt từng dải ở đâu tùy ý.</string>
     <string name="eq_mode_graphic">Đồ họa</string>
+    <string name="eq_mode_graphic_desc">Mỗi dải ở một tần số cố định</string>
     <string name="eq_mode_parametric">Tham số</string>
+    <string name="eq_mode_parametric_desc">Đặt từng dải ở đâu tùy ý</string>
     <string name="eq_band_count">Số dải</string>
-    <string name="eq_band_count_desc">Càng nhiều dải thì càng bám sát một đường cong chi tiết. Đây không phải thiết lập về tốc độ: điện thoại làm cùng một khối lượng việc trong cả hai trường hợp.</string>
+    <string name="eq_band_count_desc">Đây không phải thiết lập về tốc độ: điện thoại làm cùng một khối lượng việc với bất kỳ số dải nào.</string>
     <string name="eq_band_none">Chưa có dải nào. Hãy thêm một dải, hoặc nhập tệp AutoEQ.</string>
     <string name="eq_band_add">Thêm dải</string>
     <string name="eq_band_remove">Bỏ dải này</string>
@@ -242,7 +234,6 @@
     <string name="eq_finder_entry_disconnected">Kết nối tai nghe này để bắt đầu.</string>
     <string name="eq_finder_song">Bài hát</string>
     <string name="eq_finder_song_none">Chọn một bài hát bạn thuộc</string>
-    <string name="eq_finder_song_desc">Một đoạn ngắn của bài hát sẽ lặp lại trong lúc so sánh. Chọn từ các tệp âm thanh trên máy.</string>
     <string name="eq_finder_song_loading">Đang đọc tệp…</string>
     <string name="eq_finder_song_failed">Không đọc được tệp này. Hãy chọn tệp khác.</string>
     <string name="eq_finder_passage">Đoạn nhạc</string>
@@ -252,7 +243,6 @@
     <string name="eq_finder_include_mid">Khám phá cả dải trung</string>
     <string name="eq_finder_include_mid_desc">Thêm trục thứ ba quanh giọng hát. Số câu hỏi tăng một chút.</string>
     <string name="eq_finder_fine_tune">Tinh chỉnh thiết lập hiện tại</string>
-    <string name="eq_finder_fine_tune_desc">Bắt đầu từ bộ chỉnh âm hiện tại và đi từng bước nhỏ.</string>
     <string name="eq_finder_notes">Trước khi bắt đầu</string>
     <string name="eq_finder_note_volume">Bài kiểm tra phát hơi nhỏ hơn bình thường. Hãy chỉnh âm lượng dễ nghe sau khi bắt đầu, rồi giữ nguyên đến hết.</string>
     <string name="eq_finder_note_earphones">Nghe bằng tai nghe này, ở nơi yên tĩnh.</string>

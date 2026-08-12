@@ -39,13 +39,9 @@
 
     <string name="section_general">Configurações gerais</string>
     <string name="toggle_auto_apply">Aplicar as configurações automaticamente</string>
-    <string name="toggle_auto_apply_desc">Enquanto estiver desativado, nada é alterado em nenhum dispositivo</string>
     <string name="toggle_enforce">Desfazer alterações do sistema ou de outros apps</string>
-    <string name="toggle_enforce_desc">Se o sistema ou outro app alterar o codec, volta ao valor fixado</string>
     <string name="toggle_notify">Avisar quando o codec mudar</string>
-    <string name="toggle_notify_desc">Mostra uma mensagem curta quando o codec muda</string>
     <string name="toggle_verbose">Gravar logs detalhados</string>
-    <string name="toggle_verbose_desc">Para investigar os dispositivos que não mudam</string>
 
     <string name="permission_title">É necessária a permissão de Bluetooth</string>
     <string name="permission_body">Ao conceder, o app pode ler seus dispositivos pareados e os nomes deles.</string>
@@ -82,7 +78,7 @@
     <string name="eq_unavailable_device">Estes fones não estão registrados para o processamento de áudio, então nada do que for definido aqui chega ao som.</string>
 
     <string name="eq_device_register">Usar processamento de áudio com estes fones</string>
-    <string name="eq_device_register_desc">Adiciona estes fones às configurações de áudio do aparelho. O som para por um instante enquanto é aplicado.</string>
+    <string name="eq_device_register_desc">O som para por um instante enquanto é aplicado.</string>
     <string name="eq_device_confirm_on_title">Ativar o processamento de áudio para estes fones?</string>
     <string name="eq_device_confirm_off_title">Desativar o processamento de áudio para estes fones?</string>
     <string name="eq_device_confirm_body">O serviço de áudio do aparelho reinicia, então o que estiver tocando agora fica mudo por alguns segundos. O Bluetooth continua conectado, e suas configurações do equalizador são mantidas de qualquer forma.</string>
@@ -122,7 +118,6 @@
     <string name="profile_no_target">Nada foi fixado ainda</string>
 
     <string name="section_backup">Backup</string>
-    <string name="backup_body">Salva todas as configurações em um arquivo JSON.</string>
     <string name="backup_export">Exportar</string>
     <string name="backup_import">Importar</string>
     <string name="backup_confirm_title">Importar um backup?</string>
@@ -135,7 +130,6 @@
     <string name="msg_backup_failed">Não foi possível ler o arquivo</string>
 
     <string name="detail_auto_apply">Aplicar nestes fones</string>
-    <string name="detail_auto_apply_desc">Muda para as configurações abaixo sempre que eles se conectarem</string>
     <string name="detail_current_codec">Codec atual: %1$s</string>
     <string name="ldac_bitrate_offload">Não é possível ler a taxa de bits efetiva porque o offload de hardware do Bluetooth A2DP está ativado.</string>
     <string name="detail_note">Último resultado: %1$s</string>
@@ -162,9 +156,7 @@
     <string name="adv_force">Forçar a mudança</string>
     <string name="adv_force_desc">Tenta também combinações que o dispositivo não declara</string>
     <string name="adv_via_sbc">Mudar passando pelo SBC</string>
-    <string name="adv_via_sbc_desc">Cai para SBC primeiro e depois passa para o codec escolhido</string>
     <string name="adv_auto_hd">Ativar o áudio HD automaticamente</string>
-    <string name="adv_auto_hd_desc">Ativa o áudio HD quando o sistema está com ele desligado</string>
     <string name="adv_delay">Espera antes de aplicar</string>
     <string name="adv_delay_desc">Alguns dispositivos não aceitam a mudança logo depois de conectar</string>
     <string name="adv_retries">Número de tentativas</string>
@@ -198,14 +190,14 @@
     </plurals>
     <string name="eq_summary_unavailable">No momento não dá para usar. Abra para ver o motivo.</string>
     <string name="eq_enabled">Equalizador</string>
-    <string name="eq_enabled_desc">Ajusta o som destes fones</string>
     <string name="eq_latency_zero">Atraso adicionado: 0 ms</string>
     <string name="eq_mode">Modo de edição</string>
-    <string name="eq_mode_desc">No modo gráfico cada banda fica em uma frequência fixa. No paramétrico você coloca cada banda onde quiser.</string>
     <string name="eq_mode_graphic">Gráfico</string>
+    <string name="eq_mode_graphic_desc">Cada banda fica em uma frequência fixa</string>
     <string name="eq_mode_parametric">Paramétrico</string>
+    <string name="eq_mode_parametric_desc">Você coloca cada banda onde quiser</string>
     <string name="eq_band_count">Número de bandas</string>
-    <string name="eq_band_count_desc">Quanto mais bandas, mais de perto uma curva detalhada é seguida. Não é um ajuste de desempenho: o telefone trabalha igual nos dois casos.</string>
+    <string name="eq_band_count_desc">Não é um ajuste de desempenho: o telefone trabalha igual com qualquer quantidade de bandas.</string>
     <string name="eq_band_none">Nenhuma banda ainda. Adicione uma ou importe um arquivo do AutoEQ.</string>
     <string name="eq_band_add">Adicionar uma banda</string>
     <string name="eq_band_remove">Remover esta banda</string>
@@ -246,7 +238,6 @@
     <string name="eq_finder_entry_disconnected">Conecte estes fones para começar.</string>
     <string name="eq_finder_song">Música</string>
     <string name="eq_finder_song_none">Escolha uma música que você conhece bem</string>
-    <string name="eq_finder_song_desc">Um trecho curto dela se repete durante a comparação. É escolhida entre os arquivos de áudio do aparelho.</string>
     <string name="eq_finder_song_loading">Lendo o arquivo…</string>
     <string name="eq_finder_song_failed">Não foi possível ler esse arquivo. Escolha outro.</string>
     <string name="eq_finder_passage">Trecho</string>
@@ -256,7 +247,6 @@
     <string name="eq_finder_include_mid">Explorar também os médios</string>
     <string name="eq_finder_include_mid_desc">Adiciona um terceiro eixo em torno das vozes. Algumas perguntas a mais.</string>
     <string name="eq_finder_fine_tune">Ajuste fino das configurações atuais</string>
-    <string name="eq_finder_fine_tune_desc">Parte do equalizador atual e avança em passos pequenos.</string>
     <string name="eq_finder_notes">Antes de começar</string>
     <string name="eq_finder_note_volume">O teste toca um pouco mais baixo que o normal. Ajuste um volume confortável depois do início e não mexa nele até o fim.</string>
     <string name="eq_finder_note_earphones">Ouça com estes fones, em um lugar silencioso.</string>

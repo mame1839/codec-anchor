@@ -40,13 +40,9 @@
 
     <string name="section_general">Общие настройки</string>
     <string name="toggle_auto_apply">Применять настройки автоматически</string>
-    <string name="toggle_auto_apply_desc">Пока выключено, ни на одном устройстве ничего не меняется</string>
     <string name="toggle_enforce">Отменять изменения системы и других приложений</string>
-    <string name="toggle_enforce_desc">Если система или другое приложение меняет кодек, возвращает закреплённое значение</string>
     <string name="toggle_notify">Сообщать о смене кодека</string>
-    <string name="toggle_notify_desc">Показывает короткое сообщение при переключении кодека</string>
     <string name="toggle_verbose">Вести подробный журнал</string>
-    <string name="toggle_verbose_desc">Для разбора устройств, которые не переключаются</string>
 
     <string name="permission_title">Нужно разрешение на Bluetooth</string>
     <string name="permission_body">С ним приложение сможет читать сопряжённые устройства и их имена.</string>
@@ -83,7 +79,7 @@
     <string name="eq_unavailable_device">Эти наушники не зарегистрированы для обработки звука, поэтому ничего из настроенного здесь не доходит до звука.</string>
 
     <string name="eq_device_register">Использовать обработку звука с этими наушниками</string>
-    <string name="eq_device_register_desc">Добавляет эти наушники в звуковые настройки телефона. Во время применения звук на мгновение пропадает.</string>
+    <string name="eq_device_register_desc">Во время применения звук на мгновение пропадает.</string>
     <string name="eq_device_confirm_on_title">Включить обработку звука для этих наушников?</string>
     <string name="eq_device_confirm_off_title">Выключить обработку звука для этих наушников?</string>
     <string name="eq_device_confirm_body">Звуковая служба телефона перезапускается, поэтому то, что сейчас играет, на несколько секунд затихнет. Bluetooth останется подключён, а настройки эквалайзера в любом случае сохранятся.</string>
@@ -123,7 +119,6 @@
     <string name="profile_no_target">Пока ничего не закреплено</string>
 
     <string name="section_backup">Резервная копия</string>
-    <string name="backup_body">Сохраняет все настройки в файл JSON.</string>
     <string name="backup_export">Экспорт</string>
     <string name="backup_import">Импорт</string>
     <string name="backup_confirm_title">Импортировать резервную копию?</string>
@@ -136,7 +131,6 @@
     <string name="msg_backup_failed">Не удалось прочитать файл</string>
 
     <string name="detail_auto_apply">Применять к этим наушникам</string>
-    <string name="detail_auto_apply_desc">При подключении переключает на настройки ниже</string>
     <string name="detail_current_codec">Текущий кодек: %1$s</string>
     <string name="ldac_bitrate_offload">Не удаётся получить фактический битрейт, так как включена аппаратная разгрузка Bluetooth A2DP.</string>
     <string name="detail_note">Последний результат: %1$s</string>
@@ -163,9 +157,7 @@
     <string name="adv_force">Принудительное переключение</string>
     <string name="adv_force_desc">Пробует и комбинации, которые устройство не объявляет</string>
     <string name="adv_via_sbc">Переключать через SBC</string>
-    <string name="adv_via_sbc_desc">Сначала опускает до SBC, затем переходит на выбранный кодек</string>
     <string name="adv_auto_hd">Включать HD-звук автоматически</string>
-    <string name="adv_auto_hd_desc">Включает HD-звук, если в системе он выключен</string>
     <string name="adv_delay">Задержка перед применением</string>
     <string name="adv_delay_desc">Некоторые устройства не переключаются сразу после подключения</string>
     <string name="adv_retries">Число попыток</string>
@@ -200,14 +192,14 @@
     </plurals>
     <string name="eq_summary_unavailable">Сейчас недоступна. Откройте, чтобы узнать причину.</string>
     <string name="eq_enabled">Эквалайзер</string>
-    <string name="eq_enabled_desc">Настраивает звучание этих наушников</string>
     <string name="eq_latency_zero">Добавленная задержка: 0 мс</string>
     <string name="eq_mode">Способ настройки</string>
-    <string name="eq_mode_desc">В графическом режиме каждая полоса стоит на фиксированной частоте. В параметрическом полосу можно поставить куда угодно.</string>
     <string name="eq_mode_graphic">Графический</string>
+    <string name="eq_mode_graphic_desc">Каждая полоса стоит на фиксированной частоте</string>
     <string name="eq_mode_parametric">Параметрический</string>
+    <string name="eq_mode_parametric_desc">Полосу можно поставить куда угодно</string>
     <string name="eq_band_count">Число полос</string>
-    <string name="eq_band_count_desc">Чем больше полос, тем точнее повторяется подробная кривая. Это не настройка производительности: телефон в обоих случаях считает одинаково.</string>
+    <string name="eq_band_count_desc">Это не настройка производительности: телефон считает одинаково при любом числе полос.</string>
     <string name="eq_band_none">Полос пока нет. Добавьте полосу или загрузите файл AutoEQ.</string>
     <string name="eq_band_add">Добавить полосу</string>
     <string name="eq_band_remove">Удалить эту полосу</string>
@@ -248,7 +240,6 @@
     <string name="eq_finder_entry_disconnected">Подключите эти наушники, чтобы начать.</string>
     <string name="eq_finder_song">Композиция</string>
     <string name="eq_finder_song_none">Выберите хорошо знакомую композицию</string>
-    <string name="eq_finder_song_desc">Короткий отрывок из неё повторяется во время сравнения. Выбирается из аудиофайлов на телефоне.</string>
     <string name="eq_finder_song_loading">Чтение файла…</string>
     <string name="eq_finder_song_failed">Не удалось прочитать этот файл. Выберите другой.</string>
     <string name="eq_finder_passage">Отрывок</string>
@@ -258,7 +249,6 @@
     <string name="eq_finder_include_mid">Исследовать и средние частоты</string>
     <string name="eq_finder_include_mid_desc">Добавляет третью ось вокруг голосов. Вопросов станет немного больше.</string>
     <string name="eq_finder_fine_tune">Тонкая настройка текущих параметров</string>
-    <string name="eq_finder_fine_tune_desc">Начинает с нынешнего эквалайзера и движется мелкими шагами.</string>
     <string name="eq_finder_notes">Перед началом</string>
     <string name="eq_finder_note_volume">Тест звучит немного тише обычного. Выставьте комфортную громкость после начала и не меняйте её до конца.</string>
     <string name="eq_finder_note_earphones">Слушайте в этих наушниках, в тихом месте.</string>
