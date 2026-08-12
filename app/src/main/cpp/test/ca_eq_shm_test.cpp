@@ -629,6 +629,46 @@ void runShmSections(Report& r) {
         delete w;
     }
 
+    // --- 10b. サンプルレートが変わっても FIR が戻ってくること -----------------
+    //
+    // ⚠️ **ここが繋がっていないと、EQ が黙って平坦に戻ったまま二度と戻らない。**
+    // fs が変わると Eq はパラメータを丸ごと捨て (新しい Nyquist で fc が範囲外に
+    // なりうるため)、arena も組み直しになって曲線が失われる。共有メモリの枠は
+    // 何も変わっていないので、読み手が「適用済み」を覚えたままだと再送の機会が無い。
+    // `.so` は SET_CONFIG で PollState::param_gen を 0 に戻してこれを塞いでいる。
+    // **往復のどちらの側を外しても、この 1 件が落ちる** (変異試験で両方確認した)。
+    {
+        ShmWithCanary* w = newCanaryShm();
+        caeq::EqPipeline pl;
+        pl.configure(48000.0, 2, caeq::Structure::kTdf2);
+        pl.setClock(&fakeClock);
+        pl.warmUp();
+        caeq::PollState st;
+        Driver drv(pl, 960, 2);
+        writeSlot(&w->m.params[0], 1u, 1u, good.data(),
+                  CA_EQ_FLAG_ENABLED | CA_EQ_FLAG_HIGH_PRECISION, -2.0);
+        for (int b = 0; b < 60 && pl.firState() != caeq::EqPipeline::FirState::kFir; b++) {
+            caeq::pollSlot(&w->m.params[0], &st, &pl, true);
+            drv.step();
+        }
+        r.check(pl.firState() == caeq::EqPipeline::FirState::kFir, "まず 48 kHz で FIR が鳴る");
+
+        // SET_CONFIG が 44.1 kHz で来たときと同じ手順。**枠は 1 バイトも変わらない。**
+        pl.configure(44100.0, 2, caeq::Structure::kTdf2);
+        pl.warmUp();
+        st.param_gen = 0;
+        Driver drv2(pl, 960, 2);
+        for (int b = 0; b < 60 && pl.firState() != caeq::EqPipeline::FirState::kFir; b++) {
+            caeq::pollSlot(&w->m.params[0], &st, &pl, true);
+            drv2.step();
+        }
+        r.check(pl.firState() == caeq::EqPipeline::FirState::kFir &&
+                    pl.designTaps() == caeq::firTapsFor(44100.0),
+                "44.1 kHz へ変えても、枠が変わらないまま FIR が戻る (taps=%d)",
+                pl.designTaps());
+        delete w;
+    }
+
     // --- 11. 申告するメモリ量が実測を上回っていること -------------------------
     {
         const double rates[] = {44100.0, 48000.0, 88200.0, 96000.0};

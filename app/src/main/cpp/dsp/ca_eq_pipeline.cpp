@@ -226,6 +226,12 @@ void EqPipeline::setFirEnabled(bool enabled) { fir_enabled_ = enabled; }
 
 void EqPipeline::setCurve(const float* db401, uint32_t generation) {
     if (db401 == nullptr) return;
+    // ⚠️ **`have_curve_` を条件から外さないこと。**`releaseArena()` は `have_curve_` を
+    // 落とすが `pending_gen_` は残すので、fs や ch が変わって arena を組み直した後も
+    // 世代だけは同じに見える。世代の一致だけで戻ると、**同じ曲線を渡し直しても受け取らず、
+    // 曲線が変わるまで FIR が戻らない。**
+    // 渡し直す側の経路は SET_CONFIG → `PollState::param_gen = 0` → 次の poll で再読み
+    // (dsp/ca_eq_poll.h)。ハーネス 31 節の「fs が変わっても FIR が戻る」がこの往復を見ている。
     if (generation == pending_gen_ && have_curve_) return;
     std::memcpy(pending_curve_, db401, sizeof(pending_curve_));
     pending_gen_ = generation;
