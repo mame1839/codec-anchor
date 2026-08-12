@@ -1,6 +1,6 @@
 // 「高精度」(最小位相 FIR) 経路のハーネス。ca_eq_test.cpp の main から呼ばれる。
 //
-// 参照は llmdocs/tools/eq/18_minphase_golden.py が生成した ca_eq_fir_golden.h
+// 参照は llmdocs/tools/eq/19_minphase_golden.py が生成した ca_eq_fir_golden.h
 // (numpy, float64)。C 側は float32 なので、許容はテスト側が持つ。
 
 #include <chrono>
@@ -39,7 +39,7 @@ struct AlignedBuf {
     }
 };
 
-// 18_minphase_golden.py の lcg_floats と同じ列。24 bit なので float で厳密。
+// 19_minphase_golden.py の lcg_floats と同じ列。24 bit なので float で厳密。
 std::vector<float> lcgFloats(uint64_t seed, int n) {
     std::vector<float> out(static_cast<size_t>(n));
     uint64_t s = seed;
@@ -54,7 +54,7 @@ std::vector<float> lcgFloats(uint64_t seed, int n) {
 
 // 摘み値 (グリッド添字 kKnobGridIdx 上の頂点) から 401 点曲線を組む。
 // 添字空間の線形補間 = 対数 f・線形 dB (グリッドが対数等間隔なので)。
-// 18_minphase_golden.py の curve_from_knobs と同じ式。
+// 19_minphase_golden.py の curve_from_knobs と同じ式。
 std::vector<float> curveFromKnobs(const double* knob_db) {
     std::vector<float> c(caeq::kCurvePoints);
     int seg = 0;
@@ -436,7 +436,7 @@ struct FirBuild {
 std::vector<float> knobsCurve(const double* knobs) { return curveFromKnobs(knobs); }
 
 void checkMinphase(Report& r) {
-    r.section("21. 最小位相 IR (参照は 18_minphase_golden.py / numpy float64)");
+    r.section("21. 最小位相 IR (参照は 19_minphase_golden.py / numpy float64)");
 
     std::vector<double> flat(31, 12.0), alt(31);
     for (int i = 0; i < 31; i++) alt[static_cast<size_t>(i)] = (i % 2 == 0) ? 12.0 : -12.0;
@@ -1548,11 +1548,16 @@ void checkPipeline(Report& r) {
         // frames·ch を書いて外へ出た)。いまは biquad だけの経路が out へ直接書くので
         // arena に触れない。上限の前後を跨いで釘を打つ。
         //
-        // ⚠️ **この釘が破れたときの見え方は「FAIL の行」ではなく「プロセスの異常終了」**
-        // (区画外への書き込みなので heap が壊れる。壊し実験では 0xC0000374)。
-        // 正確な診断が要るときは検分の手口 —— arena をガードページ付きで確保し直した
-        // 別バイナリ (scratchpad/attack、`attack.exe oob`) —— を使う。あちらは
-        // 1 バイト目の逸脱で 0xC0000005 になるので、どこで出たかが即分かる。
+        // ⚠️ **この釘が破れたときの見え方は「FAIL の行」ではない。**
+        // 区画外への書き込みは `process()` の中で heap を壊すので、**その先の
+        // r.check() には到達しない。この節が途中で沈黙してハーネスごと落ちたら、
+        // それがこの釘の FAIL** である (幽霊を追わないこと)。
+        // 期待される署名: 素のビルドで 0xC0000374 (STATUS_HEAP_CORRUPTION)、
+        // ASan ビルド (CA_EQ_ASAN_FIR=ON) なら heap-buffer-overflow として
+        // **名前付きで報告される** — この節は ASan ターゲットにも入っている。
+        // さらに正確な位置が要るときは検分の手口 —— arena をガードページ付きで
+        // 確保し直した別バイナリ (scratchpad/attack、`attack.exe oob`) —— を使う。
+        // あちらは逸脱の 1 バイト目で 0xC0000005 になる。
         for (int big : {caeq::kMaxConvBlock * 2, caeq::kMaxConvBlock + 32, 8192, 6144}) {
             caeq::EqPipeline pl;
             pl.configure(48000.0, 2, caeq::Structure::kTdf2);
@@ -1671,6 +1676,178 @@ void checkPipeline(Report& r) {
         r.check(during_face == 11 && after_face == 22,
                 "面フェード中は前の世代のまま、鳴り切ってから 22 (%u -> %u)", during_face,
                 after_face);
+    }
+
+    {   // **フェード長を変えてもクロスフェードの和が 1 のままか。**
+        //
+        // 乗り移りは「Eq の wet が降りる + fir_mix が昇る」の和で出来ているので、
+        // 両者の長さが食い違うと和が 1 でなくなり、**両エンジンが同じ応答でも**
+        // 途中で音量が動く。pipeline がフェード長を自前で持っていると
+        // `biquad().setFadeMillis()` で食い違いが作れてしまう (いまは Eq から毎回引く)。
+        //
+        // 観測できる形にするのが要点: **両エンジンを厳密に同じ伝達関数にする。**
+        //   biquad = バンド無し + preamp +12 dB → 平ら 3.981 倍
+        //   FIR    = 0 dB 平らの曲線 (IR は単位インパルス) → pre_cur_ だけで 3.981 倍
+        // 正しければ乗り移りの全区間で出力が dry×3.981 から動かない。
+        // ここをユニティ biquad で組むと 24 節と同じ罠 (差が出ない構成) にはまる。
+        const double kGain = std::pow(10.0, 12.0 / 20.0);
+        std::vector<float> flat0(caeq::kCurvePoints, 0.0f);
+        double worst_all = 0.0;
+        for (double fade_ms : {5.0, 10.0, 20.0, 50.0}) {
+            caeq::EqPipeline pl;
+            pl.configure(48000.0, 1, caeq::Structure::kTdf2);
+            // **configure の後で**変える。前に呼ぶと、フェード長を configure 時に
+            // 1 回だけ確定する実装でも通ってしまい、釘が弱くなる。
+            pl.biquad().setFadeMillis(fade_ms);
+            caeq::Params p12;
+            p12.band_count = 0;
+            p12.preamp_db  = 12.0;
+            pl.snapParams(p12);
+            pl.setActive(true);
+
+            PipeDriver drv(pl, 128, 1);
+            for (int b = 0; b < 60; b++) drv.noiseBlock();  // Eq の wet を 1 へ
+
+            pl.setFirEnabled(true);
+            pl.setCurve(flat0.data(), 1);
+            double worst = 0.0;
+            int    blocks = 0;
+            for (int b = 0; b < 400; b++) {
+                std::vector<float> x = lcgFloats(8100 + static_cast<uint64_t>(b), 128);
+                std::vector<float> y = x;
+                pl.process(y.data(), y.data(), 128, false);
+                for (int i = 0; i < 128; i++) {
+                    const double want = static_cast<double>(x[static_cast<size_t>(i)]) * kGain;
+                    worst = std::fmax(worst, std::fabs(
+                        static_cast<double>(y[static_cast<size_t>(i)]) - want));
+                }
+                blocks = b;
+                if (pl.firState() == caeq::EqPipeline::FirState::kFir) break;
+            }
+            worst_all = std::fmax(worst_all, worst);
+            r.note("  Eq フェード %5.1f ms: 乗り移り全区間の max|out − dry×3.981| = %.5f "
+                   "(%d ブロック)",
+                   fade_ms, worst, blocks + 1);
+        }
+        r.check(worst_all < 1e-5,
+                "[乗り移り 昇り] フェード長を変えても和が 1 (最大 %.5f) — "
+                "mix の傾きが Eq に追随",
+                worst_all);
+    }
+
+    {   // **降りる向き (kFadeOut) の釣り合い。**
+        //
+        // いまの実装は昇りと降りで同じ式 (`d = ±fadeStep()`) を使うので、上の釘が
+        // 落ちれば降りも落ちる = 結合の確認としては 1 本で足りる。それでもここを
+        // 別に測るのは 2 つ理由がある:
+        //   1. **kFadeOut が厳密なクロスフェードであること自体、これまで測っていない。**
+        //      モード OFF のクリック (−60.8 dBFS) は両エンジンがわざと違う構成での
+        //      測定なので、「和が 1 か」までは言えていなかった (推測のままだった)
+        //   2. 昇りと降りで式を分ける改修が入ったとき、降り側が無防備になる
+        const double kGain = std::pow(10.0, 12.0 / 20.0);
+        std::vector<float> flat0(caeq::kCurvePoints, 0.0f);
+        caeq::Params p12;
+        p12.band_count = 0;
+        p12.preamp_db  = 12.0;
+        double worst_all = 0.0;
+        for (double fade_ms : {5.0, 10.0, 20.0, 50.0}) {
+            caeq::EqPipeline pl;
+            pl.configure(48000.0, 1, caeq::Structure::kTdf2);
+            pl.biquad().setFadeMillis(fade_ms);   // configure の後で (上の説明)
+            pl.snapParams(p12);
+            pl.setActive(true);
+            pl.setFirEnabled(true);
+            pl.setCurve(flat0.data(), 1);
+            PipeDriver drv(pl, 128, 1);
+            drv.runUntil(caeq::EqPipeline::FirState::kFir, 400);
+
+            pl.setFirEnabled(false);   // → kFadeOut (FIR は健在なので対称に降りる)
+            double worst = 0.0;
+            int    blocks = 0;
+            for (int b = 0; b < 120; b++) {
+                std::vector<float> x = lcgFloats(8500 + static_cast<uint64_t>(b), 128);
+                std::vector<float> y = x;
+                pl.process(y.data(), y.data(), 128, false);
+                for (int i = 0; i < 128; i++) {
+                    const double want = static_cast<double>(x[static_cast<size_t>(i)]) * kGain;
+                    worst = std::fmax(worst, std::fabs(
+                        static_cast<double>(y[static_cast<size_t>(i)]) - want));
+                }
+                blocks = b;
+                if (pl.firState() == caeq::EqPipeline::FirState::kBiquad) break;
+            }
+            worst_all = std::fmax(worst_all, worst);
+            r.note("  Eq フェード %5.1f ms: 降りる全区間の max|out − dry×3.981| = %.5f "
+                   "(%d ブロックで biquad へ)",
+                   fade_ms, worst, blocks + 1);
+        }
+        r.check(worst_all < 1e-5,
+                "[乗り移り 降り] kFadeOut も厳密なクロスフェード (最大 %.5f)", worst_all);
+    }
+
+    {   // **同じ結合の、もう 1 本の釘。上の釘とは互いに相手を見られない。**
+        //
+        //   上 (乗り移り)   : kFadeIn の mix の傾きを測る。あの時点で fir_wet は既に
+        //                     1.0 まで上がりきっているので、**wet の歩幅のずれには無反応**
+        //   ここ (DISABLE)  : fir_wet の歩幅を測る。kFir にいるので mix は 1.0 で固定、
+        //                     **mix の傾きのずれには無反応**
+        //
+        // つまり片方だけ直しても、もう片方の釘しか落ちない。フェード長を pipeline 側に
+        // 焼くと (configure で 1 回だけ確定する形) ここが落ちる — **だから
+        // setFadeMillis は configure の後で呼ぶ。**前に呼ぶと焼いた実装でも通ってしまう。
+        //
+        // 測り方: 両エンジンを厳密に同じ応答にすると
+        //   pipeline = dry·(1 + 2.981·fir_wet) / 素の Eq = dry·(1 + 2.981·eq_wet)
+        // なので、差はそのまま (fir_wet − eq_wet) に比例する。
+        const double kGain = std::pow(10.0, 12.0 / 20.0);
+        std::vector<float> flat0(caeq::kCurvePoints, 0.0f);
+        caeq::Params p12;
+        p12.band_count = 0;
+        p12.preamp_db  = 12.0;
+        double worst_all = 0.0;
+        for (double fade_ms : {5.0, 10.0, 20.0, 50.0}) {
+            caeq::EqPipeline pl;
+            pl.configure(48000.0, 1, caeq::Structure::kTdf2);
+            pl.biquad().setFadeMillis(fade_ms);   // **configure の後で** (上の説明)
+            pl.snapParams(p12);
+            pl.setActive(true);
+            pl.setFirEnabled(true);
+            pl.setCurve(flat0.data(), 1);
+            PipeDriver drv(pl, 128, 1);
+            const int reached = drv.runUntil(caeq::EqPipeline::FirState::kFir, 400);
+
+            // 参照: 素の Eq を同じ設定・同じフェード長で
+            caeq::Eq eq;
+            eq.configure(48000.0, 1, caeq::Structure::kTdf2);
+            eq.setFadeMillis(fade_ms);
+            eq.snapParams(p12);
+            eq.setActive(true);
+            std::vector<float> warm(128, 0.0f);
+            for (int b = 0; b < 60; b++) eq.process(warm.data(), warm.data(), 128);
+
+            pl.setActive(false);
+            eq.setActive(false);
+            double worst = 0.0;
+            for (int b = 0; b < 60; b++) {
+                std::vector<float> x = lcgFloats(8300 + static_cast<uint64_t>(b), 128);
+                std::vector<float> a = x, c = x;
+                pl.process(a.data(), a.data(), 128, false);
+                eq.process(c.data(), c.data(), 128, false);
+                for (int i = 0; i < 128; i++) {
+                    worst = std::fmax(worst,
+                                      std::fabs(static_cast<double>(a[static_cast<size_t>(i)]) -
+                                                static_cast<double>(c[static_cast<size_t>(i)])));
+                }
+            }
+            worst_all = std::fmax(worst_all, worst);
+            r.note("  Eq フェード %5.1f ms: DISABLE の軌跡 max|pipeline − 素の Eq| = %.5f "
+                   "(FIR 到達 %d ブロック、gain %.3f)",
+                   fade_ms, worst, reached, kGain);
+        }
+        r.check(worst_all < 1e-5,
+                "[DISABLE] フェード長を変えても FIR 側 wet が Eq と同じ軌跡 (最大 %.5f) — "
+                "wet の歩幅を焼かない",
+                worst_all);
     }
 
     {   // クリックの実測 (記録)。tones を流し、イベント後を 3 kHz HP で見る
@@ -2287,7 +2464,8 @@ void checkAlignment(Report& r) {
 
 }  // namespace
 
-// ca_eq_test.cpp の main から呼ばれる入口。
+// ca_eq_test.cpp の main から呼ばれる入口。**節は番号順に印字する** —
+// 29 (整列) は検分の 28 節より後なので、あちらを挟んでから別の入口で呼ぶ。
 void runFirSections(Report& r) {
     checkFftWrapper(r);
     checkCurve(r);
@@ -2298,5 +2476,7 @@ void runFirSections(Report& r) {
     checkFftTiming(r);
     checkAccounting(r);
     checkFuzz(r);
-    checkAlignment(r);
 }
+
+// 29 節。main が 28 節 (ca_eq_fir_gate_test.cpp) の後に呼ぶ。
+void runFirAlignmentSection(Report& r) { checkAlignment(r); }

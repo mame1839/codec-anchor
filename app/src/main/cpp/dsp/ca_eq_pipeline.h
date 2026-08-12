@@ -168,6 +168,7 @@ private:
     void startDesigner(int face);
     void stepPrepare(int frames);       // 準備中のスライス (setup 構築 / designer)
     void stepDesigner();                // kFir 中のスライス (失敗の後始末を 1 箇所に)
+    double fadeStep() const;            // 1 フレームあたりのフェードの進み (Eq から引く)
     // 混合の規約はファイル冒頭。bq == nullptr なら「biquad の分け前ゼロ」= 素の dry が土台。
     void mixFirOut(const float* in, float* out, int frames, bool accumulate,
                    const float* bq, double mix0, double dmix);
@@ -230,7 +231,6 @@ private:
     // 同一性はハーネス 26 節が Eq の実出力と突き合わせる。
     bool   active_     = false;
     double fir_wet_    = 0.0;
-    double fir_wet_step_ = 1.0;
     double pre_cur_  = 1.0;
     double pre_from_ = 1.0;
     double pre_to_   = 1.0;

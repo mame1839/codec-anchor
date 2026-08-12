@@ -52,7 +52,7 @@ inline int firDefaultM(double fs) { return firTapsFor(fs) * 2; }
 //   - 実用曲線では窓なし・後端 1/16・1/8・1/4 の差は 0.03 dB 未満
 //   - 病的曲線 (隣接摘み ±12) では後端 1/8 が谷: 窓なし 7.8 / 1/16 7.4 / 1/8 5.5 /
 //     1/4 9.7 dB。短いと打ち切り縁の漏れ、長いと分解能の食い潰しに倒れる
-// kHalfHann は golden (18_minphase_golden.py との突き合わせ) と比較実測のために残す。
+// kHalfHann は golden (19_minphase_golden.py との突き合わせ) と比較実測のために残す。
 enum class FirWindow : uint8_t {
     kHalfHann  = 0,  // w[n] = 0.5·(1 + cos(πn/taps))。参照実装と golden の突き合わせ用
     kRect      = 1,  // 窓なし (打ち切りのみ)。比較実測用

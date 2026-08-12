@@ -7,8 +7,9 @@
 namespace caeq {
 namespace {
 
-// 遷移のフェードはすべて 10 ms (Eq の既定の fade / ramp と同じ長さ)。
-constexpr double kXfadeMs = 10.0;
+// FIR → FIR の面クロスフェード長。**これだけは Eq と無関係** (両側とも FIR なので
+// Eq の wet が関与しない)。エンジン間の乗り移りは Eq のフェード長に従う (fadeStep)。
+constexpr double kFaceFadeMs = 10.0;
 
 inline size_t align64(size_t v) { return (v + 63u) & ~static_cast<size_t>(63u); }
 
@@ -20,6 +21,17 @@ constexpr int64_t kSetupNsPerElem = 120;
 inline int64_t setupBuildNs(int n) { return static_cast<int64_t>(n) * kSetupNsPerElem; }
 
 }  // namespace
+
+// 1 フレームあたりのフェードの進み。**Eq のフェード長から毎回引く** — pipeline 側に
+// 長さを持つと `biquad().setFadeMillis()` で変えられたときに食い違い、
+// クロスフェードの和が 1 でなくなる (両エンジンが同じ応答でも音量が動く)。
+// **configure() で焼かないこと** — configure 後の setFadeMillis に追随しなくなる。
+// 式は Eq::setFadeMillis と同一にしてあること。
+double EqPipeline::fadeStep() const {
+    double n = eq_.fadeMillis() * fs_ / 1000.0;
+    if (n < 1.0) n = 1.0;
+    return 1.0 / n;
+}
 
 EqPipeline::~EqPipeline() { releaseArena(); }
 
@@ -155,7 +167,6 @@ void EqPipeline::configure(double sample_rate, int channels, Structure structure
     m_    = firDefaultM(fs_);
     reserveArena();
 
-    fir_wet_step_ = 1.0 / (kXfadeMs * fs_ / 1000.0 < 1.0 ? 1.0 : kXfadeMs * fs_ / 1000.0);
     pre_len_ = static_cast<int64_t>(eq_.rampMillis() * fs_ / 1000.0 + 0.5);
     p_cur_ = 0;
     p_ok_  = false;
@@ -195,11 +206,8 @@ void EqPipeline::setActive(bool active) {
 
 void EqPipeline::reset() {
     // EFFECT_CMD_RESET。履歴は全部無効になるので FIR も畳む。**端末側の都合なので落下。**
+    // 止めてある Eq を起こすのは invalidateFir(kHard) がやる (鳴っていた場合だけ)。
     eq_.reset();
-    if (state_ == FirState::kFir || state_ == FirState::kFadeIn ||
-        state_ == FirState::kFadeOut) {
-        eq_.setActive(active_);  // kFir では Eq を止めてある — 起こしてから渡す
-    }
     invalidateFir(Drop::kHard);
 }
 
@@ -401,11 +409,12 @@ void EqPipeline::mixFirOut(const float* in, float* out, int frames, bool accumul
         // FIR 経路の wet (Eq の processChunk と同じ「使ってから進める」)
         const double wet    = fir_wet_;
         const double target = active_ ? 1.0 : 0.0;
+        const double step   = fadeStep();
         if (fir_wet_ < target) {
-            fir_wet_ += fir_wet_step_;
+            fir_wet_ += step;
             if (fir_wet_ > target) fir_wet_ = target;
         } else if (fir_wet_ > target) {
-            fir_wet_ -= fir_wet_step_;
+            fir_wet_ -= step;
             if (fir_wet_ < target) fir_wet_ = target;
         }
         const double mix   = clamp01(mix0 + static_cast<double>(i) * dmix);
@@ -456,6 +465,10 @@ void EqPipeline::process(const float* in, float* out, int frames, bool accumulat
             mode_offs_++;
             eq_.reset();              // kFir では回していないので状態が古い
             eq_.setActive(active_);   // Eq 自身の wet が biquad 側の昇りを担う
+            // **kFadeOut は単面で回すので、進行中の面フェード (FIR→FIR) は中断される。**
+            // 中断された側は次に FIR を組み直すときに作り直されるだけで、残骸は
+            // 残らない。曲線変更から 10 ms 以内にモード OFF が要るので実運用では
+            // 起きない — 経路を増やす価値が無いと判断した (検分の指摘 B)。
             state_  = FirState::kFadeOut;
         } else if (state_ == FirState::kPrepare) {
             invalidateFir(Drop::kQuiet);  // まだ音に出ていない — 静かに捨てる
@@ -471,7 +484,7 @@ void EqPipeline::process(const float* in, float* out, int frames, bool accumulat
         // fir_wet_ は FIR の混合ループでしか進まないので、ここでも軌跡を揃えておく
         // (次に FIR 経路へ入るときの初期値)。
         const double target = active_ ? 1.0 : 0.0;
-        const double step   = fir_wet_step_ * static_cast<double>(frames);
+        const double step   = fadeStep() * static_cast<double>(frames);
         if (fir_wet_ < target) fir_wet_ = fir_wet_ + step > target ? target : fir_wet_ + step;
         if (fir_wet_ > target) fir_wet_ = fir_wet_ - step < target ? target : fir_wet_ - step;
 
@@ -509,7 +522,10 @@ void EqPipeline::process(const float* in, float* out, int frames, bool accumulat
         const bool in_ = state_ == FirState::kFadeIn;
         eq_.process(in, buf_bq_y_, frames, false);
         kernel_.processBlock(in, buf_fir_y_, active_face_, -1, 0.0f, 0.0f);
-        const double d = (in_ ? 1.0 : -1.0) / (kXfadeMs * fs_ / 1000.0);
+        // **Eq のフェード長に従う。**片側 (Eq の wet) と傾きが違うと和が 1 にならず、
+        // 両エンジンが同じ応答でも乗り移りの途中で音量が動く。
+        // 昇りと降りで同じ式を使う (分けると片側だけの退行が起きうる)。
+        const double d = (in_ ? 1.0 : -1.0) * fadeStep();
         mixFirOut(in, out, frames, accumulate, buf_bq_y_, fir_mix_, d);
         fir_mix_ += d * static_cast<double>(frames);
         if (in_ && fir_mix_ >= 1.0) {
@@ -535,7 +551,7 @@ void EqPipeline::process(const float* in, float* out, int frames, bool accumulat
             face_fading_ = true;
             face_w_      = 0.0;
         }
-        const double dw = 1.0 / (kXfadeMs * fs_ / 1000.0);
+        const double dw = 1.0 / (kFaceFadeMs * fs_ / 1000.0);
         if (face_fading_) {
             kernel_.processBlock(in, buf_fir_y_, active_face_, 1 - active_face_,
                                  static_cast<float>(face_w_), static_cast<float>(dw));

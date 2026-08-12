@@ -1550,6 +1550,7 @@ void printDeviceChecklist(Report& r) {
 
 // 「高精度」(最小位相 FIR) 経路のセクション (19〜)。ca_eq_fir_test.cpp。
 void runFirSections(catest::Report& r);
+void runFirAlignmentSection(catest::Report& r);
 // 検分 (eqfir-gate) が足した見張り (28)。ca_eq_fir_gate_test.cpp。
 void runFirGateSections(catest::Report& r);
 
@@ -1578,8 +1579,9 @@ int main(int argc, char** argv) {
     checkRateChange(r);
     checkSlotPick(r);
     printDeviceChecklist(r);
-    runFirSections(r);
-    runFirGateSections(r);
+    runFirSections(r);          // 19〜27
+    runFirGateSections(r);      // 28 (検分が足した節)
+    runFirAlignmentSection(r);  // 29
 
     std::printf("\n%d / %d 件が通った。\n", r.total() - r.failures(), r.total());
     return r.failures() == 0 ? 0 : 1;

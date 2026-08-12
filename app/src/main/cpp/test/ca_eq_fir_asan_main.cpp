@@ -13,12 +13,14 @@
 
 void runFirSections(catest::Report& r);
 void runFirGateSections(catest::Report& r);
+void runFirAlignmentSection(catest::Report& r);
 
 int main() {
     std::printf("Codec Anchor EQ — FIR の節を ASan で (MSVC /fsanitize=address)\n");
     catest::Report r;
-    runFirSections(r);
-    runFirGateSections(r);
+    runFirSections(r);          // 19〜27
+    runFirGateSections(r);      // 28
+    runFirAlignmentSection(r);  // 29
     std::printf("\n%d / %d 件が通った。\n", r.total() - r.failures(), r.total());
     return r.failures() == 0 ? 0 : 1;
 }

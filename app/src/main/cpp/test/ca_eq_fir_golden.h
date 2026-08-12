@@ -1,4 +1,4 @@
-// 18_minphase_golden.py (llmdocs/tools/eq) が生成した golden。手で編集しない。
+// 19_minphase_golden.py (llmdocs/tools/eq) が生成した golden。手で編集しない。
 // 参照は numpy (float64)。C 側 (float32) との差はテスト側の許容が持つ。
 #ifndef CA_EQ_FIR_GOLDEN_H_
 #define CA_EQ_FIR_GOLDEN_H_
