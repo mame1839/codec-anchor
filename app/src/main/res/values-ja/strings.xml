@@ -37,13 +37,9 @@
 
     <string name="section_general">全体設定</string>
     <string name="toggle_auto_apply">自動適用を有効にする</string>
-    <string name="toggle_auto_apply_desc">オフにすると、すべての機器で何もしません</string>
     <string name="toggle_enforce">システムや他アプリによる変更を上書きする</string>
-    <string name="toggle_enforce_desc">システムや他アプリがコーデックを変えたら、設定した内容に戻します</string>
     <string name="toggle_notify">コーデックが変わったら知らせる</string>
-    <string name="toggle_notify_desc">切り替わったときに短いメッセージを出します</string>
     <string name="toggle_verbose">詳細ログを出す</string>
-    <string name="toggle_verbose_desc">うまく切り替わらないときの調査用</string>
 
     <string name="permission_title">Bluetooth の権限が必要です</string>
     <string name="permission_body">許可すると、ペアリング済みの機器と名前を読み取れます。</string>
@@ -80,7 +76,7 @@
     <string name="eq_unavailable_device">このイヤホンは音響処理に登録されていないため、ここで設定した内容は音に反映されません。</string>
 
     <string name="eq_device_register">このイヤホンで音響処理を使う</string>
-    <string name="eq_device_register_desc">このイヤホンを端末の音声設定に追加します。適用中は音が一瞬途切れます。</string>
+    <string name="eq_device_register_desc">適用中は音が一瞬途切れます。</string>
     <string name="eq_device_confirm_on_title">このイヤホンの音響処理をオンにしますか</string>
     <string name="eq_device_confirm_off_title">このイヤホンの音響処理をオフにしますか</string>
     <string name="eq_device_confirm_body">端末の音声サービスが再起動するため、いま再生中の音が数秒間途切れます。Bluetooth の接続は保たれ、イコライザーの設定もどちらの場合も保持されます。</string>
@@ -120,7 +116,6 @@
     <string name="profile_no_target">固定する項目はまだありません</string>
 
     <string name="section_backup">バックアップ</string>
-    <string name="backup_body">すべての設定を JSON ファイルに書き出します。</string>
     <string name="backup_export">書き出す</string>
     <string name="backup_import">読み込む</string>
     <string name="backup_confirm_title">バックアップを読み込みますか</string>
@@ -133,7 +128,6 @@
     <string name="msg_backup_failed">ファイルを読み込めませんでした</string>
 
     <string name="detail_auto_apply">このイヤホンに自動適用する</string>
-    <string name="detail_auto_apply_desc">接続したときに、下の設定へ切り替えます</string>
     <string name="detail_current_codec">現在のコーデック: %1$s</string>
     <string name="ldac_bitrate_offload">Bluetooth A2DP ハードウェアオフロードが有効なため、実効ビットレートを取得できません。</string>
     <string name="detail_note">直近の結果: %1$s</string>
@@ -160,9 +154,7 @@
     <string name="adv_force">強制適用</string>
     <string name="adv_force_desc">機器が対応を申告していない組み合わせも試します</string>
     <string name="adv_via_sbc">SBC を経由して切り替える</string>
-    <string name="adv_via_sbc_desc">いったん SBC に落としてから、選んだコーデックにします</string>
     <string name="adv_auto_hd">HD オーディオを自動で有効化</string>
-    <string name="adv_auto_hd_desc">システム側で HD オーディオがオフのときにオンにします</string>
     <string name="adv_delay">適用までの待ち時間</string>
     <string name="adv_delay_desc">接続直後は切り替えを受け付けない機器があります</string>
     <string name="adv_retries">リトライ回数</string>
@@ -194,14 +186,14 @@
     </plurals>
     <string name="eq_summary_unavailable">いまは使えません。理由は開いた先に出ます。</string>
     <string name="eq_enabled">イコライザー</string>
-    <string name="eq_enabled_desc">このイヤホンの音を調整します</string>
     <string name="eq_latency_zero">追加の遅延: 0 ms</string>
     <string name="eq_mode">編集の方法</string>
-    <string name="eq_mode_desc">グラフィックは各バンドの周波数が固定です。パラメトリックは好きな位置にバンドを置けます。</string>
     <string name="eq_mode_graphic">グラフィック</string>
+    <string name="eq_mode_graphic_desc">各バンドの周波数が固定です</string>
     <string name="eq_mode_parametric">パラメトリック</string>
+    <string name="eq_mode_parametric_desc">好きな位置にバンドを置けます</string>
     <string name="eq_band_count">バンド数</string>
-    <string name="eq_band_count_desc">バンドが多いほど細かい曲線に近づきます。処理の重さは変わりません。</string>
+    <string name="eq_band_count_desc">処理の重さは変わりません。</string>
     <string name="eq_band_none">バンドがありません。追加するか、AutoEQ のファイルを読み込んでください。</string>
     <string name="eq_band_add">バンドを追加</string>
     <string name="eq_band_remove">このバンドを削除</string>
@@ -242,7 +234,6 @@
     <string name="eq_finder_entry_disconnected">このイヤホンを接続すると始められます。</string>
     <string name="eq_finder_song">曲</string>
     <string name="eq_finder_song_none">よく知っている曲を選んでください</string>
-    <string name="eq_finder_song_desc">聴き比べのあいだ、この曲の一節が繰り返し流れます。端末内の音声ファイルから選びます。</string>
     <string name="eq_finder_song_loading">ファイルを読んでいます…</string>
     <string name="eq_finder_song_failed">このファイルは読めませんでした。別のファイルを選んでください。</string>
     <string name="eq_finder_passage">一節</string>
@@ -252,7 +243,6 @@
     <string name="eq_finder_include_mid">中音域も探す</string>
     <string name="eq_finder_include_mid_desc">声のあたりにもう 1 軸を足します。質問が少し増えます。</string>
     <string name="eq_finder_fine_tune">いまの設定を微調整する</string>
-    <string name="eq_finder_fine_tune_desc">現在のイコライザーから、細かい刻みで探します。</string>
     <string name="eq_finder_notes">始める前に</string>
     <string name="eq_finder_note_volume">テスト中は普段より少し小さめの音になります。始まってから聴きやすい音量に合わせ、終わるまで変えないでください。</string>
     <string name="eq_finder_note_earphones">このイヤホンで、静かな場所で聴いてください。</string>

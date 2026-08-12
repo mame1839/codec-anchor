@@ -40,13 +40,9 @@
 
     <string name="section_general">Ustawienia ogólne</string>
     <string name="toggle_auto_apply">Stosuj ustawienia automatycznie</string>
-    <string name="toggle_auto_apply_desc">Gdy wyłączone, na żadnym urządzeniu nic się nie zmienia</string>
     <string name="toggle_enforce">Cofaj zmiany systemu i innych aplikacji</string>
-    <string name="toggle_enforce_desc">Jeśli system lub inna aplikacja zmieni kodek, przywraca przypiętą wartość</string>
     <string name="toggle_notify">Powiadamiaj o zmianie kodeka</string>
-    <string name="toggle_notify_desc">Pokazuje krótki komunikat przy przełączeniu kodeka</string>
     <string name="toggle_verbose">Zapisuj szczegółowe logi</string>
-    <string name="toggle_verbose_desc">Do badania urządzeń, które się nie przełączają</string>
 
     <string name="permission_title">Potrzebne uprawnienie Bluetooth</string>
     <string name="permission_body">Po przyznaniu aplikacja może odczytać sparowane urządzenia i ich nazwy.</string>
@@ -83,7 +79,7 @@
     <string name="eq_unavailable_device">Te słuchawki nie są zarejestrowane do przetwarzania dźwięku, więc nic z tego, co tu ustawisz, nie dociera do dźwięku.</string>
 
     <string name="eq_device_register">Używaj przetwarzania dźwięku z tymi słuchawkami</string>
-    <string name="eq_device_register_desc">Dodaje te słuchawki do ustawień audio telefonu. Podczas stosowania dźwięk na chwilę milknie.</string>
+    <string name="eq_device_register_desc">Podczas stosowania dźwięk na chwilę milknie.</string>
     <string name="eq_device_confirm_on_title">Włączyć przetwarzanie dźwięku dla tych słuchawek?</string>
     <string name="eq_device_confirm_off_title">Wyłączyć przetwarzanie dźwięku dla tych słuchawek?</string>
     <string name="eq_device_confirm_body">Usługa audio telefonu uruchamia się ponownie, więc to, co teraz gra, na kilka sekund ucichnie. Bluetooth pozostaje połączony, a ustawienia korektora są zachowywane w obu przypadkach.</string>
@@ -123,7 +119,6 @@
     <string name="profile_no_target">Nic nie jest jeszcze przypięte</string>
 
     <string name="section_backup">Kopia zapasowa</string>
-    <string name="backup_body">Zapisuje wszystkie ustawienia w pliku JSON.</string>
     <string name="backup_export">Eksportuj</string>
     <string name="backup_import">Importuj</string>
     <string name="backup_confirm_title">Zaimportować kopię zapasową?</string>
@@ -136,7 +131,6 @@
     <string name="msg_backup_failed">Nie udało się odczytać pliku</string>
 
     <string name="detail_auto_apply">Stosuj do tych słuchawek</string>
-    <string name="detail_auto_apply_desc">Przy każdym połączeniu przełącza na ustawienia poniżej</string>
     <string name="detail_current_codec">Obecny kodek: %1$s</string>
     <string name="ldac_bitrate_offload">Nie można odczytać efektywnej przepływności, ponieważ włączone jest sprzętowe odciążanie Bluetooth A2DP.</string>
     <string name="detail_note">Ostatni wynik: %1$s</string>
@@ -163,9 +157,7 @@
     <string name="adv_force">Wymuś przełączenie</string>
     <string name="adv_force_desc">Próbuje też kombinacji, których urządzenie nie zgłasza</string>
     <string name="adv_via_sbc">Przełączaj przez SBC</string>
-    <string name="adv_via_sbc_desc">Najpierw schodzi do SBC, potem przechodzi na wybrany kodek</string>
     <string name="adv_auto_hd">Włączaj dźwięk HD automatycznie</string>
-    <string name="adv_auto_hd_desc">Włącza dźwięk HD, gdy system ma go wyłączonego</string>
     <string name="adv_delay">Opóźnienie przed zastosowaniem</string>
     <string name="adv_delay_desc">Niektóre urządzenia nie przełączają się od razu po połączeniu</string>
     <string name="adv_retries">Liczba prób</string>
@@ -200,14 +192,14 @@
     </plurals>
     <string name="eq_summary_unavailable">Na razie nie działa. Otwórz, aby zobaczyć dlaczego.</string>
     <string name="eq_enabled">Korektor</string>
-    <string name="eq_enabled_desc">Kształtuje brzmienie tych słuchawek</string>
     <string name="eq_latency_zero">Dodane opóźnienie: 0 ms</string>
     <string name="eq_mode">Sposób edycji</string>
-    <string name="eq_mode_desc">W trybie graficznym każde pasmo stoi na stałej częstotliwości. W parametrycznym możesz ustawić pasmo tam, gdzie chcesz.</string>
     <string name="eq_mode_graphic">Graficzny</string>
+    <string name="eq_mode_graphic_desc">Każde pasmo stoi na stałej częstotliwości</string>
     <string name="eq_mode_parametric">Parametryczny</string>
+    <string name="eq_mode_parametric_desc">Możesz ustawić pasmo tam, gdzie chcesz</string>
     <string name="eq_band_count">Liczba pasm</string>
-    <string name="eq_band_count_desc">Im więcej pasm, tym dokładniej odwzorowana jest szczegółowa krzywa. To nie jest ustawienie wydajności: telefon liczy tyle samo w obu przypadkach.</string>
+    <string name="eq_band_count_desc">To nie jest ustawienie wydajności: telefon liczy tyle samo przy każdej liczbie pasm.</string>
     <string name="eq_band_none">Nie ma jeszcze żadnego pasma. Dodaj je albo wczytaj plik AutoEQ.</string>
     <string name="eq_band_add">Dodaj pasmo</string>
     <string name="eq_band_remove">Usuń to pasmo</string>
@@ -248,7 +240,6 @@
     <string name="eq_finder_entry_disconnected">Podłącz te słuchawki, aby zacząć.</string>
     <string name="eq_finder_song">Utwór</string>
     <string name="eq_finder_song_none">Wybierz dobrze znany utwór</string>
-    <string name="eq_finder_song_desc">Krótki fragment utworu powtarza się podczas porównywania. Wybiera się go z plików audio w telefonie.</string>
     <string name="eq_finder_song_loading">Odczytywanie pliku…</string>
     <string name="eq_finder_song_failed">Nie udało się odczytać tego pliku. Wybierz inny.</string>
     <string name="eq_finder_passage">Fragment</string>
@@ -258,7 +249,6 @@
     <string name="eq_finder_include_mid">Badaj też średnie tony</string>
     <string name="eq_finder_include_mid_desc">Dodaje trzecią oś wokół wokali. Kilka pytań więcej.</string>
     <string name="eq_finder_fine_tune">Dostrój obecne ustawienia</string>
-    <string name="eq_finder_fine_tune_desc">Zaczyna od obecnego korektora i porusza się małymi krokami.</string>
     <string name="eq_finder_notes">Zanim zaczniesz</string>
     <string name="eq_finder_note_volume">Test gra nieco ciszej niż zwykle. Ustaw wygodną głośność po rozpoczęciu i nie zmieniaj jej do końca.</string>
     <string name="eq_finder_note_earphones">Słuchaj na tych słuchawkach, w cichym miejscu.</string>

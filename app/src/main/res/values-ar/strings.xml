@@ -42,13 +42,9 @@
 
     <string name="section_general">إعدادات عامة</string>
     <string name="toggle_auto_apply">تطبيق الإعدادات تلقائيًا</string>
-    <string name="toggle_auto_apply_desc">عند إيقافه لا يُغيَّر أي شيء على أي جهاز</string>
     <string name="toggle_enforce">التراجع عن تغييرات النظام أو التطبيقات الأخرى</string>
-    <string name="toggle_enforce_desc">إذا غيّر النظام أو تطبيق آخر الكوديك، يُعاد إلى ما ثبّتته</string>
     <string name="toggle_notify">الإشعار عند تغيّر الكوديك</string>
-    <string name="toggle_notify_desc">يعرض رسالة قصيرة عند تحويل الكوديك</string>
     <string name="toggle_verbose">كتابة سجلات مفصّلة</string>
-    <string name="toggle_verbose_desc">لفحص الأجهزة التي لا تقبل التحويل</string>
 
     <string name="permission_title">إذن Bluetooth مطلوب</string>
     <string name="permission_body">منح الإذن يتيح للتطبيق قراءة أجهزتك المقترنة وأسمائها.</string>
@@ -85,7 +81,7 @@
     <string name="eq_unavailable_device">هذه السماعات غير مسجَّلة لمعالجة الصوت، لذلك لا يصل أي مما يُضبط هنا إلى الصوت الفعلي.</string>
 
     <string name="eq_device_register">استخدام معالجة الصوت مع هذه السماعات</string>
-    <string name="eq_device_register_desc">يضيف هذه السماعات إلى إعدادات الصوت في الهاتف. يتوقف الصوت للحظة أثناء التطبيق.</string>
+    <string name="eq_device_register_desc">يتوقف الصوت للحظة أثناء التطبيق.</string>
     <string name="eq_device_confirm_on_title">تفعيل معالجة الصوت لهذه السماعات؟</string>
     <string name="eq_device_confirm_off_title">إيقاف معالجة الصوت لهذه السماعات؟</string>
     <string name="eq_device_confirm_body">تُعاد تشغيل خدمة الصوت في الهاتف، لذا يتوقف أي صوت قيد التشغيل الآن لبضع ثوانٍ. يبقى Bluetooth متصلًا، وتُحفظ إعدادات المُعادل في كلتا الحالتين.</string>
@@ -125,7 +121,6 @@
     <string name="profile_no_target">لم يُثبَّت أي شيء بعد</string>
 
     <string name="section_backup">النسخ الاحتياطي</string>
-    <string name="backup_body">يحفظ كل الإعدادات في ملف JSON.</string>
     <string name="backup_export">تصدير</string>
     <string name="backup_import">استيراد</string>
     <string name="backup_confirm_title">استيراد نسخة احتياطية؟</string>
@@ -138,7 +133,6 @@
     <string name="msg_backup_failed">تعذّرت قراءة الملف</string>
 
     <string name="detail_auto_apply">التطبيق على هذه السماعة</string>
-    <string name="detail_auto_apply_desc">يحوّل إلى الإعدادات أدناه في كل مرة تتصل فيها السماعة</string>
     <string name="detail_current_codec">الكوديك الحالي: %1$s</string>
     <string name="ldac_bitrate_offload">لا يمكن قراءة معدل البت الفعلي لأن التفريغ العتادي لـ Bluetooth A2DP مُمكَّن.</string>
     <string name="detail_note">النتيجة الأخيرة: %1$s</string>
@@ -165,9 +159,7 @@
     <string name="adv_force">إجبار التحويل</string>
     <string name="adv_force_desc">يجرّب أيضًا تركيبات لا يعلن الجهاز عن دعمها</string>
     <string name="adv_via_sbc">التحويل عبر SBC</string>
-    <string name="adv_via_sbc_desc">ينزل إلى SBC أولًا، ثم ينتقل إلى الكوديك الذي اخترته</string>
     <string name="adv_auto_hd">تشغيل صوت HD تلقائيًا</string>
-    <string name="adv_auto_hd_desc">يشغّل صوت HD عندما يكون النظام قد أوقفه</string>
     <string name="adv_delay">الانتظار قبل التطبيق</string>
     <string name="adv_delay_desc">بعض الأجهزة ترفض التحويل بعد الاتصال مباشرة</string>
     <string name="adv_retries">عدد المحاولات</string>
@@ -204,14 +196,14 @@
     </plurals>
     <string name="eq_summary_unavailable">غير متاحة الآن. افتحها لمعرفة السبب.</string>
     <string name="eq_enabled">المُعادل</string>
-    <string name="eq_enabled_desc">يضبط طابع صوت هذه السماعات</string>
     <string name="eq_latency_zero">التأخير المُضاف: 0 مللي ثانية</string>
     <string name="eq_mode">طريقة التحرير</string>
-    <string name="eq_mode_desc">في الوضع الرسومي يبقى كل نطاق على تردد ثابت. أما الوضع البارامتري فيتيح لك وضع كل نطاق حيث تشاء.</string>
     <string name="eq_mode_graphic">رسومي</string>
+    <string name="eq_mode_graphic_desc">يبقى كل نطاق على تردد ثابت</string>
     <string name="eq_mode_parametric">بارامتري</string>
+    <string name="eq_mode_parametric_desc">يمكنك وضع كل نطاق حيث تشاء</string>
     <string name="eq_band_count">عدد النطاقات</string>
-    <string name="eq_band_count_desc">كلما زادت النطاقات اقترب المنحنى أكثر من الشكل التفصيلي المطلوب. هذا ليس إعداد أداء: الهاتف يقوم بالقدر نفسه من العمل في الحالتين.</string>
+    <string name="eq_band_count_desc">هذا ليس إعداد أداء: الهاتف يقوم بالقدر نفسه من العمل أيًّا كان عدد النطاقات.</string>
     <string name="eq_band_none">لا توجد نطاقات بعد. أضِف نطاقًا أو استورد ملف AutoEQ.</string>
     <string name="eq_band_add">إضافة نطاق</string>
     <string name="eq_band_remove">إزالة هذا النطاق</string>
@@ -252,7 +244,6 @@
     <string name="eq_finder_entry_disconnected">وصّل هذه السماعات للبدء.</string>
     <string name="eq_finder_song">الأغنية</string>
     <string name="eq_finder_song_none">اختر أغنية تعرفها جيدًا</string>
-    <string name="eq_finder_song_desc">يتكرر مقطع قصير منها أثناء المقارنة. تُختار من ملفات الصوت على الهاتف.</string>
     <string name="eq_finder_song_loading">جارٍ قراءة الملف…</string>
     <string name="eq_finder_song_failed">تعذّرت قراءة هذا الملف. اختر ملفًا آخر.</string>
     <string name="eq_finder_passage">المقطع</string>
@@ -262,7 +253,6 @@
     <string name="eq_finder_include_mid">استكشاف الترددات المتوسطة أيضًا</string>
     <string name="eq_finder_include_mid_desc">يضيف محورًا ثالثًا حول الأصوات. بضعة أسئلة إضافية.</string>
     <string name="eq_finder_fine_tune">ضبط دقيق للإعدادات الحالية</string>
-    <string name="eq_finder_fine_tune_desc">يبدأ من المعادل الحالي ويتحرك بخطوات صغيرة.</string>
     <string name="eq_finder_notes">قبل البدء</string>
     <string name="eq_finder_note_volume">يُشغَّل الاختبار بصوت أخفض قليلًا من المعتاد. اضبط مستوى صوت مريحًا بعد البدء ولا تغيّره حتى النهاية.</string>
     <string name="eq_finder_note_earphones">استمع بهذه السماعات في مكان هادئ.</string>

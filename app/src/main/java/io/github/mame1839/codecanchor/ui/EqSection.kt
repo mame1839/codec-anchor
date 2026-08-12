@@ -104,7 +104,6 @@ fun EqSection(vm: MainViewModel, mac: String, profile: DeviceProfile) {
 
         SwitchRow(
             title = stringResource(R.string.eq_enabled),
-            description = stringResource(R.string.eq_enabled_desc),
             checked = eq.enabled,
             onChange = { value ->
                 vm.updateEq(mac) { current ->
@@ -122,12 +121,16 @@ fun EqSection(vm: MainViewModel, mac: String, profile: DeviceProfile) {
         RowDivider()
 
         // グラフィックは「fc と Q を固定したパラメトリック」なので内部表現は 1 つ。
+        // 方式の違いは行に常時出さず、選ぶダイアログの選択肢に副題として付ける。
         ChoiceRow(
             title = stringResource(R.string.eq_mode),
-            description = stringResource(R.string.eq_mode_desc),
             options = listOf(
                 EqMode.GRAPHIC to stringResource(R.string.eq_mode_graphic),
                 EqMode.PARAMETRIC to stringResource(R.string.eq_mode_parametric),
+            ),
+            optionDescriptions = mapOf(
+                EqMode.GRAPHIC to stringResource(R.string.eq_mode_graphic_desc),
+                EqMode.PARAMETRIC to stringResource(R.string.eq_mode_parametric_desc),
             ),
             selected = eq.mode,
             onSelect = { value ->

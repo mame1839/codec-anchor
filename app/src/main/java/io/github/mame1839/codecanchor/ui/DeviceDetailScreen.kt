@@ -129,7 +129,6 @@ fun DeviceDetailScreen(
             SettingsCard {
                 SwitchRow(
                     title = stringResource(R.string.detail_auto_apply),
-                    description = stringResource(R.string.detail_auto_apply_desc),
                     checked = profile.enabled,
                     onChange = { value -> vm.updateProfile(mac) { it.copy(enabled = value) } },
                 )
@@ -155,13 +154,11 @@ fun DeviceDetailScreen(
                     )
                     SwitchRow(
                         title = stringResource(R.string.adv_via_sbc),
-                        description = stringResource(R.string.adv_via_sbc_desc),
                         checked = profile.viaSbc,
                         onChange = { value -> vm.updateProfile(mac) { it.copy(viaSbc = value) } },
                     )
                     SwitchRow(
                         title = stringResource(R.string.adv_auto_hd),
-                        description = stringResource(R.string.adv_auto_hd_desc),
                         checked = profile.autoEnableHd,
                         onChange = { value -> vm.updateProfile(mac) { it.copy(autoEnableHd = value) } },
                     )

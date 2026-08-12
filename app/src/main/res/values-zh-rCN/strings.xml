@@ -37,13 +37,9 @@
 
     <string name="section_general">通用设置</string>
     <string name="toggle_auto_apply">自动应用设置</string>
-    <string name="toggle_auto_apply_desc">关闭后，任何设备都不会被修改</string>
     <string name="toggle_enforce">覆盖其他应用的修改</string>
-    <string name="toggle_enforce_desc">系统或其他应用改变编解码器时，切换回你设定的内容</string>
     <string name="toggle_notify">编解码器变化时提示</string>
-    <string name="toggle_notify_desc">切换完成后显示一条简短提示</string>
     <string name="toggle_verbose">输出详细日志</string>
-    <string name="toggle_verbose_desc">用于排查无法切换的设备</string>
 
     <string name="permission_title">需要蓝牙权限</string>
     <string name="permission_body">授予后即可读取已配对的设备及其名称。</string>
@@ -80,7 +76,7 @@
     <string name="eq_unavailable_device">这副耳机还没有注册音频处理，因此这里设置的任何内容都不会影响声音。</string>
 
     <string name="eq_device_register">对这副耳机使用音频处理</string>
-    <string name="eq_device_register_desc">把这副耳机加入手机的音频设置。应用期间声音会中断片刻。</string>
+    <string name="eq_device_register_desc">应用期间声音会中断片刻。</string>
     <string name="eq_device_confirm_on_title">要为这副耳机开启音频处理吗</string>
     <string name="eq_device_confirm_off_title">要为这副耳机关闭音频处理吗</string>
     <string name="eq_device_confirm_body">手机的音频服务会重启，此刻正在播放的声音会中断几秒钟。蓝牙连接不受影响，均衡器设置无论如何都会保留。</string>
@@ -120,7 +116,6 @@
     <string name="profile_no_target">还没有锁定任何项目</string>
 
     <string name="section_backup">备份</string>
-    <string name="backup_body">把所有设置导出为 JSON 文件。</string>
     <string name="backup_export">导出</string>
     <string name="backup_import">导入</string>
     <string name="backup_confirm_title">要导入备份吗</string>
@@ -133,7 +128,6 @@
     <string name="msg_backup_failed">无法读取文件</string>
 
     <string name="detail_auto_apply">对这副耳机自动应用</string>
-    <string name="detail_auto_apply_desc">连接时切换为下面的设置</string>
     <string name="detail_current_codec">当前编解码器：%1$s</string>
     <string name="ldac_bitrate_offload">由于已启用蓝牙 A2DP 硬件卸载，无法读取实际码率。</string>
     <string name="detail_note">最近的结果：%1$s</string>
@@ -160,9 +154,7 @@
     <string name="adv_force">强制应用</string>
     <string name="adv_force_desc">也尝试设备没有声明支持的组合</string>
     <string name="adv_via_sbc">经由 SBC 切换</string>
-    <string name="adv_via_sbc_desc">先降到 SBC，再切换到你选择的编解码器</string>
     <string name="adv_auto_hd">自动开启高清音频</string>
-    <string name="adv_auto_hd_desc">系统关闭了高清音频时自动开启</string>
     <string name="adv_delay">应用前的等待时间</string>
     <string name="adv_delay_desc">有些设备刚连接时不接受切换</string>
     <string name="adv_retries">重试次数</string>
@@ -194,14 +186,14 @@
     </plurals>
     <string name="eq_summary_unavailable">目前无法使用。打开可查看原因。</string>
     <string name="eq_enabled">均衡器</string>
-    <string name="eq_enabled_desc">调整这副耳机的声音</string>
     <string name="eq_latency_zero">额外延迟：0 ms</string>
     <string name="eq_mode">调整方式</string>
-    <string name="eq_mode_desc">图示均衡器把每个频段固定在特定频率上。参数均衡器可以把频段放在任意位置。</string>
     <string name="eq_mode_graphic">图示</string>
+    <string name="eq_mode_graphic_desc">每个频段固定在特定频率上</string>
     <string name="eq_mode_parametric">参数</string>
+    <string name="eq_mode_parametric_desc">频段可以放在任意位置</string>
     <string name="eq_band_count">频段数量</string>
-    <string name="eq_band_count_desc">频段越多，越能贴近细致的曲线。这不是性能选项：两种情况下手机的运算量相同。</string>
+    <string name="eq_band_count_desc">这不是性能选项：无论多少个频段，手机的运算量都相同。</string>
     <string name="eq_band_none">还没有频段。请添加一个，或读取 AutoEQ 文件。</string>
     <string name="eq_band_add">添加频段</string>
     <string name="eq_band_remove">删除此频段</string>
@@ -242,7 +234,6 @@
     <string name="eq_finder_entry_disconnected">连接这副耳机即可开始。</string>
     <string name="eq_finder_song">歌曲</string>
     <string name="eq_finder_song_none">选一首你很熟的歌</string>
-    <string name="eq_finder_song_desc">对比期间会循环播放这首歌的一小段。从手机里的音频文件中选择。</string>
     <string name="eq_finder_song_loading">正在读取文件…</string>
     <string name="eq_finder_song_failed">无法读取该文件。请另选一个。</string>
     <string name="eq_finder_passage">片段</string>
@@ -252,7 +243,6 @@
     <string name="eq_finder_include_mid">也探索中频</string>
     <string name="eq_finder_include_mid_desc">在人声附近增加第三个维度。问题会多几个。</string>
     <string name="eq_finder_fine_tune">微调当前设置</string>
-    <string name="eq_finder_fine_tune_desc">从现在的均衡器出发，以小步幅调整。</string>
     <string name="eq_finder_notes">开始之前</string>
     <string name="eq_finder_note_volume">测试的音量会比平时略小。开始后再把音量调到舒适的程度，之后到结束都不要再动。</string>
     <string name="eq_finder_note_earphones">请在安静的地方，用这副耳机聆听。</string>
