@@ -149,6 +149,23 @@ android {
     }
 }
 
+// `EqCurveGridTest` は C++ のヘッダ本文を読んで、目標曲線の格子の定数が Kotlin と
+// 一致していることを見張る (Kotlin から C++ の定数は参照できないので、言語をまたぐ辺は
+// テキストの突き合わせでしか縛れない)。
+//
+// ⚠️ **入力として宣言しないと、この見張りは黙る。**単体テストのタスクは Kotlin の
+// ソースしか入力に持たないので、**C++ のヘッダだけを動かした回は UP-TO-DATE で飛ばされ、
+// 変異を撃っても緑のまま返る** (2026-08-13 に実測。kCurvePoints を 402 にして 2 秒で
+// BUILD SUCCESSFUL・386 件が 1 件も走らなかった)。
+//
+// 読んでいるファイルだけを列挙しないのは、テストが読む先が増えたときに黙って抜けるため。
+// 木ごと入力にすれば、抜けは構造的に起きない。
+tasks.withType<Test>().configureEach {
+    inputs.dir(layout.projectDirectory.dir("src/main/cpp"))
+        .withPropertyName("nativeSourcesReadByTests")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
 dependencies {
     // Xposed API は実行時に LSPosed が提供するので APK には含めない
     compileOnly(files("libs/xposed-api-82.jar"))
