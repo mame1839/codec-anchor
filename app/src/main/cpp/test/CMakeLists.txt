@@ -14,6 +14,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_executable(ca_eq_test
     ca_eq_test.cpp
     ca_eq_fir_test.cpp
+    ca_eq_fir_gate_test.cpp
     ../dsp/ca_eq_dsp.cpp
     ../dsp/ca_eq_fft.cpp
     ../dsp/ca_eq_fir.cpp
