@@ -1040,6 +1040,69 @@ void runShmSections(Report& r) {
                     "診断カウンタも一致 (rebuilds %u / 落下 %u / 曲線 gen %u)", a.rebuilds(),
                     a.fallbacks(), a.curveGeneration());
         }
+
+        // (9) FIR 経路の preamp が**両経路とも**ランプすること。
+        //
+        // ⚠️ (8) は 2 つの経路の**差**しか見ないので、`pre_len_` のように
+        // **両方で同時に壊れる**ものは素通りする (実測: `pre_len_` を丸ごと消す変異が
+        // (8) を入れた後でも 350/350 のまま通った)。**「同値である」と「正しい」は別の主張。**
+        // ここは値そのものを見る。
+        //
+        // 直流を入れて kFir で定常にすると、FIR の出力は一定なので
+        // **出力の並びが preamp の軌跡をそのままなぞる。**ランプが消えていれば
+        // ブロックの先頭サンプルで既に新しいゲインになっている。
+        // (段 1 から `pre_len_` には釘が無かった。私が reserveForCurrent へ移して
+        //  初めて気づいた形なので、経緯を残す。)
+        {
+            caeq::EqPipeline pl;
+            pl.configure(48000.0, 2, caeq::Structure::kTdf2);
+            const std::vector<float> curve = tiltCurve(-6.0f, 6.0f);
+            caeq::Params p;
+            p.band_count = 0;
+            p.preamp_db  = -2.0;
+            pl.snapParams(p);
+            pl.setActive(true);
+            pl.setFirEnabled(true);
+            pl.setCurve(curve.data(), 1);
+            pl.warmUp();
+
+            std::vector<float> in(1920, 0.25f), out(1920);
+            for (int b = 0; b < 80 && pl.firState() != caeq::EqPipeline::FirState::kFir; b++) {
+                pl.process(in.data(), out.data(), 960, false);
+            }
+            // 定常になるまで流す (FDL に直流が満ちる)。
+            for (int b = 0; b < 12; b++) pl.process(in.data(), out.data(), 960, false);
+            const double steady = static_cast<double>(out[0]);
+
+            p.preamp_db = -20.0;   // 大きく動かして軌跡を見やすくする
+            pl.setParams(p);
+            pl.process(in.data(), out.data(), 960, false);
+
+            const double first = static_cast<double>(out[0]);
+            const double last  = static_cast<double>(out[2 * 900]);   // 900 サンプル目 (> 480)
+            const double want_ratio = std::pow(10.0, -18.0 / 20.0);   // -2 → -20 dB
+            const double settled = steady * want_ratio;
+
+            // 先頭は**まだ古いゲインのまま**であること。ランプが消えていると
+            // ここが既に settled になる。
+            const double head_err = std::fabs(first - steady) / std::fabs(steady);
+            const double tail_err = std::fabs(last - settled) / std::fabs(settled);
+            r.check(head_err < 0.02 && tail_err < 0.02,
+                    "preamp がランプする — ブロック先頭は旧ゲインのまま (誤差 %.3f%%)、"
+                    "900 サンプル後に新ゲインへ着地 (%.3f%%)",
+                    head_err * 100.0, tail_err * 100.0);
+
+            // 途中が単調に降りていること (階段でも即時でもない)。
+            int moving = 0;
+            for (int i = 1; i < 480; i++) {
+                if (static_cast<double>(out[2 * i]) != static_cast<double>(out[2 * (i - 1)])) {
+                    moving++;
+                }
+            }
+            r.check(moving > 400,
+                    "ランプの区間で毎サンプル動いている (%d / 479 サンプル) — "
+                    "即時の入れ替えでも階段でもない", moving);
+        }
     }
 
     // --- 10e. 書き手の枠選びと読み手の確保が同じ述語を見ていること -------------
