@@ -272,4 +272,73 @@
     <string name="eq_unit_hz" translatable="false">%1$s Hz</string>
     <string name="eq_unit_khz" translatable="false">%1$s kHz</string>
     <string name="eq_unit_khz_short" translatable="false">%1$sk</string>
+    <!-- Find the EQ you like (blind A/B). Wording rules from the design doc: never suggest
+         a hearing test, never claim absolute loudness, and be honest about uncertainty.
+         The session plays quieter than normal (loudness-equal trim), so the volume note says
+         to set the volume AFTER the test starts, not before it. -->
+    <string name="eq_finder_title">Find the EQ you like</string>
+    <string name="eq_finder_entry_desc">Blind listening comparisons shape the equaliser to your taste</string>
+    <string name="eq_finder_entry_resume">A saved test is waiting. Open to continue.</string>
+    <string name="eq_finder_entry_unavailable">Not usable right now — the reasons are shown above.</string>
+    <string name="eq_finder_entry_disconnected">Connect these earphones to start.</string>
+    <string name="eq_finder_song">Song</string>
+    <string name="eq_finder_song_none">Choose a song you know well</string>
+    <string name="eq_finder_song_desc">A short passage of it repeats while you compare. Picked from the audio files on this phone.</string>
+    <string name="eq_finder_song_loading">Reading the file…</string>
+    <string name="eq_finder_song_failed">That file could not be read. Choose another one.</string>
+    <string name="eq_finder_passage">Passage</string>
+    <string name="eq_finder_passage_desc">About 20 seconds from this point repeat during the test. A full, busy part works best.</string>
+    <string name="eq_finder_preview_play">Listen</string>
+    <string name="eq_finder_preview_stop">Stop</string>
+    <string name="eq_finder_include_mid">Also explore the midrange</string>
+    <string name="eq_finder_include_mid_desc">Adds a third dimension around voices. A few more questions.</string>
+    <string name="eq_finder_fine_tune">Fine-tune the current settings</string>
+    <string name="eq_finder_fine_tune_desc">Starts from the equaliser you have now and moves in small steps.</string>
+    <string name="eq_finder_notes">Before you start</string>
+    <string name="eq_finder_note_volume">The test plays a little quieter than normal. Set a comfortable volume after it starts, then do not change it until the end.</string>
+    <string name="eq_finder_note_earphones">Listen on these earphones, in a quiet place.</string>
+    <string name="eq_finder_note_length">Around 25 to 40 questions, 10 to 15 minutes. You can stop at any time and continue later.</string>
+    <string name="eq_finder_begin">Start</string>
+    <string name="eq_finder_resume">Continue the saved test</string>
+    <plurals name="eq_finder_resume_progress">
+        <item quantity="one">%1$d answer so far</item>
+        <item quantity="other">%1$d answers so far</item>
+    </plurals>
+    <string name="eq_finder_start_over">Start over</string>
+    <string name="eq_finder_start_over_title">Delete the saved test?</string>
+    <string name="eq_finder_start_over_body">The answers you have given are deleted. The equaliser itself does not change.</string>
+    <string name="eq_finder_resume_missing">The saved song could not be opened. Pick the same file again to continue.</string>
+    <string name="eq_finder_resume_changed">This passage is not the one the saved test was using. The answers so far were about the old sound, so the result may be less accurate.</string>
+    <string name="eq_finder_trial_hint">Tap A and B to switch instantly. Compare as many times as you like.</string>
+    <string name="eq_finder_answer_locked">Listen to both before you answer.</string>
+    <string name="eq_finder_answer_a">A is better</string>
+    <string name="eq_finder_answer_same">Same</string>
+    <string name="eq_finder_answer_b">B is better</string>
+    <string name="eq_finder_now_playing">Playing</string>
+    <string name="eq_finder_finish_now">Finish here</string>
+    <string name="eq_finder_suspend">Save and leave</string>
+    <string name="eq_finder_paused_disconnected">Paused: the earphones are not connected. The test continues when they come back.</string>
+    <string name="eq_finder_paused_focus">Paused: another app took over the sound.</string>
+    <string name="eq_finder_resume_playback">Resume</string>
+    <string name="eq_finder_result_curve_cd">Curve of the equaliser before and after</string>
+    <string name="eq_finder_before">Before</string>
+    <string name="eq_finder_after">After</string>
+    <string name="eq_finder_axis_bass">Bass</string>
+    <string name="eq_finder_axis_treble">Treble</string>
+    <string name="eq_finder_axis_mid">Midrange</string>
+    <string name="eq_finder_validated_win">In the blind check at the end, you chose this result over your starting point.</string>
+    <string name="eq_finder_validated_lose">In the blind check at the end, your starting point held up. The difference is small either way.</string>
+    <string name="eq_finder_not_validated">The test ended before the final blind check, so the result was not verified.</string>
+    <string name="eq_finder_consistency">Your answers wavered a little. Running the test once more would sharpen the result.</string>
+    <string name="eq_finder_bake_failed">The result needs more free bands than the equaliser has left. Remove some bands, then finish again.</string>
+    <string name="eq_finder_apply">Apply and save</string>
+    <string name="eq_finder_discard">Discard</string>
+    <string name="eq_finder_discard_title">Discard the result?</string>
+    <string name="eq_finder_discard_body">The equaliser goes back to how it was, and the answers are deleted.</string>
+    <string name="eq_finder_preset_title">Save it as a preset too?</string>
+    <string name="eq_finder_preset_skip">Not now</string>
+    <string name="eq_finder_a" translatable="false">A</string>
+    <string name="eq_finder_b" translatable="false">B</string>
+    <string name="eq_finder_progress_value" translatable="false">%1$s / ~%2$s</string>
+    <string name="eq_finder_passage_value" translatable="false">%1$s / %2$s</string>
 </resources>
