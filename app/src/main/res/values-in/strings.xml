@@ -27,6 +27,8 @@
 
     <string name="cd_refresh_status">Periksa status lagi</string>
     <string name="cd_back">Kembali</string>
+    <string name="cd_eq_slot_menu">Opsi slot</string>
+    <string name="cd_eq_slot_add">Tambah slot</string>
     <string name="state_expanded">Diperluas</string>
     <string name="state_collapsed">Diciutkan</string>
 
@@ -214,9 +216,17 @@
     <string name="eq_reset_title">Nolkan semuanya?</string>
     <string name="eq_reset_body">Semua penguatan dan preamp manual kembali ke 0 dB, dan ekualiser berhenti mengubah suara. Pita tetap di tempatnya, tetapi kurva yang sekarang akan hilang jika belum disimpan sebagai prasetel.</string>
 
+    <string name="eq_slot_flat">Datar</string>
+    <string name="eq_slot_default">Kustom %1$d</string>
+    <string name="eq_slot_rename">Ganti nama</string>
+    <string name="eq_slot_rename_title">Nama slot</string>
+    <string name="eq_slot_duplicate">Duplikat</string>
+    <string name="eq_slot_save_preset">Simpan sebagai prasetel</string>
+    <string name="eq_slot_delete_title">Hapus slot?</string>
+    <string name="eq_slot_delete_body">Menghapus \"%1$s\". Kalau itu yang sedang Anda dengar, suaranya kembali ke Datar.</string>
+
     <string name="eq_presets">Prasetel</string>
-    <string name="eq_preset_empty">Belum ada yang disimpan</string>
-    <string name="eq_preset_save">Simpan setelan ini</string>
+    <string name="eq_preset_empty">Belum ada yang disimpan. Anda bisa menyimpannya dari menu slot yang sedang dipakai.</string>
     <string name="eq_preset_save_title">Nama prasetel</string>
     <string name="eq_preset_name">Nama</string>
     <string name="eq_preset_apply">Terapkan</string>
@@ -225,7 +235,7 @@
     <string name="eq_preset_delete_title">Hapus prasetel?</string>
     <string name="eq_preset_delete_body">Menghapus \"%1$s\". Yang sudah tersetel di earphone Anda tetap seperti apa adanya.</string>
     <string name="eq_autoeq_import">Impor AutoEQ</string>
-    <string name="eq_autoeq_desc">Membaca ParametricEQ.txt atau GraphicEQ.txt dari AutoEQ dan menggantikan setelan di atas.</string>
+    <string name="eq_autoeq_desc">Membaca ParametricEQ.txt atau GraphicEQ.txt dari AutoEQ dan memuatnya sebagai slot baru.</string>
     <string name="eq_curve_desc">Kurva yang menunjukkan cara setelan ini mengubah suara</string>
     <string name="eq_finder_title">Temukan ekualiser sesuai selera</string>
     <string name="eq_finder_entry_desc">Perbandingan dengar tersamar membentuk ekualiser sesuai selera Anda</string>

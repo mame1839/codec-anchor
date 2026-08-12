@@ -32,6 +32,8 @@
 
     <string name="cd_refresh_status">التحقّق من الحالة مرة أخرى</string>
     <string name="cd_back">رجوع</string>
+    <string name="cd_eq_slot_menu">خيارات الخانة</string>
+    <string name="cd_eq_slot_add">إضافة خانة</string>
     <string name="state_expanded">موسّع</string>
     <string name="state_collapsed">مطوي</string>
 
@@ -224,9 +226,17 @@
     <string name="eq_reset_title">إعادة كل شيء إلى الصفر؟</string>
     <string name="eq_reset_body">يعود كل كسب والتضخيم المسبق اليدوي إلى 0 ديسيبل، فيتوقف المعادل عن تغيير الصوت. تبقى النطاقات في أماكنها، لكن المنحنى الحالي سيُفقد ما لم يُحفظ ضمن الإعدادات المحفوظة.</string>
 
+    <string name="eq_slot_flat">محايد</string>
+    <string name="eq_slot_default">مخصص %1$d</string>
+    <string name="eq_slot_rename">إعادة التسمية</string>
+    <string name="eq_slot_rename_title">اسم الخانة</string>
+    <string name="eq_slot_duplicate">تكرار</string>
+    <string name="eq_slot_save_preset">الحفظ كإعداد</string>
+    <string name="eq_slot_delete_title">حذف الخانة؟</string>
+    <string name="eq_slot_delete_body">يحذف \"%1$s\". وإذا كان هو ما تستمع إليه الآن، يعود الصوت إلى \"محايد\".</string>
+
     <string name="eq_presets">الإعدادات المحفوظة</string>
-    <string name="eq_preset_empty">لم يُحفظ أي شيء بعد</string>
-    <string name="eq_preset_save">حفظ هذه الإعدادات</string>
+    <string name="eq_preset_empty">لم يُحفظ أي شيء بعد. يمكنك الحفظ من قائمة الخانة التي تستخدمها.</string>
     <string name="eq_preset_save_title">اسم الإعداد</string>
     <string name="eq_preset_name">الاسم</string>
     <string name="eq_preset_apply">تطبيق</string>
@@ -235,7 +245,7 @@
     <string name="eq_preset_delete_title">حذف الإعداد؟</string>
     <string name="eq_preset_delete_body">يحذف \"%1$s\". ويبقى ما هو مضبوط على سماعاتك كما هو.</string>
     <string name="eq_autoeq_import">استيراد AutoEQ</string>
-    <string name="eq_autoeq_desc">يقرأ ملف ParametricEQ.txt أو GraphicEQ.txt من AutoEQ ويستبدل به الإعدادات أعلاه.</string>
+    <string name="eq_autoeq_desc">يقرأ ملف ParametricEQ.txt أو GraphicEQ.txt من AutoEQ ويحمّله في خانة جديدة.</string>
     <string name="eq_curve_desc">منحنى يوضّح كيف تغيّر هذه الإعدادات الصوت</string>
     <string name="eq_finder_title">العثور على المعادل الذي يعجبك</string>
     <string name="eq_finder_entry_desc">مقارنات استماع معماة تشكّل المعادل حسب ذوقك</string>

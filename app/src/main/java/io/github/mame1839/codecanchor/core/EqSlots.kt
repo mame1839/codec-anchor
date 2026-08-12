@@ -38,6 +38,29 @@ data class DeviceSlots(
 ) {
     fun activeSlot(): EqSlot? = slots.firstOrNull { it.id == active }
 
+    fun slot(id: String): EqSlot? = slots.firstOrNull { it.id == id }
+
+    /**
+     * [eq] を種にした新しいスロットを足して選択する。**新しい曲線の着地はここ 1 本**
+     * (移行・プリセットの適用・AutoEQ の取り込み・「+」が全部通る)。
+     *
+     * id は数字の連番で、消しても振り直さない — 表示の既定名 (「カスタム n」) がこの番号なので、
+     * 振り直すと**別のスロットの名前が勝手に変わる。**[EqSlotBook.FLAT_ID] は数字でないので衝突しない。
+     */
+    fun withNewSlot(eq: EqSettings, name: String = ""): DeviceSlots {
+        val id = ((slots.mapNotNull { it.id.toIntOrNull() }.maxOrNull() ?: 0) + 1).toString()
+        return copy(active = id, slots = slots + EqSlot(id = id, name = name, eq = eq))
+    }
+
+    fun renamed(id: String, name: String): DeviceSlots =
+        copy(slots = slots.map { if (it.id == id) it.copy(name = name) else it })
+
+    /** 消す。**選択中を消したらフラットへ戻す** — 別のスロットへ倒すと、選んでいない曲線が鳴り出す。 */
+    fun without(id: String): DeviceSlots = copy(
+        active = if (active == id) EqSlotBook.FLAT_ID else active,
+        slots = slots.filterNot { it.id == id },
+    )
+
     fun toJson(): JSONObject = JSONObject().apply {
         put("active", active)
         put("slots", JSONArray().also { a -> slots.forEach { a.put(it.toJson()) } })
@@ -56,6 +79,18 @@ data class DeviceSlots(
 data class EqSlotBook(val devices: Map<String, DeviceSlots> = emptyMap()) {
 
     fun without(mac: String): EqSlotBook = copy(devices = devices - mac.uppercase())
+
+    fun of(mac: String): DeviceSlots = devices[mac.uppercase()] ?: DeviceSlots()
+
+    /**
+     * [mac] の台帳を差し替える。**呼ぶ側の順番に規則がある** — スロットの選択を動かす操作は
+     * **ここを先に通してから `updateEq`** を呼ぶこと。逆順だと write-through ([reconciledWith])
+     * が新しい曲線を「まだ選択中の古いスロット」へ写して上書きする。
+     */
+    fun mapDevice(mac: String, transform: (DeviceSlots) -> DeviceSlots): EqSlotBook {
+        val key = mac.uppercase()
+        return copy(devices = devices + (key to transform(devices[key] ?: DeviceSlots())))
+    }
 
     /**
      * [mac] の台帳を「いま鳴っている音」([eq] = profile.eq) と辻褄の合う形にする。
@@ -97,10 +132,7 @@ data class EqSlotBook(val devices: Map<String, DeviceSlots> = emptyMap()) {
                 if (active.eq == eq) entry
                 else entry.copy(slots = entry.slots.map { if (it.id == entry.active) it.copy(eq = eq) else it })
             isNeutral(eq) -> if (entry.active == FLAT_ID) entry else entry.copy(active = FLAT_ID)
-            else -> {
-                val id = newId(entry.slots)
-                entry.copy(active = id, slots = entry.slots + EqSlot(id = id, name = "", eq = eq))
-            }
+            else -> entry.withNewSlot(eq)
         }
     }
 
@@ -112,7 +144,10 @@ data class EqSlotBook(val devices: Map<String, DeviceSlots> = emptyMap()) {
     }.toString()
 
     companion object {
-        /** フラット = 暗黙のスロット。実体を保存しないので id だけを予約する ([newId] は数字なので衝突しない)。 */
+        /**
+         * フラット = 暗黙のスロット。実体を保存しないので id だけを予約する
+         * ([DeviceSlots.withNewSlot] が振る id は数字なので衝突しない)。
+         */
         const val FLAT_ID = "flat"
 
         private const val VERSION = 1
@@ -129,9 +164,6 @@ data class EqSlotBook(val devices: Map<String, DeviceSlots> = emptyMap()) {
             eq.mode == EqMode.GRAPHIC &&
                 eq.bands.all { it.gainDb10 == 0 } &&
                 (eq.preampAuto || eq.preampDb10 == 0)
-
-        private fun newId(slots: List<EqSlot>): String =
-            ((slots.mapNotNull { it.id.toIntOrNull() }.maxOrNull() ?: 0) + 1).toString()
 
         fun decode(json: String?): EqSlotBook {
             if (json.isNullOrBlank()) return EqSlotBook()

@@ -30,6 +30,8 @@
 
     <string name="cd_refresh_status">Check the status again</string>
     <string name="cd_back">Back</string>
+    <string name="cd_eq_slot_menu">Slot options</string>
+    <string name="cd_eq_slot_add">Add a slot</string>
     <string name="state_expanded">Expanded</string>
     <string name="state_collapsed">Collapsed</string>
 
@@ -247,9 +249,17 @@
     <string name="eq_reset_title">Set everything to zero?</string>
     <string name="eq_reset_body">Every gain and the manual preamp go back to 0 dB, so the equaliser stops changing the sound. The bands stay where they are, but the curve you have now is lost unless it has been saved as a preset.</string>
 
+    <string name="eq_slot_flat">Flat</string>
+    <string name="eq_slot_default">Custom %1$d</string>
+    <string name="eq_slot_rename">Rename</string>
+    <string name="eq_slot_rename_title">Name the slot</string>
+    <string name="eq_slot_duplicate">Duplicate</string>
+    <string name="eq_slot_save_preset">Save as a preset</string>
+    <string name="eq_slot_delete_title">Delete the slot?</string>
+    <string name="eq_slot_delete_body">Removes \"%1$s\". If it is the one you are listening to, the sound goes back to Flat.</string>
+
     <string name="eq_presets">Presets</string>
-    <string name="eq_preset_empty">Nothing saved yet</string>
-    <string name="eq_preset_save">Save these settings</string>
+    <string name="eq_preset_empty">Nothing saved yet. Save one from the menu on the slot you are using.</string>
     <string name="eq_preset_save_title">Name the preset</string>
     <string name="eq_preset_name">Name</string>
     <string name="eq_preset_apply">Apply</string>
@@ -258,7 +268,7 @@
     <string name="eq_preset_delete_title">Delete the preset?</string>
     <string name="eq_preset_delete_body">Removes \"%1$s\". What is already set on your earphones stays as it is.</string>
     <string name="eq_autoeq_import">Import AutoEQ</string>
-    <string name="eq_autoeq_desc">Reads a ParametricEQ.txt or GraphicEQ.txt from AutoEQ and replaces the settings above.</string>
+    <string name="eq_autoeq_desc">Reads a ParametricEQ.txt or GraphicEQ.txt from AutoEQ and loads it as a new slot.</string>
     <string name="preset_filename" translatable="false">codec-anchor-eq-%1$s.json</string>
 
     <string name="eq_unit_db" translatable="false">%1$s dB</string>

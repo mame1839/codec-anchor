@@ -27,6 +27,8 @@
 
     <string name="cd_refresh_status">ตรวจสอบสถานะอีกครั้ง</string>
     <string name="cd_back">ย้อนกลับ</string>
+    <string name="cd_eq_slot_menu">ตัวเลือกของช่อง</string>
+    <string name="cd_eq_slot_add">เพิ่มช่อง</string>
     <string name="state_expanded">ขยายอยู่</string>
     <string name="state_collapsed">ยุบอยู่</string>
 
@@ -214,9 +216,17 @@
     <string name="eq_reset_title">รีเซ็ตทั้งหมดเป็นศูนย์ไหม</string>
     <string name="eq_reset_body">เกนทั้งหมดและพรีแอมป์ที่ตั้งเองจะกลับเป็น 0 เดซิเบล และอีควอไลเซอร์จะไม่เปลี่ยนเสียงอีก แบนด์ยังอยู่ที่เดิม แต่เส้นโค้งตอนนี้จะหายไปถ้ายังไม่ได้บันทึกเป็นพรีเซ็ต</string>
 
+    <string name="eq_slot_flat">แบน</string>
+    <string name="eq_slot_default">กำหนดเอง %1$d</string>
+    <string name="eq_slot_rename">เปลี่ยนชื่อ</string>
+    <string name="eq_slot_rename_title">ชื่อช่อง</string>
+    <string name="eq_slot_duplicate">ทำสำเนา</string>
+    <string name="eq_slot_save_preset">บันทึกเป็นพรีเซ็ต</string>
+    <string name="eq_slot_delete_title">ลบช่องไหม</string>
+    <string name="eq_slot_delete_body">ลบ \"%1$s\" ถ้ากำลังฟังช่องนี้อยู่ เสียงจะกลับไปเป็นแบน</string>
+
     <string name="eq_presets">พรีเซ็ต</string>
-    <string name="eq_preset_empty">ยังไม่ได้บันทึกอะไรไว้</string>
-    <string name="eq_preset_save">บันทึกการตั้งค่านี้</string>
+    <string name="eq_preset_empty">ยังไม่ได้บันทึกอะไรไว้ บันทึกได้จากเมนูของช่องที่ใช้อยู่</string>
     <string name="eq_preset_save_title">ชื่อพรีเซ็ต</string>
     <string name="eq_preset_name">ชื่อ</string>
     <string name="eq_preset_apply">ใช้งาน</string>
@@ -225,7 +235,7 @@
     <string name="eq_preset_delete_title">ลบพรีเซ็ตไหม</string>
     <string name="eq_preset_delete_body">ลบ \"%1$s\" ส่วนที่ตั้งไว้กับหูฟังแล้วยังคงอยู่เหมือนเดิม</string>
     <string name="eq_autoeq_import">นำเข้า AutoEQ</string>
-    <string name="eq_autoeq_desc">อ่านไฟล์ ParametricEQ.txt หรือ GraphicEQ.txt ของ AutoEQ แล้วแทนที่การตั้งค่าด้านบน</string>
+    <string name="eq_autoeq_desc">อ่านไฟล์ ParametricEQ.txt หรือ GraphicEQ.txt ของ AutoEQ แล้วโหลดเป็นช่องใหม่</string>
     <string name="eq_curve_desc">เส้นโค้งแสดงว่าการตั้งค่านี้เปลี่ยนเสียงอย่างไร</string>
     <string name="eq_finder_title">หาอีควอไลเซอร์ที่ถูกใจ</string>
     <string name="eq_finder_entry_desc">การเปรียบเทียบฟังแบบไม่เห็นค่า ช่วยปรับอีควอไลเซอร์ให้ตรงรสนิยมของคุณ</string>

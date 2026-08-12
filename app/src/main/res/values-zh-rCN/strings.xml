@@ -27,6 +27,8 @@
 
     <string name="cd_refresh_status">重新检查状态</string>
     <string name="cd_back">返回</string>
+    <string name="cd_eq_slot_menu">方案选项</string>
+    <string name="cd_eq_slot_add">添加方案</string>
     <string name="state_expanded">已展开</string>
     <string name="state_collapsed">已收起</string>
 
@@ -214,9 +216,17 @@
     <string name="eq_reset_title">要全部归零吗</string>
     <string name="eq_reset_body">所有增益和手动前级增益都会回到 0 dB，均衡器不再改变声音。频段会留在原处，但如果没有存成预设，现在的曲线将无法找回。</string>
 
+    <string name="eq_slot_flat">平直</string>
+    <string name="eq_slot_default">自定义 %1$d</string>
+    <string name="eq_slot_rename">重命名</string>
+    <string name="eq_slot_rename_title">方案名称</string>
+    <string name="eq_slot_duplicate">复制</string>
+    <string name="eq_slot_save_preset">保存为预设</string>
+    <string name="eq_slot_delete_title">要删除方案吗</string>
+    <string name="eq_slot_delete_body">删除“%1$s”。如果正在听的就是它，声音会回到平直。</string>
+
     <string name="eq_presets">预设</string>
-    <string name="eq_preset_empty">还没有保存任何预设</string>
-    <string name="eq_preset_save">保存当前设置</string>
+    <string name="eq_preset_empty">还没有保存任何预设。可以从正在使用的方案的菜单中保存。</string>
     <string name="eq_preset_save_title">预设名称</string>
     <string name="eq_preset_name">名称</string>
     <string name="eq_preset_apply">应用</string>
@@ -225,7 +235,7 @@
     <string name="eq_preset_delete_title">要删除预设吗</string>
     <string name="eq_preset_delete_body">删除“%1$s”。耳机上已经设置的内容保持不变。</string>
     <string name="eq_autoeq_import">读取 AutoEQ</string>
-    <string name="eq_autoeq_desc">读取 AutoEQ 的 ParametricEQ.txt 或 GraphicEQ.txt，并替换上面的设置。</string>
+    <string name="eq_autoeq_desc">读取 AutoEQ 的 ParametricEQ.txt 或 GraphicEQ.txt，并载入为新的方案。</string>
     <string name="eq_curve_desc">显示这些设置如何改变声音的曲线</string>
     <string name="eq_finder_title">找出合你口味的均衡器</string>
     <string name="eq_finder_entry_desc">盲听对比会按你的喜好塑造均衡器</string>

@@ -30,6 +30,8 @@
 
     <string name="cd_refresh_status">Sprawdź stan ponownie</string>
     <string name="cd_back">Wstecz</string>
+    <string name="cd_eq_slot_menu">Opcje slotu</string>
+    <string name="cd_eq_slot_add">Dodaj slot</string>
     <string name="state_expanded">Rozwinięte</string>
     <string name="state_collapsed">Zwinięte</string>
 
@@ -220,9 +222,17 @@
     <string name="eq_reset_title">Wyzerować wszystko?</string>
     <string name="eq_reset_body">Każde wzmocnienie i ręczny przedwzmacniacz wracają do 0 dB, a korektor przestaje zmieniać dźwięk. Pasma zostają na swoich miejscach, ale obecna krzywa przepadnie, jeśli nie została zapisana w ustawieniach własnych.</string>
 
+    <string name="eq_slot_flat">Neutralne</string>
+    <string name="eq_slot_default">Własne %1$d</string>
+    <string name="eq_slot_rename">Zmień nazwę</string>
+    <string name="eq_slot_rename_title">Nazwa slotu</string>
+    <string name="eq_slot_duplicate">Duplikuj</string>
+    <string name="eq_slot_save_preset">Zapisz jako ustawienie własne</string>
+    <string name="eq_slot_delete_title">Usunąć slot?</string>
+    <string name="eq_slot_delete_body">Usuwa „%1$s”. Jeśli właśnie go słuchasz, dźwięk wraca do ustawienia Neutralne.</string>
+
     <string name="eq_presets">Ustawienia własne</string>
-    <string name="eq_preset_empty">Nic jeszcze nie zapisano</string>
-    <string name="eq_preset_save">Zapisz te ustawienia</string>
+    <string name="eq_preset_empty">Nic jeszcze nie zapisano. Możesz zapisać ustawienie z menu slotu, którego używasz.</string>
     <string name="eq_preset_save_title">Nazwa ustawienia</string>
     <string name="eq_preset_name">Nazwa</string>
     <string name="eq_preset_apply">Zastosuj</string>
@@ -231,7 +241,7 @@
     <string name="eq_preset_delete_title">Usunąć ustawienie?</string>
     <string name="eq_preset_delete_body">Usuwa „%1$s”. To, co jest już ustawione w słuchawkach, zostaje bez zmian.</string>
     <string name="eq_autoeq_import">Wczytaj AutoEQ</string>
-    <string name="eq_autoeq_desc">Czyta plik ParametricEQ.txt albo GraphicEQ.txt z AutoEQ i zastępuje ustawienia powyżej.</string>
+    <string name="eq_autoeq_desc">Czyta plik ParametricEQ.txt albo GraphicEQ.txt z AutoEQ i wczytuje go jako nowy slot.</string>
     <string name="eq_curve_desc">Krzywa pokazująca, jak te ustawienia zmieniają dźwięk</string>
     <string name="eq_finder_title">Dobierz korektor do swojego gustu</string>
     <string name="eq_finder_entry_desc">Ślepe porównania słuchowe dopasowują korektor do Twojego gustu</string>

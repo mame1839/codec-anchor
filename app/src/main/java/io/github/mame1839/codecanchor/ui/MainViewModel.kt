@@ -32,6 +32,7 @@ import io.github.mame1839.codecanchor.core.AutoEqParser
 import io.github.mame1839.codecanchor.core.AutoEqResult
 import io.github.mame1839.codecanchor.core.CodecKeys
 import io.github.mame1839.codecanchor.core.DeviceProfile
+import io.github.mame1839.codecanchor.core.DeviceSlots
 import io.github.mame1839.codecanchor.core.DeviceStatus
 import io.github.mame1839.codecanchor.core.EqAvailability
 import io.github.mame1839.codecanchor.core.EqDelivery
@@ -570,6 +571,77 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         slotStore.save(next)
     }
 
+    fun slotsOf(mac: String): DeviceSlots = slots.of(mac)
+
+    /**
+     * スロットを選ぶ。
+     *
+     * ⚠️ **台帳を先に書いてから [updateEq] を呼ぶ。**逆順だと write-through が新しい曲線を
+     * 「まだ選択中の古いスロット」へ写して上書きする ([EqSlotBook.reconciledWith] の KDoc)。
+     * **選択を動かす操作 ([deleteSlot] / [landInNewSlot]) はすべてこの順番。**
+     * `EqSlotSelectionTest.switchingSlotsLeavesTheCurveYouCameFromAlone` が見張っている。
+     */
+    fun selectSlot(mac: String, id: String) {
+        val device = slots.of(mac)
+        if (device.active == id) return
+        // 知らない id には倒さない。倒すと active が宙に浮き、和解が勝手に新しいスロットを立てる。
+        val target = if (id == EqSlotBook.FLAT_ID) null else device.slot(id) ?: return
+        saveSlots(slots.mapDevice(mac) { it.copy(active = id) })
+        applySlotCurve(mac, target?.eq)
+    }
+
+    /** 「+」。フラットを種にした新しいスロットを作って選ぶ。 */
+    fun addSlot(mac: String) {
+        landInNewSlot(mac, flatEq(config.profileFor(mac)?.eq ?: EqSettings(enabled = true)))
+    }
+
+    /**
+     * 複製。**名前は引き継がない** (未命名 = 表示は次の「カスタム n」)。
+     * 「〜のコピー」を作ると、訳文がデータに焼かれて端末の言語を替えたときに嘘になる。
+     */
+    fun duplicateSlot(mac: String, id: String) {
+        val slot = slots.of(mac).slot(id) ?: return
+        landInNewSlot(mac, slot.eq)
+    }
+
+    /** 空文字は未命名に戻す (表示は既定名へ)。名前は音に関わらないので [updateEq] は通さない。 */
+    fun renameSlot(mac: String, id: String, name: String) {
+        saveSlots(slots.mapDevice(mac) { it.renamed(id, name.trim()) })
+    }
+
+    /** 選択中を消したらフラットへ戻る ([DeviceSlots.without])。鳴っている音もそこへ合わせる。 */
+    fun deleteSlot(mac: String, id: String) {
+        val device = slots.of(mac)
+        if (device.slot(id) == null) return
+        val wasActive = device.active == id
+        saveSlots(slots.mapDevice(mac) { it.without(id) })
+        if (wasActive) applySlotCurve(mac, null)
+    }
+
+    /**
+     * 外から来た曲線を**新しいスロットに着地**させて選ぶ。プリセットの適用・AutoEQ の取り込み・
+     * 「+」が通る唯一の道 (`llmdocs/eq-slot-design.md` §1「既存スロットを黙って上書きする経路を
+     * 作らない」)。
+     */
+    private fun landInNewSlot(mac: String, eq: EqSettings, name: String = "") {
+        val curve = slotCurve(eq)
+        saveSlots(slots.mapDevice(mac) { it.withNewSlot(curve, name) })
+        updateEq(mac) { curve }
+    }
+
+    /** [eq] が null ならフラット。台帳を書き終えた後にだけ呼ぶこと (上の ⚠️)。 */
+    private fun applySlotCurve(mac: String, eq: EqSettings?) {
+        updateEq(mac) { current -> eq?.let(::slotCurve) ?: flatEq(current) }
+    }
+
+    /**
+     * スロットの中身として扱ってよい形にする。**主電源は必ず入れる** — オフとスロットは別の層
+     * (仕様 §1) なので、スロットを選んだだけでイコライザーが切れてはいけない。
+     * `enabled = false` のプリセットを読み込んだときにだけ効く。
+     */
+    private fun slotCurve(eq: EqSettings): EqSettings =
+        if (eq.enabled) eq else eq.copy(enabled = true)
+
     /**
      * EQ の設定を変える。**入口はここ 1 つ** (スライダー・プリセット・AutoEQ の取り込みが全部通る)。
      *
@@ -601,9 +673,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         presetStore.save(presets)
     }
 
+    /**
+     * プリセットの「適用」= **新しいスロットとして読み込む。**選択中のスロットは残るので、
+     * 試した後に元の曲線へ 1 タップで戻れる。
+     *
+     * 名前はプリセットの名前をそのまま引き継ぐ — ユーザが付けた名前なので、
+     * 「既定名をデータに焼かない」規則には触れない。
+     */
     fun applyPreset(mac: String, name: String) {
         val preset = presets.presets.firstOrNull { it.name == name } ?: return
-        updateEq(mac) { preset.settings }
+        landInNewSlot(mac, preset.settings, preset.name)
     }
 
     fun confirmEqRounding() {
@@ -713,7 +792,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val result = withContext(Dispatchers.Default) { AutoEqParser.parse(text, bandCount) }
             when (result) {
                 is AutoEqResult.Ok -> {
-                    updateEq(mac) { result.settings }
+                    // 取り込んだ曲線も新しいスロットに着地する (既存の作りかけを潰さない)。
+                    landInNewSlot(mac, result.settings)
                     pendingMessage = R.string.msg_autoeq_imported
                 }
 

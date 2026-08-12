@@ -28,6 +28,8 @@
 
     <string name="cd_refresh_status">Durumu yeniden kontrol et</string>
     <string name="cd_back">Geri</string>
+    <string name="cd_eq_slot_menu">Yuva seçenekleri</string>
+    <string name="cd_eq_slot_add">Yuva ekle</string>
     <string name="state_expanded">Genişletildi</string>
     <string name="state_collapsed">Daraltıldı</string>
 
@@ -216,9 +218,17 @@
     <string name="eq_reset_title">Tümü sıfırlansın mı?</string>
     <string name="eq_reset_body">Tüm kazançlar ve elle ayarlanan ön yükseltme 0 dB\'ye döner, ekolayzır artık sesi değiştirmez. Bantlar yerlerinde kalır ama şu anki eğri, hazır ayar olarak kaydedilmediyse geri gelmez.</string>
 
+    <string name="eq_slot_flat">Düz</string>
+    <string name="eq_slot_default">Özel %1$d</string>
+    <string name="eq_slot_rename">Yeniden adlandır</string>
+    <string name="eq_slot_rename_title">Yuvanın adı</string>
+    <string name="eq_slot_duplicate">Çoğalt</string>
+    <string name="eq_slot_save_preset">Hazır ayar olarak kaydet</string>
+    <string name="eq_slot_delete_title">Yuva silinsin mi?</string>
+    <string name="eq_slot_delete_body">“%1$s” silinir. Şu anda onu dinliyorsanız, ses Düz ayarına döner.</string>
+
     <string name="eq_presets">Hazır ayarlar</string>
-    <string name="eq_preset_empty">Henüz kaydedilmiş bir şey yok</string>
-    <string name="eq_preset_save">Bu ayarları kaydet</string>
+    <string name="eq_preset_empty">Henüz kaydedilmiş bir şey yok. Kullandığınız yuvanın menüsünden kaydedebilirsiniz.</string>
     <string name="eq_preset_save_title">Hazır ayarın adı</string>
     <string name="eq_preset_name">Ad</string>
     <string name="eq_preset_apply">Uygula</string>
@@ -227,7 +237,7 @@
     <string name="eq_preset_delete_title">Hazır ayar silinsin mi?</string>
     <string name="eq_preset_delete_body">“%1$s” silinir. Kulaklığınızda hâlihazırda ayarlı olan şeyler olduğu gibi kalır.</string>
     <string name="eq_autoeq_import">AutoEQ al</string>
-    <string name="eq_autoeq_desc">AutoEQ\'nun ParametricEQ.txt veya GraphicEQ.txt dosyasını okur ve yukarıdaki ayarların yerine koyar.</string>
+    <string name="eq_autoeq_desc">AutoEQ\'nun ParametricEQ.txt veya GraphicEQ.txt dosyasını okur ve yeni bir yuvaya yükler.</string>
     <string name="eq_curve_desc">Bu ayarların sesi nasıl değiştirdiğini gösteren eğri</string>
     <string name="eq_finder_title">Zevkine uygun ekolayzırı bul</string>
     <string name="eq_finder_entry_desc">Kör dinleme karşılaştırmaları ekolayzırı zevkine göre biçimlendirir</string>
