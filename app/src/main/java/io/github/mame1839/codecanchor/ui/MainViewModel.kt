@@ -84,6 +84,17 @@ data class EqParamsReport(
     val result: EqParamsResult,
 )
 
+/**
+ * 探索セッション (好みの EQ を探す) が一時的に鳴らす設定。**永続化しない。**
+ *
+ * [mac] は正規化済み (`EqDevices.normalizeMac`) の対象機器。機器を持つのは、押す直前に
+ * 枠の持ち主が入れ替わっていたとき、別のイヤホンへプレビューの曲線を掛けないため。
+ *
+ * `EqPreview` (EqCurve.kt) はスライダーのドラッグ中の**絵**の受け皿で別物 — あちらは描画にだけ
+ * 効き、こちらは共有メモリへ押す値にだけ効く。
+ */
+data class EqSessionPreview(val mac: String, val settings: EqSettings)
+
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val context: Context = application.applicationContext
@@ -247,6 +258,29 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
+     * 探索セッション中だけ永続設定の代わりに押す値。null なら普段どおり。
+     *
+     * `updateEq` を通さないのは、あちらが保存とフックへの送信まで一続きだから — 試行のたびに
+     * 通すと、聴き比べの候補が本物の設定として保存されて残る。既存の押し直し (前面復帰・
+     * 出口の変化・登録直後) は [eqSettingsToPush] 経由でこの値を勝手に拾うので、
+     * セッション側での再送は要らない。
+     */
+    // private set にしないのは JVM の都合 — プロパティの setter が setEqPreview という同じ
+    // JVM 名を生成して、下の関数と衝突する。
+    private var eqPreviewState by mutableStateOf<EqSessionPreview?>(null)
+    val eqPreview: EqSessionPreview? get() = eqPreviewState
+
+    fun setEqPreview(p: EqSessionPreview?) {
+        eqPreviewState = p
+        pushEqParams()
+    }
+
+    /** 枠の持ち主 [target] へ書く設定。プレビューは相手が一致するときだけ永続設定に勝つ。 */
+    internal fun eqSettingsToPush(target: String): EqSettings =
+        eqPreview?.takeIf { it.mac == target }?.settings
+            ?: (config.profileFor(target)?.eq ?: EqSettings())
+
+    /**
      * 枠の持ち主の設定を共有メモリへ書く。**開いている画面とは無関係** — 共有メモリは常に
      * 「いま鳴っている機器」の設定を映す。
      *
@@ -273,7 +307,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 // 設定を作っていない機器にも書く。共有メモリには前の機器の値が残っているので、
                 // 「何もしない」は「前の曲線が掛かったまま」を意味する (params[] はインスタンスの
                 // 死を越えて残る)。既定は EQ オフなので、書けば素通しに戻る。
-                val settings = config.profileFor(target)?.eq ?: EqSettings()
+                val settings = eqSettingsToPush(target)
                 val result = withContext(Dispatchers.IO) { EqParams.apply(nativeLibraryDir, settings) }
                 eqParamsReport = EqParamsReport(mac = target, result = result)
             } while (eqPushQueued)

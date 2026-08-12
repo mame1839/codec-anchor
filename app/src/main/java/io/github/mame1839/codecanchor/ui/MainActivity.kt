@@ -138,8 +138,8 @@ private fun CodecAnchorApp(vm: MainViewModel = viewModel()) {
  * ここ。`HomeScreen` の中に持って中で `BackHandler` を足すと、詳細画面を開いている間も
  * 生き残って 2 つになる。
  *
- * 戻るの筋道は 4 段:
- * `音響処理 → 機器の詳細 → 設定 / 状態タブ → 機器タブ → アプリを抜ける`
+ * 戻るの筋道は 5 段:
+ * `EQ 探索 → 音響処理 → 機器の詳細 → 設定 / 状態タブ → 機器タブ → アプリを抜ける`
  *
  * 最後の段は `enabled = false` で系へ渡す (アプリが終わる)。**消してしまわないこと** —
  * `BackHandler { }` を無条件に置くと、機器タブで戻るが効かないアプリになる。
@@ -158,6 +158,7 @@ internal fun AppNavigation(
     var tab by rememberSaveable { mutableStateOf(HomeTab.DEVICES) }
     var selectedMac by rememberSaveable { mutableStateOf<String?>(null) }
     var eqOpen by rememberSaveable { mutableStateOf(false) }
+    var eqFinderOpen by rememberSaveable { mutableStateOf(false) }
 
     val mac = selectedMac
     when {
@@ -178,6 +179,18 @@ internal fun AppNavigation(
             )
         }
 
+        // eqOpen より先に見る。EQ 探索は音響処理の画面からしか開かないので、
+        // この枝が立っているあいだ eqOpen も必ず立っている (戻ると音響処理へ返る)。
+        eqFinderOpen -> {
+            BackHandler { eqFinderOpen = false }
+            EqFinderScreen(
+                vm = vm,
+                mac = mac,
+                snackbarHostState = snackbarHostState,
+                onBack = { eqFinderOpen = false },
+            )
+        }
+
         eqOpen -> {
             BackHandler { eqOpen = false }
             EqScreen(
@@ -185,6 +198,7 @@ internal fun AppNavigation(
                 mac = mac,
                 snackbarHostState = snackbarHostState,
                 onBack = { eqOpen = false },
+                onOpenFinder = { eqFinderOpen = true },
             )
         }
 

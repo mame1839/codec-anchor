@@ -100,6 +100,7 @@ fun EqScreen(
     mac: String,
     snackbarHostState: SnackbarHostState,
     onBack: () -> Unit,
+    onOpenFinder: () -> Unit,
 ) {
     val profile = vm.config.profileFor(mac)
     // 機器の設定を消したときは、この画面が組まれたまま参照先だけが消える。詳細画面と同じ形で戻す。
@@ -134,6 +135,7 @@ fun EqScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             EqSection(vm = vm, mac = mac, profile = profile)
+            EqFinderEntryCard(vm = vm, mac = mac, onOpen = onOpenFinder)
         }
     }
 }
