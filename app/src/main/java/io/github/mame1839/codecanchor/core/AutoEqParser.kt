@@ -103,17 +103,19 @@ object AutoEqParser {
         }.sortedBy { it.first }
         if (points.isEmpty()) return AutoEqResult.Error(AutoEqResult.Reason.NOT_AUTOEQ)
 
-        val freqs = EqSolver.centerFrequencies(bandCount)
-        val target = DoubleArray(freqs.size) { interpolate(points, freqs[it].toDouble()) }
-
-        // peaking は DC と Nyquist で必ず 0 dB になるので、広帯域のオフセットを作れない。
+        // 取り込みは中心サンプルではなく曲線全体へのフィット (EqSolver.fitCurve)。
+        // 中心の値だけを合わせる (withGraphicTarget の契約) と中心の間で曲線から離れる —
+        // DUNU Titan S の 127 点で実測 2.2 dB。フィットなら 20 Hz〜20 kHz で 1.5 dB /
+        // 10 kHz 以下 0.4 dB (AutoEqImportFitTest が上限を固定)。
         // AutoEQ の目標カーブは全体が下にずれている (実例で平均 -6.89 dB) ので、
-        // そのまま当てると最大誤差 9〜12 dB、バンドゲインが 28 dB まで暴れる。
-        // オフセットはプリアンプに分離して、形だけをバンドに当てる。
-        val offset = target.average()
-        for (i in target.indices) target[i] -= offset
-
-        val bands = EqSolver.solveBands(target, freqs, EqSolver.defaultQ(bandCount))
+        // フィットは広帯域オフセットを分離して返す。peaking では作れない成分 (DC と
+        // Nyquist で必ず 0 dB) なので、プリアンプに移す。
+        val freqs = EqSolver.centerFrequencies(bandCount)
+        val fit = EqSolver.fitCurve(
+            { hz -> interpolate(points, hz) },
+            freqs,
+            EqSolver.defaultQ(bandCount),
+        )
         // GraphicEQ.txt はプリアンプが曲線に焼き込んであるので、自動計算を掛けない。
         // 分離したオフセットだけをプリアンプに移す。
         return AutoEqResult.Ok(
@@ -121,9 +123,10 @@ object AutoEqParser {
                 enabled = true,
                 mode = EqMode.GRAPHIC,
                 bandCount = bandCount,
-                bands = bands,
+                bands = fit.bands,
                 preampAuto = false,
-                preampDb10 = (offset * EqUnits.GAIN_SCALE).toInt().coerceIn(EqSettings.PREAMP_RANGE),
+                preampDb10 = Math.round(fit.offsetDb * EqUnits.GAIN_SCALE).toInt()
+                    .coerceIn(EqSettings.PREAMP_RANGE),
             ),
         )
     }
