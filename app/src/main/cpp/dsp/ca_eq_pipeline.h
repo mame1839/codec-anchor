@@ -169,6 +169,12 @@ public:
     uint32_t curveRejected() const { return curve_rejected_; }
     // FIR の作業領域を持ってよいインスタンスか (setFirCapable の現在値)。診断が読む。
     bool     firCapable() const { return fir_capable_; }
+    // **いま採用している曲線で設計器が失敗して、再挑戦を封じている状態か。**
+    // `designFailures()` は累積で減らないので「いま失敗しているか」には使えない —
+    // 使うと、一度失敗した後は新しい曲線を温めている最中も永久に「設計器が止まった」と
+    // 出続ける (検分で実測。失敗パターン 3 の、値の側で起きた版)。
+    // **こちらは新しい曲線が来れば解除される現在値。**
+    bool     curveFailed() const { return curve_failed_; }
     uint32_t scrubbedSamples() const { return kernel_.scrubbedSamples(); }
     uint64_t maxSliceNs() const { return max_slice_ns_; }
     uint32_t curveGeneration() const { return active_gen_; }  // いま鳴っている曲線の世代

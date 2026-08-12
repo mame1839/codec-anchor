@@ -66,6 +66,9 @@ const char* fir_why_text(caeq::FirWhy w) {
     switch (w) {
     case caeq::FirWhy::kRunning:      return "";
     case caeq::FirWhy::kNotRequested: return "高精度が要求されていない (標準モード)";
+    case caeq::FirWhy::kNotAddressable:
+        return "このインスタンスには設定を宛てられない (DEVICE 経由ではない = 退路経路)。"
+               "作業領域を持たないのは設計どおりで、確保の失敗ではない";
     case caeq::FirWhy::kNoArena:
         return "作業領域が無い — このインスタンスは 3ch 以上 (spatializer 等) か確保に失敗";
     case caeq::FirWhy::kBlockUnfit:

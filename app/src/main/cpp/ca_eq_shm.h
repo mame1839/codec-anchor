@@ -34,8 +34,16 @@
  *   - **版 3 の .so が版 4 のファイル (19584 B) を見たとき** … 大きさは足りるので map は
  *     成功する。統計の枠は 128 B 刻みで書くので版 4 の枠 0〜3 の領域を塗り潰し、
  *     パラメータは 1152 B から 576 B 刻みで読むので**統計の領域をパラメータとして読む。**
- *     値は全部検査を通るので発散も爆音も起きず、素通しのまま `rejected` が増える。
- *     ただし header の `version` は 3 のままなので、caeqset / caeqstat 側で必ず気づける。
+ *     そこは版 4 の `slots[4]` の先頭で、`seq` に読むのが `in_use`、`generation` に読むのが
+ *     `seq` になる。**結果として何も起きない**:
+ *       - `slots[4]` が使用中なら `in_use = CA_SHM_MAGIC` で**奇数**なので、seqlock が
+ *         「書き込み中」と見て `paramsRead` が 3 回とも失敗する → **`rejected` も増えない**
+ *       - 未使用なら `generation` に 0 を読んで早期 return → やはり何も起きない
+ *     素通しのまま、**どのカウンタも動かない。`version` が 3 のままなのが唯一の手掛かり。**
+ *
+ *     ⚠️ **ここは紙の上の推論で、版 3 のバイナリでも実機でも未確認**
+ *     (signature の実機確認は段 4 の項目)。**「rejected が増える」と書いていた版があり、
+ *     それだと現地で探すものを間違える** — 増えないカウンタを待つことになる。
  */
 #define CA_SHM_VERSION 4u
 #define CA_SHM_SLOTS  8
@@ -119,7 +127,11 @@ typedef struct ca_slot_s {
     uint32_t fir_design_failures;  /* 設計器が非有限で止まった回数 */
     uint32_t fir_unfit_size;       /* ブロック長が大きさで不適 (5-smooth でない等) */
     uint32_t fir_unfit_budget;     /* ブロック長が予算で不適 */
-    uint32_t fir_curve_rejected;   /* 曲線の検査に落ちた回数 (EqPipeline 側の最後の砦) */
+    /* 曲線の検査に落ちた回数。⚠️ **本番では常に 0。**枠の更新を丸ごと採るか丸ごと捨てるかを
+     * 決めるために、読み手 (dsp/ca_eq_poll.h) が曲線の検査を先に通すので、ここまで来ない。
+     * **曲線が原因の棄却は param_rejected に出る。**この欄が 0 でも曲線の棄却は除外できない。
+     * カウンタが指しているのは poll を通らない呼び手 (ハーネス) 用の最後の砦のほう。 */
+    uint32_t fir_curve_rejected;
     uint32_t fir_curve_gen;        /* **いま鳴っている**曲線の世代。0 = FIR 未稼働 */
     uint32_t fir_taps;
     uint32_t fir_m;                /* ケプストラムの FFT 長 */
@@ -163,6 +175,10 @@ CA_STATIC_ASSERT(offsetof(ca_slot_t, fir_state) == 128,
  * caeq::sessionCanBeAddressed。**退路経路 (<postprocess> / session 0) のインスタンスは
  * ここが落ちる**ので、そこで高精度が効かないことの理由がこのビットで読める。 */
 #define CA_FIR_F_ADDRESSABLE 0x8u
+/* **いま採用している曲線で設計器が失敗している** (新しい曲線が来れば解除される現在値)。
+ * ⚠️ 理由づけに fir_design_failures (累積) を使わないこと — 減らないので、一度失敗すると
+ * 新しい曲線を温めている最中も永久に「設計器が止まった」と出続ける。 */
+#define CA_FIR_F_CURVE_FAILED 0x10u
 
 /* ---------------------------------------------------------------------------
  * パラメータの領域。**向きが上の統計と逆で、書き手が外 (設定を持っている側)、

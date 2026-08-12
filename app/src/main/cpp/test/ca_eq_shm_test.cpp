@@ -156,6 +156,21 @@ uint64_t fakeClock() {
     return t;
 }
 
+// 統計の枠を 1 つ埋める (`.so` の ca_stats_attach と同じ顔ぶれ)。
+void putStatSlot(ca_shm_t* m, uint32_t i, uint64_t pid, int32_t session) {
+    ca_slot_t& s = m->slots[i];
+    s.in_use = CA_SHM_MAGIC;
+    s.pid = pid;
+    s.session_id = session;
+    s.param_slot = i;
+    s.sample_rate = 48000;
+}
+
+// 「そのプロセスは生きている」と答えるだけの差し込み。
+struct FakeAlive {
+    static bool fn(uint64_t pid, void*) { return pid != 0; }
+};
+
 }  // namespace
 
 void runShmSections(Report& r) {
@@ -502,12 +517,18 @@ void runShmSections(Report& r) {
                 "要求されていなければ「標準モード」(異常ではない)");
 
         // 以降は「1 つ手前まで満たしたうえで次だけ欠けている」形にして、順序を固定する。
+        // **`fir_design_failures` に値を入れておく** — 述語がこの累積カウンタを見ていたら、
+        // どの行でも「設計器が止まった」に化けるので、表全体が同時に落ちる。
         s.fir_flags = CA_FIR_F_REQUESTED;
-        s.fir_design_failures = 3;   // **より下の理由を先に言わないこと**の見張り
+        s.fir_design_failures = 3;
         s.fir_fill = 0;
         s.fir_partitions = 9;
+        r.check(caeq::firWhy(s, &q) == caeq::FirWhy::kNotAddressable,
+                "宛てられない経路なら、作業領域や設計失敗より先に「宛てられない」");
+
+        s.fir_flags |= CA_FIR_F_ADDRESSABLE;
         r.check(caeq::firWhy(s, &q) == caeq::FirWhy::kNoArena,
-                "作業領域が無ければ、設計失敗や温め中より先に「作業領域が無い」");
+                "宛てられるのに作業領域が無ければ「作業領域が無い」");
 
         s.fir_flags |= CA_FIR_F_ARENA;
         r.check(caeq::firWhy(s, &q) == caeq::FirWhy::kBlockUnfit,
@@ -518,11 +539,17 @@ void runShmSections(Report& r) {
                 "曲線が無ければ、設計失敗より先に「曲線が届いていない」");
 
         q.curve_gen = 5;
+        s.fir_flags |= CA_FIR_F_CURVE_FAILED;
         r.check(caeq::firWhy(s, &q) == caeq::FirWhy::kDesignFailed,
-                "曲線があって設計器が止まっていれば「設計器が止まった」");
+                "曲線があって**いま**設計器が止まっていれば「設計器が止まった」");
 
-        s.fir_design_failures = 0;
-        r.check(caeq::firWhy(s, &q) == caeq::FirWhy::kWarming, "温め中なら「温めている最中」");
+        // **累積カウンタは据え置いたまま、現在値の旗だけ落とす。**述語が
+        // `fir_design_failures > 0` を見ていたら、ここが永久ラッチして落ちる。
+        s.fir_flags &= ~CA_FIR_F_CURVE_FAILED;
+        r.check(caeq::firWhy(s, &q) == caeq::FirWhy::kWarming &&
+                    s.fir_design_failures == 3,
+                "累積 %u 回の失敗が残っていても、いま失敗していなければ「温めている最中」",
+                s.fir_design_failures);
 
         s.fir_fill = s.fir_partitions;
         r.check(caeq::firWhy(s, &q) == caeq::FirWhy::kAlmost, "全部揃っていれば「まだ乗り移る前」");
@@ -666,6 +693,251 @@ void runShmSections(Report& r) {
                     pl.designTaps() == caeq::firTapsFor(44100.0),
                 "44.1 kHz へ変えても、枠が変わらないまま FIR が戻る (taps=%d)",
                 pl.designTaps());
+        delete w;
+    }
+
+    // --- 10c. 「設計器が止まった」が永久にラッチしないこと --------------------
+    //
+    // ⚠️ **累積カウンタ (designFailures) を現在状態の述語に使うと、一度失敗した後は
+    // 新しい曲線を温めている最中もずっと「設計器が止まった」と嘘を言う。**
+    // 検分が製品経路で実測した形をそのまま再現する。**表への代入で作った状態遷移では
+    // これを見られない** — 累積カウンタが 0 に戻る遷移は製品では起こせないので、
+    // ここは必ず pipeline を実際に回して見ること。
+    {
+        ShmWithCanary* w = newCanaryShm();
+        caeq::EqPipeline pl;
+        pl.configure(48000.0, 2, caeq::Structure::kTdf2);
+        pl.setClock(&fakeClock);
+        pl.warmUp();
+        caeq::PollState st;
+        Driver drv(pl, 960, 2);
+
+        // 設計器を失敗させる。**検査を通る曲線で失敗させる**必要があるので、
+        // ハーネス専用の入口から直接壊す (poll の検査は迂回できない)。
+        writeSlot(&w->m.params[0], 1u, 1u, good.data(),
+                  CA_EQ_FLAG_ENABLED | CA_EQ_FLAG_HIGH_PRECISION, -2.0);
+        caeq::pollSlot(&w->m.params[0], &st, &pl, true);
+        drv.step();   // setup 構築 → designer 起動
+        pl.designerForTest().injectNonFinite();
+        for (int b = 0; b < 30 && pl.designFailures() == 0; b++) drv.step();
+        r.check(pl.designFailures() > 0 && pl.curveFailed(),
+                "設計器を失敗させた (designFailures=%u curveFailed=%d)", pl.designFailures(),
+                pl.curveFailed() ? 1 : 0);
+        {
+            ca_slot_t s{};
+            caeq::firStatsOf(st, pl, &s);
+            r.check(caeq::firWhy(s, &w->m.params[0]) == caeq::FirWhy::kDesignFailed,
+                    "失敗している最中は「設計器が止まった」");
+        }
+
+        // **新しい曲線を送る。**ここから先は温めているだけで、失敗はしていない。
+        const std::vector<float> other = tiltCurve(3.0f, -3.0f);
+        writeSlot(&w->m.params[0], 2u, 2u, other.data(),
+                  CA_EQ_FLAG_ENABLED | CA_EQ_FLAG_HIGH_PRECISION, -2.0);
+        caeq::pollSlot(&w->m.params[0], &st, &pl, true);
+        bool lied = false;
+        int blocks = 0;
+        for (; blocks < 60 && pl.firState() != caeq::EqPipeline::FirState::kFir; blocks++) {
+            caeq::pollSlot(&w->m.params[0], &st, &pl, true);
+            drv.step();
+            ca_slot_t s{};
+            caeq::firStatsOf(st, pl, &s);
+            if (caeq::firWhy(s, &w->m.params[0]) == caeq::FirWhy::kDesignFailed) lied = true;
+        }
+        r.check(!lied,
+                "新しい曲線を温めている %d ブロックのあいだ、一度も「設計器が止まった」と"
+                "言わない (designFailures は %u のまま累積している)",
+                blocks, pl.designFailures());
+        r.check(pl.firState() == caeq::EqPipeline::FirState::kFir && !pl.curveFailed(),
+                "新しい曲線で FIR まで到達し、curveFailed が解除されている");
+        delete w;
+    }
+
+    // --- 10d. setFirCapable — 宿主になれないインスタンスは作業領域を持たない ----
+    //
+    // FIR が乗るのは書き手が設定を宛てられる枠だけ。そうでないインスタンスが 791 KB を
+    // 一度も使わずに抱えるのは、コードの意味としても矛盾している。
+    // ⚠️ **釘の先頭は順序非依存。**段 1 の setFadeMillis は「configure の後に呼ぶ」ことが
+    // 釘の強さを決めていて、検分が気づくまで誰にも見えなかった。同じ型を作らない。
+    {
+        // (1) 順序非依存: capable→configure と configure→capable で arena の状態が同じ。
+        size_t before_bytes = 0, after_bytes = 0;
+        bool before_avail = false, after_avail = false;
+        {
+            caeq::EqPipeline a;
+            a.setFirCapable(true);
+            a.configure(48000.0, 2, caeq::Structure::kTdf2);
+            before_avail = a.firAvailable();
+            before_bytes = a.arenaBytes();
+        }
+        {
+            caeq::EqPipeline b;
+            b.configure(48000.0, 2, caeq::Structure::kTdf2);
+            b.setFirCapable(true);
+            after_avail = b.firAvailable();
+            after_bytes = b.arenaBytes();
+        }
+        r.check(before_avail && after_avail && before_bytes == after_bytes &&
+                    before_bytes > 0,
+                "true の順序に依存しない (先に呼んでも後で呼んでも %zu KB)",
+                before_bytes / 1024);
+
+        {   // false 側も同じ。
+            caeq::EqPipeline a, b;
+            a.setFirCapable(false);
+            a.configure(48000.0, 2, caeq::Structure::kTdf2);
+            b.configure(48000.0, 2, caeq::Structure::kTdf2);
+            b.setFirCapable(false);
+            r.check(!a.firAvailable() && a.arenaBytes() == 0 && !b.firAvailable() &&
+                        b.arenaBytes() == 0,
+                    "false の順序にも依存しない (どちらも作業領域なし)");
+        }
+
+        // (2) 既定は true — setter を一度も呼ばなければ今までどおり。
+        {
+            caeq::EqPipeline d;
+            d.configure(48000.0, 2, caeq::Structure::kTdf2);
+            r.check(d.firCapable() && d.firAvailable(),
+                    "既定は true — 呼び忘れても高精度は死なない (無駄なだけ)");
+        }
+
+        // (3) capable=false のとき、出力が素の Eq とビット同一。
+        {
+            caeq::EqPipeline pl;
+            pl.setFirCapable(false);
+            pl.configure(48000.0, 2, caeq::Structure::kTdf2);
+            caeq::Eq ref;
+            ref.configure(48000.0, 2, caeq::Structure::kTdf2);
+            caeq::Params p;
+            p.band_count = 1;
+            p.preamp_db  = -2.0;
+            p.bands[0] = caeq::Band{caeq::BandType::kPeaking, 1000.0, 1.0, 6.0};
+            pl.snapParams(p);
+            ref.snapParams(p);
+            pl.setActive(true);
+            ref.setActive(true);
+            pl.setFirEnabled(true);
+            const std::vector<float> curve = tiltCurve(-6.0f, 6.0f);
+            pl.setCurve(curve.data(), 1);
+
+            catest::Rng rng(99);
+            std::vector<float> in(1920), out_a(1920), out_b(1920);
+            bool same = true;
+            for (int b = 0; b < 20 && same; b++) {
+                for (size_t i = 0; i < in.size(); i++) {
+                    in[i] = static_cast<float>(0.2 * rng.uniform());
+                }
+                pl.process(in.data(), out_a.data(), 960, false);
+                ref.process(in.data(), out_b.data(), 960, false);
+                for (size_t i = 0; i < in.size(); i++) {
+                    if (out_a[i] != out_b[i]) same = false;
+                }
+            }
+            r.check(same && !pl.firAvailable() &&
+                        pl.firState() == caeq::EqPipeline::FirState::kBiquad,
+                    "capable=false なら高精度を頼まれても素の Eq とビット同一 (FIR 経路が"
+                    "音に影響しない)");
+            r.check(pl.rebuilds() == 0 && pl.fallbacks() == 0 && pl.unfitSizeCount() == 0,
+                    "capable=false では設計も落下も起きない (カウンタが全部 0)");
+        }
+
+        // (4) true→true が鳴っている FIR を畳まない。**SET_PARAM で毎回撃つ形になる。**
+        {
+            ShmWithCanary* w = newCanaryShm();
+            caeq::EqPipeline pl;
+            pl.configure(48000.0, 2, caeq::Structure::kTdf2);
+            pl.setClock(&fakeClock);
+            pl.warmUp();
+            caeq::PollState st;
+            Driver drv(pl, 960, 2);
+            writeSlot(&w->m.params[0], 1u, 1u, good.data(),
+                      CA_EQ_FLAG_ENABLED | CA_EQ_FLAG_HIGH_PRECISION, -2.0);
+            for (int b = 0; b < 60 && pl.firState() != caeq::EqPipeline::FirState::kFir; b++) {
+                caeq::pollSlot(&w->m.params[0], &st, &pl, true);
+                drv.step();
+            }
+            const uint32_t gen = pl.curveGeneration();
+            const int fill = pl.fdlFill();
+            const uint32_t fb = pl.fallbacks();
+            const uint32_t rb = pl.rebuilds();
+            std::vector<float> in(1920), out_a(1920), out_b(1920);
+            catest::Rng rng(5);
+            for (size_t i = 0; i < in.size(); i++) in[i] = static_cast<float>(0.2 * rng.uniform());
+            for (int k = 0; k < 5; k++) pl.setFirCapable(true);   // 何度撃っても no-op
+            pl.process(in.data(), out_a.data(), 960, false);
+            r.check(pl.firState() == caeq::EqPipeline::FirState::kFir &&
+                        pl.curveGeneration() == gen && pl.fdlFill() == fill &&
+                        pl.fallbacks() == fb && pl.rebuilds() == rb,
+                    "true→true を 5 回撃っても鳴っている FIR が畳まれない");
+            delete w;
+        }
+
+        // (5) false→true が configure を待たずに確保する (同じ fs/ch のまま)。
+        //     configure は同じ fs/ch なら冪等に return するので、setter 側で確保しないと
+        //     **次の configure が来るまで永久に確保されない。**
+        {
+            caeq::EqPipeline pl;
+            pl.setFirCapable(false);
+            pl.configure(48000.0, 2, caeq::Structure::kTdf2);
+            r.check(!pl.firAvailable(), "false のあいだは作業領域なし");
+            pl.setFirCapable(true);
+            r.check(pl.firAvailable() && pl.arenaBytes() > 0,
+                    "false→true で、configure を挟まずにその場で確保する (%zu KB)",
+                    pl.arenaBytes() / 1024);
+            // 確保しただけで FIR は始まらない (許可であって要求ではない)。
+            r.check(pl.firState() == caeq::EqPipeline::FirState::kBiquad && pl.rebuilds() == 0,
+                    "確保しただけでは FIR は始まらない (許可であって要求ではない)");
+        }
+
+        // (6) true→false が鳴っている最中でも落ちない。**落下には数えない。**
+        {
+            ShmWithCanary* w = newCanaryShm();
+            caeq::EqPipeline pl;
+            pl.configure(48000.0, 2, caeq::Structure::kTdf2);
+            pl.setClock(&fakeClock);
+            pl.warmUp();
+            caeq::PollState st;
+            Driver drv(pl, 960, 2);
+            writeSlot(&w->m.params[0], 1u, 1u, good.data(),
+                      CA_EQ_FLAG_ENABLED | CA_EQ_FLAG_HIGH_PRECISION, -2.0);
+            for (int b = 0; b < 60 && pl.firState() != caeq::EqPipeline::FirState::kFir; b++) {
+                caeq::pollSlot(&w->m.params[0], &st, &pl, true);
+                drv.step();
+            }
+            const uint32_t fb = pl.fallbacks();
+            const uint32_t mo = pl.modeOffs();
+            pl.setFirCapable(false);
+            r.check(!pl.firAvailable() && pl.arenaBytes() == 0 &&
+                        pl.firState() == caeq::EqPipeline::FirState::kBiquad,
+                    "鳴っている最中に false にしても作業領域が解放されて biquad へ戻る");
+            r.check(pl.fallbacks() == fb && pl.modeOffs() == mo,
+                    "落下にもモード切にも数えない (枠の宛先が動いただけ)");
+            bool finite = true;
+            for (int b = 0; b < 10; b++) {
+                drv.step();
+                for (float v : drv.out) {
+                    if (!std::isfinite(v)) finite = false;
+                }
+            }
+            r.check(finite, "解放したあとも出力が有限 (解放済みの領域を触っていない)");
+            delete w;
+        }
+    }
+
+    // --- 10e. 書き手の枠選びと読み手の確保が同じ述語を見ていること -------------
+    {
+        ShmWithCanary* w = newCanaryShm();
+        FakeAlive alive;
+        // DEVICE の枠と、そうでない枠を 1 つずつ。
+        putStatSlot(&w->m, 0, 4242, CA_AUDIO_SESSION_DEVICE);
+        putStatSlot(&w->m, 1, 4242, 77);
+        const caeq::SlotPickResult pick = caeq::pickDeviceSlot(&w->m, FakeAlive::fn, &alive);
+        r.check(pick.status == caeq::SlotPick::kOk && pick.stats_slot == 0 &&
+                    pick.other_count == 1,
+                "書き手は DEVICE の枠だけを選ぶ (other=%u)", pick.other_count);
+        r.check(caeq::sessionCanBeAddressed(w->m.slots[0].session_id) &&
+                    !caeq::sessionCanBeAddressed(w->m.slots[1].session_id),
+                "読み手の確保もまったく同じ述語で決まる (sessionCanBeAddressed)");
         delete w;
     }
 

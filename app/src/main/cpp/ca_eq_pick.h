@@ -106,6 +106,14 @@ enum class FirWhy {
 /**
  * 統計の枠 (+ 対応するパラメータ枠。無ければ nullptr) から理由を決める。
  * `curve_gen` はパラメータ枠のもの (`.so` が鳴らしている世代ではない)。
+ *
+ * ⚠️ **見てよいのは「いまの状態」を表す値だけ。累積カウンタを述語に使わないこと。**
+ * ここには `fir_design_failures > 0` (累積) を使った版があり、**一度失敗したら
+ * 永久にラッチして、その後は新しい曲線を温めている最中もずっと「設計器が止まった」と
+ * 嘘を言っていた** (検分が製品経路で実測。9 ブロックのあいだ、まさにユーザが
+ * 「なぜまだ効かないのか」と見る窓で嘘が出る)。
+ * **表のテストではこれを見られない** — テストは値を代入して次の行へ進むが、
+ * その遷移 (累積カウンタが 0 に戻る) は製品では起こせないため。
  */
 inline FirWhy firWhy(const ca_slot_t& s, const ca_eq_slot_t* q) {
     if (s.fir_state == CA_FIR_STATE_FIR) return FirWhy::kRunning;
@@ -114,7 +122,7 @@ inline FirWhy firWhy(const ca_slot_t& s, const ca_eq_slot_t* q) {
     if ((s.fir_flags & CA_FIR_F_ARENA) == 0u) return FirWhy::kNoArena;
     if ((s.fir_flags & CA_FIR_F_BLOCK_OK) == 0u) return FirWhy::kBlockUnfit;
     if (q != nullptr && q->curve_gen == 0u) return FirWhy::kNoCurve;
-    if (s.fir_design_failures > 0u) return FirWhy::kDesignFailed;
+    if ((s.fir_flags & CA_FIR_F_CURVE_FAILED) != 0u) return FirWhy::kDesignFailed;
     if (s.fir_fill < s.fir_partitions) return FirWhy::kWarming;
     return FirWhy::kAlmost;
 }
@@ -131,7 +139,11 @@ struct SlotPickResult {
     uint32_t stats_slot;    /* 上の枠を読んでいるインスタンスの統計の添字。検査に使う fs の出どころ */
     uint32_t live_count;    /* 生きた DEVICE の枠の数 */
     uint32_t stale_count;   /* pid が死んでいる残骸。**.so はプロセスの死で枠を掃除しない** */
-    uint32_t other_count;   /* 生きているが DEVICE でない枠。**通常の構成で必ず居る** */
+    /* 生きているが DEVICE でない枠。**`<postprocess>` にも登録した端末でだけ立つ** —
+     * 登録するかどうかを決めるのは `module/common/setup.sh` の `ca_want_pp`。
+     * ⚠️ **ここに既定値を書かないこと。**以前は「通常の構成で必ず居る」と書いてあり、
+     * 0 を異常と読ませる (逆に本物の異常を見逃させる) 形になっていた (2026-08-13)。 */
+    uint32_t other_count;
 };
 
 /* プロセスが生きているかを答える。実機では /proc/<pid> の有無、ハーネスでは表引き。 */

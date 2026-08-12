@@ -84,7 +84,8 @@ inline void firStatsOf(const PollState& st, const EqPipeline& dsp, ca_slot_t* ou
     out->fir_flags       = (st.fir_requested ? CA_FIR_F_REQUESTED : 0u) |
                            (dsp.firAvailable() ? CA_FIR_F_ARENA : 0u) |
                            (dsp.blockOk() ? CA_FIR_F_BLOCK_OK : 0u) |
-                           (dsp.firCapable() ? CA_FIR_F_ADDRESSABLE : 0u);
+                           (dsp.firCapable() ? CA_FIR_F_ADDRESSABLE : 0u) |
+                           (dsp.curveFailed() ? CA_FIR_F_CURVE_FAILED : 0u);
     out->fir_fill        = static_cast<uint32_t>(dsp.fdlFill());
     out->fir_partitions  = static_cast<uint32_t>(dsp.fdlPartitions());
     out->fir_rebuilds    = dsp.rebuilds();
