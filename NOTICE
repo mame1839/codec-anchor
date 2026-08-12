@@ -19,3 +19,11 @@ License, Version 2.0.
   Copyright 2011 The Android Open Source Project
   Derived from hardware/libhardware/include/hardware/audio_effect.h and
   system/media/audio/include/system/audio.h
+
+The test suite includes measurement data from the AutoEq project,
+licensed under the MIT License.
+
+  app/src/test/resources/autoeq/DUNU Titan S GraphicEQ.txt
+  Copyright 2018-2025 Jaakko Pasanen (https://github.com/jaakkopasanen/AutoEq)
+  Measurement by Auriculares Argentina
+  Used in tests only and not included in the built APK.
