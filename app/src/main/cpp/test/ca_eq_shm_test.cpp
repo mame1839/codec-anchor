@@ -11,6 +11,7 @@
 //   3. ca_shm_t の外に置いた自前の番兵 (確保の外側 = ASan と同じ形を mingw でも見る)
 #include <cstring>
 #include <limits>
+#include <memory>
 #include <string>
 
 #include "ca_test_support.h"
@@ -21,6 +22,14 @@
 namespace {
 
 using catest::Report;
+
+// ⚠️ **EqPipeline をこの節のスタックに置かないこと。**1 つ 50 KB 近くあり、
+// **ASan は同じ関数の兄弟スコープでスタックの枠を再利用しない** (各変数に赤帯付きの
+// 独立した枠を割り当てる) ので、20 個ほど並べるとフレームが 1 MB を超えて
+// **スタックオーバーフローで落ちる。**mingw の構成では枠が再利用されるので通ってしまい、
+// **ASan の構成でだけ落ちる** (実際にそうなった)。
+// 製品側は `CaCtx` を `new` で確保しているので、これはハーネスだけの制約。
+// 宣言は `std::unique_ptr` + 参照にしてある (呼び出し側の書き方は変えずに済む)。
 
 // ca_shm_t の前後を自前の番兵で挟む。**ASan が居ない mingw でも効く** 2 本目の計器。
 constexpr uint32_t kCanary = 0xA5C3F00Du;
@@ -318,7 +327,8 @@ void runShmSections(Report& r) {
         // 枠 5 にだけ本物の曲線を置く。
         writeSlot(&w->m.params[5], 77u, 88u, good.data(), CA_EQ_FLAG_ENABLED, -2.0);
 
-        caeq::EqPipeline pl;
+        std::unique_ptr<caeq::EqPipeline> pl_h(new caeq::EqPipeline());
+        auto& pl = *pl_h;
         pl.configure(48000.0, 2, caeq::Structure::kTdf2);
         pl.setClock(&fakeClock);
         caeq::PollState st;
@@ -340,7 +350,8 @@ void runShmSections(Report& r) {
     // **bands だけ通すと「新しい bands と古い曲線」が同時に鳴る**ので、片方だけは通さない。
     {
         ShmWithCanary* w = newCanaryShm();
-        caeq::EqPipeline pl;
+        std::unique_ptr<caeq::EqPipeline> pl_h(new caeq::EqPipeline());
+        auto& pl = *pl_h;
         pl.configure(48000.0, 2, caeq::Structure::kTdf2);
         pl.setClock(&fakeClock);
         caeq::PollState st;
@@ -428,7 +439,8 @@ void runShmSections(Report& r) {
     // **走ると 0.3〜0.6 s の再構築が毎フレーム始まり直して永久に完成しない。**
     {
         ShmWithCanary* w = newCanaryShm();
-        caeq::EqPipeline pl;
+        std::unique_ptr<caeq::EqPipeline> pl_h(new caeq::EqPipeline());
+        auto& pl = *pl_h;
         pl.configure(48000.0, 2, caeq::Structure::kTdf2);
         pl.setClock(&fakeClock);
         pl.warmUp();
@@ -472,7 +484,8 @@ void runShmSections(Report& r) {
     // --- 9. 曲線が載っていない枠 -------------------------------------------
     {
         ShmWithCanary* w = newCanaryShm();
-        caeq::EqPipeline pl;
+        std::unique_ptr<caeq::EqPipeline> pl_h(new caeq::EqPipeline());
+        auto& pl = *pl_h;
         pl.configure(48000.0, 2, caeq::Structure::kTdf2);
         pl.setClock(&fakeClock);
         pl.warmUp();
@@ -610,7 +623,8 @@ void runShmSections(Report& r) {
     // --- 10. 診断の写し取りが pipeline の値そのものであること -----------------
     {
         ShmWithCanary* w = newCanaryShm();
-        caeq::EqPipeline pl;
+        std::unique_ptr<caeq::EqPipeline> pl_h(new caeq::EqPipeline());
+        auto& pl = *pl_h;
         pl.configure(48000.0, 2, caeq::Structure::kTdf2);
         pl.setClock(&fakeClock);
         pl.warmUp();
@@ -666,7 +680,8 @@ void runShmSections(Report& r) {
     // **往復のどちらの側を外しても、この 1 件が落ちる** (変異試験で両方確認した)。
     {
         ShmWithCanary* w = newCanaryShm();
-        caeq::EqPipeline pl;
+        std::unique_ptr<caeq::EqPipeline> pl_h(new caeq::EqPipeline());
+        auto& pl = *pl_h;
         pl.configure(48000.0, 2, caeq::Structure::kTdf2);
         pl.setClock(&fakeClock);
         pl.warmUp();
@@ -705,7 +720,8 @@ void runShmSections(Report& r) {
     // ここは必ず pipeline を実際に回して見ること。
     {
         ShmWithCanary* w = newCanaryShm();
-        caeq::EqPipeline pl;
+        std::unique_ptr<caeq::EqPipeline> pl_h(new caeq::EqPipeline());
+        auto& pl = *pl_h;
         pl.configure(48000.0, 2, caeq::Structure::kTdf2);
         pl.setClock(&fakeClock);
         pl.warmUp();
@@ -764,14 +780,16 @@ void runShmSections(Report& r) {
         size_t before_bytes = 0, after_bytes = 0;
         bool before_avail = false, after_avail = false;
         {
-            caeq::EqPipeline a;
+            std::unique_ptr<caeq::EqPipeline> a_h(new caeq::EqPipeline());
+            auto& a = *a_h;
             a.setFirCapable(true);
             a.configure(48000.0, 2, caeq::Structure::kTdf2);
             before_avail = a.firAvailable();
             before_bytes = a.arenaBytes();
         }
         {
-            caeq::EqPipeline b;
+            std::unique_ptr<caeq::EqPipeline> b_h(new caeq::EqPipeline());
+            auto& b = *b_h;
             b.configure(48000.0, 2, caeq::Structure::kTdf2);
             b.setFirCapable(true);
             after_avail = b.firAvailable();
@@ -783,7 +801,10 @@ void runShmSections(Report& r) {
                 before_bytes / 1024);
 
         {   // false 側も同じ。
-            caeq::EqPipeline a, b;
+            std::unique_ptr<caeq::EqPipeline> a_h(new caeq::EqPipeline());
+            auto& a = *a_h;
+            std::unique_ptr<caeq::EqPipeline> b_h(new caeq::EqPipeline());
+            auto& b = *b_h;
             a.setFirCapable(false);
             a.configure(48000.0, 2, caeq::Structure::kTdf2);
             b.configure(48000.0, 2, caeq::Structure::kTdf2);
@@ -795,7 +816,8 @@ void runShmSections(Report& r) {
 
         // (2) 既定は true — setter を一度も呼ばなければ今までどおり。
         {
-            caeq::EqPipeline d;
+            std::unique_ptr<caeq::EqPipeline> d_h(new caeq::EqPipeline());
+            auto& d = *d_h;
             d.configure(48000.0, 2, caeq::Structure::kTdf2);
             r.check(d.firCapable() && d.firAvailable(),
                     "既定は true — 呼び忘れても高精度は死なない (無駄なだけ)");
@@ -803,7 +825,8 @@ void runShmSections(Report& r) {
 
         // (3) capable=false のとき、出力が素の Eq とビット同一。
         {
-            caeq::EqPipeline pl;
+            std::unique_ptr<caeq::EqPipeline> pl_h(new caeq::EqPipeline());
+            auto& pl = *pl_h;
             pl.setFirCapable(false);
             pl.configure(48000.0, 2, caeq::Structure::kTdf2);
             caeq::Eq ref;
@@ -844,7 +867,8 @@ void runShmSections(Report& r) {
         // (4) true→true が鳴っている FIR を畳まない。**SET_PARAM で毎回撃つ形になる。**
         {
             ShmWithCanary* w = newCanaryShm();
-            caeq::EqPipeline pl;
+            std::unique_ptr<caeq::EqPipeline> pl_h(new caeq::EqPipeline());
+            auto& pl = *pl_h;
             pl.configure(48000.0, 2, caeq::Structure::kTdf2);
             pl.setClock(&fakeClock);
             pl.warmUp();
@@ -882,7 +906,8 @@ void runShmSections(Report& r) {
         // `p_cur_` は process() を 1 度でも回して初めて 0 でなくなるため。
         // **入れ替えの前に process() を回す**のが、この釘の本来の形。
         {
-            caeq::EqPipeline pl;
+            std::unique_ptr<caeq::EqPipeline> pl_h(new caeq::EqPipeline());
+            auto& pl = *pl_h;
             pl.setFirCapable(false);
             pl.configure(48000.0, 2, caeq::Structure::kTdf2);
             r.check(!pl.firAvailable(), "false のあいだは作業領域なし");
@@ -920,7 +945,8 @@ void runShmSections(Report& r) {
         // (6) true→false が鳴っている最中でも落ちない。**落下には数えない。**
         {
             ShmWithCanary* w = newCanaryShm();
-            caeq::EqPipeline pl;
+            std::unique_ptr<caeq::EqPipeline> pl_h(new caeq::EqPipeline());
+            auto& pl = *pl_h;
             pl.configure(48000.0, 2, caeq::Structure::kTdf2);
             pl.setClock(&fakeClock);
             pl.warmUp();
@@ -972,7 +998,8 @@ void runShmSections(Report& r) {
         // **契約が「いつでも何度でも呼んでよい」なので、呼び手が増えたときに踏む。**
         {
             ShmWithCanary* w = newCanaryShm();
-            caeq::EqPipeline pl;
+            std::unique_ptr<caeq::EqPipeline> pl_h(new caeq::EqPipeline());
+            auto& pl = *pl_h;
             pl.setFirCapable(false);
             pl.configure(48000.0, 2, caeq::Structure::kTdf2);
             pl.setClock(&fakeClock);
@@ -1022,7 +1049,10 @@ void runShmSections(Report& r) {
 
             // A: 最初から capable (configure が確保する)。
             // B: capable=false で configure したあと true (setFirCapable が確保する)。
-            caeq::EqPipeline a, b;
+            std::unique_ptr<caeq::EqPipeline> a_h(new caeq::EqPipeline());
+            auto& a = *a_h;
+            std::unique_ptr<caeq::EqPipeline> b_h(new caeq::EqPipeline());
+            auto& b = *b_h;
             a.configure(48000.0, 2, caeq::Structure::kTdf2);
             b.setFirCapable(false);
             b.configure(48000.0, 2, caeq::Structure::kTdf2);
@@ -1082,7 +1112,8 @@ void runShmSections(Report& r) {
         // (段 1 から `pre_len_` には釘が無かった。私が reserveForCurrent へ移して
         //  初めて気づいた形なので、経緯を残す。)
         {
-            caeq::EqPipeline pl;
+            std::unique_ptr<caeq::EqPipeline> pl_h(new caeq::EqPipeline());
+            auto& pl = *pl_h;
             pl.configure(48000.0, 2, caeq::Structure::kTdf2);
             const std::vector<float> curve = tiltCurve(-6.0f, 6.0f);
             caeq::Params p;
@@ -1156,7 +1187,8 @@ void runShmSections(Report& r) {
         size_t worst = 0;
         double worst_fs = 0.0;
         for (double fs : rates) {
-            caeq::EqPipeline pl;
+            std::unique_ptr<caeq::EqPipeline> pl_h(new caeq::EqPipeline());
+            auto& pl = *pl_h;
             pl.configure(fs, 2, caeq::Structure::kTdf2);
             if (pl.arenaBytes() > worst) { worst = pl.arenaBytes(); worst_fs = fs; }
         }
@@ -1167,7 +1199,8 @@ void runShmSections(Report& r) {
                 "descriptor の申告 %u KB >= 実測の最悪 %u KB (arena %zu KB @%.0f Hz + Eq %zu KB)",
                 caeq::kDeclaredMemoryKb, need, worst / 1024, worst_fs, eq_bytes / 1024);
         // 12ch のインスタンスには作業領域を作らない (spatializer に 1 MB を持たせない)。
-        caeq::EqPipeline wide;
+        std::unique_ptr<caeq::EqPipeline> wide_h(new caeq::EqPipeline());
+        auto& wide = *wide_h;
         wide.configure(48000.0, 12, caeq::Structure::kTdf2);
         r.check(!wide.firAvailable() && wide.arenaBytes() == 0,
                 "12ch のインスタンスには作業領域を作らない");
