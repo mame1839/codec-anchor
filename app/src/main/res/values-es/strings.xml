@@ -306,6 +306,4 @@
     <string name="eq_finder_discard">Descartar</string>
     <string name="eq_finder_discard_title">¿Descartar el resultado?</string>
     <string name="eq_finder_discard_body">El ecualizador vuelve a como estaba y las respuestas se eliminan.</string>
-    <string name="eq_finder_preset_title">¿Guardarlo también como preajuste?</string>
-    <string name="eq_finder_preset_skip">Ahora no</string>
 </resources>

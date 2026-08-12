@@ -303,6 +303,4 @@
     <string name="eq_finder_discard">छोड़ें</string>
     <string name="eq_finder_discard_title">नतीजा छोड़ दें?</string>
     <string name="eq_finder_discard_body">इक्वलाइज़र पहले जैसा हो जाएगा और जवाब हट जाएँगे।</string>
-    <string name="eq_finder_preset_title">इसे प्रीसेट के रूप में भी सहेजें?</string>
-    <string name="eq_finder_preset_skip">अभी नहीं</string>
 </resources>

@@ -300,6 +300,4 @@
     <string name="eq_finder_discard">ทิ้ง</string>
     <string name="eq_finder_discard_title">ทิ้งผลลัพธ์ไหม</string>
     <string name="eq_finder_discard_body">อีควอไลเซอร์จะกลับเป็นเหมือนเดิม และคำตอบจะถูกลบ</string>
-    <string name="eq_finder_preset_title">บันทึกเป็นชุดการตั้งค่าไว้ด้วยไหม</string>
-    <string name="eq_finder_preset_skip">ยังก่อน</string>
 </resources>

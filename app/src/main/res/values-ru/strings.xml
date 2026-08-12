@@ -309,6 +309,4 @@
     <string name="eq_finder_discard">Отбросить</string>
     <string name="eq_finder_discard_title">Отбросить результат?</string>
     <string name="eq_finder_discard_body">Эквалайзер вернётся к прежнему состоянию, ответы будут удалены.</string>
-    <string name="eq_finder_preset_title">Сохранить и как пресет?</string>
-    <string name="eq_finder_preset_skip">Не сейчас</string>
 </resources>

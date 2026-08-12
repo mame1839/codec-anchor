@@ -18,7 +18,6 @@ import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performSemanticsAction
-import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.createFontFamilyResolver
@@ -366,17 +365,13 @@ class EqFinderScreenTest {
         bandChoices = bandChoices,
     )
 
-    @Suppress("LongParameterList")
     private fun showResult(
         ui: EqFinderResultUi,
         selectedBandCount: Int = 10,
         onBandCount: (Int) -> Unit = {},
         bakeFailed: Boolean = false,
-        presetOffer: Boolean = false,
         onApply: () -> Unit = {},
         onDiscard: () -> Unit = {},
-        onSavePreset: (String) -> Unit = {},
-        onDismissPresetOffer: () -> Unit = {},
     ) {
         compose.setContent {
             MaterialTheme {
@@ -386,11 +381,8 @@ class EqFinderScreenTest {
                         selectedBandCount = selectedBandCount,
                         onBandCount = onBandCount,
                         bakeFailed = bakeFailed,
-                        presetOffer = presetOffer,
                         onApply = onApply,
                         onDiscard = onDiscard,
-                        onSavePreset = onSavePreset,
-                        onDismissPresetOffer = onDismissPresetOffer,
                     )
                 }
             }
@@ -410,15 +402,17 @@ class EqFinderScreenTest {
         assertTrue(discarded)
     }
 
+    /**
+     * 適用したら**何も聞かずに終わる。**結果は自分のスロットへ残り、名前付けも書き出しも
+     * スロットのメニューに常設されている — ここで重ねて聞くと同じことを 2 通りで聞く。
+     */
     @Test
-    fun thePresetOfferSavesTheTypedName() {
-        var saved: String? = null
-        showResult(result(), presetOffer = true, onSavePreset = { saved = it })
-        // 空のうちは押せない (無名のプリセットは一覧で選べない)。
-        onText(R.string.action_save).assertIsNotEnabled()
-        compose.onNodeWithText(string(R.string.eq_preset_name)).performTextInput("夜用")
-        onText(R.string.action_save).assertIsEnabled().performSemanticsAction(SemanticsActions.OnClick)
-        assertEquals("夜用", saved)
+    fun applyingAsksNothingFurther() {
+        var applied = false
+        showResult(result(), onApply = { applied = true })
+        onText(R.string.eq_finder_apply).performSemanticsAction(SemanticsActions.OnClick)
+        assertTrue(applied)
+        compose.onNode(isDialog()).assertDoesNotExist()
     }
 
     @Test

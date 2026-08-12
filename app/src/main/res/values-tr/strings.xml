@@ -303,6 +303,4 @@
     <string name="eq_finder_discard">Vazgeç</string>
     <string name="eq_finder_discard_title">Sonuçtan vazgeçilsin mi?</string>
     <string name="eq_finder_discard_body">Ekolayzır eski hâline döner ve yanıtlar silinir.</string>
-    <string name="eq_finder_preset_title">Hazır ayar olarak da kaydedilsin mi?</string>
-    <string name="eq_finder_preset_skip">Şimdi değil</string>
 </resources>

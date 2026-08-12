@@ -303,6 +303,4 @@
     <string name="eq_finder_discard">Verwerfen</string>
     <string name="eq_finder_discard_title">Ergebnis verwerfen?</string>
     <string name="eq_finder_discard_body">Der Equalizer kehrt zum vorherigen Stand zurück, die Antworten werden gelöscht.</string>
-    <string name="eq_finder_preset_title">Auch als Voreinstellung speichern?</string>
-    <string name="eq_finder_preset_skip">Später</string>
 </resources>

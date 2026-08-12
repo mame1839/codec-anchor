@@ -300,6 +300,4 @@
     <string name="eq_finder_discard">丢弃</string>
     <string name="eq_finder_discard_title">要丢弃结果吗？</string>
     <string name="eq_finder_discard_body">均衡器恢复原样，回答会被删除。</string>
-    <string name="eq_finder_preset_title">也存为预设吗？</string>
-    <string name="eq_finder_preset_skip">暂不</string>
 </resources>

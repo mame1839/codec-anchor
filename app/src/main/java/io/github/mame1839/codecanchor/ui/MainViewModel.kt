@@ -620,10 +620,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     /**
      * 外から来た曲線を**新しいスロットに着地**させて選ぶ。プリセットの適用・AutoEQ の取り込み・
-     * 「+」が通る唯一の道 (`llmdocs/eq-slot-design.md` §1「既存スロットを黙って上書きする経路を
-     * 作らない」)。
+     * 好み探索の結果・「+」が通る唯一の道 (`llmdocs/eq-slot-design.md` §1「既存スロットを
+     * 黙って上書きする経路を作らない」)。
+     *
+     * [name] を渡してよいのは**ユーザが付けた名前**だけ (プリセット名)。既定名は表示側で作る —
+     * 「自動 1」のような訳文をデータに焼くと、端末の言語を替えたときにデータが嘘になる。
      */
-    private fun landInNewSlot(mac: String, eq: EqSettings, name: String = "") {
+    fun landInNewSlot(mac: String, eq: EqSettings, name: String = "") {
         val curve = slotCurve(eq)
         saveSlots(slots.mapDevice(mac) { it.withNewSlot(curve, name) })
         updateEq(mac) { curve }

@@ -30,7 +30,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHost
@@ -747,7 +746,14 @@ private fun RowScope.AnswerButton(text: String, enabled: Boolean, onClick: () ->
 // 結果
 // ---------------------------------------------------------------------------
 
-@Suppress("LongParameterList")
+/**
+ * 結果の画面。
+ *
+ * **適用のあとにプリセット保存を聞かない。**結果は自分のスロットへ着地して残り、
+ * 改名も「プリセットとして保存」もスロットのメニューに常設されている
+ * (`llmdocs/eq-slot-design.md` §3)。適用の直後にダイアログを重ねると、常設の入り口と
+ * 同じことを 2 通りで聞くことになる。
+ */
 @Composable
 internal fun EqFinderResultContent(
     ui: EqFinderResultUi,
@@ -755,12 +761,8 @@ internal fun EqFinderResultContent(
     onBandCount: (Int) -> Unit,
     /** 焼き込みが入らなかった (パラメトリックが満杯)。 */
     bakeFailed: Boolean,
-    /** 適用が済んで、プリセットとしても保存するかを聞いている。 */
-    presetOffer: Boolean,
     onApply: () -> Unit,
     onDiscard: () -> Unit,
-    onSavePreset: (String) -> Unit,
-    onDismissPresetOffer: () -> Unit,
 ) {
     var confirmDiscard by rememberSaveable { mutableStateOf(false) }
 
@@ -888,32 +890,6 @@ internal fun EqFinderResultContent(
             dismissButton = {
                 TextButton(onClick = { confirmDiscard = false }) {
                     Text(stringResource(R.string.action_cancel))
-                }
-            },
-        )
-    }
-
-    if (presetOffer) {
-        var name by rememberSaveable { mutableStateOf("") }
-        AlertDialog(
-            onDismissRequest = onDismissPresetOffer,
-            title = { Text(stringResource(R.string.eq_finder_preset_title)) },
-            text = {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text(stringResource(R.string.eq_preset_name)) },
-                    singleLine = true,
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = { onSavePreset(name) }, enabled = name.isNotBlank()) {
-                    Text(stringResource(R.string.action_save))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = onDismissPresetOffer) {
-                    Text(stringResource(R.string.eq_finder_preset_skip))
                 }
             },
         )

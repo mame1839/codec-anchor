@@ -300,6 +300,4 @@
     <string name="eq_finder_discard">버리기</string>
     <string name="eq_finder_discard_title">결과를 버릴까요?</string>
     <string name="eq_finder_discard_body">이퀄라이저는 원래 설정으로 돌아가고 답변은 삭제됩니다.</string>
-    <string name="eq_finder_preset_title">프리셋으로도 저장할까요?</string>
-    <string name="eq_finder_preset_skip">나중에</string>
 </resources>

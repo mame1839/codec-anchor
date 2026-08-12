@@ -32,6 +32,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.github.mame1839.codecanchor.R
+import io.github.mame1839.codecanchor.core.DeviceSlots
 import io.github.mame1839.codecanchor.core.EqSlot
 import io.github.mame1839.codecanchor.core.EqSlotBook
 
@@ -249,5 +250,19 @@ internal fun EqSlotRow(vm: MainViewModel, mac: String) {
 
 /** 表示名。保存されているのは名前だけで、既定名 (「カスタム n」) はここで作る。 */
 @Composable
-private fun eqSlotLabel(slot: EqSlot, index: Int): String =
+internal fun eqSlotLabel(slot: EqSlot, index: Int): String =
     slot.name.ifBlank { stringResource(R.string.eq_slot_default, eqSlotNumber(slot, index)) }
+
+/**
+ * 選択中スロットの表示名。チップ行と機器の詳細画面の要約が**同じ 1 本**から名前を取る
+ * (訳語と既定名の作り方が 2 箇所に分かれると、片方だけ直る)。
+ *
+ * 実体の無い選択 (フラット、および壊れた保存で active が宙に浮いた場合) はフラットの訳語。
+ * 後者は起動時の和解が立て直すので、ここは「どのカスタムでもない」を一様に扱えばよい。
+ */
+@Composable
+internal fun eqActiveSlotLabel(device: DeviceSlots): String {
+    val index = device.slots.indexOfFirst { it.id == device.active }
+    val slot = device.slots.getOrNull(index) ?: return stringResource(R.string.eq_slot_flat)
+    return eqSlotLabel(slot, index)
+}

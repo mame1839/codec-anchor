@@ -300,6 +300,4 @@
     <string name="eq_finder_discard">Bỏ</string>
     <string name="eq_finder_discard_title">Bỏ kết quả?</string>
     <string name="eq_finder_discard_body">Bộ chỉnh âm trở lại như cũ và các câu trả lời bị xóa.</string>
-    <string name="eq_finder_preset_title">Lưu thành thiết lập sẵn luôn?</string>
-    <string name="eq_finder_preset_skip">Để sau</string>
 </resources>

@@ -193,8 +193,6 @@ class EqFinderController(
     // 旗 1 つのために全フィールドを写す形になり、写し忘れが静かに壊す (KDoc 参照)。
     var bakeFailed by mutableStateOf(false)
         private set
-    var presetOffer by mutableStateOf(false)
-        private set
 
     private var overlay: List<Int> = emptyList()
 
@@ -204,7 +202,6 @@ class EqFinderController(
      * (パラメトリック満杯)。
      */
     private var bakePlan: Map<Int, EqFinderBaked?> = emptyMap()
-    private var appliedSettings: EqSettings? = null
 
     init {
         // 検知は画面が開いているあいだ常時。読む相手は handler (main) のスレッドに束ねてある。
@@ -550,7 +547,6 @@ class EqFinderController(
             bakePlan = built.first
             bakeBandCount = theBase.bandCount
             bakeFailed = false
-            presetOffer = false
             result = built.second
             phase = EqFinderPhase.RESULT
         }
@@ -569,33 +565,36 @@ class EqFinderController(
         if (count in bakePlan) bakeBandCount = count
     }
 
-    /** 適用して保存。成功したらプリセット保存の提案に切り替わる。 */
-    fun apply() {
-        if (result == null) return
+    /**
+     * 適用して保存。**新しいスロットに着地する** (`llmdocs/eq-slot-design.md` §1
+     * 「外から来る曲線は必ず新しいスロットに着地する」)。開始点だったスロットはそのまま残るので、
+     * 探索の前後をチップ 1 タップで聴き比べられる。**名前は付けない** — 既定名は表示側の文言で、
+     * データに焼くと端末の言語を替えたときに嘘になる。
+     *
+     * 焼けなかった (パラメトリックが満杯) ときだけ false を返す。画面はこれを見て、
+     * 成功したときだけ閉じる。
+     */
+    fun apply(): Boolean {
+        if (result == null) return false
         val baked = bakePlan[bakeBandCount]?.settings
         if (baked == null) {
             bakeFailed = true
-            return
+            return false
         }
-        appliedSettings = baked
         // 永続化はここ 1 回だけ。押し込みは updateEq → pushEqParams が担い、直後の
         // setEqPreview(null) で最後の押しが「プレビュー無し + 新しい永続値」になる。
         // 「選んだバンド数で焼き込んだ EqSettings を作る」(bakePlan) までが不変の資産で、
-        // 保存先を知るのはこの 1 行だけ — スロット制が来たらここを差し替える。
-        vm.updateEq(mac) { baked }
+        // 保存先を知るのはこの 1 行だけ。
+        vm.landInNewSlot(mac, baked)
         vm.setEqPreview(null)
         store.clear()
-        presetOffer = true
+        return true
     }
 
     /** 破棄。永続設定の音へ戻す (画面側が確認済み)。 */
     fun discard() {
         store.clear()
         vm.setEqPreview(null)
-    }
-
-    fun savePreset(name: String) {
-        appliedSettings?.let { vm.savePreset(name, it) }
     }
 
     // ------------------------------------------------------------------
@@ -980,17 +979,13 @@ fun EqFinderScreen(
                     selectedBandCount = controller.bakeBandCount,
                     onBandCount = controller::chooseBakeBandCount,
                     bakeFailed = controller.bakeFailed,
-                    presetOffer = controller.presetOffer,
-                    onApply = controller::apply,
+                    // 着いた先はスロットのチップ行 (戻り先の音響処理の画面の一番上) に出る。
+                    // 焼けなかったときは理由を出したまま留まる。
+                    onApply = { if (controller.apply()) onBack() },
                     onDiscard = {
                         controller.discard()
                         onBack()
                     },
-                    onSavePreset = { name ->
-                        controller.savePreset(name)
-                        onBack()
-                    },
-                    onDismissPresetOffer = onBack,
                 )
             }
         }

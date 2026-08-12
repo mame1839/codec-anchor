@@ -309,6 +309,4 @@
     <string name="eq_finder_discard">Odrzuć</string>
     <string name="eq_finder_discard_title">Odrzucić wynik?</string>
     <string name="eq_finder_discard_body">Korektor wraca do poprzedniego stanu, a odpowiedzi są usuwane.</string>
-    <string name="eq_finder_preset_title">Zapisać też jako ustawienie własne?</string>
-    <string name="eq_finder_preset_skip">Nie teraz</string>
 </resources>
