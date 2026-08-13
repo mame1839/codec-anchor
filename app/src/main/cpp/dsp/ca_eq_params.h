@@ -12,25 +12,30 @@
 
 #include "../ca_eq_shm.h"
 #include "ca_eq_dsp.h"
+#include "ca_eq_seq.h"
 
 namespace caeq {
 
 // 演算層の容量が転送の容量を下回ると、band_count の検査を通った値で配列の外を触る。
 static_assert(CA_EQ_MAX_BANDS <= kMaxBands, "演算層のバンド数が転送の上限より少ない");
 
+// 32 bit を不可分に触る土台 (`asAtomic` と `std::atomic<uint32_t>` の並びの釘) は
+// ca_eq_seq.h にある。**統計の向き (ca_eq_stats.h) と同じ形を使うため**で、
+// 片方だけ書き換えられる形にしない。
+
+// 世代だけを覗く安い読み。**目安でしかない** — 途中まで書かれた値を掴んでも、
+// この後の paramsRead の seqlock が弾く。動いていないなら丸ごとの読みを省ける。
+inline uint32_t paramsGeneration(const ca_eq_slot_t* s) {
+    return asAtomic(&s->generation)->load(std::memory_order_relaxed);
+}
+
 // --- 書き手 ---------------------------------------------------------------
 //
 // 書く前に奇数、書き終えたら偶数。**読み手はスピンしないので、書き込みは短く。**
 
-inline void paramsBeginWrite(ca_eq_slot_t* s) {
-    __atomic_store_n(&s->seq, s->seq + 1u, __ATOMIC_RELAXED);
-    std::atomic_thread_fence(std::memory_order_release);
-}
+inline void paramsBeginWrite(ca_eq_slot_t* s) { seqBeginWrite(&s->seq); }
 
-inline void paramsEndWrite(ca_eq_slot_t* s) {
-    std::atomic_thread_fence(std::memory_order_release);
-    __atomic_store_n(&s->seq, s->seq + 1u, __ATOMIC_RELEASE);
-}
+inline void paramsEndWrite(ca_eq_slot_t* s) { seqEndWrite(&s->seq); }
 
 // --- 読み手 ---------------------------------------------------------------
 
@@ -38,12 +43,13 @@ inline void paramsEndWrite(ca_eq_slot_t* s) {
 // 書き手が書き込みの途中で死んでも、諦めて次のブロックへ進めば音は前の設定で鳴り続ける。
 // ミューテックスは使えない (プロセスをまたぐうえ、書き手は切断時に kill される)。
 inline bool paramsRead(const ca_eq_slot_t* src, ca_eq_slot_t* dst) {
+    const std::atomic<uint32_t>* seq = asAtomic(&src->seq);
     for (int i = 0; i < 3; i++) {
-        const uint32_t s1 = __atomic_load_n(&src->seq, __ATOMIC_ACQUIRE);
+        const uint32_t s1 = seq->load(std::memory_order_acquire);
         if (s1 & 1u) continue;                    // 書き込みの最中
         std::memcpy(dst, src, sizeof(*dst));
         std::atomic_thread_fence(std::memory_order_acquire);
-        if (s1 == __atomic_load_n(&src->seq, __ATOMIC_ACQUIRE)) return true;
+        if (s1 == seq->load(std::memory_order_acquire)) return true;
     }
     return false;
 }

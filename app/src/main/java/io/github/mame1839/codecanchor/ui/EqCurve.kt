@@ -34,8 +34,11 @@ import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.mame1839.codecanchor.R
+import io.github.mame1839.codecanchor.core.AutoEqParser
 import io.github.mame1839.codecanchor.core.EqBand
+import io.github.mame1839.codecanchor.core.EqCurveGrid
 import io.github.mame1839.codecanchor.core.EqMode
+import io.github.mame1839.codecanchor.core.EqPrecision
 import io.github.mame1839.codecanchor.core.EqSettings
 import io.github.mame1839.codecanchor.core.EqSolver
 import io.github.mame1839.codecanchor.core.EqUnits
@@ -197,7 +200,10 @@ fun EqCurve(eq: EqSettings, modifier: Modifier = Modifier) {
     )
 
     if (eq.mode == EqMode.GRAPHIC) {
-        GraphicPlot(bands, active, measurer, labelStyle, colors.primary, colors.onSurfaceVariant, description, modifier)
+        GraphicPlot(
+            bands, eq.precision, active, measurer, labelStyle,
+            colors.primary, colors.onSurfaceVariant, description, modifier,
+        )
     } else {
         ParametricPlot(bands, active, measurer, labelStyle, colors.primary, colors.onSurfaceVariant, description, modifier)
     }
@@ -210,6 +216,7 @@ fun EqCurve(eq: EqSettings, modifier: Modifier = Modifier) {
 @Composable
 private fun GraphicPlot(
     bands: List<EqBand>,
+    precision: Int,
     active: Int,
     measurer: TextMeasurer,
     labelStyle: TextStyle,
@@ -222,12 +229,12 @@ private fun GraphicPlot(
 
     // 実際に鳴る特性を、バンド中心が等間隔に並ぶ軸の上で測る。
     // 中心と中心のあいだは対数周波数で補間するので、目盛りは歪むが曲線は本物のまま。
-    val response = remember(bands) { graphicResponse(bands) }
+    val response = remember(bands, precision) { graphicResponse(bands, precision) }
 
     // 数値ラベルは摘みと同じ「その中心で実際に鳴る音量」([centreGainsDb10])。
     // `gainDb10` (フィルタのゲイン) を出すと、全バンド +12.0 の摘みの上に解いたゲイン
     // (+6.3〜+10.7) が並び、直したはずの「摘みと絵の不一致」がグラフの中に残る。
-    val gainLabels = remember(bands, labelStyle) {
+    val gainLabels = remember(bands, precision, labelStyle) {
         centreGainsDb10(response, bands.size).map { measurer.measure(eqGainNumber(it), labelStyle) }
     }
     val freqLabels = remember(bands, labelStyle, kiloShort) {
@@ -589,23 +596,80 @@ internal fun evenColumns(count: Int, left: Float, right: Float): FloatArray =
  */
 
 /**
+ * **高精度のときに何を描くかを決める唯一の場所。**
+ *
+ * いまは `.so` へ送る折れ線そのもの。FIR の目標がこの折れ線なので、実用曲線ではこれが
+ * 鳴るものと一致する。
+ *
+ * ⚠️ **ただし折れ線は「FIR が実際に作る応答」ではない。**IR 170 ms の周波数分解能は
+ * 5.9 Hz で、31 バンドの最低域の摘み間隔 (5〜6 Hz) と同じ桁なので、**20〜32 Hz では
+ * 隣り合う摘みが逆へ振れるほど折れ線から離れる。**
+ *
+ * **⚠️ 「病的な形だけ」ではない。**31 バンドの最低域 4 本 (20/25/32/40 Hz) だけを交互に
+ * 振った形で、深さに対してこう伸びる (48 kHz・製品の既定の M と窓で実測):
+ *
+ * | 段差 | 折れ線と FIR の実応答の差 |
+ * |---|---|
+ * | **±3 dB** | **0.823 dB** |
+ * | ±6 dB | 1.669 dB |
+ * | ±9 dB | 3.385 dB |
+ * | ±12 dB | 6.157 dB |
+ *
+ * **±3 dB は穏当な操作なのに、そこで既に 1 dB 近く絵が嘘をつく。**しかも
+ * **31 バンドの描画範囲はちょうど 20 Hz〜20 kHz なので、この食い違いはそのまま画面に出る。**
+ *
+ * バンド数を下げると急に小さくなる (同じ ±12 dB で 15 バンド 1.025 / 10 バンド 0.448 /
+ * 5 バンド 0.113 dB)。**さらに 5〜15 バンドは最低域 (25/32/63 Hz より下) が描画範囲の
+ * 外なので、画面に出る分はこれより小さい。**効くのは実質 31 バンドだけ。
+ *
+ * **出どころを「FIR の実応答」へ移すなら、差し替えるのはこの関数 1 つ。**
+ * ここで作った標本が点 ([centreGainsDb10]) と縦軸の段 ([graphicPlotRange]) の材料も兼ねる。
+ */
+private fun highPrecisionSampler(vertices: List<Pair<Double, Double>>): (Double) -> Double =
+    { hz -> AutoEqParser.interpolate(vertices, hz) }
+
+/**
  * バンド中心が等間隔に並ぶ軸の上での、実際に鳴る特性。
  *
  * 中心と中心のあいだは対数周波数で補間する。ISO の中心周波数はほぼ対数等間隔なので、
  * 見た目は対数軸とほとんど変わらないまま、点の x が必ず自分のバンドの真上に来る。
+ *
+ * ### 何を「実際に鳴る特性」とするかは [precision] で変わる
+ *
+ * - **標準** … biquad カスケードの合成応答。中心では摘みの値に厳密に一致し、
+ *   中心と中心のあいだは裾の重なりで折れ線から少し離れる
+ * - **高精度** … `.so` へ送る折れ線そのもの ([EqCurveGrid.knobPolyline])。
+ *   FIR が目標にするのはこの折れ線なので、**絵と音がここで一致する**
+ *
+ * **分けないと、高精度を選んだ画面が「高精度が消したはずの誤差」を描き続ける**
+ * (実測で全 +12 の 0.36〜0.94 dB、31 バンドは 16k–20k の潰れで 2.86 dB)。
+ * 点 ([centreGainsDb10]) も縦軸の段 ([graphicPlotRange]) もこの配列から出るので、
+ * 材料が 2 つに割れることはない。
  */
-internal fun graphicResponse(bands: List<EqBand>): DoubleArray {
-    val freqs = bands.map { ln(it.freqHz.toDouble()) }
+internal fun graphicResponse(
+    bands: List<EqBand>,
+    precision: Int = EqPrecision.STANDARD,
+): DoubleArray {
+    // 高精度では軸の節も吸着後の周波数で取る。**そうしないと点が摘みの値から外れる** —
+    // 折れ線は吸着後の頂点で摘みの値を厳密に取るので、吸着前の中心で読むと
+    // 「半ステップ × 傾き」だけずれた値が点に出る。ずれる向きは x で、340 dp 幅の 0.4 dp。
+    val vertices = if (precision == EqPrecision.HIGH) EqCurveGrid.knobPolyline(bands) else emptyList()
+    val at: (Double) -> Double =
+        if (precision == EqPrecision.HIGH) highPrecisionSampler(vertices)
+        else { hz -> EqSolver.combinedResponseDb(bands, hz) }
+    val freqs =
+        if (precision == EqPrecision.HIGH) vertices.map { ln(it.first) }
+        else bands.map { ln(it.freqHz.toDouble()) }
     val last = bands.size - 1
     // 1 本しかなくても 2 点返す。1 点だと描画側の (size - 1) が 0 になって x が NaN になる。
-    if (last == 0) return DoubleArray(2) { EqSolver.combinedResponseDb(bands, exp(freqs[0])) }
+    if (last == 0) return DoubleArray(2) { at(exp(freqs[0])) }
     // バンド 1 つぶんを割り切れる数で刻む。**端数にすると標本がバンド中心を外す** —
     // 曲線が点のすぐ横を通るだけになり、「この列の実際の値」が絵から読めなくなる。
     val perBand = (SAMPLES + last - 1) / last
     return DoubleArray(last * perBand + 1) { s ->
         val i = (s / perBand).coerceAtMost(last - 1)
         val t = (s - i * perBand).toDouble() / perBand
-        EqSolver.combinedResponseDb(bands, exp(freqs[i] * (1 - t) + freqs[i + 1] * t))
+        at(exp(freqs[i] * (1 - t) + freqs[i + 1] * t))
     }
 }
 

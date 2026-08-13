@@ -12,9 +12,16 @@
 #include <unistd.h>
 #include <android/log.h>
 #include "aosp/audio_effect.h"
+// 枠の宛先の述語 (sessionCanBeAddressed) を書き手と共有するため。
+// **`ca_eq.cpp` はホストのハーネスに入らない**ので、ここの include 漏れは
+// Android のビルドでしか出ない。
+#include "ca_eq_pick.h"
 #include "ca_eq_shm.h"
 #include "dsp/ca_eq_dsp.h"
 #include "dsp/ca_eq_params.h"
+#include "dsp/ca_eq_pipeline.h"
+#include "dsp/ca_eq_poll.h"
+#include "dsp/ca_eq_stats.h"
 
 #define CA_LOG_TAG "CodecAnchorEQ"
 // ログは制御スレッド (create / SET_CONFIG / ENABLE / release) からだけ呼ぶ。
@@ -35,9 +42,12 @@ const effect_descriptor_t kCaEqDescriptor = {
     // DEVICE_IND はデバイスの変化を教えてもらうため。
     .flags       = EFFECT_FLAG_TYPE_POST_PROC | EFFECT_FLAG_INSERT_LAST | EFFECT_FLAG_DEVICE_IND,
     .cpuLoad     = 10,
-    // KB 単位。caeq::Eq が状態と作業領域で 40 KB ほど持つ (最大構成を create の時点で
-    // 確保して process() で一切確保しないため)。
-    .memoryUsage = 64,
+    // KB 単位。caeq::Eq が状態と作業領域で 40 KB ほど、「高精度」(最小位相 FIR) の
+    // 作業領域 (arena) が **ch <= 2 のインスタンスだけ** 更に載る。
+    // **数はここに書かない** — 出どころは dsp/ca_eq_pipeline.h の 1 箇所で、
+    // ハーネス 30 節が全サンプルレートの arena を実測して超えないことを見張っている。
+    // **12ch の spatializer インスタンスには arena を作らない**ので、そちらは 40 KB のまま。
+    .memoryUsage = caeq::kDeclaredMemoryKb,
     .name        = "Codec Anchor EQ",
     .implementor = "Codec Anchor",
 };
@@ -56,10 +66,13 @@ struct CaCtx {
     // 読みに行くパラメータ枠。**割り当てられていないあいだは何も適用せず素通しする** —
     // 「たぶん自分宛て」で読むと、2 台目のイヤホンに 1 台目の設定が掛かる。
     uint32_t   param_slot;
-    uint32_t   param_gen;        // 最後に適用した generation
-    uint32_t   param_rejected;
-    bool       user_enabled;     // 共有メモリ側の on/off。framework の ENABLE とは別
-    caeq::Eq dsp;                // 演算本体。ホストのハーネスで検証してあるものと同じコード
+    // 枠の読み取りが持ち越す状態と写し取り先。**同じコードをホストのハーネスが回す**
+    // (dsp/ca_eq_poll.h)。2 KB 超の写し取り先を含むので、audio スレッドのスタックに
+    // 置かないためここに持つ。
+    caeq::PollState poll;
+    // 演算本体。ホストのハーネスで検証してあるものと同じコード。
+    // biquad (標準) と最小位相 FIR (高精度) を束ねた面で、外から見た使い方は Eq と同じ。
+    caeq::EqPipeline dsp;
 };
 
 // 1 ブロックぶんの計測。process() のスタックに置くだけで、確保はしない。
@@ -146,21 +159,20 @@ void ca_stats_open() {
     g_shm->version = CA_SHM_VERSION;
     g_shm->slot_count = CA_SHM_SLOTS;
     g_shm->slot_size = static_cast<uint32_t>(sizeof(ca_slot_t));
+    // 版が同じで並びだけ違うビルド (開発中に必ず起きる) を読み手が断れるようにする。
+    g_shm->param_slot_size = static_cast<uint32_t>(sizeof(ca_eq_slot_t));
+    g_shm->curve_points = static_cast<uint32_t>(caeq::kCurvePoints);
     std::atomic_thread_fence(std::memory_order_release);
     g_shm->magic = CA_SHM_MAGIC;
     CA_LOGI("stats mapped at %p pid=%d", p, static_cast<int>(getpid()));
 }
 
 // seqlock。書く前に奇数、書き終えたら偶数にする。読み手は前後で同じ偶数を見たら採用する。
-inline void ca_seq_begin(ca_slot_t* s) {
-    s->seq++;
-    std::atomic_thread_fence(std::memory_order_release);
-}
+// **規約は dsp/ca_eq_stats.h** — 読み手 (caeqstat) と同じ定義を共有していて、
+// ホストのハーネスが書き手のスレッドを立てて千切れた読みが起きないことを確かめている。
+inline void ca_seq_begin(ca_slot_t* s) { caeq::statsBeginWrite(s); }
 
-inline void ca_seq_end(ca_slot_t* s) {
-    std::atomic_thread_fence(std::memory_order_release);
-    s->seq++;
-}
+inline void ca_seq_end(ca_slot_t* s) { caeq::statsEndWrite(s); }
 
 inline std::atomic<uint32_t>* ca_in_use(ca_slot_t* s) {
     return reinterpret_cast<std::atomic<uint32_t>*>(&s->in_use);
@@ -248,37 +260,23 @@ void ca_stats_set_gain(CaCtx* c, int32_t gain_mb) {
 // パラメータの読み出し。統計とは向きが逆で、書き手が外・読み手がここ。
 // ---------------------------------------------------------------------------
 
-// seqlock の読み手と並びの変換は dsp/ca_eq_params.h。**書き手と同じ定義を共有していて、
-// ホストのハーネスが書き手のスレッドを立てて千切れた読みが起きないことを確かめている。**
+// seqlock の読み手と並びの変換は dsp/ca_eq_params.h、判断そのものは dsp/ca_eq_poll.h。
+// **書き手と同じ定義を共有していて、ホストのハーネスが書き手のスレッドを立てて
+// 千切れた読みが起きないことを確かめている。**ここは枠の添字を解決するだけ。
+inline void ca_params_poll(CaCtx* c) {
+    if (g_shm == nullptr) return;
+    // **範囲外の添字で params[] を読まない。**CA_PARAM_SLOT_NONE (未割り当て) も
+    // ここで落ちる。SET_PARAM で渡された値も同じ門を通す。
+    if (c->param_slot >= static_cast<uint32_t>(CA_SHM_SLOTS)) return;
+    caeq::pollSlot(&g_shm->params[c->param_slot], &c->poll, &c->dsp, c->enabled);
+}
 
-// process() の先頭で 1 回だけ呼ぶ。**ブロックの途中で読み直さない** —
-// 取り込みを process() 1 回につき 1 回に縛ることが、係数の変調速度に構造的な上限を
-// 与えている (dsp/ca_eq_dsp.h の setParams を参照)。
-void ca_params_poll(CaCtx* c) {
-    if (g_shm == nullptr || c->param_slot >= CA_SHM_SLOTS) return;
-    const ca_eq_slot_t* src = &g_shm->params[c->param_slot];
-
-    // 世代が動いていなければ何もしない。ここは目安なので素で読んでよい
-    // (途中まで書かれた並びを掴んでも、下の seqlock が弾く)。
-    const uint32_t gen = __atomic_load_n(&src->generation, __ATOMIC_RELAXED);
-    if (gen == 0 || gen == c->param_gen) return;
-
-    ca_eq_slot_t snap;
-    if (!caeq::paramsRead(src, &snap)) return;   // 掴めなければ次のブロックで
-    if (snap.generation == 0 || snap.generation == c->param_gen) return;
-
-    caeq::Params p;
-    if (!caeq::paramsConvert(snap, &p) || !c->dsp.setParams(p)) {
-        // **丸ごと捨てて前の設定を保つ。**部分適用はしない。
-        // 同じ世代を毎ブロック試し直さないよう、捨てた世代も覚える。
-        c->param_gen = snap.generation;
-        c->param_rejected++;
-        return;
-    }
-    c->param_gen = snap.generation;
-    c->user_enabled = (snap.flags & CA_EQ_FLAG_ENABLED) != 0;
-    c->dsp.setActive(c->enabled && c->user_enabled);
-    // 統計への転記は ca_stats_add が seqlock の中でまとめてやる。
+// process() から呼ばれるので vDSO 経由。スライスの実測にだけ使う (決定性には影響しない)。
+uint64_t ca_now_ns() {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return static_cast<uint64_t>(ts.tv_sec) * 1000000000ull +
+           static_cast<uint64_t>(ts.tv_nsec);
 }
 
 // process() から呼ばれる。確保・ロック・ログを一切しない。
@@ -300,12 +298,12 @@ inline void ca_stats_add(CaCtx* c, size_t frames, const CaBlock& b) {
     s->dbg_samples = b.samples;
     s->dbg_fmt = c->cfg.outputCfg.format;
     s->param_slot = c->param_slot;
-    s->param_gen = c->param_gen;
-    s->param_rejected = c->param_rejected;
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    s->last_ns = static_cast<uint64_t>(ts.tv_sec) * 1000000000ull +
-                 static_cast<uint64_t>(ts.tv_nsec);
+    s->param_gen = c->poll.param_gen;
+    s->param_rejected = c->poll.rejected;
+    // 「入っている / 有効 / 設定済み / でも音が通っていない」に加えて、
+    // 「高精度を頼んだのに biquad のまま」の理由まで 1 枚で読めるようにする。
+    caeq::firStatsOf(c->poll, c->dsp, s);
+    s->last_ns = ca_now_ns();
     ca_seq_end(s);
 }
 
@@ -403,8 +401,17 @@ extern "C" int32_t ca_command(effect_handle_t self, uint32_t cmd, uint32_t cmdSi
                 c->cfg.outputCfg.samplingRate, c->channels,
                 static_cast<unsigned>(c->cfg.outputCfg.format),
                 static_cast<unsigned>(c->cfg.outputCfg.accessMode), c->passthrough_only);
+        // **FIR の作業領域 (arena) を確保するのはここ。**ch <= 2 のときだけで、
+        // 12ch の spatializer インスタンスには作らない (EqPipeline::configure の中の規則)。
         c->dsp.configure(static_cast<double>(c->cfg.outputCfg.samplingRate),
                          static_cast<int>(c->channels), kStructure);
+        // 組み直した arena のページは 1 度も触られていない。**warmUp を省くと、
+        // 最初の process() で数百回のページフォルトをオーディオスレッドが食う。**
+        c->dsp.warmUp();
+        // **枠を読み直させる。**configure は fs が変わるとパラメータを丸ごと捨てる
+        // (新しい Nyquist で fc が範囲外になりうるため) ので、覚えたままの世代で
+        // 「適用済み」と思っていると、EQ が黙って平坦に戻ったまま二度と戻らない。
+        c->poll.param_gen = 0;
         ca_stats_configure(c);
         *static_cast<int*>(pReply) = 0;
         return 0;
@@ -429,7 +436,7 @@ extern "C" int32_t ca_command(effect_handle_t self, uint32_t cmd, uint32_t cmdSi
         if (c->enabled) c->dsp.reset();
         // 有効になるのは framework とユーザ設定の両方が有効なときだけ。
         // **どちらの側の OFF でも、素通しになるまでフェードを掛けてから止まる。**
-        c->dsp.setActive(c->enabled && c->user_enabled);
+        c->dsp.setActive(c->enabled && c->poll.user_enabled);
         CA_LOGI("%s ctx=%p", c->enabled ? "ENABLE" : "DISABLE", static_cast<void*>(c));
         ca_stats_set_enabled(c, c->enabled);
         *static_cast<int*>(pReply) = 0;
@@ -459,7 +466,13 @@ extern "C" int32_t ca_command(effect_handle_t self, uint32_t cmd, uint32_t cmdSi
                 return 0;
             }
             c->param_slot = static_cast<uint32_t>(v);
-            c->param_gen = 0;   // 新しい枠なので、次のブロックで読み直す
+            c->poll.param_gen = 0;   // 新しい枠なので、次のブロックで読み直す
+            // **明示的に枠を宛てられた = このインスタンスは FIR の宿主になれる。**
+            // ハンドルを持つ保持者からの経路 (hold-process.md の退路段) では、
+            // session が DEVICE でないインスタンスにも枠が宛てられる。
+            // ここで引き上げないと、その構成でだけ高精度が黙って効かない。
+            // (同じ値なら no-op なので、毎回撃っても鳴っている FIR は畳まれない。)
+            c->dsp.setFirCapable(true);
             CA_LOGI("SET_PARAM slot=%d ctx=%p", v, static_cast<void*>(c));
             *static_cast<int*>(pReply) = 0;
             return 0;
@@ -479,13 +492,14 @@ extern "C" int32_t ca_command(effect_handle_t self, uint32_t cmd, uint32_t cmdSi
         if (!c->dsp.setParams(p)) {
             // 検査に落ちたときは前の設定のまま鳴らし続ける。黙って捨てると
             // 原因不明の「効かない」になるので、診断カウンタを見せる。
-            CA_LOGE("SET_PARAM rejected gain=%d mB (rejected=%u)", v, c->dsp.rejectedCount());
+            CA_LOGE("SET_PARAM rejected gain=%d mB (rejected=%u)", v,
+                    c->dsp.biquad().rejectedCount());
             *static_cast<int*>(pReply) = -EINVAL;
             return 0;
         }
         // 明示的に指示された以上「宛てられた」とみなす。共有メモリを使わずに
         // この経路だけで実証するときに、ここが無いと素通しのままになる。
-        c->user_enabled = true;
+        c->poll.user_enabled = true;
         c->dsp.setActive(c->enabled);
         CA_LOGI("SET_PARAM gain=%d mB (preamp=%.2f dB)", c->gain_mb, p.preamp_db);
         ca_stats_set_gain(c, c->gain_mb);
@@ -538,9 +552,17 @@ extern "C" int32_t ca_lib_create(const effect_uuid_t* uuid, int32_t sessionId, i
     // 枠を宛てられるまでパラメータを一切適用しない。ca_stats_attach が枠を取れたら
     // その添字が入る。
     c->param_slot = CA_PARAM_SLOT_NONE;
-    c->param_gen = 0;
-    c->param_rejected = 0;
-    c->user_enabled = false;
+    // スライスの実測。**進め方は費用モデルが決めるので、時計は測るだけ** —
+    // 渡さなくても音は同じで、診断の µs が出なくなるだけ。
+    c->dsp.setClock(ca_now_ns);
+    // **FIR の作業領域を持ってよいインスタンスか。**FIR が乗るのは書き手が設定を
+    // 宛てられる枠だけなので、そうでないインスタンス (退路経路の <postprocess> /
+    // session 0) は 791 KB を一度も使わずに抱え続けることになる。
+    // **判定は書き手の枠選びと同じ述語** (caeq::sessionCanBeAddressed)。
+    // ⚠️ **configure より先に呼ぶ** — 後だと暫定の arena が一度作られてしまう。
+    // (setter 自体は順序非依存なので、これは無駄を省くためだけの順序。)
+    c->dsp.setFirCapable(caeq::sessionCanBeAddressed(sessionId));
+    // SET_CONFIG が来るまでの暫定。
     c->dsp.configure(48000.0, 2, kStructure);
     // 初回のページフォルトと係数の初期化を process() の外へ出す。
     c->dsp.warmUp();

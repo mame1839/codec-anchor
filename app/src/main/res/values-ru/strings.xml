@@ -202,6 +202,11 @@
     <string name="eq_mode_parametric_desc">Полосу можно поставить куда угодно</string>
     <string name="eq_band_count">Число полос</string>
     <string name="eq_band_count_desc">Это не настройка производительности: телефон считает одинаково при любом числе полос.</string>
+    <string name="eq_precision">Точность кривой</string>
+    <string name="eq_precision_standard">Обычная (рекомендуется)</string>
+    <string name="eq_precision_standard_desc">Между полосами кривая немного отклоняется</string>
+    <string name="eq_precision_high">Высокая точность</string>
+    <string name="eq_precision_high_desc">Точнее следует линии, соединяющей полосы</string>
     <string name="eq_band_none">Полос пока нет. Добавьте полосу или загрузите файл AutoEQ.</string>
     <string name="eq_band_add">Добавить полосу</string>
     <string name="eq_band_remove">Удалить эту полосу</string>

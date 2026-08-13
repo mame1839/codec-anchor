@@ -41,6 +41,7 @@ import io.github.mame1839.codecanchor.core.EqFinderMaterialize
 import io.github.mame1839.codecanchor.core.EqFinderSession
 import io.github.mame1839.codecanchor.core.EqLoudness
 import io.github.mame1839.codecanchor.core.EqMode
+import io.github.mame1839.codecanchor.core.EqPrecision
 import io.github.mame1839.codecanchor.core.EqSettings
 import io.github.mame1839.codecanchor.core.EqUnits
 import io.github.mame1839.codecanchor.core.Spectrum
@@ -820,6 +821,11 @@ internal fun eqFinderCandidateSettings(
     bands = bands,
     preampAuto = false,
     preampDb10 = EqLoudness.preampDb10(bands, weights, trimDb),
+    // **セッション中の A/B は必ず標準 (biquad)。**候補はシェルフのオーバーレイで、そこでは
+    // biquad が定義どおりの厳密値なので高精度にする利得が無い。一方で切り替えのたびに
+    // FIR の組み直し (0.3〜0.6 s) が挟まり、**即時に切り替わることを前提にした聴き比べが壊れる。**
+    // 焼き込んだ結果 (apply → landInNewSlot) は base の選択のまま鳴る。
+    precision = EqPrecision.STANDARD,
 )
 
 /** 軸の見た目の区分。周波数ではなく種別で決める (定義の周波数が動いても表示は正しいまま)。 */

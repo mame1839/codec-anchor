@@ -198,6 +198,11 @@
     <string name="eq_mode_parametric_desc">Jedes Band lässt sich frei setzen</string>
     <string name="eq_band_count">Anzahl der Bänder</string>
     <string name="eq_band_count_desc">Das ist keine Leistungseinstellung: Das Telefon rechnet bei jeder Anzahl gleich viel.</string>
+    <string name="eq_precision">Kurvengenauigkeit</string>
+    <string name="eq_precision_standard">Standard (empfohlen)</string>
+    <string name="eq_precision_standard_desc">Zwischen den Bändern weicht die Kurve leicht ab</string>
+    <string name="eq_precision_high">Hohe Genauigkeit</string>
+    <string name="eq_precision_high_desc">Folgt der Linie durch die Bänder genauer</string>
     <string name="eq_band_none">Noch kein Band. Fügen Sie eines hinzu oder laden Sie eine AutoEQ-Datei.</string>
     <string name="eq_band_add">Band hinzufügen</string>
     <string name="eq_band_remove">Dieses Band entfernen</string>

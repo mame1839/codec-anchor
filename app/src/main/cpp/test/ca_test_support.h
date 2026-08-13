@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <string>
 #include <vector>
 
 #include "../dsp/ca_eq_dsp.h"
@@ -265,6 +266,32 @@ public:
 private:
     int failed_ = 0;
     int total_ = 0;
+};
+
+// 中身を書いた一時ファイル。デストラクタで消す。テキストを読む道具
+// (`caeqset` の曲線の解析) をホストで掛けるためだけのもの。
+class TempFile {
+public:
+    explicit TempFile(const std::string& text) {
+        // std::tmpnam は MSVC で /WX の警告になるので使わない。連番で作る。
+        static int counter = 0;
+        char name[64];
+        std::snprintf(name, sizeof(name), "ca_eq_test_tmp_%d.txt", counter++);
+        path_ = name;
+        std::FILE* f = std::fopen(path_.c_str(), "wb");
+        if (f != nullptr) {
+            std::fwrite(text.data(), 1, text.size(), f);
+            std::fclose(f);
+        }
+    }
+    ~TempFile() { std::remove(path_.c_str()); }
+    TempFile(const TempFile&) = delete;
+    TempFile& operator=(const TempFile&) = delete;
+
+    const char* path() const { return path_.c_str(); }
+
+private:
+    std::string path_;
 };
 
 }  // namespace catest

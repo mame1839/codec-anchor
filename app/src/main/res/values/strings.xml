@@ -229,6 +229,11 @@
     <string name="eq_mode_parametric_desc">Put each band where you want it</string>
     <string name="eq_band_count">Number of bands</string>
     <string name="eq_band_count_desc">Not a speed setting: the phone does the same amount of work at any count.</string>
+    <string name="eq_precision">Curve accuracy</string>
+    <string name="eq_precision_standard">Standard (recommended)</string>
+    <string name="eq_precision_standard_desc">The curve drifts a little between bands</string>
+    <string name="eq_precision_high">High accuracy</string>
+    <string name="eq_precision_high_desc">Follows the line through the bands more closely</string>
     <string name="eq_band_none">No band yet. Add one, or import an AutoEQ file.</string>
     <string name="eq_band_add">Add a band</string>
     <string name="eq_band_remove">Remove this band</string>

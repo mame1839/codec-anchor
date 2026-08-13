@@ -7,24 +7,11 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include "ca_eq_pick.h"
 #include "ca_eq_shm.h"
+#include "dsp/ca_eq_stats.h"
 
 namespace {
-
-// seqlock の読み手側。seq が偶数で、コピーの前後で変わっていなければ内容は一貫している。
-// 書き手 (オーディオスレッド) が奇数の区間に居るのは数十 ns なので、まず 1 回で通る。
-bool read_slot(const ca_slot_t* src, ca_slot_t* dst) {
-    for (int attempt = 0; attempt < 100; attempt++) {
-        const uint32_t s1 = src->seq;
-        std::atomic_thread_fence(std::memory_order_acquire);
-        if (s1 & 1u) continue;                  // 書き込み中
-        std::memcpy(dst, src, sizeof(ca_slot_t));
-        std::atomic_thread_fence(std::memory_order_acquire);
-        if (s1 == src->seq) return true;
-    }
-    std::memcpy(dst, src, sizeof(ca_slot_t));   // 諦めて素で読み、行に印を付ける
-    return false;
-}
 
 uint64_t now_monotonic_ns() {
     struct timespec ts;
@@ -43,6 +30,41 @@ void format_age(char* buf, size_t n, uint64_t last_ns, uint64_t now_ns) {
     if (last_ns == 0) { snprintf(buf, n, "never"); return; }
     if (last_ns > now_ns) { snprintf(buf, n, "?"); return; }
     snprintf(buf, n, "%.2fs", static_cast<double>(now_ns - last_ns) / 1e9);
+}
+
+const char* fir_state_name(uint32_t s) {
+    switch (s) {
+    case CA_FIR_STATE_BIQUAD:   return "biquad";
+    case CA_FIR_STATE_PREPARE:  return "準備中";
+    case CA_FIR_STATE_FADE_IN:  return "乗り移り中 (biquad→FIR)";
+    case CA_FIR_STATE_FIR:      return "FIR";
+    case CA_FIR_STATE_FADE_OUT: return "降り中 (FIR→biquad)";
+    default:                    return "?";
+    }
+}
+
+// **「高精度を頼んだのに biquad のまま」の理由を 1 行で言い切る。**
+// ここが曖昧だと、現地で「入っていない」「効いていない」「そもそも要求していない」の
+// どれなのかが分からず、モジュールの入れ直しから始めることになる。
+// **判定は caeq::firWhy (ca_eq_pick.h) にあり、ハーネスが表ごと固定している。**
+// ここは文言だけ。
+const char* fir_why_text(caeq::FirWhy w) {
+    switch (w) {
+    case caeq::FirWhy::kRunning:      return "";
+    case caeq::FirWhy::kNotRequested: return "高精度が要求されていない (標準モード)";
+    case caeq::FirWhy::kNotAddressable:
+        return "このインスタンスには設定を宛てられない (DEVICE 経由ではない = 退路経路)。"
+               "作業領域を持たないのは設計どおりで、確保の失敗ではない";
+    case caeq::FirWhy::kNoArena:
+        return "作業領域が無い — このインスタンスは 3ch 以上 (spatializer 等) か確保に失敗";
+    case caeq::FirWhy::kBlockUnfit:
+        return "このスレッドのブロック長では回せない (不適の内訳は size/budget を見る)";
+    case caeq::FirWhy::kNoCurve:      return "曲線がまだ届いていない (書き手が送っていない)";
+    case caeq::FirWhy::kDesignFailed: return "設計器が止まった (曲線が非有限になった)";
+    case caeq::FirWhy::kWarming:      return "FDL を温めている最中 (fill/K を見る)";
+    case caeq::FirWhy::kAlmost:       return "準備は整っているが、まだ乗り移っていない";
+    }
+    return "?";
 }
 
 }  // namespace
@@ -79,7 +101,23 @@ int main(int argc, char** argv) {
         printf("    grep libcaeq /proc/$(pidof android.hardware.audio.service.mediatek)/maps\n");
         return 1;
     }
-    printf("version=%u slots=%u slot_size=%u\n", m->version, m->slot_count, m->slot_size);
+    printf("version=%u (期待 %u) slots=%u slot_size=%u (期待 %zu) param_slot_size=%u "
+           "(期待 %zu) curve_points=%u (期待 %d)\n",
+           m->version, CA_SHM_VERSION, m->slot_count, m->slot_size, sizeof(ca_slot_t),
+           m->param_slot_size, sizeof(ca_eq_slot_t), m->curve_points, caeq::kCurvePoints);
+    if (m->version != CA_SHM_VERSION) {
+        // 版 3 の .so は 128 B 刻みで統計を書き、1152 B から 576 B 刻みでパラメータを読む。
+        // 版 4 のファイルではどちらも枠の境界がずれるので、下の表は意味を持たない。
+        printf("\n⚠️ 版が食い違っている。以下の表は枠の境界がずれているので読まないこと。\n");
+        printf("   モジュールとアプリのどちらかが古い。入れ直すこと。\n");
+        return 1;
+    }
+    if (m->slot_size != sizeof(ca_slot_t) || m->param_slot_size != sizeof(ca_eq_slot_t) ||
+        m->curve_points != static_cast<uint32_t>(caeq::kCurvePoints)) {
+        printf("\n⚠️ 版は同じなのに並びが違う。**版を上げずに構造体を変えたビルドが混ざっている。**\n");
+        printf("   以下の表は枠の境界がずれているので読まないこと。\n");
+        return 1;
+    }
     printf("%-4s %-18s %-6s %-10s %-4s %-7s %-6s %-9s %-6s %-7s %-8s %-8s %s\n",
            "slot", "ctx", "io", "frames", "ch", "rate", "block", "age", "pid", "gain_mB",
            "in_dBFS", "out_dBFS", "state");
@@ -88,7 +126,7 @@ int main(int argc, char** argv) {
     int active = 0;
     for (uint32_t i = 0; i < m->slot_count && i < static_cast<uint32_t>(CA_SHM_SLOTS); i++) {
         ca_slot_t s;
-        const bool stable = read_slot(&m->slots[i], &s);
+        const bool stable = caeq::statsRead(&m->slots[i], &s);
         if (s.in_use != CA_SHM_MAGIC) continue;
         active++;
         char age[16], ind[16], outd[16];
@@ -118,10 +156,14 @@ int main(int argc, char** argv) {
                    ? "(DEVICE = <deviceEffects> 経由 = イヤホン側)"
                    : "(DEVICE でない = postprocess 等。イヤホンの設定を書く先ではない)");
         // パラメータ経路。**捨てたことが見えないと「効かない」の原因が追えない。**
+        const ca_eq_slot_t* q = nullptr;
         if (s.param_slot == CA_PARAM_SLOT_NONE) {
             printf("     param: 枠が未割り当て — パラメータを一切適用せず素通し\n");
+        } else if (s.param_slot >= static_cast<uint32_t>(CA_SHM_SLOTS)) {
+            printf("     param: 枠=%u は範囲外 (0..%d)。**壊れた値**\n",
+                   s.param_slot, CA_SHM_SLOTS - 1);
         } else {
-            const ca_eq_slot_t* q = &m->params[s.param_slot];
+            q = &m->params[s.param_slot];
             printf("     param: 枠=%u 適用済み gen=%u / 共有メモリ gen=%u bands=%u "
                    "preamp=%.2f dB flags=0x%x 却下=%u\n",
                    s.param_slot, s.param_gen, q->generation, q->band_count,
@@ -133,6 +175,26 @@ int main(int argc, char** argv) {
                        "却下が増えているなら検査に落ちている)\n");
             }
         }
+        // 「高精度」(最小位相 FIR)。**要求と実際が別々に出ることが要点** —
+        // 「設定は高精度なのに biquad で鳴っている」を、理由まで含めてここで読む。
+        printf("     fir  : %s / 要求=%s 作業領域=%s ブロック=%s  FDL %u/%u  曲線 gen=%u/%u\n",
+               fir_state_name(s.fir_state),
+               (s.fir_flags & CA_FIR_F_REQUESTED) ? "高精度" : "標準",
+               (s.fir_flags & CA_FIR_F_ARENA) ? "あり" : "なし",
+               (s.fir_flags & CA_FIR_F_BLOCK_OK) ? "可" : "不可",
+               s.fir_fill, s.fir_partitions, s.fir_curve_gen,
+               q != nullptr ? q->curve_gen : 0u);
+        printf("            taps=%u M=%u arena=%u KB スライス最大=%.1f µs "
+               "再構築=%u 差し替え=%u\n",
+               s.fir_taps, s.fir_m, s.fir_arena_kb,
+               static_cast<double>(s.fir_max_slice_ns) / 1000.0,
+               s.fir_rebuilds, s.fir_face_fades);
+        printf("            落下=%u モード切=%u 設計失敗=%u 不適(大きさ)=%u 不適(予算)=%u "
+               "曲線却下=%u 潰し=%u\n",
+               s.fir_fallbacks, s.fir_mode_offs, s.fir_design_failures, s.fir_unfit_size,
+               s.fir_unfit_budget, s.fir_curve_rejected, s.fir_scrubbed);
+        const caeq::FirWhy why = caeq::firWhy(s, q);
+        if (why != caeq::FirWhy::kRunning) printf("            → %s\n", fir_why_text(why));
     }
     if (active == 0) {
         // magic が立っている = ca_stats_open() が走った = create_effect() が最低 1 回はあった。

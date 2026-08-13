@@ -668,12 +668,9 @@ object EqSolver {
     fun autoPreampDb10(bands: List<EqBand>, fs: Int = DEFAULT_FS): Int {
         if (bands.isEmpty()) return 0
         var peak = 0.0
-        // 20 Hz 〜 20 kHz を対数で 400 点。ピークを取り逃さない粒度。
-        val steps = 400
-        val lo = ln(20.0)
-        val hi = ln(20_000.0)
-        for (i in 0..steps) {
-            val hz = Math.E.pow(lo + (hi - lo) * i / steps)
+        // 評価点は [EqCurveGrid]。**格子をここで作り直さない** — 同じ 20 Hz〜20 kHz の
+        // 対数等間隔 401 点を、聴感重みと「高精度」へ送る曲線も引いている。
+        for (hz in EqCurveGrid.HZ) {
             val db = combinedResponseDb(bands, hz, fs)
             if (db > peak) peak = db
         }

@@ -196,6 +196,11 @@
     <string name="eq_mode_parametric_desc">Đặt từng dải ở đâu tùy ý</string>
     <string name="eq_band_count">Số dải</string>
     <string name="eq_band_count_desc">Đây không phải thiết lập về tốc độ: điện thoại làm cùng một khối lượng việc với bất kỳ số dải nào.</string>
+    <string name="eq_precision">Độ chính xác của đường cong</string>
+    <string name="eq_precision_standard">Tiêu chuẩn (khuyến nghị)</string>
+    <string name="eq_precision_standard_desc">Giữa các dải, đường cong lệch đi một chút</string>
+    <string name="eq_precision_high">Độ chính xác cao</string>
+    <string name="eq_precision_high_desc">Bám sát hơn đường nối các dải</string>
     <string name="eq_band_none">Chưa có dải nào. Hãy thêm một dải, hoặc nhập tệp AutoEQ.</string>
     <string name="eq_band_add">Thêm dải</string>
     <string name="eq_band_remove">Bỏ dải này</string>

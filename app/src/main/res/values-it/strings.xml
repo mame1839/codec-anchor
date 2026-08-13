@@ -200,6 +200,11 @@
     <string name="eq_mode_parametric_desc">Metti ogni banda dove vuoi</string>
     <string name="eq_band_count">Numero di bande</string>
     <string name="eq_band_count_desc">Non è un\'impostazione di prestazioni: il telefono lavora allo stesso modo con qualsiasi numero di bande.</string>
+    <string name="eq_precision">Precisione della curva</string>
+    <string name="eq_precision_standard">Standard (consigliato)</string>
+    <string name="eq_precision_standard_desc">Tra una banda e l\'altra la curva si discosta un po\'</string>
+    <string name="eq_precision_high">Alta precisione</string>
+    <string name="eq_precision_high_desc">Segue più da vicino la linea che unisce le bande</string>
     <string name="eq_band_none">Ancora nessuna banda. Aggiungine una o importa un file AutoEQ.</string>
     <string name="eq_band_add">Aggiungi una banda</string>
     <string name="eq_band_remove">Rimuovi questa banda</string>

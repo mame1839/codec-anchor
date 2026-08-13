@@ -198,6 +198,11 @@
     <string name="eq_mode_parametric_desc">हर बैंड को जहाँ चाहें रख सकते हैं</string>
     <string name="eq_band_count">बैंड की संख्या</string>
     <string name="eq_band_count_desc">यह गति की सेटिंग नहीं है: बैंड चाहे जितने हों, फ़ोन उतना ही काम करता है।</string>
+    <string name="eq_precision">कर्व की सटीकता</string>
+    <string name="eq_precision_standard">मानक (अनुशंसित)</string>
+    <string name="eq_precision_standard_desc">बैंड के बीच कर्व थोड़ा हट जाता है</string>
+    <string name="eq_precision_high">उच्च सटीकता</string>
+    <string name="eq_precision_high_desc">बैंड को जोड़ने वाली रेखा का ज़्यादा नज़दीकी से पालन करता है</string>
     <string name="eq_band_none">अभी कोई बैंड नहीं है। एक जोड़ें, या AutoEQ फ़ाइल पढ़वाएँ।</string>
     <string name="eq_band_add">बैंड जोड़ें</string>
     <string name="eq_band_remove">यह बैंड हटाएँ</string>

@@ -206,6 +206,11 @@
     <string name="eq_mode_parametric_desc">يمكنك وضع كل نطاق حيث تشاء</string>
     <string name="eq_band_count">عدد النطاقات</string>
     <string name="eq_band_count_desc">هذا ليس إعداد أداء: الهاتف يقوم بالقدر نفسه من العمل أيًّا كان عدد النطاقات.</string>
+    <string name="eq_precision">دقة المنحنى</string>
+    <string name="eq_precision_standard">قياسي (موصى به)</string>
+    <string name="eq_precision_standard_desc">ينحرف المنحنى قليلاً بين النطاقات</string>
+    <string name="eq_precision_high">دقة عالية</string>
+    <string name="eq_precision_high_desc">يتبع الخط الواصل بين النطاقات بدقة أكبر</string>
     <string name="eq_band_none">لا توجد نطاقات بعد. أضِف نطاقًا أو استورد ملف AutoEQ.</string>
     <string name="eq_band_add">إضافة نطاق</string>
     <string name="eq_band_remove">إزالة هذا النطاق</string>

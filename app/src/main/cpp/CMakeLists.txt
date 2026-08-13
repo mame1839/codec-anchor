@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(caeq CXX)
+project(caeq C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -10,14 +10,37 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # **-ffast-math を付けないこと。**NaN / Inf の検査ごと消える (dsp/ca_eq_dsp.h が #error で
 # 止める)。FMA は積和が 1 回の丸めで済むので精度が上がる。ホストのハーネス
 # (test/CMakeLists.txt) と同じ方針にしてあり、同じコードが同じ丸めで走る。
-add_compile_options(-Wall -Wextra -Werror -O2 -ffp-contract=fast -fno-exceptions -fno-rtti)
+#
+# -fno-exceptions / -fno-rtti は C++ にだけ渡す。vendoring した pffft.c は C なので、
+# 素で並べると「C では無効な指定」が -Werror で落ちる。
+add_compile_options(-Wall -Wextra -Werror -O2 -ffp-contract=fast
+                    $<$<COMPILE_LANGUAGE:CXX>:-fno-exceptions>
+                    $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>)
 
 # エフェクト本体。vendor の audio HAL プロセスが dlopen する。
 # dsp/ は Android に依存しない演算層で、同じソースを test/ のハーネスがホストでビルドする。
-add_library(caeq SHARED ca_eq.cpp dsp/ca_eq_dsp.cpp)
+add_library(caeq SHARED
+    ca_eq.cpp
+    dsp/ca_eq_dsp.cpp
+    dsp/ca_eq_fft.cpp
+    dsp/ca_eq_fir.cpp
+    dsp/ca_eq_conv.cpp
+    dsp/ca_eq_pipeline.cpp
+    dsp/pffft/pffft.c)
 target_include_directories(caeq PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(caeq log)
 target_compile_options(caeq PRIVATE -fvisibility=hidden)
+
+# vendored の pffft.c だけ 2 つ扱いが違う。
+#
+# 1. **警告は上流のまま** — 改変を最小に保つため -Werror の対象から外す。
+# 2. **assert を no-op にする。**pffft は process 経路でも整列を assert で見ていて、
+#    この製品は release / debug のどちらも NDEBUG を定義しない。条件が崩れると
+#    audio HAL が abort() = 端末全体が無音になる。**ホストのハーネスでは定義しない** —
+#    開発時に整列のバグを握り潰さないため (詳細は dsp/pffft/pffft.c 冒頭)。
+set_source_files_properties(dsp/pffft/pffft.c PROPERTIES
+    COMPILE_OPTIONS "-w"
+    COMPILE_DEFINITIONS "CA_PFFFT_NO_ASSERT=1")
 # 見えるべきシンボルは AUDIO_EFFECT_LIBRARY_INFO_SYM (= AELI) だけ。
 # -fvisibility=hidden は自分の翻訳単位にしか効かない。ANDROID_STL=c++_static が引き込む
 # prebuilt の静的ライブラリは既定の可視性で入るので、--exclude-libs で libc++abi の

@@ -28,6 +28,23 @@ object EqMode {
     fun normalize(value: Int): Int = if (value == PARAMETRIC) PARAMETRIC else GRAPHIC
 }
 
+/**
+ * 曲線をどう鳴らすか。**音の内容ではなく作り方の選択**なので、バンドとは別の欄に持つ。
+ *
+ * - [STANDARD] … バンドを biquad のカスケードで鳴らす (これまでの唯一の方式)
+ * - [HIGH] … 摘みの折れ線そのものを目標にした最小位相 FIR。中心と中心のあいだの
+ *   ずれ (biquad の裾の重なりで出る) が消える
+ *
+ * **既定は [STANDARD]。**追加遅延はどちらも 0 で、差は曲線の再現精度だけ
+ * (eq-fir-design.md §0)。
+ */
+object EqPrecision {
+    const val STANDARD = 0
+    const val HIGH = 1
+
+    fun normalize(value: Int): Int = if (value == HIGH) HIGH else STANDARD
+}
+
 data class EqBand(
     val freqHz: Int,
     val q100: Int,
@@ -62,15 +79,30 @@ data class EqSettings(
     val bands: List<EqBand> = emptyList(),
     val preampAuto: Boolean = true,
     val preampDb10: Int = -30,
+    val precision: Int = EqPrecision.STANDARD,
 ) {
+    /**
+     * 「高精度」を実際に要求するか。**画面に方式の行を出す条件と、`caeqset` へ `--hp` を
+     * 渡す条件は、この 1 つの述語。**分けると「切り替えたのに送っていない」が作れる。
+     *
+     * グラフィックのときだけ。パラメトリックは fc と Q をユーザが決めていて、biquad が
+     * 定義どおりの厳密値なので、FIR にしても近似が入るだけ (eq-fir-design.md §0)。
+     * **パラメトリックへ移っても選択は消さない** — 戻ったときに選び直させるほうが煩わしい。
+     */
+    val firRequested: Boolean
+        get() = enabled && mode == EqMode.GRAPHIC && precision == EqPrecision.HIGH
+
     // put は必ず全部呼ぶ。「既定値なら省略」をやるとアプリとフックでキーの数が変わって
-    // hash が食い違う。
+    // hash が食い違う。**キーを増やしたら EqSupport.SCHEMA を上げること**
+    // (古いフックは知らないキーを落として再 encode するので、hash が永久に食い違う。
+    //  EqSchemaGuardTest がこの 2 つを一緒に動かすよう縛っている)。
     fun toJson(): JSONObject = JSONObject().apply {
         put("on", enabled)
         put("mode", mode)
         put("n", bandCount)
         put("pa", preampAuto)
         put("pdb", preampDb10)
+        put("prec", precision)
         put("b", JSONArray().also { a -> bands.forEach { a.put(it.toJson()) } })
     }
 
@@ -91,6 +123,7 @@ data class EqSettings(
                 bands = bands,
                 preampAuto = o.optBoolean("pa", true),
                 preampDb10 = o.optInt("pdb", -30).coerceIn(PREAMP_RANGE),
+                precision = EqPrecision.normalize(o.optInt("prec", EqPrecision.STANDARD)),
             )
         }
 
