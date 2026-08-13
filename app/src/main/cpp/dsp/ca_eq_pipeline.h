@@ -62,11 +62,24 @@ namespace caeq {
 // ブロック長の上限。2P がこれを超えると fftSetupBytes の予約の外に出る。
 inline constexpr int kMaxConvBlock = 4096;
 
-// `.so` の descriptor.memoryUsage に申告する値 (KB)。**ここが唯一の出どころで、
-// ハーネス 30 節が全サンプルレートの arena を実測して超えないことを見張る。**
-// フレームワークはこの値を予約には使わない (dumpsys に出る申告値) が、実際に 1 MB
-// 使うものを 64 KB と申告すると、あとから見た人が別の場所を疑うことになる。
-inline constexpr unsigned kDeclaredMemoryKb = 1536;
+// `.so` の descriptor.memoryUsage に申告する値 (KB)。
+//
+// ⚠️ **実測の使用量 (最悪 1233 KB) より小さい。意図的で、実機の制約による。**
+// 実機 (Xiaomi 2407FPN8ER / HyperOS 3 / MediaTek) で 2026-08-13 に実測:
+// **1536 を申告するとエフェクトのインスタンスが 1 つも生成されない。64 なら生成される。**
+// この 1 行だけが違う 2 つのビルドで対照を取った。**`<deviceEffects>` と `<postprocess>`
+// の両方で拒否される**ので、経路ではなく descriptor が原因。拒否はフレームワークが
+// `create_effect` を呼ぶ前に起き、**`ca_lib_create` に到達しない**
+// (`ca_stats_open` が呼ばれず共有メモリの magic が 0 のまま = `caeqstat` で確認できる)。
+//
+// **未確認**: 拒否の閾値がどこか / 拒んでいるのが audioserver か audio HAL か /
+// この端末以外での挙動。**機序を確かめていないので「フレームワークが予約に使う」とは書かない。**
+// 言えるのは「1536 を申告すると生成されない」だけ。
+//
+// **実際の使用量はここでは読めない。**`caeqstat` がインスタンスごとに `arena=%u KB` を出す
+// ので、正直な数はそちらで見る。上限の見張りはハーネス (ca_eq_shm_test.cpp の
+// 「申告するメモリ量」の節) が literal で持つ — **この定数とは独立**にしてある。
+inline constexpr unsigned kDeclaredMemoryKb = 64;
 
 // スライス予算 = この割合 × ブロックの実時間 (P/fs)。ホスト実測 (ハーネス 26 節) では
 // 設計全体が ~0.5 ms で、P ≥ 512 なら 1 スライスに収まり、完成までの時間は FDL の

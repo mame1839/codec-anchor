@@ -1195,9 +1195,13 @@ void runShmSections(Report& r) {
         // Eq 自身の状態と作業領域 (kMaxBands × kMaxChannels の double 2 面ほか)。
         const size_t eq_bytes = sizeof(caeq::Eq);
         const unsigned need = static_cast<unsigned>((worst + eq_bytes + 1023u) / 1024u);
-        r.check(need <= caeq::kDeclaredMemoryKb,
-                "descriptor の申告 %u KB >= 実測の最悪 %u KB (arena %zu KB @%.0f Hz + Eq %zu KB)",
-                caeq::kDeclaredMemoryKb, need, worst / 1024, worst_fs, eq_bytes / 1024);
+        // ⚠️ **`kDeclaredMemoryKb` と突き合わせない。**あちらは実機のフレームワークに
+        // 拒否されない大きさ (64 KB) に切り下げてあり、実測の使用量とは別の意味を持つ
+        // (理由は dsp/ca_eq_pipeline.h)。**上限は literal で持つ** — 記号で書くと
+        // 定数を動かしたときに釘も一緒に動いて、永久に落ちなくなる。
+        r.check(need <= 1536,
+                "実測の最悪 %u KB が上限 1536 KB に収まる (arena %zu KB @%.0f Hz + Eq %zu KB)",
+                need, worst / 1024, worst_fs, eq_bytes / 1024);
         // 12ch のインスタンスには作業領域を作らない (spatializer に 1 MB を持たせない)。
         std::unique_ptr<caeq::EqPipeline> wide_h(new caeq::EqPipeline());
         auto& wide = *wide_h;
