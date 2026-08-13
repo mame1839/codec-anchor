@@ -104,6 +104,9 @@ data class EqSessionPreview(val mac: String, val settings: EqSettings)
 /** 共有メモリへ書き込みが通った曲線。**同じものを送り直さない**判断だけに使う。 */
 private data class SentCurve(val mac: String, val text: String)
 
+/** 書き出し済みの曲線。[text] は書き込みが通ったときに [SentCurve] へ移す。 */
+private data class PreparedCurve(val file: File, val text: String)
+
 /**
  * 曲線を送るまでの静止時間。**最後の操作からこれだけ静かになってから 1 回だけ送る。**
  *
@@ -241,6 +244,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // 「高精度」の曲線だけは手が止まってから送る (理由は scheduleEqCurvePush)。
     private var eqCurveJob: Job? = null
 
+    /** 次の押し込みに曲線を載せるか。デバウンスが明けたときだけ立つ。 */
+    private var eqCurveDue = false
+
     /** 最後に書き込みが通った曲線。**一致したときだけ送らない** (詳しくは pushEqCurve)。 */
     private var eqSentCurve: SentCurve? = null
 
@@ -339,7 +345,39 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         // 可能性を含む。設定を変えただけのときだけ [eqSentCurve] を信じる。
         if (!settingsChangedOnly) eqSentCurve = null
         scheduleEqCurvePush()
+        runEqPush()
+    }
+
+    /**
+     * 「高精度」の目標曲線を送り直す予約。**手が止まってから 1 回だけ。**
+     *
+     * 曲線を送ると `.so` は FIR を組み直す (0.3〜0.6 s、そのあいだは biquad で鳴る)。
+     * 摘みを 1 本ずつ動かすたびに組み直させると完成が先送りされ続けるので、最後の操作から
+     * [EQ_CURVE_DEBOUNCE_MS] 静かになるまで待つ。**bands は即時の押し込みで届いている**ので、
+     * 待っているあいだも音は摘みどおりに鳴る (biquad interim)。
+     *
+     * **標準のときは予約を取り消すだけ。**`--curve` を伴わない押し込みに任せる。
+     */
+    private fun scheduleEqCurvePush() {
+        eqCurveJob?.cancel()
+        val target = eqOwner ?: return
+        if (!eqSettingsToPush(target).firRequested) return
+        eqCurveJob = viewModelScope.launch {
+            delay(EQ_CURVE_DEBOUNCE_MS)
+            // ⚠️ ここから [pushEqParams] を呼ばないこと。あちらは先頭でこの予約を取り直すので、
+            // 400 ms ごとに自分を呼び直す輪になる。
+            eqCurveDue = true
+            runEqPush()
+        }
+    }
+
+    /**
+     * 押し込みを 1 本だけ走らせる。**曲線もこの 1 本に載せる** — `caeqset` はプロセスをまたぐ
+     * 排他を持たないので、曲線を別の経路で送ると 2 本が同じ枠に重なって seqlock ごと壊れる。
+     */
+    private fun runEqPush() {
         if (eqPushJob?.isActive == true) {
+            // [eqCurveDue] は消さない。この回に載らなくても、次の回が拾う。
             eqPushQueued = true
             return
         }
@@ -352,65 +390,41 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 // 「何もしない」は「前の曲線が掛かったまま」を意味する (params[] はインスタンスの
                 // 死を越えて残る)。既定は EQ オフなので、書けば素通しに戻る。
                 val settings = eqSettingsToPush(target)
-                val result = withContext(Dispatchers.IO) { EqParams.apply(nativeLibraryDir, settings) }
+                val sendCurve = eqCurveDue
+                eqCurveDue = false
+                val sent = eqSentCurve?.takeIf { it.mac == target }?.text
+                // 曲線の組み立て (401 点 × バンド数) とファイル書き出しも IO 側で。
+                val (curve, result) = withContext(Dispatchers.IO) {
+                    val prepared = if (sendCurve) prepareEqCurve(settings, sent) else null
+                    prepared to EqParams.apply(nativeLibraryDir, settings, prepared?.file)
+                }
+                if (curve != null) {
+                    eqSentCurve =
+                        if (result.outcome == EqParamsOutcome.APPLIED) SentCurve(target, curve.text) else null
+                }
                 eqParamsReport = EqParamsReport(mac = target, result = result)
             } while (eqPushQueued)
         }
     }
 
     /**
-     * 「高精度」の目標曲線を送り直す予約。**手が止まってから 1 回だけ。**
+     * 曲線を組んで cacheDir へ書く。**送らないなら null。**IO スレッドから呼ぶこと。
      *
-     * 曲線を送ると `.so` は FIR を組み直す (0.3〜0.6 s、そのあいだは biquad で鳴る)。
-     * 摘みを 1 本ずつ動かすたびに組み直させると完成が先送りされ続けるので、最後の操作から
-     * [EQ_CURVE_DEBOUNCE_MS] 静かになるまで待つ。**bands は上の即時の押し込みで届いている**
-     * ので、待っているあいだも音は摘みどおりに鳴る (biquad interim)。
-     *
-     * **標準のときは何もしない。**予約だけ取り消して、`--curve` を伴わない押し込みに任せる。
+     * **[sent] と同じ曲線なら送らない。**送れば世代が動いて FIR が組み直され、鳴っている音が
+     * 0.3〜0.6 s のあいだ biquad に戻る。プリアンプだけを動かしたときにそれが起きないための
+     * 記憶で、**合致しなければ必ず送る側に倒す** (送りすぎは組み直し 1 回で済むが、送り損ねると
+     * 「高精度にしたのに変わらない」が黙って残り、次に曲線を触るまで直らない)。
      */
-    private fun scheduleEqCurvePush() {
-        eqCurveJob?.cancel()
-        val target = eqOwner ?: return
-        if (!eqSettingsToPush(target).firRequested) return
-        eqCurveJob = viewModelScope.launch {
-            delay(EQ_CURVE_DEBOUNCE_MS)
-            pushEqCurve()
-        }
-    }
-
-    /**
-     * 曲線を書き出して `caeqset --curve` で送る。**押し込みの本体 ([pushEqParams]) と同じ
-     * 直列化に乗せる** — `caeqset` はプロセスをまたぐ排他を持たないので、2 本が同じ枠に
-     * 重なると seqlock ごと壊れる。
-     *
-     * **前に送ったものと同じ曲線なら送らない。**送れば世代が動いて FIR が組み直され、
-     * 鳴っている音が 0.3〜0.6 s のあいだ biquad に戻る。プリアンプだけを動かしたときに
-     * それが起きないようにするための記憶で、**合致しなければ必ず送る側に倒す**
-     * (送りすぎは組み直し 1 回で済むが、送り損ねると「高精度にしたのに変わらない」が
-     * 黙って残り、次に曲線を触るまで直らない)。
-     */
-    private suspend fun pushEqCurve() {
-        eqPushJob?.join()
-        if (eqRegisterRunning != null) return
-        val target = eqOwner ?: return
-        val settings = eqSettingsToPush(target)
-        if (!settings.firRequested) return
+    private fun prepareEqCurve(settings: EqSettings, sent: String?): PreparedCurve? {
+        if (!settings.firRequested) return null
         val curve = EqCurveGrid.graphicCurveDb(settings.bands)
         // 非有限が混ざった曲線は直しようがない。送れば `.so` が枠の更新を丸ごと捨てて
         // bands まで消えるので、**送らずに biquad のまま鳴らす**ほうが害が小さい。
-        if (!EqCurveGrid.valid(curve)) return
+        if (!EqCurveGrid.valid(curve)) return null
         val text = EqCurveGrid.encode(curve)
-        if (eqSentCurve == SentCurve(target, text)) return
-        val result = withContext(Dispatchers.IO) {
-            val file = File(context.cacheDir, EQ_CURVE_FILE)
-            runCatching { file.writeText(text) }
-                .map { EqParams.apply(nativeLibraryDir, settings, file) }
-                .getOrElse {
-                    EqParamsResult(EqParamsOutcome.BAD_INPUT, EqParams.NO_EXIT_CODE, "", it.message.orEmpty())
-                }
-        }
-        eqSentCurve = if (result.outcome == EqParamsOutcome.APPLIED) SentCurve(target, text) else null
-        eqParamsReport = EqParamsReport(mac = target, result = result)
+        if (text == sent) return null
+        val file = File(context.cacheDir, EQ_CURVE_FILE)
+        return runCatching { file.writeText(text) }.map { PreparedCurve(file, text) }.getOrNull()
     }
 
     /**
