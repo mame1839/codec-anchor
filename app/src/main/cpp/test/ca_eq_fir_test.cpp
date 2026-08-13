@@ -2124,6 +2124,35 @@ void checkAccounting(Report& r) {
                 "小さすぎる P は予算で弾き、実用域は通す (判定が実際に効いている)");
     }
 
+    // --- 2b. ブロック長の上限そのもの -----------------------------------------
+    //
+    // **⚠️ 4096 と 8192 は literal で書くこと。**`kMaxConvBlock` を使って書くと、
+    // 定数を下げても「下げた値」を撃つだけになり、**この釘は永久に発火しない**
+    // (`ca_eq_slot_t` の pad を式で書いて static_assert が 1 本も鳴らなかったのと同じ形)。
+    //
+    // 向きが非対称なので、下げる方向にはここしか網が無い:
+    //   - **上げる方向**は arena が膨らんで `kDeclaredMemoryKb` の見張りが落ちる
+    //   - **下げる方向**は、その範囲のブロック長で **FIR が黙って無効になるだけ**
+    //     (`unfit_size` が増えて音は biquad)。TERM.md の「自分を無効化する型」そのもの
+    {
+        auto blockOkAt = [&](int p) {
+            caeq::EqPipeline pl;
+            pl.configure(48000.0, 2, caeq::Structure::kTdf2);
+            caeq::Params fl;
+            pl.snapParams(fl);
+            pl.setActive(true);
+            pl.setFirEnabled(true);
+            pl.setCurve(dunu.data(), 1);
+            std::vector<float> io(static_cast<size_t>(p) * 2, 0.01f);
+            pl.process(io.data(), io.data(), p, false);
+            return pl.blockOk();
+        };
+        r.check(blockOkAt(4096), "上限 P = 4096 のブロック長を通す (下げると黙って FIR が死ぬ)");
+        r.check(!blockOkAt(8192), "上限を超える P = 8192 は弾く (arena の区画を守る門)");
+        r.check(caeq::convBlockSizeValid(8192),
+                "8192 は合法な P — 弾いているのは大きさの上限であって形ではない");
+    }
+
     // --- 3. 壁時計は参考値 (note) + 桁違いの退行だけ拾う緩い天井 ---------------
     r.note("壁時計の実測 (**環境で揺れる。ASan や負荷で数倍になる**。参考値):");
     double worst_ratio = 0.0;
