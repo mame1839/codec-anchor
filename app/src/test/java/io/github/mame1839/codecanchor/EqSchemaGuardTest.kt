@@ -31,6 +31,13 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class EqSchemaGuardTest {
 
+    /**
+     * **上げた版が実際にフックから送られること**は `StatusReportSchemaTest.theHookStampsItsSchema`
+     * が見張っている (`A2dpHook.buildReport` を実際に呼んで `eqSchema` を確かめる形)。
+     * ここはその重複ではなく、**キーの集合と版を一緒に動かす**ほうを持つ。
+     * 2 つ揃って初めて「版を上げた」と「上げた版が届く」の両方が閉じる。
+     */
+
     /** 版ごとの `EqSettings` の JSON のキー。**行を書き換えず、必ず足すこと。** */
     private val keysBySchema = mapOf(
         1 to setOf("on", "mode", "n", "pa", "pdb", "b"),
