@@ -25,7 +25,8 @@ else
     CA_LIBDIR=/vendor/lib64/soundfx
 fi
 
-# 1. post-fs-data で置いたものが今も見えるか (/vendor の overlay の自己検証も兼ねる)
+# 1. post-fs-data で置いたものが今も見えるか (bind mount の自己検証も兼ねる。
+#    このモジュールは overlay を使わず ca_mount が常に bind する — common/setup.sh)
 [ -f "$CA_LIBDIR/libcaeq.so" ] || fail="$fail .so が見えない"
 [ "$(grep -c 'name="ca_eq"' "$CA_SRC_XML" 2>/dev/null)" = "2" ] || fail="$fail XML の 2 行が見えない"
 

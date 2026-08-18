@@ -41,8 +41,10 @@ ca_want_pp() {
 # audioserver を作り直す。XML は起動時に 1 回しか読まれず再読込の API が無いので、
 # 登録するイヤホンを増減したらこれしか手が無い。引き換えに再生中の音は切れ、
 # 他のエフェクト (Dolby DAP など) も作り直しになる (audioserver.rc の
-# onrestart restart vendor.audio-hal*)。audioserver.rc に critical / oneshot / disabled が
-# 無いので init が即座に作り直す。
+# onrestart restart vendor.audio-hal*)。kill すれば init が新しい pid で作り直す —
+# これはこの実機で実測しただけなので、戻ってこない端末に備えて下で 0 と 1 を分ける。
+# audioserver.rc に critical が無いことは実機で全文確認済み
+# (llmdocs/audio-effects.md「失敗の重さと復旧」) なので、作り直しに失敗しても端末は再起動しない。
 #   0 = 新しい pid で戻ってきた / 1 = 戻ってこない / 2 = そもそも居ない
 #
 # ⚠️ **pid が変わるまで戻らないこと。この待ちを外すとアプリ側の押さえが黙って効かなくなる。**

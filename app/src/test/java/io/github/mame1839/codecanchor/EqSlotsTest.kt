@@ -170,8 +170,9 @@ class EqSlotsTest {
         assertEquals(book, book.reconciledWith(macA, curveA))
     }
 
-    // 段 1 の既存 UI はフラット選択中でも編集できる。その編集は既存スロットを汚さず
-    // 新しいスロットに着地する (「外から来る曲線は必ず新しいスロットへ」と同じ側)。
+    // フラット選択中は編集の行を出さない (eq-slot-design.md §1 / ui/EqSection.kt) が、曲線は
+    // 外から来る (プリセット適用・AutoEQ 取り込み・好み探索の結果・移行)。その曲線は既存
+    // スロットを汚さず新しいスロットに着地する (「外から来る曲線は必ず新しいスロットへ」と同じ側)。
     @Test
     fun editingWhileFlatLandsInANewSlot() {
         val before = EqSlotBook(
