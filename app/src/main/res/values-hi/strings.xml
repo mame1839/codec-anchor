@@ -43,13 +43,15 @@
     <string name="toggle_enforce">सिस्टम या दूसरे ऐप के बदलाव पलट दें</string>
     <string name="toggle_notify">कोडेक बदलने पर बताएँ</string>
     <string name="toggle_verbose">विस्तृत लॉग लिखें</string>
+    <string name="toggle_free_offload_switch">डेवलपर विकल्प में A2DP हार्डवेयर ऑफ़लोड का स्विच खोलें</string>
 
     <string name="permission_title">Bluetooth की अनुमति चाहिए</string>
     <string name="permission_body">अनुमति देने पर ऐप आपके जोड़े गए डिवाइस और उनके नाम पढ़ सकता है।</string>
     <string name="permission_denied">अनुमति ब्लॉक है। सिस्टम की सेटिंग से अनुमति दें।</string>
     <string name="bluetooth_off">Bluetooth बंद है। जोड़े गए डिवाइस देखने के लिए इसे चालू करें।</string>
     <string name="config_broken">सहेजी गई सेटिंग पढ़ी नहीं जा सकी, इसलिए कुछ भी बदला नहीं जा सकता। फिर से शुरू करने के लिए बैकअप इंपोर्ट करें।</string>
-    <string name="offload_hint">Bluetooth A2DP हार्डवेयर ऑफ़लोड चालू है। डेवलपर विकल्प में \"Bluetooth A2DP हार्डवेयर ऑफ़लोड बंद करें\" चालू करें, ताकि फ़ोन खुद LDAC एन्कोड करे और बिटरेट कनेक्शन के हिसाब से बदल सके।</string>
+    <string name="offload_hint">Bluetooth A2DP हार्डवेयर ऑफ़लोड चालू है, इसलिए फ़ोन खुद LDAC एन्कोड नहीं करता और बिटरेट कनेक्शन के हिसाब से नहीं बदल पाता।</string>
+    <string name="offload_turn_off">डेवलपर विकल्प में \"Bluetooth A2DP हार्डवेयर ऑफ़लोड बंद करें\" चालू करें।</string>
     <string name="offload_hint_scope">इस डिवाइस पर वह स्विच इस्तेमाल नहीं किया जा सकता। मॉड्यूल के स्कोप में सेटिंग ऐप जोड़ें, फिर उसे खोलने के लिए डेवलपर विकल्प दोबारा खोलें।</string>
 
     <string name="section_audio_devices">ऑडियो डिवाइस</string>
@@ -74,7 +76,7 @@
 
     <string name="eq_module_version_mismatch">ऑडियो प्रोसेसिंग मॉड्यूल (%1$s) और ऐप (%2$s) के वर्शन अलग हैं। दोनों को एक ही वर्शन पर अपडेट करें, फिर फ़ोन को रीस्टार्ट करें।</string>
     <string name="eq_unavailable_not_registered">ऑडियो प्रोसेसिंग उपलब्ध नहीं है: ऑडियो प्रोसेसिंग मॉड्यूल इंस्टॉल नहीं है, या इस फ़ोन ने उसे अभी तक लोड नहीं किया। उसे इंस्टॉल करें, फिर फ़ोन को रीस्टार्ट करें।</string>
-    <string name="eq_unavailable_offload">जब तक Bluetooth A2DP हार्डवेयर ऑफ़लोड चालू है, ऑडियो प्रोसेसिंग उपलब्ध नहीं है। उसे बंद करने का तरीक़ा डिवाइस सूची की सूचना में बताया गया है।</string>
+    <string name="eq_unavailable_offload">जब तक Bluetooth A2DP हार्डवेयर ऑफ़लोड चालू है, ऑडियो प्रोसेसिंग उपलब्ध नहीं है।</string>
     <string name="eq_unavailable_hook_old">ऑडियो प्रोसेसिंग उपलब्ध नहीं है: Bluetooth प्रोसेस में चल रहा मॉड्यूल पुराने वर्शन का है और उसे नहीं जानता। Bluetooth बंद करके फिर चालू करें।</string>
     <string name="eq_unavailable_device">इन ईयरफ़ोन के लिए ऑडियो प्रोसेसिंग रजिस्टर नहीं है, इसलिए यहाँ जो भी सेट किया जाए, वह आवाज़ तक नहीं पहुँचता।</string>
 

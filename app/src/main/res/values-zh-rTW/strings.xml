@@ -42,13 +42,15 @@
     <string name="toggle_enforce">還原系統或其他應用程式的變更</string>
     <string name="toggle_notify">編解碼器變更時提示</string>
     <string name="toggle_verbose">輸出詳細記錄</string>
+    <string name="toggle_free_offload_switch">解除開發人員選項中 A2DP 硬體卸載開關的鎖定</string>
 
     <string name="permission_title">需要藍牙權限</string>
     <string name="permission_body">授予後，應用程式就能讀取已配對的裝置及其名稱。</string>
     <string name="permission_denied">權限已被封鎖，請在系統設定中授予。</string>
     <string name="bluetooth_off">藍牙已關閉。開啟後即可看到已配對的裝置。</string>
     <string name="config_broken">無法讀取已儲存的設定，因此無法編輯任何內容。匯入備份即可重新開始。</string>
-    <string name="offload_hint">藍牙 A2DP 硬體卸載已啟用。在開發人員選項中開啟「停用藍牙 A2DP 硬體卸載」，手機就會自行編碼 LDAC，位元率也能隨連線變化。</string>
+    <string name="offload_hint">藍牙 A2DP 硬體卸載已啟用，手機不會自行編碼 LDAC，位元率也無法隨連線變化。</string>
+    <string name="offload_turn_off">請在開發人員選項中開啟「停用藍牙 A2DP 硬體卸載」。</string>
     <string name="offload_hint_scope">本機上該開關無法操作。把「設定」應用程式加入模組的作用域，再重新開啟開發人員選項即可解除。</string>
 
     <string name="section_audio_devices">音訊裝置</string>
@@ -73,7 +75,7 @@
 
     <string name="eq_module_version_mismatch">音訊處理模組 (%1$s) 與應用程式 (%2$s) 的版本不一致。請將兩者更新到相同版本，然後重新啟動手機。</string>
     <string name="eq_unavailable_not_registered">無法使用音訊處理：尚未安裝音訊處理模組，或本機還沒有載入。請先安裝，然後重新啟動手機。</string>
-    <string name="eq_unavailable_offload">藍牙 A2DP 硬體卸載開啟期間無法使用音訊處理。關閉方式請見裝置清單中的提示。</string>
+    <string name="eq_unavailable_offload">藍牙 A2DP 硬體卸載開啟期間無法使用音訊處理。</string>
     <string name="eq_unavailable_hook_old">無法使用音訊處理：藍牙處理程序中執行的模組是不認識音訊處理的舊版本。請關閉藍牙後再重新開啟。</string>
     <string name="eq_unavailable_device">這副耳機還沒有註冊音訊處理，因此這裡設定的任何內容都不會影響聲音。</string>
 

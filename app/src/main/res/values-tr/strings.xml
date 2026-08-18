@@ -43,13 +43,15 @@
     <string name="toggle_enforce">Sistemin veya diğer uygulamaların değişikliklerini geri al</string>
     <string name="toggle_notify">Kodek değişimini bildir</string>
     <string name="toggle_verbose">Ayrıntılı günlük tut</string>
+    <string name="toggle_free_offload_switch">Geliştirici seçeneklerindeki A2DP donanım aktarımı anahtarını serbest bırak</string>
 
     <string name="permission_title">Bluetooth izni gerekiyor</string>
     <string name="permission_body">İzin verdiğinizde uygulama eşleştirilmiş cihazlarınızı ve adlarını okuyabilir.</string>
     <string name="permission_denied">İzin engellendi. Lütfen sistem ayarlarından izin verin.</string>
     <string name="bluetooth_off">Bluetooth kapalı. Eşleştirilmiş cihazlarınızı görmek için açın.</string>
     <string name="config_broken">Kaydedilmiş ayarlar okunamadı, bu yüzden düzenleme yapılamıyor. Yeniden başlamak için bir yedek içe aktarın.</string>
-    <string name="offload_hint">Bluetooth A2DP donanım aktarımı etkin. Telefonun LDAC\'ı kendisi kodlaması ve bit hızının bağlantıya uyum sağlayabilmesi için geliştirici seçeneklerinde \"Bluetooth A2DP donanım aktarımını devre dışı bırak\" seçeneğini açın.</string>
+    <string name="offload_hint">Bluetooth A2DP donanım aktarımı etkin; bu yüzden telefon LDAC\'ı kendisi kodlamıyor ve bit hızı bağlantıya uyum sağlayamıyor.</string>
+    <string name="offload_turn_off">Geliştirici seçeneklerinde \"Bluetooth A2DP donanım aktarımını devre dışı bırak\" seçeneğini açın.</string>
     <string name="offload_hint_scope">Bu cihazda o anahtar kullanılamıyor. Ayarlar uygulamasını modülün kapsamına ekleyin, sonra serbest bırakmak için geliştirici seçeneklerini yeniden açın.</string>
 
     <string name="section_audio_devices">Ses cihazları</string>
@@ -74,7 +76,7 @@
 
     <string name="eq_module_version_mismatch">Ses işleme modülü (%1$s) ile uygulama (%2$s) farklı sürümlerde. İkisini de aynı sürüme güncelleyin, sonra telefonu yeniden başlatın.</string>
     <string name="eq_unavailable_not_registered">Ses işleme kullanılamıyor: ses işleme modülü kurulu değil ya da bu telefon modülü henüz yüklemedi. Modülü kurun, sonra telefonu yeniden başlatın.</string>
-    <string name="eq_unavailable_offload">Bluetooth A2DP donanım boşaltma açıkken ses işleme kullanılamaz. Nasıl kapatılacağı cihaz listesindeki notta anlatılıyor.</string>
+    <string name="eq_unavailable_offload">Bluetooth A2DP donanım boşaltma açıkken ses işleme kullanılamaz.</string>
     <string name="eq_unavailable_hook_old">Ses işleme kullanılamıyor: Bluetooth sürecinde çalışan modül, bunu bilmeyen eski bir sürüm. Bluetooth\'u kapatıp yeniden açın.</string>
     <string name="eq_unavailable_device">Bu kulaklık ses işleme için kayıtlı değil, bu yüzden burada ayarladığınız hiçbir şey sese yansımaz.</string>
 

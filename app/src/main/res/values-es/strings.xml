@@ -44,13 +44,15 @@
     <string name="toggle_enforce">Revertir los cambios de otras apps</string>
     <string name="toggle_notify">Avisar cuando cambie el códec</string>
     <string name="toggle_verbose">Registro detallado</string>
+    <string name="toggle_free_offload_switch">Desbloquear el interruptor de descarga por hardware de A2DP en Opciones para desarrolladores</string>
 
     <string name="permission_title">Se necesita el permiso de Bluetooth</string>
     <string name="permission_body">Al concederlo, la app puede leer tus dispositivos emparejados y sus nombres.</string>
     <string name="permission_denied">El permiso está bloqueado. Concédelo desde los ajustes del sistema.</string>
     <string name="bluetooth_off">El Bluetooth está desactivado. Actívalo para ver tus dispositivos emparejados.</string>
     <string name="config_broken">No se han podido leer los ajustes guardados, así que no se puede editar nada. Importa una copia de seguridad para empezar de nuevo.</string>
-    <string name="offload_hint">La descarga por hardware de Bluetooth A2DP está activada. Activa «Inhabilitar la descarga por hardware de Bluetooth A2DP» en Opciones para desarrolladores para que el teléfono codifique LDAC por su cuenta y la tasa de bits pueda adaptarse al enlace.</string>
+    <string name="offload_hint">La descarga por hardware de Bluetooth A2DP está activada, así que el teléfono no codifica LDAC por su cuenta y la tasa de bits no puede adaptarse al enlace.</string>
+    <string name="offload_turn_off">Activa «Inhabilitar la descarga por hardware de Bluetooth A2DP» en Opciones para desarrolladores.</string>
     <string name="offload_hint_scope">En este dispositivo ese interruptor no se puede tocar. Añade la app Ajustes a su ámbito y vuelve a abrir Opciones para desarrolladores para liberarlo.</string>
 
     <string name="section_audio_devices">Dispositivos de audio</string>
@@ -75,7 +77,7 @@
 
     <string name="eq_module_version_mismatch">El módulo de procesamiento de audio (%1$s) y la app (%2$s) tienen versiones distintas. Actualiza ambos a la misma versión y reinicia el teléfono.</string>
     <string name="eq_unavailable_not_registered">El procesamiento de audio no está disponible: el módulo de procesamiento de audio no está instalado, o este teléfono aún no lo ha cargado. Instálalo y reinicia el teléfono.</string>
-    <string name="eq_unavailable_offload">El procesamiento de audio no está disponible mientras la descarga por hardware de Bluetooth A2DP esté activada. El aviso de la lista de dispositivos explica cómo desactivarla.</string>
+    <string name="eq_unavailable_offload">El procesamiento de audio no está disponible mientras la descarga por hardware de Bluetooth A2DP esté activada.</string>
     <string name="eq_unavailable_hook_old">El procesamiento de audio no está disponible: el módulo que se ejecuta en el proceso de Bluetooth es de una versión anterior que no lo conoce. Desactiva el Bluetooth y vuelve a activarlo.</string>
     <string name="eq_unavailable_device">Estos auriculares no están registrados para el procesamiento de audio, así que nada de lo que ajustes aquí llega al sonido.</string>
 

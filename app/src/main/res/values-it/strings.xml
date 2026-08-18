@@ -44,13 +44,15 @@
     <string name="toggle_enforce">Annulla le modifiche del sistema o di altre app</string>
     <string name="toggle_notify">Segnala i cambi di codec</string>
     <string name="toggle_verbose">Scrivi log dettagliati</string>
+    <string name="toggle_free_offload_switch">Sblocca l\'interruttore di offload hardware A2DP nelle opzioni sviluppatore</string>
 
     <string name="permission_title">Serve l\'autorizzazione Bluetooth</string>
     <string name="permission_body">Una volta concessa, l\'app può leggere i dispositivi associati e i loro nomi.</string>
     <string name="permission_denied">L\'autorizzazione è bloccata. Concedila dalle impostazioni di sistema.</string>
     <string name="bluetooth_off">Il Bluetooth è disattivato. Attivalo per vedere i dispositivi associati.</string>
     <string name="config_broken">Non è stato possibile leggere le impostazioni salvate, quindi non è possibile modificare nulla. Importa un backup per ricominciare.</string>
-    <string name="offload_hint">L\'offload hardware di Bluetooth A2DP è attivo. Attiva «Disattiva offload hardware Bluetooth A2DP» nelle opzioni sviluppatore, così il telefono codifica LDAC da solo e il bitrate può seguire la connessione.</string>
+    <string name="offload_hint">L\'offload hardware di Bluetooth A2DP è attivo, quindi il telefono non codifica LDAC da solo e il bitrate non può seguire la connessione.</string>
+    <string name="offload_turn_off">Attiva «Disattiva offload hardware Bluetooth A2DP» nelle opzioni sviluppatore.</string>
     <string name="offload_hint_scope">Su questo dispositivo quell\'interruttore non è utilizzabile. Aggiungi l\'app Impostazioni all\'ambito del modulo, poi riapri le opzioni sviluppatore per sbloccarlo.</string>
 
     <string name="section_audio_devices">Dispositivi audio</string>
@@ -75,7 +77,7 @@
 
     <string name="eq_module_version_mismatch">Il modulo di elaborazione audio (%1$s) e l\'app (%2$s) hanno versioni diverse. Aggiorna entrambi alla stessa versione, poi riavvia il telefono.</string>
     <string name="eq_unavailable_not_registered">L\'elaborazione audio non è disponibile: il modulo di elaborazione audio non è installato, oppure questo telefono non lo ha ancora caricato. Installalo, poi riavvia il telefono.</string>
-    <string name="eq_unavailable_offload">L\'elaborazione audio non è disponibile finché lo scaricamento hardware Bluetooth A2DP è attivo. L\'avviso nell\'elenco dei dispositivi spiega come disattivarlo.</string>
+    <string name="eq_unavailable_offload">L\'elaborazione audio non è disponibile finché lo scaricamento hardware Bluetooth A2DP è attivo.</string>
     <string name="eq_unavailable_hook_old">L\'elaborazione audio non è disponibile: il modulo in esecuzione nel processo Bluetooth è di una versione precedente che non la conosce. Disattiva il Bluetooth e riattivalo.</string>
     <string name="eq_unavailable_device">Questi auricolari non sono registrati per l\'elaborazione audio, quindi nulla di ciò che viene impostato qui arriva al suono.</string>
 

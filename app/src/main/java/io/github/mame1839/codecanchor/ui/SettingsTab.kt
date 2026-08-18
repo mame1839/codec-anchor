@@ -67,6 +67,13 @@ fun SettingsTab(vm: MainViewModel, contentPadding: PaddingValues) {
                 checked = vm.config.verbose,
                 onChange = { value -> vm.update { it.copy(verbose = value) } },
             )
+            // ここだけ AppConfig ではない (行き先が Bluetooth プロセスではなく設定アプリなので、
+            // 経路も保存先も別。理由は Bridge.PREFS_KEY_FREE_OFFLOAD_SWITCH)。
+            SwitchRow(
+                title = stringResource(R.string.toggle_free_offload_switch),
+                checked = vm.freeOffloadSwitch,
+                onChange = vm::updateFreeOffloadSwitch,
+            )
         }
 
         BackupCard(vm = vm)

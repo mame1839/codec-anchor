@@ -44,13 +44,15 @@
     <string name="toggle_enforce">Annuler les modifications du système ou d\'autres applications</string>
     <string name="toggle_notify">Signaler les changements de codec</string>
     <string name="toggle_verbose">Écrire des journaux détaillés</string>
+    <string name="toggle_free_offload_switch">Débloquer le commutateur de déchargement matériel A2DP dans les options pour les développeurs</string>
 
     <string name="permission_title">Autorisation Bluetooth requise</string>
     <string name="permission_body">Une fois accordée, l\'application peut lire vos appareils associés et leurs noms.</string>
     <string name="permission_denied">L\'autorisation est bloquée. Accordez-la depuis les paramètres système.</string>
     <string name="bluetooth_off">Le Bluetooth est désactivé. Activez-le pour voir vos appareils associés.</string>
     <string name="config_broken">Les réglages enregistrés n\'ont pas pu être lus, aucune modification n\'est donc possible. Importez une sauvegarde pour repartir de zéro.</string>
-    <string name="offload_hint">Le déchargement matériel Bluetooth A2DP est activé. Activez « Désactiver le déchargement matériel Bluetooth A2DP » dans les options pour les développeurs afin que le téléphone encode lui-même le LDAC et que le débit puisse suivre la liaison.</string>
+    <string name="offload_hint">Le déchargement matériel Bluetooth A2DP est activé, le téléphone n\'encode donc pas le LDAC lui-même et le débit ne peut pas suivre la liaison.</string>
+    <string name="offload_turn_off">Activez « Désactiver le déchargement matériel Bluetooth A2DP » dans les options pour les développeurs.</string>
     <string name="offload_hint_scope">Sur cet appareil, ce commutateur n\'est pas utilisable. Ajoutez l\'application Paramètres à la portée du module, puis rouvrez les options pour les développeurs pour le débloquer.</string>
 
     <string name="section_audio_devices">Appareils audio</string>
@@ -75,7 +77,7 @@
 
     <string name="eq_module_version_mismatch">Le module de traitement audio (%1$s) et l\'application (%2$s) sont dans des versions différentes. Mettez les deux à la même version, puis redémarrez le téléphone.</string>
     <string name="eq_unavailable_not_registered">Le traitement audio n\'est pas disponible : le module de traitement audio n\'est pas installé, ou ce téléphone ne l\'a pas encore chargé. Installez-le, puis redémarrez le téléphone.</string>
-    <string name="eq_unavailable_offload">Le traitement audio n\'est pas disponible tant que le déchargement matériel Bluetooth A2DP est activé. La remarque dans la liste des appareils explique comment le désactiver.</string>
+    <string name="eq_unavailable_offload">Le traitement audio n\'est pas disponible tant que le déchargement matériel Bluetooth A2DP est activé.</string>
     <string name="eq_unavailable_hook_old">Le traitement audio n\'est pas disponible : le module qui tourne dans le processus Bluetooth est une version plus ancienne qui ne le connaît pas. Désactivez le Bluetooth, puis réactivez-le.</string>
     <string name="eq_unavailable_device">Ces écouteurs ne sont pas enregistrés pour le traitement audio, donc rien de ce qui est réglé ici n\'agit sur le son.</string>
 

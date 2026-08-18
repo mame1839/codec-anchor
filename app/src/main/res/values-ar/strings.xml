@@ -47,13 +47,15 @@
     <string name="toggle_enforce">التراجع عن تغييرات النظام أو التطبيقات الأخرى</string>
     <string name="toggle_notify">الإشعار عند تغيّر الكوديك</string>
     <string name="toggle_verbose">كتابة سجلات مفصّلة</string>
+    <string name="toggle_free_offload_switch">تحرير مفتاح التفريغ العتادي لـ A2DP في خيارات المطوّر</string>
 
     <string name="permission_title">إذن Bluetooth مطلوب</string>
     <string name="permission_body">منح الإذن يتيح للتطبيق قراءة أجهزتك المقترنة وأسمائها.</string>
     <string name="permission_denied">تم حظر الإذن. يُرجى منحه من إعدادات النظام.</string>
     <string name="bluetooth_off">تم إيقاف Bluetooth. شغّله لعرض أجهزتك المقترنة.</string>
     <string name="config_broken">تعذّرت قراءة الإعدادات المحفوظة، لذا لا يمكن تعديل أي شيء. استورد نسخة احتياطية للبدء من جديد.</string>
-    <string name="offload_hint">التفريغ العتادي لـ Bluetooth A2DP مُمكَّن. فعّل «إيقاف التفريغ العتادي لـ Bluetooth A2DP» في خيارات المطوّر ليُرمّز الهاتف LDAC بنفسه ويتكيّف معدل البت مع الاتصال.</string>
+    <string name="offload_hint">التفريغ العتادي لـ Bluetooth A2DP مُمكَّن، لذلك لا يُرمّز الهاتف LDAC بنفسه ولا يتكيّف معدل البت مع الاتصال.</string>
+    <string name="offload_turn_off">فعّل «إيقاف التفريغ العتادي لـ Bluetooth A2DP» في خيارات المطوّر.</string>
     <string name="offload_hint_scope">لا يمكن استخدام هذا المفتاح على هذا الجهاز. أضف تطبيق الإعدادات إلى نطاق الوحدة، ثم افتح خيارات المطوّر مرة أخرى لتحريره.</string>
 
     <string name="section_audio_devices">أجهزة الصوت</string>
@@ -78,7 +80,7 @@
 
     <string name="eq_module_version_mismatch">وحدة معالجة الصوت (%1$s) والتطبيق (%2$s) بإصدارين مختلفين. حدّث كليهما إلى الإصدار نفسه، ثم أعد تشغيل الهاتف.</string>
     <string name="eq_unavailable_not_registered">معالجة الصوت غير متاحة: وحدة معالجة الصوت غير مثبّتة، أو أن هذا الهاتف لم يحمّلها بعد. ثبّتها، ثم أعد تشغيل الهاتف.</string>
-    <string name="eq_unavailable_offload">معالجة الصوت غير متاحة ما دام تفريغ Bluetooth A2DP بالعتاد مفعّلًا. تشرح الملاحظة في قائمة الأجهزة كيفية إيقافه.</string>
+    <string name="eq_unavailable_offload">معالجة الصوت غير متاحة ما دام تفريغ Bluetooth A2DP بالعتاد مفعّلًا.</string>
     <string name="eq_unavailable_hook_old">معالجة الصوت غير متاحة: الوحدة العاملة في عملية Bluetooth إصدار أقدم لا يعرفها. أوقف Bluetooth ثم شغّله مرة أخرى.</string>
     <string name="eq_unavailable_device">هذه السماعات غير مسجَّلة لمعالجة الصوت، لذلك لا يصل أي مما يُضبط هنا إلى الصوت الفعلي.</string>
 

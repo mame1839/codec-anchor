@@ -42,13 +42,15 @@
     <string name="toggle_enforce">ย้อนการเปลี่ยนแปลงจากระบบหรือแอปอื่น</string>
     <string name="toggle_notify">แจ้งเมื่อโคเดกเปลี่ยน</string>
     <string name="toggle_verbose">บันทึกล็อกแบบละเอียด</string>
+    <string name="toggle_free_offload_switch">ปลดล็อกสวิตช์การถ่ายโอนงานด้วยฮาร์ดแวร์ของ A2DP ในตัวเลือกสำหรับนักพัฒนา</string>
 
     <string name="permission_title">ต้องมีสิทธิ์ Bluetooth</string>
     <string name="permission_body">เมื่อให้สิทธิ์ แอปจะอ่านอุปกรณ์ที่จับคู่ไว้และชื่อของอุปกรณ์ได้</string>
     <string name="permission_denied">สิทธิ์ถูกบล็อกอยู่ โปรดให้สิทธิ์จากการตั้งค่าของระบบ</string>
     <string name="bluetooth_off">Bluetooth ปิดอยู่ เปิดเพื่อดูอุปกรณ์ที่จับคู่ไว้</string>
     <string name="config_broken">อ่านการตั้งค่าที่บันทึกไว้ไม่ได้ จึงแก้ไขอะไรไม่ได้ นำเข้าข้อมูลสำรองเพื่อเริ่มต้นใหม่</string>
-    <string name="offload_hint">การถ่ายโอนงานด้วยฮาร์ดแวร์ของ Bluetooth A2DP เปิดใช้งานอยู่ ให้เปิด \"ปิดใช้การถ่ายโอนงานด้วยฮาร์ดแวร์ของ Bluetooth A2DP\" ในตัวเลือกสำหรับนักพัฒนา เพื่อให้เครื่องเข้ารหัส LDAC เองและบิตเรตปรับตามสัญญาณได้</string>
+    <string name="offload_hint">การถ่ายโอนงานด้วยฮาร์ดแวร์ของ Bluetooth A2DP เปิดใช้งานอยู่ เครื่องจึงไม่ได้เข้ารหัส LDAC เองและบิตเรตปรับตามสัญญาณไม่ได้</string>
+    <string name="offload_turn_off">ให้เปิด \"ปิดใช้การถ่ายโอนงานด้วยฮาร์ดแวร์ของ Bluetooth A2DP\" ในตัวเลือกสำหรับนักพัฒนา</string>
     <string name="offload_hint_scope">บนเครื่องนี้สวิตช์ดังกล่าวใช้งานไม่ได้ ให้เพิ่มแอปการตั้งค่าในขอบเขตของโมดูล แล้วเปิดตัวเลือกสำหรับนักพัฒนาอีกครั้งเพื่อปลดล็อก</string>
 
     <string name="section_audio_devices">อุปกรณ์เสียง</string>
@@ -73,7 +75,7 @@
 
     <string name="eq_module_version_mismatch">โมดูลประมวลผลเสียง (%1$s) กับแอป (%2$s) เป็นคนละเวอร์ชัน โปรดอัปเดตทั้งสองให้เป็นเวอร์ชันเดียวกัน แล้วรีสตาร์ทเครื่อง</string>
     <string name="eq_unavailable_not_registered">ใช้การประมวลผลเสียงไม่ได้ เพราะยังไม่ได้ติดตั้งโมดูลประมวลผลเสียง หรือเครื่องนี้ยังไม่ได้โหลดโมดูล โปรดติดตั้งแล้วรีสตาร์ทเครื่อง</string>
-    <string name="eq_unavailable_offload">ใช้การประมวลผลเสียงไม่ได้ขณะที่เปิด Bluetooth A2DP hardware offload อยู่ วิธีปิดอธิบายไว้ในหมายเหตุที่รายการอุปกรณ์</string>
+    <string name="eq_unavailable_offload">ใช้การประมวลผลเสียงไม่ได้ขณะที่เปิด Bluetooth A2DP hardware offload อยู่</string>
     <string name="eq_unavailable_hook_old">ใช้การประมวลผลเสียงไม่ได้ เพราะโมดูลที่ทำงานอยู่ในโปรเซส Bluetooth เป็นเวอร์ชันเก่าที่ยังไม่รู้จักการประมวลผลเสียง โปรดปิด Bluetooth แล้วเปิดอีกครั้ง</string>
     <string name="eq_unavailable_device">หูฟังคู่นี้ยังไม่ได้ลงทะเบียนสำหรับการประมวลผลเสียง สิ่งที่ตั้งค่าไว้ที่นี่จึงไม่มีผลกับเสียงที่ได้ยิน</string>
 
