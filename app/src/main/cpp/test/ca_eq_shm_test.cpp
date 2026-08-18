@@ -1308,6 +1308,26 @@ void runSlotLifecycleSection(Report& r) {
         delete w;
     }
 
+    // --- a2. 生存確認の規則 — **誤りの向きが被害の向き** ---------------------
+    //
+    // `/proc/<pid>` を見に行った結果の翻訳。**`ca_eq_proc.h` は POSIX なのでホストでは
+    // 1 行も回らない**ので、規則だけを `ca_eq_pick.h` に置いてここで撃つ。
+    //
+    // ⚠️ `access(path, F_OK) == 0` と書くと、`ENOENT` 以外の errno が全部「死んでいる」に
+    // 潰れる。回収は「死んだ枠を空きに戻す」操作なので、**そのまま「生きている枠を奪う」
+    // 向きに反転する。**短く見えるが等価ではない。
+    {
+        r.check(caeq::aliveFromAccess(0, 0), "見に行けた = 生きている");
+        r.check(!caeq::aliveFromAccess(-1, ENOENT), "ENOENT だけが「死んでいる」");
+        // **拒否系。ここが false になったら、生きているプロセスの枠を奪いに行く。**
+        r.check(caeq::aliveFromAccess(-1, EACCES), "EACCES は「分からない」= 生きている扱い");
+        r.check(caeq::aliveFromAccess(-1, EPERM), "EPERM は「分からない」= 生きている扱い");
+        r.check(caeq::aliveFromAccess(-1, ENAMETOOLONG),
+                "そのほかの errno も「分からない」= 生きている扱い");
+        // errno が 0 のまま非 0 が返る実装もありうる。**ENOENT でなければ死とは言わない。**
+        r.check(caeq::aliveFromAccess(-1, 0), "errno が立っていなければ死とは言わない");
+    }
+
     // --- b. 死んだ枠だけを回収する -------------------------------------------
     {
         ShmWithCanary* w = newCanaryShm();

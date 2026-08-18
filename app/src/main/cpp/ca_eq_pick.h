@@ -18,6 +18,7 @@
 #include <stdint.h>
 
 #include <atomic>
+#include <cerrno>
 #include <cstring>
 
 #include "ca_eq_shm.h"
@@ -235,6 +236,27 @@ struct SlotPickResult {
  * 判定が逆に倒れると、`reclaimDeadSlots` が**生きている枠を奪う**向きに反転する。
  */
 typedef bool (*PidAliveFn)(uint64_t pid, void* user);
+
+/**
+ * `/proc/<pid>` を見に行った結果を「生きている / 死んでいる」に翻訳する規則。
+ *
+ * **`rc` は `access()` (や `stat()`) の戻り値、`err` はそのときの `errno`。**
+ * 規則だけをここに置いてあるのは、**syscall を持ち込まずにハーネスで撃つため** —
+ * `ca_eq_proc.h` は POSIX なのでホスト (MSVC) では 1 行も回らず、規則を向こうに
+ * 書くと誰も検査できない。
+ *
+ * ⚠️ **戻り値だけで判定しないこと。**`access()` が 0 以外を返す理由は `ENOENT` だけ
+ * ではない。拒否系の `errno` を「死んでいる」と読むと、判定が**生きている枠を奪う
+ * 向きに反転する** — 回収は「死んだ枠を空きに戻す」操作なので、誤りの向きが
+ * そのまま被害の向きになる。
+ *
+ * **`ENOENT` だけが「死んでいる」。それ以外は「分からない」で、生きている扱いに倒す。**
+ * こうすれば見に行けなかったときの結末は「回収できない (= 回収を足す前と同じ)」で止まる。
+ */
+inline bool aliveFromAccess(int rc, int err) {
+    if (rc == 0) return true;
+    return err != ENOENT;
+}
 
 /* 走査する枠の数。ヘッダの申告を我々の並びで頭打ちにする。 */
 inline uint32_t slotCountOf(const ca_shm_t* m) {

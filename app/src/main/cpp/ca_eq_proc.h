@@ -17,27 +17,22 @@
 namespace caeq {
 
 /**
- * プロセスが生きているか。[PidAliveFn] の実装で、`.so` と `caeqset` が同じものを使う。
+ * プロセスが生きているか。[caeq::PidAliveFn] の実装で、`.so` と `caeqset` が同じものを使う。
  *
- * ⚠️ **戻り値ではなく `errno` で判定する。**`access()` が 0 以外を返す理由は
- * ENOENT だけではない。拒否系の `errno` (EACCES など) を「死んでいる」と読むと、
- * 判定が**生きている枠を奪う向きに反転する** — 回収は「死んだ枠を空きに戻す」操作なので、
- * 誤りの向きがそのまま被害の向きになる。
+ * **ここは syscall を撃つだけ。判定の規則は `caeq::aliveFromAccess`** (`ca_eq_pick.h`) に
+ * 置いてあり、ハーネスがそちらを撃っている — このヘッダは POSIX なのでホストでは
+ * 1 行も回らず、規則をここに書くと誰も検査できない。
  *
- * **`ENOENT` だけが「死んでいる」。それ以外の `errno` は「分からない」で、
- * 生きている扱いに倒す。**こうすれば読めなかったときの結末は
- * 「回収できない (= 回収を足す前と同じ)」で止まる。
- *
- * ⚠️ **`access(path, F_OK) == 0` という書き方を戻すと、この安全側の倒し方が消える。**
- * 短く見えるが等価ではない。
+ * ⚠️ **`return access(path, F_OK) == 0;` に短くしないこと。**戻り値だけで判定すると、
+ * 拒否系の `errno` が「死んでいる」に潰れて、判定が**生きている枠を奪う向きに反転する。**
  */
 inline bool procPidAlive(uint64_t pid, void* /*user*/) {
     if (pid == 0) return false;
     char path[64];
     std::snprintf(path, sizeof(path), "/proc/%llu", static_cast<unsigned long long>(pid));
     errno = 0;
-    if (access(path, F_OK) == 0) return true;
-    return errno != ENOENT;
+    const int rc = access(path, F_OK);
+    return aliveFromAccess(rc, errno);
 }
 
 }  // namespace caeq
