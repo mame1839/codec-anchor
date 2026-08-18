@@ -27,6 +27,14 @@ class SettingsStore(private val context: Context) {
         prefs.edit { putLong(Bridge.PREFS_KEY_SETTINGS_HOOKED, System.currentTimeMillis()) }
     }
 
+    // 設定アプリのフックが XSharedPreferences で同じ鍵を読む (ブロードキャストを取り逃したとき、
+    // および設定アプリのプロセスが立った直後の 1 回目の描画のため)。
+    fun freeOffloadSwitch(): Boolean = prefs.getBoolean(Bridge.PREFS_KEY_FREE_OFFLOAD_SWITCH, true)
+
+    fun setFreeOffloadSwitch(value: Boolean) {
+        prefs.edit { putBoolean(Bridge.PREFS_KEY_FREE_OFFLOAD_SWITCH, value) }
+    }
+
     companion object {
         // MODE_WORLD_READABLE は Xposed 環境でのみ通る。ブロードキャストを取り逃したときの保険。
         private fun openPrefs(context: Context): SharedPreferences =
@@ -52,6 +60,18 @@ object BridgeClient {
 
     fun applyNow(context: Context, mac: String?) {
         send(context) { Intent(Bridge.ACTION_APPLY_NOW).apply { mac?.let { putExtra(Bridge.EXTRA_MAC, it) } } }
+    }
+
+    // 設定アプリのフックだけが読む値。宛先も中身も上の 3 つとは別なので経路を分ける —
+    // AppConfig を com.android.settings へ流すと全機器の MAC と名前が渡ることになる。
+    fun pushSettingsHook(context: Context, freeOffloadSwitch: Boolean) {
+        runCatching {
+            val intent = Intent(Bridge.ACTION_PUSH_SETTINGS_HOOK)
+                .setPackage(Bridge.SETTINGS_PACKAGE)
+                .putExtra(Bridge.EXTRA_FREE_OFFLOAD_SWITCH, freeOffloadSwitch)
+                .addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
+            context.sendBroadcast(intent)
+        }
     }
 
     // 受信側 (Bluetooth プロセス) は BRIDGE 権限の保持を送信元に要求する。ここで receiverPermission を

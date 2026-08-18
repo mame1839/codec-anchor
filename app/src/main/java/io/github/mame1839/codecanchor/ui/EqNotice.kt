@@ -31,15 +31,23 @@ private val NOTICE_PADDING = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
  * OK のときは何も出さない (呼び出し側で分岐しなくてよい)。
  */
 @Composable
-fun EqUnavailableNotice(availability: EqAvailability, modifier: Modifier = Modifier) {
+fun EqUnavailableNotice(vm: MainViewModel, availability: EqAvailability, modifier: Modifier = Modifier) {
     val reason = when (availability) {
         EqAvailability.OK -> return
         EqAvailability.EFFECT_NOT_REGISTERED -> R.string.eq_unavailable_not_registered
-        // 切り方は一覧画面の offload_hint が持っているので、ここでは繰り返さずそちらを指す。
         EqAvailability.OFFLOAD_ENABLED -> R.string.eq_unavailable_offload
         // すぐ下に登録のトグルが並ぶので、ここでは操作を繰り返さず「届いていない」だけを言う。
         EqAvailability.DEVICE_NOT_REGISTERED -> R.string.eq_unavailable_device
         EqAvailability.HOOK_TOO_OLD -> R.string.eq_unavailable_hook_old
+    }
+    // オフロードだけは、この画面から直せる相手ではないのに**直し方が短い**。以前は状態タブの
+    // 案内を指していたが、指し先を読み手が特定できないので、切り方をその場に出す。
+    if (availability == EqAvailability.OFFLOAD_ENABLED) {
+        Column(modifier.fillMaxWidth()) {
+            NoticeRow(icon = R.drawable.ic_info, text = stringResource(reason))
+            OffloadTurnOffLines(vm = vm, modifier = Modifier.padding(bottom = 4.dp))
+        }
+        return
     }
     NoticeRow(icon = R.drawable.ic_info, text = stringResource(reason), modifier = modifier)
 }

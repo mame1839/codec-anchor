@@ -211,6 +211,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     var settingsHooked by mutableStateOf(store.settingsHooked())
         private set
 
+    // 設定アプリのグレーアウトを外す介入をするか。`AppConfig` ではなく独立した鍵に置いてある
+    // (理由は Bridge.PREFS_KEY_FREE_OFFLOAD_SWITCH)。
+    var freeOffloadSwitch by mutableStateOf(store.freeOffloadSwitch())
+        private set
+
     // queryEffects() は audioserver への binder 呼び出し。Compose の再構成のたびに走らせないよう、
     // ここに持って refresh() でだけ取り直す。
     private var effectRegistered by mutableStateOf(EqSupport.effectRegistered())
@@ -614,6 +619,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun applyNow(mac: String?) = BridgeClient.applyNow(context, mac)
+
+    // 設定アプリのフック宛て。保存と送信は AppConfig と同じ順 (先に保存 — 送信が届かなくても、
+    // 設定アプリのプロセスが立ち上がり直せば XSharedPreferences から拾える)。
+    fun updateFreeOffloadSwitch(value: Boolean) {
+        if (value == freeOffloadSwitch) return
+        freeOffloadSwitch = value
+        store.setFreeOffloadSwitch(value)
+        BridgeClient.pushSettingsHook(context, value)
+    }
 
     fun update(transform: (AppConfig) -> AppConfig) {
         if (configBroken) return

@@ -66,29 +66,14 @@ fun StatusTab(vm: MainViewModel, contentPadding: PaddingValues, onNotify: (Strin
         // オフロードは端末全体の設定なので、機器ごとの詳細ではなくここに出す。報告が届いて
         // いなければ offloadEnabled は false になるので、モジュールが動いていない間は出ない。
         if (vm.a2dpOffloadEnabled) {
-            val needsScope = !vm.settingsHooked
             SettingsCard(container = MaterialTheme.colorScheme.surfaceContainerHighest) {
                 NoticeRow(
                     icon = R.drawable.ic_bolt,
                     text = stringResource(R.string.offload_hint),
-                    contentPadding = PaddingValues(
-                        start = 16.dp,
-                        end = 16.dp,
-                        top = 10.dp,
-                        bottom = if (needsScope) 6.dp else 10.dp,
-                    ),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 2.dp),
                 )
-                // トグルが塞がれているかは端末側からは読めない。設定アプリに入ったフックが
-                // 名乗ってきたかどうかで代える — 名乗りが無いのは「スコープ未追加」か
-                // 「設定アプリをまだ開いていない」のどちらかで、どちらでもこの案内が当たる。
-                if (needsScope) {
-                    Text(
-                        text = stringResource(R.string.offload_hint_scope),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 46.dp, end = 16.dp, bottom = 10.dp),
-                    )
-                }
+                // 切り方は音響処理の画面にも同じものが出る。文言と出し分けは OffloadTurnOffLines が持つ。
+                OffloadTurnOffLines(vm = vm, modifier = Modifier.padding(bottom = 10.dp))
             }
         }
 

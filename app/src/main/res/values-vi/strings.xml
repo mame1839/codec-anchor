@@ -42,13 +42,15 @@
     <string name="toggle_enforce">Hoàn tác thay đổi của hệ thống hoặc ứng dụng khác</string>
     <string name="toggle_notify">Thông báo khi codec thay đổi</string>
     <string name="toggle_verbose">Ghi nhật ký chi tiết</string>
+    <string name="toggle_free_offload_switch">Mở khóa công tắc giảm tải phần cứng A2DP trong tùy chọn cho nhà phát triển</string>
 
     <string name="permission_title">Cần quyền Bluetooth</string>
     <string name="permission_body">Cấp quyền để ứng dụng đọc được các thiết bị đã ghép nối và tên của chúng.</string>
     <string name="permission_denied">Quyền đang bị chặn. Hãy cấp quyền trong cài đặt hệ thống.</string>
     <string name="bluetooth_off">Bluetooth đang tắt. Hãy bật để xem các thiết bị đã ghép nối.</string>
     <string name="config_broken">Không đọc được cài đặt đã lưu nên không thể chỉnh sửa. Hãy nhập một bản sao lưu để bắt đầu lại.</string>
-    <string name="offload_hint">Tính năng giảm tải phần cứng Bluetooth A2DP đang được bật. Hãy bật \"Tắt tính năng giảm tải phần cứng Bluetooth A2DP\" trong tùy chọn cho nhà phát triển để điện thoại tự mã hóa LDAC và bitrate có thể thay đổi theo kết nối.</string>
+    <string name="offload_hint">Tính năng giảm tải phần cứng Bluetooth A2DP đang được bật nên điện thoại không tự mã hóa LDAC và bitrate không thể thay đổi theo kết nối.</string>
+    <string name="offload_turn_off">Hãy bật \"Tắt tính năng giảm tải phần cứng Bluetooth A2DP\" trong tùy chọn cho nhà phát triển.</string>
     <string name="offload_hint_scope">Trên máy này, công tắc đó không dùng được. Hãy thêm ứng dụng Cài đặt vào phạm vi của mô-đun rồi mở lại tùy chọn cho nhà phát triển để mở khóa.</string>
 
     <string name="section_audio_devices">Thiết bị âm thanh</string>
@@ -73,7 +75,7 @@
 
     <string name="eq_module_version_mismatch">Mô-đun xử lý âm thanh (%1$s) và ứng dụng (%2$s) khác phiên bản. Hãy cập nhật cả hai lên cùng một phiên bản, rồi khởi động lại điện thoại.</string>
     <string name="eq_unavailable_not_registered">Không dùng được xử lý âm thanh: chưa cài mô-đun xử lý âm thanh, hoặc máy này chưa nạp nó. Hãy cài đặt, rồi khởi động lại điện thoại.</string>
-    <string name="eq_unavailable_offload">Không dùng được xử lý âm thanh khi Bluetooth A2DP hardware offload đang bật. Cách tắt được ghi trong ghi chú ở danh sách thiết bị.</string>
+    <string name="eq_unavailable_offload">Không dùng được xử lý âm thanh khi Bluetooth A2DP hardware offload đang bật.</string>
     <string name="eq_unavailable_hook_old">Không dùng được xử lý âm thanh: mô-đun đang chạy trong tiến trình Bluetooth là phiên bản cũ, chưa biết đến nó. Hãy tắt Bluetooth rồi bật lại.</string>
     <string name="eq_unavailable_device">Tai nghe này chưa được đăng ký để xử lý âm thanh, nên mọi thứ đặt ở đây đều không ảnh hưởng đến âm thanh.</string>
 

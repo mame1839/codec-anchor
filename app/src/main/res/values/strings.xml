@@ -45,13 +45,15 @@
     <string name="toggle_enforce">Undo changes by the system or other apps</string>
     <string name="toggle_notify">Announce codec changes</string>
     <string name="toggle_verbose">Write verbose logs</string>
+    <string name="toggle_free_offload_switch">Unlock the A2DP hardware offload switch in Developer options</string>
 
     <string name="permission_title">Bluetooth permission needed</string>
     <string name="permission_body">Granting it lets the app read your paired devices and their names.</string>
     <string name="permission_denied">The permission is blocked. Please grant it from the system settings.</string>
     <string name="bluetooth_off">Bluetooth is off. Turn it on to see your paired devices.</string>
     <string name="config_broken">The saved settings could not be read, so nothing can be edited. Import a backup to start over.</string>
-    <string name="offload_hint">Bluetooth A2DP hardware offload is enabled. Turn on \"Disable Bluetooth A2DP hardware offload\" in Developer options so that the phone encodes LDAC itself and the bitrate can follow the link.</string>
+    <string name="offload_hint">Bluetooth A2DP hardware offload is enabled, so the phone is not encoding LDAC itself and the bitrate cannot follow the link.</string>
+    <string name="offload_turn_off">Turn on \"Disable Bluetooth A2DP hardware offload\" in Developer options.</string>
     <string name="offload_hint_scope">On this device that switch cannot be operated. Add the Settings app to the scope of the module, then open Developer options again to free it.</string>
 
     <string name="section_audio_devices">Audio devices</string>
@@ -79,7 +81,7 @@
          what every other module_* string above means. -->
     <string name="eq_module_version_mismatch">The audio processing module (%1$s) and the app (%2$s) are different versions. Update both to the same version, then restart the phone.</string>
     <string name="eq_unavailable_not_registered">Audio processing is unavailable: the audio processing module is not installed, or this phone has not loaded it. Install it, then restart the phone.</string>
-    <string name="eq_unavailable_offload">Audio processing is unavailable while Bluetooth A2DP hardware offload is enabled. The note in the device list explains how to turn it off.</string>
+    <string name="eq_unavailable_offload">Audio processing is unavailable while Bluetooth A2DP hardware offload is enabled.</string>
     <string name="eq_unavailable_hook_old">Audio processing is unavailable: the module running in the Bluetooth process is an older version that does not know about it. Turn Bluetooth off, then on again.</string>
     <string name="eq_unavailable_device">These earphones are not registered for audio processing, so nothing set here reaches the sound.</string>
 

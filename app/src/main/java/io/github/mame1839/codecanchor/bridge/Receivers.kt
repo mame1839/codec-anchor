@@ -29,8 +29,14 @@ class BootReceiver : BroadcastReceiver() {
 private val BOOT_ACTIONS = setOf(Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED)
 
 // onReceive で投げた例外はアプリのプロセスを落とす。
+//
+// 設定アプリのフックも同じ ACTION_REQUEST_CONFIG で要求してくるので、ここで両方に答える。
+// 設定アプリ側の値は AppConfig とは別の鍵なので、JSON が壊れていても送れる (送らないと、
+// 壊れた設定を直すまで介入のオンオフだけが届かないままになる)。
 private fun pushSaved(context: Context) {
     runCatching {
-        SettingsStore(context).load()?.let { BridgeClient.pushConfig(context, it) }
+        val store = SettingsStore(context)
+        BridgeClient.pushSettingsHook(context, store.freeOffloadSwitch())
+        store.load()?.let { BridgeClient.pushConfig(context, it) }
     }
 }

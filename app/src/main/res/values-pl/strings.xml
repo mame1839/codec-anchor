@@ -45,13 +45,15 @@
     <string name="toggle_enforce">Cofaj zmiany systemu i innych aplikacji</string>
     <string name="toggle_notify">Powiadamiaj o zmianie kodeka</string>
     <string name="toggle_verbose">Zapisuj szczegółowe logi</string>
+    <string name="toggle_free_offload_switch">Odblokuj przełącznik sprzętowego odciążania A2DP w opcjach programistycznych</string>
 
     <string name="permission_title">Potrzebne uprawnienie Bluetooth</string>
     <string name="permission_body">Po przyznaniu aplikacja może odczytać sparowane urządzenia i ich nazwy.</string>
     <string name="permission_denied">Uprawnienie jest zablokowane. Przyznaj je w ustawieniach systemu.</string>
     <string name="bluetooth_off">Bluetooth jest wyłączony. Włącz go, aby zobaczyć sparowane urządzenia.</string>
     <string name="config_broken">Nie udało się odczytać zapisanych ustawień, więc nie można ich edytować. Zaimportuj kopię zapasową, aby zacząć od nowa.</string>
-    <string name="offload_hint">Sprzętowe odciążanie Bluetooth A2DP jest włączone. Włącz „Wyłącz sprzętowe odciążanie Bluetooth A2DP” w opcjach programistycznych, aby telefon sam kodował LDAC, a przepływność mogła dostosowywać się do połączenia.</string>
+    <string name="offload_hint">Sprzętowe odciążanie Bluetooth A2DP jest włączone, więc telefon nie koduje LDAC samodzielnie, a przepływność nie może dostosowywać się do połączenia.</string>
+    <string name="offload_turn_off">Włącz „Wyłącz sprzętowe odciążanie Bluetooth A2DP” w opcjach programistycznych.</string>
     <string name="offload_hint_scope">Na tym urządzeniu tego przełącznika nie da się użyć. Dodaj aplikację Ustawienia do zakresu modułu i otwórz opcje programistyczne ponownie, aby go odblokować.</string>
 
     <string name="section_audio_devices">Urządzenia audio</string>
@@ -76,7 +78,7 @@
 
     <string name="eq_module_version_mismatch">Moduł przetwarzania dźwięku (%1$s) i aplikacja (%2$s) mają różne wersje. Zaktualizuj oba do tej samej wersji, a potem uruchom telefon ponownie.</string>
     <string name="eq_unavailable_not_registered">Przetwarzanie dźwięku jest niedostępne: moduł przetwarzania dźwięku nie jest zainstalowany albo telefon jeszcze go nie wczytał. Zainstaluj go i uruchom telefon ponownie.</string>
-    <string name="eq_unavailable_offload">Przetwarzanie dźwięku jest niedostępne, dopóki włączone jest sprzętowe odciążanie Bluetooth A2DP. Jak je wyłączyć, wyjaśnia uwaga na liście urządzeń.</string>
+    <string name="eq_unavailable_offload">Przetwarzanie dźwięku jest niedostępne, dopóki włączone jest sprzętowe odciążanie Bluetooth A2DP.</string>
     <string name="eq_unavailable_hook_old">Przetwarzanie dźwięku jest niedostępne: w procesie Bluetooth działa starsza wersja modułu, która go nie zna. Wyłącz Bluetooth i włącz go ponownie.</string>
     <string name="eq_unavailable_device">Te słuchawki nie są zarejestrowane do przetwarzania dźwięku, więc nic z tego, co tu ustawisz, nie dociera do dźwięku.</string>
 
