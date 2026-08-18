@@ -215,8 +215,9 @@ inline void ca_seq_end(ca_slot_t* s) { caeq::statsEndWrite(s); }
 
 // 枠を 1 つ取って中身を埋める。取れたら true。
 //
-// `reclaim` が false のときは死んだ枠の回収を行わない = **syscall を 1 つも撃たない。**
-// 呼び手のスレッドが分からない経路 (EFFECT_CMD_ENABLE) 用。
+// `reclaim` が false のときは死んだ枠の回収を行わない = **`/proc` を 1 度も見に行かない。**
+// 呼び手のスレッドが分からない経路 (EFFECT_CMD_ENABLE) 用。撃つのは `getpid()` 1 回と
+// `in_use` の CAS だけで、確保もログもファイルも触らない。
 bool ca_stats_take_slot(CaCtx* c, bool reclaim) {
     if (g_shm == nullptr) return false;
     const uint64_t self = static_cast<uint64_t>(getpid());
@@ -503,8 +504,9 @@ extern "C" int32_t ca_command(effect_handle_t self, uint32_t cmd, uint32_t cmdSi
         // このコマンドが制御スレッドで届くとは限らない — AOSP の AudioFlinger は
         // EffectModule::updateState() (= EffectChain::process_l() の中 = 再生スレッド)
         // からも EFFECT_CMD_ENABLE を出す。**未確認だが、そうでない保証も無い**ので、
-        // open / mmap / 待ち合わせ / syscall を持ち込まない側に倒す。
-        // reclaim を渡さないので、ここで撃つのは in_use の CAS だけ (最大 8 回)。
+        // open / mmap / 待ち合わせ / ファイルを持ち込まない側に倒す。
+        // reclaim を渡さないので、ここで増えるのは getpid() 1 回と in_use の CAS
+        // (最大 8 回) だけ。すぐ下の CA_LOGI のほうがよほど重い。
         // 死んだ枠の回収は、生成 (create_effect) と SET_CONFIG が受け持つ。
         if (c->enabled && c->slot == nullptr) {
             if (ca_stats_take_slot(c, /*reclaim=*/false)) {
