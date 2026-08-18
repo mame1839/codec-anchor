@@ -51,6 +51,10 @@ const char* fir_state_name(uint32_t s) {
 const char* fir_why_text(caeq::FirWhy w) {
     switch (w) {
     case caeq::FirWhy::kRunning:      return "";
+    case caeq::FirWhy::kNoAudio:
+        return "このインスタンスで process() がまだ 1 度も回っていない。"
+               "**fir_flags は process() が書くので、下の旗はどれもまだ根拠が無い** "
+               "(要求の有無も読めない)。まず frames と age を見ること";
     case caeq::FirWhy::kNotRequested: return "高精度が要求されていない (標準モード)";
     case caeq::FirWhy::kNotAddressable:
         return "このインスタンスには設定を宛てられない (DEVICE 経由ではない = 退路経路)。"
@@ -193,7 +197,9 @@ int main(int argc, char** argv) {
                "曲線却下=%u 潰し=%u\n",
                s.fir_fallbacks, s.fir_mode_offs, s.fir_design_failures, s.fir_unfit_size,
                s.fir_unfit_budget, s.fir_curve_rejected, s.fir_scrubbed);
-        const caeq::FirWhy why = caeq::firWhy(s, q);
+        // **firWhy ではなく firWhyReported。**音がまだ来ていない枠では fir_flags が
+        // 丸ごと 0 なので、素で表を引くと「標準モード」という嘘になる。
+        const caeq::FirWhy why = caeq::firWhyReported(s, q);
         if (why != caeq::FirWhy::kRunning) printf("            → %s\n", fir_why_text(why));
     }
     if (active == 0) {

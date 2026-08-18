@@ -13,6 +13,8 @@
 #include <limits>
 #include <memory>
 #include <string>
+#include <thread>
+#include <vector>
 
 #include "ca_test_support.h"
 #include "../ca_eq_curve_io.h"
@@ -1208,5 +1210,369 @@ void runShmSections(Report& r) {
         wide.configure(48000.0, 12, caeq::Structure::kTdf2);
         r.check(!wide.firAvailable() && wide.arenaBytes() == 0,
                 "12ch のインスタンスには作業領域を作らない");
+    }
+}
+
+// --------------------------------------------------------------------------
+// 32. 枠の取得と回収 — **出荷を止めていた不具合の本体**
+//
+// apply が audioserver を作り直すと audio HAL も道連れで死に、`release_effect` が
+// 呼ばれないので枠が `in_use` のまま残る。`acquireSlot` が死んだ枠を拾い直せないと、
+// 枠が尽きて **EQ が黙って完全な素通しになる (再起動でしか戻らない)。**
+//
+// ⚠️ **ここは値そのものを見る。**「`caeqset` と `.so` が同じ答えを出す」形の釘は、
+// 両者が同じ関数を呼ぶ以上 差が原理的に出ない = 何も見ていない。
+//
+// ⚠️ `ca_eq.cpp` の `ca_stats_attach` / `ca_stats_detach` 自体はここから撃てない
+// (あちらは test/CMakeLists.txt のソース一覧に無い)。だから**判断と手順を
+// ca_eq_pick.h の純関数に置いてある** — 撃っているのは `.so` が実際に通る実体。
+// --------------------------------------------------------------------------
+
+namespace {
+
+// 生きている pid の表。**表に無ければ死んでいると答える。**
+struct PidTable {
+    uint64_t alive[16];
+    int count;
+    static bool fn(uint64_t pid, void* user) {
+        const PidTable* t = static_cast<const PidTable*>(user);
+        for (int i = 0; i < t->count; i++) {
+            if (t->alive[i] == pid) return true;
+        }
+        return false;
+    }
+};
+
+// 枠を全部埋める。pid は 1000+i。
+void fillAllSlots(ca_shm_t* m, int32_t session) {
+    for (uint32_t i = 0; i < CA_SHM_SLOTS; i++) putStatSlot(m, i, 1000ull + i, session);
+}
+
+// パラメータ枠に見分けの付く中身を置く。**回収がここを消していないこと**を見る。
+void putParams(ca_shm_t* m, uint32_t i, uint32_t gen) {
+    ca_eq_slot_t& q = m->params[i];
+    q.generation = gen;
+    q.band_count = 10;
+    q.curve_gen = 3;
+    q.preamp_db = -2.5f;
+    q.flags = CA_EQ_FLAG_ENABLED | CA_EQ_FLAG_HIGH_PRECISION;
+    for (int p = 0; p < caeq::kCurvePoints; p++) q.curve_db[p] = curveSample(i, p);
+}
+
+bool paramsIntact(const ca_shm_t* m, uint32_t i, uint32_t gen) {
+    const ca_eq_slot_t& q = m->params[i];
+    if (q.generation != gen || q.band_count != 10u || q.curve_gen != 3u) return false;
+    if (q.flags != (CA_EQ_FLAG_ENABLED | CA_EQ_FLAG_HIGH_PRECISION)) return false;
+    for (int p = 0; p < caeq::kCurvePoints; p++) {
+        if (q.curve_db[p] != curveSample(i, p)) return false;
+    }
+    return true;
+}
+
+// 統計の枠の本体 (in_use の後ろ) が全部ゼロか。
+bool statBodyZero(const ca_slot_t& s) {
+    const uint8_t* p = reinterpret_cast<const uint8_t*>(&s) + offsetof(ca_slot_t, seq);
+    for (size_t i = 0; i < sizeof(ca_slot_t) - offsetof(ca_slot_t, seq); i++) {
+        if (p[i] != 0u) return false;
+    }
+    return true;
+}
+
+}  // namespace
+
+void runSlotLifecycleSection(Report& r) {
+    r.section("32. 枠の取得と回収 (枠の枯渇で EQ が素通しになる不具合)");
+
+    // --- a. 手放す手順 -------------------------------------------------------
+    {
+        ShmWithCanary* w = newCanaryShm();
+        putStatSlot(&w->m, 3, 4242, CA_AUDIO_SESSION_DEVICE);
+        putParams(&w->m, 3, 7);
+        w->m.slots[3].frames = 99999;
+
+        r.check(caeq::releaseSlot(&w->m.slots[3]), "使用中の枠は手放せる");
+        r.check(w->m.slots[3].in_use == 0u, "in_use が空きに戻る (0x%x)", w->m.slots[3].in_use);
+        // **不変条件そのもの。**中身が残ったまま空きに戻ると、次に取った側の初期化前に
+        // リーダが前のインスタンスの frames を読んで「進んでいる」と誤読する。
+        r.check(statBodyZero(w->m.slots[3]),
+                "in_use == 0 の枠は中身も必ずゼロ (frames が残っていない)");
+        // **params[] は消さない。**ここが「アプリが走っていなくても EQ が生き延びる」本体。
+        r.check(paramsIntact(&w->m, 3, 7),
+                "パラメータ枠は無傷 (曲線 %d 点・バンド 10・gen 7 が残っている)",
+                caeq::kCurvePoints);
+
+        r.check(!caeq::releaseSlot(&w->m.slots[3]),
+                "空きの枠は手放せない (二重解放を CAS が弾く)");
+        r.check(!caeq::releaseSlot(nullptr), "nullptr でも落ちない");
+        r.check(canaryIntact(*w), "番兵が無傷");
+        delete w;
+    }
+
+    // --- b. 死んだ枠だけを回収する -------------------------------------------
+    {
+        ShmWithCanary* w = newCanaryShm();
+        fillAllSlots(&w->m, CA_AUDIO_SESSION_DEVICE);
+        PidTable t{{1002, 1005}, 2};       // 枠 2 と 5 の持ち主だけ生きている
+
+        const uint32_t freed = caeq::reclaimDeadSlots(&w->m, PidTable::fn, &t, 0);
+        r.check(freed == 6u, "死んでいる 6 枠だけを回収した (%u)", freed);
+        r.check(w->m.slots[2].in_use == CA_SHM_MAGIC && w->m.slots[5].in_use == CA_SHM_MAGIC,
+                "生きている枠は使用中のまま");
+        r.check(w->m.slots[2].pid == 1002 && w->m.slots[5].pid == 1005,
+                "生きている枠の中身が消えていない");
+        bool others_free = true;
+        for (uint32_t i = 0; i < CA_SHM_SLOTS; i++) {
+            if (i == 2u || i == 5u) continue;
+            if (w->m.slots[i].in_use != 0u) others_free = false;
+        }
+        r.check(others_free, "残りの 6 枠は空きに戻った");
+        delete w;
+    }
+
+    {   // pid が全部生きていれば 1 つも回収しない。**回収の向きが逆に倒れたら落ちる。**
+        ShmWithCanary* w = newCanaryShm();
+        fillAllSlots(&w->m, CA_AUDIO_SESSION_DEVICE);
+        PidTable t{{1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007}, 8};
+        r.check(caeq::reclaimDeadSlots(&w->m, PidTable::fn, &t, 0) == 0u,
+                "pid が全部生きていれば 1 つも回収しない");
+        delete w;
+    }
+
+    {   // **自分の枠は回収しない。**生存確認が「死んでいる」と答えても外す —
+        // 生存確認は差し替え可能な部品なので、ここの安全性をあちらの正しさに預けない。
+        ShmWithCanary* w = newCanaryShm();
+        fillAllSlots(&w->m, CA_AUDIO_SESSION_DEVICE);
+        PidTable t{{0}, 0};                // 誰も生きていないと答える表
+        const uint32_t freed = caeq::reclaimDeadSlots(&w->m, PidTable::fn, &t, 1004);
+        r.check(freed == 7u && w->m.slots[4].in_use == CA_SHM_MAGIC,
+                "pid == 自分 (1004) の枠は回収されない (回収 %u / 枠 4 は使用中のまま)", freed);
+        delete w;
+    }
+
+    {   // attach の途中 (pid == 0) の枠に触らない。触ると相手の初期化を壊す。
+        ShmWithCanary* w = newCanaryShm();
+        putStatSlot(&w->m, 0, 0, CA_AUDIO_SESSION_DEVICE);
+        PidTable t{{0}, 0};
+        r.check(caeq::reclaimDeadSlots(&w->m, PidTable::fn, &t, 9999) == 0u &&
+                    w->m.slots[0].in_use == CA_SHM_MAGIC,
+                "pid == 0 (attach の途中) の枠は回収しない");
+        delete w;
+    }
+
+    {   // 生存確認を渡さなければ回収そのものを行わない (syscall を撃たない経路)。
+        ShmWithCanary* w = newCanaryShm();
+        fillAllSlots(&w->m, CA_AUDIO_SESSION_DEVICE);
+        r.check(caeq::reclaimDeadSlots(&w->m, nullptr, nullptr, 0) == 0u,
+                "生存確認が無ければ回収しない");
+        delete w;
+    }
+
+    // --- c. 枠を取る — **不具合の本体** --------------------------------------
+    {
+        ShmWithCanary* w = newCanaryShm();
+        PidTable t{{0}, 0};
+        r.check(caeq::acquireSlot(&w->m, PidTable::fn, &t, 1) == 0u,
+                "空いていれば最小の添字を取る");
+        r.check(w->m.slots[0].in_use == CA_SHM_MAGIC, "取った枠が使用中になる");
+        r.check(caeq::acquireSlot(&w->m, PidTable::fn, &t, 1) == 1u, "次は 1 番");
+        delete w;
+    }
+
+    {   // **これが直した不具合。**8 枠全部が使用中で持ち主が全員死んでいる状態は、
+        // 修正前は「枠が取れない = EQ が黙って完全な素通し」だった。
+        ShmWithCanary* w = newCanaryShm();
+        fillAllSlots(&w->m, CA_AUDIO_SESSION_DEVICE);
+        for (uint32_t i = 0; i < CA_SHM_SLOTS; i++) {
+            w->m.slots[i].frames = 12345u + i;     // 残骸に見せかける
+            putParams(&w->m, i, 20u + i);
+        }
+        PidTable t{{0}, 0};                        // 全員死んでいる
+
+        const uint32_t got = caeq::acquireSlot(&w->m, PidTable::fn, &t, 999);
+        r.check(got == 0u, "8 枠全部が残骸なら、回収して枠 0 が取れる (返り値 %u)", got);
+        r.check(w->m.slots[0].in_use == CA_SHM_MAGIC,
+                "取った枠は使用中 (中身は呼び手がこれから埋める)");
+        r.check(w->m.slots[0].frames == 0u, "取った枠の frames は 0 に戻っている (残骸の値ではない)");
+        // **同じ添字を取り直せば、そこにユーザの曲線が残っている。**
+        // これが params[] を消さない理由 (2026-08-19 に実機で確認した並び)。
+        r.check(paramsIntact(&w->m, 0, 20),
+                "回収した枠のパラメータは無傷 — 取り直せば EQ がそのまま復帰する");
+        r.check(canaryIntact(*w), "番兵が無傷");
+        delete w;
+    }
+
+    {   // 全部生きていれば取れない。**回収が「生きている枠を奪う」向きに倒れたら落ちる。**
+        ShmWithCanary* w = newCanaryShm();
+        fillAllSlots(&w->m, CA_AUDIO_SESSION_DEVICE);
+        PidTable t{{1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007}, 8};
+        r.check(caeq::acquireSlot(&w->m, PidTable::fn, &t, 999) == caeq::kNoSlot,
+                "pid が全部生きていれば枠は取れない");
+        bool kept = true;
+        for (uint32_t i = 0; i < CA_SHM_SLOTS; i++) {
+            if (w->m.slots[i].in_use != CA_SHM_MAGIC || w->m.slots[i].pid != 1000ull + i) {
+                kept = false;
+            }
+        }
+        r.check(kept, "生きている 8 枠のどれも奪われていない");
+        delete w;
+    }
+
+    {   // 全部が自分の枠なら取れない (自分の観測点を自分で消さない)。
+        ShmWithCanary* w = newCanaryShm();
+        for (uint32_t i = 0; i < CA_SHM_SLOTS; i++) putStatSlot(&w->m, i, 555, 0);
+        PidTable t{{0}, 0};
+        r.check(caeq::acquireSlot(&w->m, PidTable::fn, &t, 555) == caeq::kNoSlot,
+                "全部が自分 (pid 555) の枠なら取れない");
+        delete w;
+    }
+
+    {   // 生存確認を渡さない経路 — 空きは取れるが、残骸は回収しない。
+        ShmWithCanary* w = newCanaryShm();
+        fillAllSlots(&w->m, CA_AUDIO_SESSION_DEVICE);
+        r.check(caeq::acquireSlot(&w->m, nullptr, nullptr, 999) == caeq::kNoSlot,
+                "生存確認が無ければ、残骸だらけでも枠は取れない (syscall を撃たない経路)");
+        caeq::releaseSlot(&w->m.slots[6]);
+        r.check(caeq::acquireSlot(&w->m, nullptr, nullptr, 999) == 6u,
+                "空きが 1 つできれば、生存確認なしでもそこを取る");
+        delete w;
+    }
+
+    {   // 生きた枠と残骸が混在。**残骸だけが空き、生きた枠は動かない。**
+        ShmWithCanary* w = newCanaryShm();
+        fillAllSlots(&w->m, CA_AUDIO_SESSION_DEVICE);
+        PidTable t{{1003}, 1};
+        const uint32_t got = caeq::acquireSlot(&w->m, PidTable::fn, &t, 999);
+        r.check(got == 0u, "残骸を回収して最小の添字 0 を取る (%u)", got);
+        r.check(w->m.slots[3].in_use == CA_SHM_MAGIC && w->m.slots[3].pid == 1003,
+                "生きている枠 3 はそのまま");
+        delete w;
+    }
+
+    // --- d. 同時に取りに来ても重ならない -------------------------------------
+    {
+        ShmWithCanary* w = newCanaryShm();
+        fillAllSlots(&w->m, CA_AUDIO_SESSION_DEVICE);
+        PidTable t{{0}, 0};                        // 8 枠全部が残骸
+
+        // **8 スレッドが同時に「回収して取る」。**回収と CAS が噛み合っていなければ、
+        // 同じ枠を 2 人が持つか、回収した枠を誰も取れない形で落ちる。
+        constexpr int kThreads = CA_SHM_SLOTS;
+        uint32_t got[kThreads] = {};
+        std::vector<std::thread> th;
+        for (int i = 0; i < kThreads; i++) {
+            th.emplace_back([&, i] { got[i] = caeq::acquireSlot(&w->m, PidTable::fn, &t, 999); });
+        }
+        for (std::thread& x : th) x.join();
+
+        int seen[CA_SHM_SLOTS] = {};
+        int failed = 0;
+        for (int i = 0; i < kThreads; i++) {
+            if (got[i] == caeq::kNoSlot) { failed++; continue; }
+            if (got[i] < static_cast<uint32_t>(CA_SHM_SLOTS)) seen[got[i]]++;
+        }
+        int dup = 0;
+        for (int i = 0; i < CA_SHM_SLOTS; i++) {
+            if (seen[i] > 1) dup++;
+        }
+        r.check(failed == 0, "%d スレッドが同時に来ても全員が枠を取れた (取れなかった %d)",
+                kThreads, failed);
+        r.check(dup == 0, "同じ枠を 2 人が持っていない (重複 %d)", dup);
+        r.check(canaryIntact(*w), "番兵が無傷");
+        delete w;
+    }
+
+    // --- e. 「枠が尽きた」と「繋がっていない」を分ける材料 --------------------
+    //
+    // どちらも live_count == 0 になる。**分けるのは used_count / slot_count だけ。**
+    {
+        ShmWithCanary* w = newCanaryShm();
+        FakeAlive alive;
+        caeq::SlotPickResult p = caeq::pickDeviceSlot(&w->m, FakeAlive::fn, &alive);
+        r.check(p.status == caeq::SlotPick::kNone && p.used_count == 0u &&
+                    p.slot_count == CA_SHM_SLOTS,
+                "1 枠も使われていない = イヤホンが繋がっていない (使用中 %u/%u)",
+                p.used_count, p.slot_count);
+
+        // 8 枠が全部「生きているがイヤホン側でない」= 枠が尽きた状態。
+        fillAllSlots(&w->m, 77);
+        p = caeq::pickDeviceSlot(&w->m, FakeAlive::fn, &alive);
+        r.check(p.status == caeq::SlotPick::kNone && p.live_count == 0u &&
+                    p.used_count == CA_SHM_SLOTS && p.other_count == CA_SHM_SLOTS,
+                "8 枠全部が使用中で DEVICE が 0 = 枠が尽きた (使用中 %u/%u / イヤホン以外 %u)",
+                p.used_count, p.slot_count, p.other_count);
+        delete w;
+
+        // pid == 0 の枠は stale にも other にも数えないが、**used には数える** —
+        // ここを落とすと「まだ空きがある」に見えて、枯渇を「繋がっていない」と報告する。
+        ShmWithCanary* w2 = newCanaryShm();
+        for (uint32_t i = 0; i < CA_SHM_SLOTS; i++) putStatSlot(&w2->m, i, 0, 0);
+        p = caeq::pickDeviceSlot(&w2->m, FakeAlive::fn, &alive);
+        r.check(p.used_count == CA_SHM_SLOTS && p.stale_count == 0u && p.other_count == 0u,
+                "attach 途中の枠も「使用中」に数える (使用中 %u / 残骸 %u / イヤホン以外 %u)",
+                p.used_count, p.stale_count, p.other_count);
+        delete w2;
+    }
+
+    // --- f. 鮮度 — 音が来ていない枠で「標準モード」と言わない -----------------
+    //
+    // ⚠️ `fir_flags` を書くのは `process()` だけ。1 ブロックも回っていない枠では
+    // 全欄が 0 で、**素で表を引くと kNotRequested (= 標準モード) に化ける。**
+    // ユーザが高精度を選んだ直後にいちばん出やすい嘘。
+    {
+        ca_slot_t s{};
+        ca_eq_slot_t q{};
+        q.curve_gen = 4;
+
+        r.check(caeq::firWhy(s, &q) == caeq::FirWhy::kNotRequested,
+                "素の表は、音が来ていない枠を「標準モード」と読む (だから入口が要る)");
+        r.check(caeq::firWhyReported(s, &q) == caeq::FirWhy::kNoAudio,
+                "入口は「まだ音が来ていない」と答える");
+
+        // 高精度を頼んであっても、まだ 1 ブロックも回っていなければ理由は言えない。
+        s.fir_flags = CA_FIR_F_REQUESTED | CA_FIR_F_ADDRESSABLE | CA_FIR_F_ARENA;
+        r.check(caeq::firWhyReported(s, &q) == caeq::FirWhy::kNoAudio,
+                "旗が立っていても frames == 0 なら「まだ音が来ていない」");
+
+        // **44.1 kHz の実物。**block 896 → 2P 1792 = 2^8·7 は 5-smooth でないので biquad。
+        s.frames = 896;
+        s.sample_rate = 44100;
+        s.block_frames = 896;
+        r.check(caeq::firWhyReported(s, &q) == caeq::FirWhy::kBlockUnfit,
+                "44.1 kHz / block 896 は「ブロック長が不適」— 無音でも遅延でもない");
+
+        s.fir_flags |= CA_FIR_F_BLOCK_OK;
+        s.fir_partitions = 9;
+        s.fir_fill = 9;
+        r.check(caeq::firWhyReported(s, &q) == caeq::FirWhy::kAlmost,
+                "条件が揃えば「まだ乗り移る前」");
+        s.fir_state = CA_FIR_STATE_FIR;
+        r.check(caeq::firWhyReported(s, &q) == caeq::FirWhy::kRunning,
+                "鳴っていれば理由は要らない");
+    }
+
+    // --- g. アプリへ渡す綴り -------------------------------------------------
+    //
+    // **`caeqset` が吐く 1 行の中身そのもの。**綴りが変わるとアプリが理由を読めなくなる
+    // (アプリは未知の綴りを「原因不明」に落とす)。**添字ごと固定する** — 値を足したときに
+    // 順序がずれたら落ちる。`firWhyToken` に `default:` を置いていないので、
+    // 値を足すこと自体はコンパイラ (-Werror=switch) が止める。
+    {
+        static const char* const kExpect[] = {
+            "running", "no_audio", "not_requested", "not_addressable", "no_arena",
+            "block_unfit", "no_curve", "design_failed", "warming", "almost",
+        };
+        constexpr int kCount = static_cast<int>(sizeof(kExpect) / sizeof(kExpect[0]));
+        bool ok = true;
+        for (int i = 0; i < kCount; i++) {
+            const char* got = caeq::firWhyToken(static_cast<caeq::FirWhy>(i));
+            if (std::strcmp(got, kExpect[i]) != 0) {
+                ok = false;
+                r.note("添字 %d: [%s] のはずが [%s]", i, kExpect[i], got);
+            }
+        }
+        r.check(ok, "理由の綴り %d 個が添字ごと一致する (アプリとの契約)", kCount);
+        // **値を足したのに綴りの表を直し忘れたら、ここが非空になって落ちる。**
+        r.check(caeq::firWhyToken(static_cast<caeq::FirWhy>(kCount))[0] == '\0',
+                "%d 個で全部 (足したら綴りの表も一緒に直すこと)", kCount);
     }
 }
