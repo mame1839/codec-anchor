@@ -1,26 +1,3 @@
-// 共有メモリのパラメータ枠に書く道具。**`.so` に実際のバンドを掛けさせる唯一の書き手。**
-// アプリが APK の中の自分自身を `su` 経由で実行して呼ぶ (`nativeLibraryDir/libcaeqset.so`)。
-//
-// seqlock の書き込みは dsp/ca_eq_params.h の paramsBeginWrite / paramsEndWrite をそのまま使う。
-// **`.so` の読み手と同じ定義を共有している**ので、ここで書けたものは必ず読める。
-//
-//   caeqset --auto-slot --preamp -3 --band 100:1.0:6 --band 4000:2:-4 --band 10000:0.7:3:hs
-//   caeqset --auto-slot --off     # enabled を落とす
-//   caeqset --slot 0 ...          # 枠を手で指定する (実機で調べるとき用)
-//   caeqset --show                # いまの中身と、どの枠が生きているかを出すだけ
-//   caeqset --auto-slot --dry-run # 選ぶところまでやって、書かずに終了コードだけ返す
-//
-//   caeqset --auto-slot --hp --curve out.txt   # 高精度 (最小位相 FIR) を要求し、曲線を送る
-//
-// **曲線は 401 点の dB を 1 行 1 値で並べたテキスト。**周波数は書かない — グリッドは
-// 20 Hz〜20 kHz の対数等間隔で `dsp/ca_eq_curve.h` に定義があり、点数も間隔もそこ 1 箇所。
-// ファイルに周波数を書くと定義が 2 箇所になる。
-//
-// --- 終了コード -------------------------------------------------------------
-//
-// **`EqParams.kt` が同じ値を literal で持っている。片方だけ変えないこと。**
-// 番号はこのコマンドのもので、`module/eq_devices.sh` の表とは別 (0 と 10 だけ意味が揃っている)。
-//
 //   | 値 | 意味                                                                        |
 //   |----|-----------------------------------------------------------------------------|
 //   |  0 | 書けた                                                                      |
@@ -31,22 +8,6 @@
 //   | 14 | 生きた枠が複数。イヤホンが 2 台繋がっているので断った                        |
 //   | 15 | パラメータが検査に落ちた (`.so` と同じ範囲で先に検査している)                |
 //   | 16 | 枠が尽きた。生きた枠が 0 で、かつ全部が使用中。**「繋がっていない」ではない** |
-//
-// **13 と 16 を分けている理由:** 以前はどちらも 13 で、アプリが「イヤホンが繋がって
-// いません」と表示していた — **繋がっていて再生中でも。**枠の枯渇は原因も対処も別なので、
-// 同じ番号に乗せると画面が嘘をつく。
-//
-// --- 機械可読な出力 ---------------------------------------------------------
-//
-// `--show` 以外で枠が決まったとき、stdout に 1 行:
-//
-//   CA_EQ_FIR why=<綴り> rate=<Hz> block=<frames> frames=<累積> age_ms=<経過|-1>
-//
-// **`why` だけが判断で、あとは材料。**綴りは `caeq::firWhyToken` が持っている
-// (ここに書き写さない — 写すと片方だけ直る)。`age_ms` の -1 は「process() が 1 度も
-// 回っていない」で、そのとき `why` は `no_audio`。
-//
-// 実体は実行ファイルだが、AGP に APK へ載せてもらうため lib*.so を名乗る (caeqstat と同じ)。
 #include <cerrno>
 #include <cstdio>
 #include <cstdlib>
@@ -63,9 +24,6 @@
 #include "dsp/ca_eq_params.h"
 #include "dsp/ca_eq_stats.h"
 
-// **引数の検査より前に stdout へ出す印。**「プロセスは動いたが root マネージャに拒まれた」を、
-// 終了コードだけでは区別できない (su は拒否のとき自分の終了コードを返す) ので、
-// 「走ったこと」の証拠を別に持つ。`eq_devices.sh` の CA_EQ_DEVICES_BEGIN と同じ役。
 #define CA_EQ_SET_BEGIN "CA_EQ_SET_BEGIN"
 
 namespace {
@@ -95,7 +53,6 @@ void usage() {
     printf("  検査は .so と同じ範囲で先に行う。落ちたら書かずに理由を出す\n");
 }
 
-// 解析そのものは ca_eq_curve_io.h (ホストのハーネスが同じコードを掛ける)。ここは理由の表示だけ。
 bool readCurve(const char* path, float* out) {
     const caeq::CurveReadResult r = caeq::readCurveFile(path, out);
     switch (r.status) {
@@ -112,13 +69,8 @@ bool readCurve(const char* path, float* out) {
     return false;
 }
 
-// 生存確認は caeq::procPidAlive (ca_eq_proc.h)。**`.so` の回収と同じ実体を使う。**
-// 以前ここに独自の実装があり、`access()` の非 0 を errno を見ずに全部「死んでいる」と
-// 答えていた。**その形を .so へ持ち込むと生きている枠を奪う向きに反転する**ので、
-// 判定を 1 つにまとめてある。
 constexpr caeq::PidAliveFn pidAlive = caeq::procPidAlive;
 
-// "fc:q:gain[:type]" を 1 バンドに。
 bool parseBand(const char* s, ca_eq_band_t* out) {
     char buf[128];
     std::snprintf(buf, sizeof(buf), "%s", s);
@@ -150,7 +102,6 @@ const char* typeName(uint32_t t) {
     }
 }
 
-// 枠がどう見えているかを 1 行で。**「使用中」と「生きている」と「イヤホン側」は全部別。**
 void describeSlot(const ca_slot_t& s) {
     if (s.in_use != CA_SHM_MAGIC) { printf("  | .so: この枠を読んでいるエフェクトは無い"); return; }
     const bool alive = pidAlive(s.pid, nullptr);
@@ -199,7 +150,6 @@ void showAll(const ca_shm_t* m) {
     printf("  残骸 %u / イヤホン以外 %u\n", pick.stale_count, pick.other_count);
 }
 
-// 選べなかった理由を stderr に出して、対応する終了コードを返す。
 int reportPickFailure(const caeq::SlotPickResult& pick) {
     if (pick.status == caeq::SlotPick::kAmbiguous) {
         fprintf(stderr, "イヤホン側の生きた枠が %u ある。**どの枠がどのイヤホンかは .so から"
@@ -207,9 +157,6 @@ int reportPickFailure(const caeq::SlotPickResult& pick) {
                 pick.live_count);
         return kExitAmbiguousSlot;
     }
-    // **「枠が尽きた」と「繋がっていない」を同じ番号に乗せない。**
-    // 乗せると、繋がっていて再生中でもアプリが「イヤホンが繋がっていません」と言う。
-    // 使用中の枠の数だけが 2 つを分ける — 生きた枠が 0 なのは両方で起きる。
     if (pick.slot_count > 0 && pick.used_count >= pick.slot_count) {
         fprintf(stderr, "枠 %u 個が全部使用中で、そのどれもイヤホン側ではない "
                         "(残骸 %u / イヤホン以外 %u)。**繋がっていないのとは別の状態。**"
@@ -223,15 +170,6 @@ int reportPickFailure(const caeq::SlotPickResult& pick) {
     return kExitNoLiveSlot;
 }
 
-// 「高精度を頼んだのに biquad のまま」の理由を機械可読な 1 行で出す。**アプリが読む。**
-//
-// ⚠️ **`CA_FIR_F_REQUESTED` だけは、いま書いた値で置き換える。**この旗は `.so` が
-// `process()` のたびに書き直すので、**書いた直後は必ず 1 ブロック古い** — 高精度へ
-// 切り替えた回はそのままだと「標準モード」と出る。ほかの旗 (ARENA / BLOCK_OK /
-// ADDRESSABLE) は枠の中身と無関係に決まるので古くならない。
-//
-// ⚠️ **鮮度は `firWhyReported` が見る。**`process()` が 1 度も回っていない枠では
-// `fir_flags` が丸ごと 0 で、素で表を引くとやはり「標準モード」に化ける。
 void reportFir(const ca_shm_t* m, uint32_t stats_slot, bool highPrecision, uint32_t curve_gen) {
     ca_slot_t s{};
     caeq::statsRead(&m->slots[stats_slot], &s);
@@ -239,9 +177,6 @@ void reportFir(const ca_shm_t* m, uint32_t stats_slot, bool highPrecision, uint3
     else               s.fir_flags &= ~CA_FIR_F_REQUESTED;
     ca_eq_slot_t probe{};
     probe.curve_gen = curve_gen;
-    // 直近の process() からの経過。**-1 = 1 度も回っていない。**
-    // `firWhyReported` は「1 ブロックでも回ったか」しか見ないので、**「いま鳴っているか」が
-    // 要る読み手のために生の材料を並べて出す** (判断はしない — 判断は 1 箇所)。
     long long age_ms = -1;
     if (s.last_ns != 0) {
         struct timespec ts;
@@ -255,10 +190,9 @@ void reportFir(const ca_shm_t* m, uint32_t stats_slot, bool highPrecision, uint3
            static_cast<unsigned long long>(s.frames), age_ms);
 }
 
-}  // namespace
+}
 
 int main(int argc, char** argv) {
-    // **引数の検査より前に出す。**これが 1 行も出ていなければ「root を拒否された」。
     printf("%s\n", CA_EQ_SET_BEGIN);
     fflush(stdout);
 
@@ -323,7 +257,6 @@ int main(int argc, char** argv) {
         fprintf(stderr, "open %s: %s\n", path, std::strerror(errno));
         return kExitNoShm;
     }
-    // 短いファイルを map して後ろを触ると SIGBUS。版が古いまま残っていることがある。
     struct stat st;
     if (fstat(fd, &st) != 0 || static_cast<size_t>(st.st_size) < sizeof(ca_shm_t)) {
         fprintf(stderr, "%s が小さすぎる: %lld バイト (%zu 必要)。"
@@ -340,13 +273,8 @@ int main(int argc, char** argv) {
 
     if (show) { showAll(m); return kExitOk; }
 
-    // 判定は caeq::shmState に一本化してある (ハーネスが表ごと固定している)。
-    // **順序が肝で、version は magic が正しいときにしか意味を持たない** —
-    // 起動直後のファイルは全部ゼロなので、version だけ見ると毎回「版ずれ」になる。
     switch (caeq::shmState(m)) {
     case caeq::ShmState::kNotInitialised:
-        // この領域を初期化する ca_stats_open() は create_effect() からしか呼ばれない。
-        // **.so が入っていてもインスタンスが立つまでここに来る。異常ではない。**
         fprintf(stderr, "エフェクトのインスタンスが 1 度も作られていない。"
                         "イヤホンが繋がっていないだけなら異常ではない\n");
         return kExitNoLiveSlot;
@@ -354,15 +282,11 @@ int main(int argc, char** argv) {
         fprintf(stderr, "magic=0x%08x — %s は我々のファイルではない\n", m->magic, path);
         return kExitShmMismatch;
     case caeq::ShmState::kVersionMismatch:
-        // 版 2 の .so は session_id を書かないので、そのまま読むと「イヤホン側の枠が 1 つも
-        // 無い」に見えて、繋がっているのに「繋がっていない」という嘘の理由が出る。
         fprintf(stderr, "共有メモリの版が %u (期待 %u)。アプリとモジュールの版がずれている。"
                         "モジュールを入れ直すこと\n",
                 m->version, CA_SHM_VERSION);
         return kExitShmMismatch;
     case caeq::ShmState::kLayoutMismatch:
-        // 版の番号は同じなのに並びが違う = 版を上げずに構造体を変えたビルドが混ざっている。
-        // そのまま書くと枠の境界がずれて別のインスタンスの設定を上書きする。
         fprintf(stderr, "共有メモリの並びが違う (枠 %u B / 期待 %zu、曲線 %u 点 / 期待 %d、"
                         "統計 %u B / 期待 %zu)。版は同じなので、.so とこのコマンドの"
                         "ビルドが食い違っている\n",
@@ -373,22 +297,12 @@ int main(int argc, char** argv) {
         break;
     }
 
-    // **死んだ枠をここで掃除する。**`.so` も生成のときに同じことをするが、あちらは
-    // audio HAL のドメインで走るので `/proc` を読めるとは限らない。root で走るこちらは
-    // 拒否に当たる面が狭く、万一当たっても errno 規則 (ca_eq_pick.h の aliveFromAccess) が
-    // 「分からない = 生きている」へ倒すので、結末は「回収できない (= 回収が無かったのと
-    // 同じ)」で止まる。狙いは、アプリが設定を書きに来るたびに残骸の掃除が試みられること。
-    //
-    // ⚠️ `--dry-run` でも走る。あの旗が約束しているのは「**パラメータの枠**に書かない」
-    // ことで、回収は共有領域の掃除。**選ばれる枠が dry-run と本番で違ってはいけない。**
     {
         const uint32_t freed = caeq::reclaimDeadSlots(m, pidAlive, nullptr,
                                                       static_cast<uint64_t>(getpid()));
         if (freed) printf("残骸の枠を %u 個回収した\n", freed);
     }
 
-    // --slot は手で調べるとき用。**統計の枠とパラメータの枠が同じ添字である前提**に依る
-    // (.so の既定の対応。SET_PARAM で移していると外れる)。--auto-slot はその対応を見て決める。
     uint32_t param_slot = 0;
     uint32_t stats_slot = 0;
     if (autoSlot) {
@@ -406,8 +320,6 @@ int main(int argc, char** argv) {
         return kExitBadInput;
     }
 
-    // **書く前に .so と同じ検査を通す。**サンプルレートは統計側から引く — fc の上限だけが
-    // fs に依るので、ここを取り違えると「書けたのに黙って却下される」になる。
     const uint32_t rate = m->slots[stats_slot].sample_rate;
     const double fs = rate ? static_cast<double>(rate) : 48000.0;
     if (rate == 0) {
@@ -419,8 +331,6 @@ int main(int argc, char** argv) {
     staged.preamp_db = static_cast<float>(preamp);
     for (uint32_t i = 0; i < band_count; i++) staged.band[i] = bands[i];
 
-    // 曲線も .so と同じ検査を先に通す。**落ちる並びを書くと、.so は枠の更新を丸ごと
-    // 捨てる** — バンドまで一緒に消えるので、ここで止めるほうが原因が分かる。
     if (haveCurve && !caeq::curveValid(curve)) {
         fprintf(stderr, "曲線が検査に落ちた (各点が有限かつ |dB| <= %.0f であること)。"
                         ".so も同じ理由で枠の更新を丸ごと捨てる\n",
@@ -448,18 +358,14 @@ int main(int argc, char** argv) {
         return kExitOk;
     }
 
-    // seqlock で書く。generation は必ず動かす — 動かさないと .so は読みに来ない。
     ca_eq_slot_t* dst = &m->params[param_slot];
     uint32_t gen = dst->generation + 1;
-    if (gen == 0) gen = 1;   // 0 は「未割り当て」の意味なので使わない
+    if (gen == 0) gen = 1;
 
-    // **曲線の版は曲線を渡したときだけ進める。**バンドやプリアンプを触るたびに進めると、
-    // ドラッグのたびに FIR の再構築が走る (eq-fir-design.md §2)。
-    // 曲線を渡さなければ、前に書いた曲線と版がそのまま残る。
     uint32_t curve_gen = dst->curve_gen;
     if (haveCurve) {
         curve_gen++;
-        if (curve_gen == 0) curve_gen = 1;   // 0 は「曲線が載っていない」の意味
+        if (curve_gen == 0) curve_gen = 1;
     }
 
     caeq::paramsBeginWrite(dst);
@@ -478,8 +384,6 @@ int main(int argc, char** argv) {
     dst->curve_gen = curve_gen;
     caeq::paramsEndWrite(dst);
 
-    // **書いた後に出す。**曲線を渡した回は curve_gen がここで初めて決まるので、
-    // 先に出すと「曲線が届いていない」と言ってしまう。
     reportFir(m, stats_slot, highPrecision, curve_gen);
 
     printf("枠 %u に書いた: gen=%u %s %s bands=%u preamp=%.2f dB 曲線 gen=%u%s "
