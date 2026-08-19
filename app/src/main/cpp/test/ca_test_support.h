@@ -1,4 +1,3 @@
-// オフラインのハーネスが使う道具。ホストでしか動かない (`.so` 側には入らない)。
 #ifndef CA_TEST_SUPPORT_H_
 #define CA_TEST_SUPPORT_H_
 
@@ -18,7 +17,6 @@ constexpr double kPi = 3.14159265358979323846;
 
 inline double dbOf(double x) { return 20.0 * std::log10(std::fabs(x) + 1e-300); }
 
-// xorshift128+。<random> は実装ごとに数列が変わるので使わない。
 class Rng {
 public:
     explicit Rng(uint64_t seed) {
@@ -34,7 +32,6 @@ public:
         s_[1] = x ^ y ^ (x >> 17) ^ (y >> 26);
         return s_[1] + y;
     }
-    // [-1, 1)
     double uniform() {
         return static_cast<double>(next() >> 11) * (2.0 / 9007199254740992.0) - 1.0;
     }
@@ -42,8 +39,6 @@ public:
 private:
     uint64_t s_[2];
 };
-
-// --- 信号 -----------------------------------------------------------------
 
 inline std::vector<float> makeImpulse(size_t n, float amp = 1.0f) {
     std::vector<float> x(n, 0.0f);
@@ -82,8 +77,6 @@ inline std::vector<float> makeTones(size_t n, double fs) {
     return x;
 }
 
-// --- 素の biquad (ハーネス側の物差し。DSP 本体とは別実装) -------------------
-
 struct Sos {
     double b0, b1, b2, a1, a2;
 };
@@ -103,8 +96,6 @@ inline std::vector<double> sosFilt(const std::vector<Sos>& secs, const std::vect
     return y;
 }
 
-// 偶数次の Butterworth 高域通過。RBJ の HPF を Butterworth の Q で積むと、
-// scipy の butter(N, fc, 'highpass', output='sos') と同じ伝達関数になる。
 inline std::vector<Sos> butterworthHighpass(int order, double fc, double fs) {
     std::vector<Sos> secs;
     const double w0 = 2.0 * kPi * fc / fs;
@@ -123,8 +114,6 @@ inline std::vector<Sos> butterworthHighpass(int order, double fc, double fs) {
     }
     return secs;
 }
-
-// --- FFT ------------------------------------------------------------------
 
 class Fft {
 public:
@@ -173,9 +162,6 @@ private:
     std::vector<double> cos_, sin_;
 };
 
-// --- 解析解 ---------------------------------------------------------------
-
-// biquad 1 段の周波数応答 (dB)。係数は TDF2 の並び。
 inline double biquadDb(const caeq::Coef& k, double f, double fs) {
     const double w = 2.0 * kPi * f / fs;
     const double zr = std::cos(-w), zi = std::sin(-w);
@@ -189,7 +175,6 @@ inline double biquadDb(const caeq::Coef& k, double f, double fs) {
     return 20.0 * std::log10(num / den);
 }
 
-// バンドの直列 + プリアンプの設計上の振幅特性 (dB)。物差しは常に RBJ 側で作る。
 inline double cascadeDb(const caeq::Params& p, double f, double fs) {
     double acc = p.preamp_db;
     for (int i = 0; i < p.band_count; i++) {
@@ -197,8 +182,6 @@ inline double cascadeDb(const caeq::Params& p, double f, double fs) {
     }
     return acc;
 }
-
-// --- 統計 -----------------------------------------------------------------
 
 inline double rms(const std::vector<double>& x, size_t from = 0) {
     double acc = 0.0;
@@ -229,8 +212,6 @@ inline bool allFinite(const std::vector<float>& x) {
     }
     return true;
 }
-
-// --- 結果の集計 -----------------------------------------------------------
 
 class Report {
 public:
@@ -264,8 +245,6 @@ private:
     int total_ = 0;
 };
 
-// 中身を書いた一時ファイル。デストラクタで消す。テキストを読む道具
-// (`caeqset` の曲線の解析) をホストで掛けるためだけのもの。
 class TempFile {
 public:
     explicit TempFile(const std::string& text) {
@@ -289,6 +268,6 @@ private:
     std::string path_;
 };
 
-}  // namespace catest
+}
 
-#endif  // CA_TEST_SUPPORT_H_
+#endif
