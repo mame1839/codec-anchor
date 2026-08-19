@@ -7,13 +7,11 @@ on:
 permissions:
   contents: read
 
-# タグを 2 本まとめて push しても Release の書き込みが並走しないよう直列化する。
 concurrency:
   group: release
   cancel-in-progress: false
 
 env:
-  # 公開する APK がリリース鍵で署名されていることを確認するための証明書 SHA-256。
   RELEASE_CERT_SHA256: d797d242717368f2053ee3fc63c192f96edf117206d40b9bed1e7bf04bf05b36
 
 jobs:
