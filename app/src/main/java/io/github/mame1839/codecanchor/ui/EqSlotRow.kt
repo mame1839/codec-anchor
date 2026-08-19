@@ -36,24 +36,18 @@ import io.github.mame1839.codecanchor.core.DeviceSlots
 import io.github.mame1839.codecanchor.core.EqSlot
 import io.github.mame1839.codecanchor.core.EqSlotBook
 
-// 未命名スロットの既定番号は id 由来。位置で振り直すと、消しただけで別スロットの番号が変わる。
 internal fun eqSlotNumber(slot: EqSlot, index: Int): Int = slot.id.toIntOrNull() ?: (index + 1)
 
-// スロットのチップ行 (トグルの下・曲線の上)。1 タップ切り替え・ダイアログ無しの理由と
-// フラットに編集入り口が無いことの意味は eq-slot-design.md §1。
 @Composable
 internal fun EqSlotRow(vm: MainViewModel, mac: String) {
     val device = vm.slotsOf(mac)
 
-    // 開いているメニューの相手は id で持つ (実体だと裏で中身が変わったとき古い写しへ書き戻す)。
     var menuFor by rememberSaveable { mutableStateOf<String?>(null) }
     var renaming by rememberSaveable { mutableStateOf<String?>(null) }
     var savingPreset by rememberSaveable { mutableStateOf<String?>(null) }
     var deleting by rememberSaveable { mutableStateOf<String?>(null) }
     var draft by rememberSaveable { mutableStateOf("") }
 
-    // 型を明示した val に入れる。`trailingIcon = if (selected) { Icon(...) } else null` と書くと
-    // Kotlin は `{ }` をラムダではなくブロックとして読み、Unit を渡そうとして通らない。
     val menuIcon: @Composable () -> Unit = {
         Icon(
             painter = painterResource(R.drawable.ic_edit),
@@ -70,7 +64,6 @@ internal fun EqSlotRow(vm: MainViewModel, mac: String) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // ⚠️ フラットに鉛筆を付けない (改名・削除不可を入り口の無さで示す。eq-slot-design.md §1)。
         FilterChip(
             selected = device.active == EqSlotBook.FLAT_ID,
             onClick = { vm.selectSlot(mac, EqSlotBook.FLAT_ID) },
@@ -130,7 +123,6 @@ internal fun EqSlotRow(vm: MainViewModel, mac: String) {
             }
         }
 
-        // 「+」はフラットを種にした新しいスロット。作成と同時に選択も移る。
         AssistChip(
             onClick = { vm.addSlot(mac) },
             label = {
@@ -143,7 +135,6 @@ internal fun EqSlotRow(vm: MainViewModel, mac: String) {
         )
     }
 
-    // 空のまま保存すると未命名 (既定名) に戻る。初期値は実際の名前、既定名は placeholder。
     val renameTarget = renaming?.let { device.slot(it) }
     if (renameTarget != null) {
         val index = device.slots.indexOfFirst { it.id == renameTarget.id }
@@ -205,7 +196,6 @@ internal fun EqSlotRow(vm: MainViewModel, mac: String) {
         )
     }
 
-    // undo が無いので確認を挟む (プリセット削除と同じ作法)。
     val deleteTarget = deleting?.let { device.slot(it) }
     if (deleteTarget != null) {
         val index = device.slots.indexOfFirst { it.id == deleteTarget.id }
@@ -230,15 +220,10 @@ internal fun EqSlotRow(vm: MainViewModel, mac: String) {
     }
 }
 
-/** 表示名。保存されているのは名前だけで、既定名 (「カスタム n」) はここで作る。 */
 @Composable
 internal fun eqSlotLabel(slot: EqSlot, index: Int): String =
     slot.name.ifBlank { stringResource(R.string.eq_slot_default, eqSlotNumber(slot, index)) }
 
-/**
- * チップ行と機器詳細の要約が同じ 1 本から名前を取る (訳語と既定名が 2 箇所に分かれると片方だけ直る)。
- * 実体の無い選択 (フラット・宙に浮いた active) はフラット扱いに倒す。
- */
 @Composable
 internal fun eqActiveSlotLabel(device: DeviceSlots): String {
     val index = device.slots.indexOfFirst { it.id == device.active }
