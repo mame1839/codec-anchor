@@ -1,4 +1,3 @@
-// 統計ファイルを読んで人間が読める形で出す。実体は実行ファイル。
 #include <fcntl.h>
 #include <atomic>
 #include <cstdio>
@@ -19,13 +18,11 @@ uint64_t now_monotonic_ns() {
     return static_cast<uint64_t>(ts.tv_sec) * 1000000000ull + static_cast<uint64_t>(ts.tv_nsec);
 }
 
-// 振幅を dBFS で。無音 (0.0) は -inf なので別扱いにする。
 void format_dbfs(char* buf, size_t n, float peak) {
     if (peak <= 0.0f) { snprintf(buf, n, "silent"); return; }
     snprintf(buf, n, "%.1f", 20.0 * log10(static_cast<double>(peak)));
 }
 
-// 最後に process() が回ってからの経過。進んでいるのか凍っているのかは、これで 1 回で分かる。
 void format_age(char* buf, size_t n, uint64_t last_ns, uint64_t now_ns) {
     if (last_ns == 0) { snprintf(buf, n, "never"); return; }
     if (last_ns > now_ns) { snprintf(buf, n, "?"); return; }
@@ -43,11 +40,6 @@ const char* fir_state_name(uint32_t s) {
     }
 }
 
-// **「高精度を頼んだのに biquad のまま」の理由を 1 行で言い切る。**
-// ここが曖昧だと、現地で「入っていない」「効いていない」「そもそも要求していない」の
-// どれなのかが分からず、モジュールの入れ直しから始めることになる。
-// **判定は caeq::firWhy (ca_eq_pick.h) にあり、ハーネスが表ごと固定している。**
-// ここは文言だけ。
 const char* fir_why_text(caeq::FirWhy w) {
     switch (w) {
     case caeq::FirWhy::kRunning:      return "";
@@ -71,15 +63,13 @@ const char* fir_why_text(caeq::FirWhy w) {
     return "?";
 }
 
-}  // namespace
+}
 
 int main(int argc, char** argv) {
     const char* path = (argc > 1) ? argv[1] : CA_SHM_PATH;
     int fd = open(path, O_RDONLY | O_CLOEXEC);
     if (fd < 0) { fprintf(stderr, "open %s failed\n", path); return 2; }
 
-    // 短いファイルを mmap して読むと、ページの終端を越えた時点で SIGBUS になる。
-    // 「カウンタが出ない」を調べている最中に理由の分からない死に方をされると困るので先に弾く。
     struct stat st;
     if (fstat(fd, &st) != 0 || static_cast<size_t>(st.st_size) < sizeof(ca_shm_t)) {
         fprintf(stderr, "%s is too small: %lld bytes (%zu required)\n",
@@ -93,10 +83,6 @@ int main(int argc, char** argv) {
     if (p == MAP_FAILED) { fprintf(stderr, "mmap failed\n"); return 2; }
     const ca_shm_t* m = static_cast<const ca_shm_t*>(p);
     if (m->magic != CA_SHM_MAGIC) {
-        // ここの文言を「.so が読み込まれていない」に戻さないこと。
-        // この領域を初期化する ca_stats_open() は create_effect() からしか呼ばれないので、
-        // HAL が .so を dlopen 済みでも、エフェクトが 1 度も生成されていなければ magic は 0 のまま。
-        // 2 つを混同すると、正しい観測から「刺さっていない」という誤った結論が出る。
         printf("magic=0x%08x — まだエフェクトのインスタンスが 1 つも作られていない\n", m->magic);
         printf("\n");
         printf("  これは「.so が読み込まれていない」という意味ではない。\n");
@@ -110,8 +96,6 @@ int main(int argc, char** argv) {
            m->version, CA_SHM_VERSION, m->slot_count, m->slot_size, sizeof(ca_slot_t),
            m->param_slot_size, sizeof(ca_eq_slot_t), m->curve_points, caeq::kCurvePoints);
     if (m->version != CA_SHM_VERSION) {
-        // 版 3 の .so は 128 B 刻みで統計を書き、1152 B から 576 B 刻みでパラメータを読む。
-        // 版 4 のファイルではどちらも枠の境界がずれるので、下の表は意味を持たない。
         printf("\n⚠️ 版が食い違っている。以下の表は枠の境界がずれているので読まないこと。\n");
         printf("   モジュールとアプリのどちらかが古い。入れ直すこと。\n");
         return 1;
@@ -145,7 +129,6 @@ int main(int argc, char** argv) {
                (s.state & CA_STATE_CONFIGURED) ? "configured " : "",
                (s.state & CA_STATE_PASSTHROUGH_ONLY) ? "PASSTHROUGH_ONLY " : "",
                stable ? "" : "(読み取り中に更新された)");
-        // バッファの正体を決めるための行。float 解釈と int32 解釈を並べて出す。
         printf("     buf: in=0x%llx out=0x%llx %s  frames in/out=%u/%u samples=%u cfg_fmt=%u\n",
                (unsigned long long) s.in_addr, (unsigned long long) s.out_addr,
                (s.in_addr == s.out_addr) ? "(in-place)" : "(out-of-place)",
@@ -153,13 +136,10 @@ int main(int argc, char** argv) {
         printf("     peak: float in=%.9g out=%.9g / int32 in=%u out=%u\n",
                static_cast<double>(s.in_peak), static_cast<double>(s.out_peak),
                s.in_peak_i32, s.out_peak_i32);
-        // **どの枠がイヤホン側かは session_id でしか分からない。**<postprocess> にも登録すると
-        // スピーカー / spatializer のスレッドにも同じエフェクトが挿さり、枠が同時に複数立つ。
         printf("     session=%d %s\n", s.session_id,
                s.session_id == CA_AUDIO_SESSION_DEVICE
                    ? "(DEVICE = <deviceEffects> 経由 = イヤホン側)"
                    : "(DEVICE でない = postprocess 等。イヤホンの設定を書く先ではない)");
-        // パラメータ経路。**捨てたことが見えないと「効かない」の原因が追えない。**
         const ca_eq_slot_t* q = nullptr;
         if (s.param_slot == CA_PARAM_SLOT_NONE) {
             printf("     param: 枠が未割り当て — パラメータを一切適用せず素通し\n");
@@ -179,8 +159,6 @@ int main(int argc, char** argv) {
                        "却下が増えているなら検査に落ちている)\n");
             }
         }
-        // 「高精度」(最小位相 FIR)。**要求と実際が別々に出ることが要点** —
-        // 「設定は高精度なのに biquad で鳴っている」を、理由まで含めてここで読む。
         printf("     fir  : %s / 要求=%s 作業領域=%s ブロック=%s  FDL %u/%u  曲線 gen=%u/%u\n",
                fir_state_name(s.fir_state),
                (s.fir_flags & CA_FIR_F_REQUESTED) ? "高精度" : "標準",
@@ -197,14 +175,10 @@ int main(int argc, char** argv) {
                "曲線却下=%u 潰し=%u\n",
                s.fir_fallbacks, s.fir_mode_offs, s.fir_design_failures, s.fir_unfit_size,
                s.fir_unfit_budget, s.fir_curve_rejected, s.fir_scrubbed);
-        // **firWhy ではなく firWhyReported。**音がまだ来ていない枠では fir_flags が
-        // 丸ごと 0 なので、素で表を引くと「標準モード」という嘘になる。
         const caeq::FirWhy why = caeq::firWhyReported(s, q);
         if (why != caeq::FirWhy::kRunning) printf("            → %s\n", fir_why_text(why));
     }
     if (active == 0) {
-        // magic が立っている = ca_stats_open() が走った = create_effect() が最低 1 回はあった。
-        // ここでも「.so が読み込まれていない」とは書かない。
         printf("(使用中のスロットなし — エフェクトが作られたことはあるが、いま生きているものは無い)\n");
     }
     printf("\n");
