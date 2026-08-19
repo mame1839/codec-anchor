@@ -111,7 +111,6 @@ cmp -s "$TMP/d3.xml" "$TMP/d3b.xml" && ok "deviceEffects つきで冪等" || ng 
 ca_strip_ours "$TMP/d3.xml" > "$TMP/d3.rt"
 cmp -s "$TMP/d3.rt" "$SHAPE" && ok "deviceEffects つきで可逆" || ng "deviceEffects つきで可逆"
 
-# 21. 20 と重なるが、落ちたときにどれが残ったか分かるよう分けてある。
 grep -qE '<(/?devicePort|/?deviceEffects)' "$TMP/d3.rt" \
   && { ng "strip が構造ごと消す"; grep -nE '<(/?devicePort|/?deviceEffects)' "$TMP/d3.rt"; } \
   || ok "strip が構造ごと消す"
@@ -125,7 +124,6 @@ ca_patch_xml "$SHAPE_DE" "$TMP/v1.xml" 1 "$TMP/dev1" || ng "ベンダーの節�
   && ok "deviceEffects の節は 1 つのまま" || ng "deviceEffects の節は 1 つのまま"
 grep -q 'vendor_speaker_fx' "$TMP/v1.xml" \
   && ok "ベンダーの devicePort が残る" || ng "ベンダーの devicePort が残る"
-# 中身を丸ごと突き合わせる (末尾行だけの判定だと挿入順を区別できない)。
 sed -n '/<deviceEffects>/,/<\/deviceEffects>/p' "$TMP/v1.xml" > "$TMP/v1.sec"
 diff -u - "$TMP/v1.sec" > "$TMP/v1.diff" <<EOF
     <deviceEffects>
@@ -206,7 +204,6 @@ else
     ok "一覧の CRLF を CR の検査で拒否"
 fi
 
-# 37. ⚠️ 64/65 は literal のまま (module-shell.md §11)。$CA_MAX_DEVICES に置き換えると定数と一緒に動いて落ちなくなる。
 awk 'BEGIN { for (i = 0; i < 64; i++) printf "AA:BB:CC:DD:00:%02X\n", i }' > "$TMP/c_64"
 awk 'BEGIN { for (i = 0; i < 65; i++) printf "AA:BB:CC:DD:00:%02X\n", i }' > "$TMP/c_65"
 [ "$(canon_rc "$TMP/c_64")" = 0 ] && [ "$(canon_rc "$TMP/c_65")" != 0 ] \

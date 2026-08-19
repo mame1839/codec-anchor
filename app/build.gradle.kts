@@ -111,12 +111,10 @@ android {
 
     packaging {
         resources.excludes += setOf("/META-INF/{AL2.0,LGPL2.1}", "META-INF/*.version")
-        // ⚠️ false にしない。su から起動する経路が丸ごと死ぬ。理由は eq-route.md §2 / build-and-release.md §7
         jniLibs.useLegacyPackaging = true
     }
 }
 
-// ⚠️ 消さないこと。無いと C++ のヘッダだけを変えたテストが UP-TO-DATE で飛ばされる。build-and-release.md §8
 tasks.withType<Test>().configureEach {
     inputs.dir(layout.projectDirectory.dir("src/main/cpp"))
         .withPropertyName("nativeSourcesReadByTests")

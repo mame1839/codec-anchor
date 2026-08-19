@@ -100,7 +100,7 @@ jobs:
           cp app/build/outputs/apk/release/app-release.apk "dist/CodecAnchor-${GITHUB_REF_NAME}.apk"
           ls -la dist
 
-      - uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
+      - uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228
         with:
           files: dist/*.apk
           generate_release_notes: true

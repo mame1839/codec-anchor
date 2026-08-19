@@ -17,7 +17,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      # 版は直近のタグから決めるので、タグも取ってくる
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
@@ -29,8 +28,6 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v6
 
-      # 署名鍵は復元しない。ここの release は未署名で、構成が壊れていないかだけを見る
-      # (本番鍵で署名した APK を作業中のブランチから配ってしまわないため)。
       - name: ビルドと lint
         run: ./gradlew assembleDebug assembleRelease :app:lintRelease --stacktrace
 
@@ -59,9 +56,6 @@ jobs:
           bash module/test/patch_xml_test.sh
           bash module/test/module_test.sh
 
-  # DSP はホストでビルドして検証する。`.so` からは logcat が出ない (この実機で実測。原因は未特定で、
-  # `__android_log_print` の import は正しい — llmdocs/eq-spec.md §10 と eq-experiment-1.md) ので、
-  # 実機だけで書くと係数の 1 文字の違いを共有メモリのピーク値だけで追うことになる。
   dsp-test:
     runs-on: ubuntu-latest
     steps:

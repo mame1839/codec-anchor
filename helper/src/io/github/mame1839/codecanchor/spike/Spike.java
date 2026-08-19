@@ -12,10 +12,9 @@ import java.util.UUID;
 
 public final class Spike {
     static final UUID IMPL = UUID.fromString("7a1c9f60-4a2e-4f6b-9d21-0a5c1b3e77d1");
-    static final int ROLE_OUTPUT = 2;                  // AudioDeviceAttributes.ROLE_OUTPUT
-    static final int TYPE_BLUETOOTH_A2DP = 8;          // AudioDeviceInfo.TYPE_BLUETOOTH_A2DP
+    static final int ROLE_OUTPUT = 2;
+    static final int TYPE_BLUETOOTH_A2DP = 8;
 
-    // 安全装置。緩めない — 過去に引数の取り違えで意図より 20 dB 大きいテストトーンを装着中のイヤホンに流した事故がある。
     static final double MAX_DBFS = -20.0;
     static final double MIN_DBFS = -60.0;
     static final float  TRACK_VOLUME = 0.25f;
@@ -68,10 +67,9 @@ public final class Spike {
         AudioEffect fx = createDeviceEffect(mac, devType);
         System.out.println("生成した: " + fx.getDescriptor().name);
         System.out.println("hasControl=" + fx.hasControl());
-        // 安全装置 1/3
         if (gainMb > MAX_GAIN_MB) gainMb = MAX_GAIN_MB;
         if (gainMb < MIN_GAIN_MB) gainMb = MIN_GAIN_MB;
-        byte[] p = intToLe(1);          // param id 1 = ゲイン (millibel)
+        byte[] p = intToLe(1);
         byte[] v = intToLe(gainMb);
         int sp = setParam(fx, p, v);
         System.out.println("setParameter=" + sp + " gain=" + gainMb + "mB");
@@ -88,7 +86,6 @@ public final class Spike {
     }
 
     static void tone(int hz, int seconds, double dbfs) throws Exception {
-        // 安全装置 2/3
         if (dbfs > MAX_DBFS) {
             System.out.println("dBFS が " + MAX_DBFS + " を超えている。丸める (要求値=" + dbfs + ")");
             dbfs = MAX_DBFS;
@@ -107,7 +104,7 @@ public final class Spike {
                                               AudioFormat.ENCODING_PCM_FLOAT) * 8;
         AudioTrack t = new AudioTrack.Builder().setAudioFormat(fmt).setAudioAttributes(attrs)
                 .setBufferSizeInBytes(buf).setTransferMode(AudioTrack.MODE_STREAM).build();
-        t.setVolume(TRACK_VOLUME);   // 安全装置 3/3
+        t.setVolume(TRACK_VOLUME);
         t.play();
         System.out.println("トーン開始 " + hz + "Hz " + dbfs + "dBFS vol=" + TRACK_VOLUME
                 + " (振幅=" + amp + ")");

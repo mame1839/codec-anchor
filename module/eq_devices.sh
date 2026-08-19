@@ -1,17 +1,10 @@
 #!/system/bin/sh
-# 契約 (呼び方・印・終了コード) は eq-route.md §2。
-# ⚠️ 呼び出し側が出す CA_SU_OK を消さないこと。理由は eq-route.md §2/§8。
-#
-#   code | 意味
-#   -----+---------------------------------------------------------------------
 #      0 | 成功
 #     10 | 入力が不正 (MAC の書式・CRLF・件数)
 #     11 | モジュールの状態が無い (post-fs-data / late-load が最後まで走っていない)
 #     12 | XML の再生成に失敗 (ca_patch_xml が非 0)
 #     13 | 反映に失敗 (live への書き込み、または書いた後の検証が落ちた)
 #     14 | audioserver が戻ってこない
-#
-# module/test/module_test.sh がこの表と実装の一致を見張っている。
 echo CA_EQ_DEVICES_BEGIN
 
 case "$0" in */*) MODDIR=${0%/*} ;; *) MODDIR=. ;; esac
