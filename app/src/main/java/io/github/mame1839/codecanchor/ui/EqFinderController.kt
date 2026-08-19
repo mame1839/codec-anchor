@@ -68,8 +68,9 @@ enum class EqFinderPhase { INTRO, TRIAL, RESULT }
  *   `EqParams.apply` を呼ばない (single-flight と「同じ枠に 2 本書かない」規約は vm 側が持つ)。
  *   トグルの体感は su 一発 (実測 median 109 ms) なので、人工的な待ちやデバウンスも置かない
  * - **セッション中は `updateEq` を通さない** (あれは永続化する)。永続化は確定 (apply) の 1 回だけ
- * - **聴感の重みとセッション共通トリムはセッション開始時に 1 回決めて固定** (eq-finder-design.md §1)。
- *   途中で計算し直すと候補間の相対音量が崩れ、音量バイアスが戻ってくる
+ * - **聴感の重みと土台の聴感レベルはセッション開始時に 1 回決めて固定**
+ *   (eq-finder-design.md §1)。途中で計算し直すと候補間の相対音量が崩れ、
+ *   音量バイアスが戻ってくる
  * - 進行状態は回答のたびに保存する。中断・プロセス死のどちらでも「続きから」が立つ
  */
 class EqFinderController(
@@ -83,7 +84,10 @@ class EqFinderController(
         runCatching { context.getSystemService(AudioManager::class.java) }.getOrNull(),
         Handler(Looper.getMainLooper()),
     ),
-    /** 重い計算 (重み・トリム・焼き込み計画) の走り先。テストは Unconfined を入れて同期に落とす。 */
+    /**
+     * 重い計算 (重み・土台の聴感レベル・焼き込み計画) の走り先。
+     * テストは Unconfined を入れて同期に落とす。
+     */
     private val compute: CoroutineDispatcher = Dispatchers.Default,
 ) {
     private val store = EqFinderStore(context)
@@ -302,7 +306,7 @@ class EqFinderController(
     // セッションの開始と再開
     // ------------------------------------------------------------------
 
-    /** 新規に始める。重み・トリム・開始点をここで固定する。 */
+    /** 新規に始める。重み・土台の聴感レベル・開始点をここで固定する。 */
     fun begin() {
         // ライブ題材に一節は無い (再生はユーザのアプリのまま。AudioFocus も取らない)。
         val clip = if (materialLive) null else (loaded ?: return)
