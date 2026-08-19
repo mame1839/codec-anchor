@@ -10,7 +10,6 @@ import java.io.File
 
 class EqStatTest {
 
-    // caeqstat.cpp の printf をなぞった実物どおりの出力。列を動かしたらここも落ちる
     private val sample = """
         version=1 slots=4 slot_size=256
         slot ctx                io     frames     ch   rate    block  age       pid    gain_mB in_dBFS  out_dBFS state
@@ -54,7 +53,6 @@ class EqStatTest {
         assertEquals(false, post.deviceSession)
     }
 
-    // 枠が 1 つも無い出力 (magic 未初期化の案内文など) は空で返す。説明文を枠と誤読しない
     @Test
     fun irrelevantTextParsesToNothing() {
         assertEquals(0, EqStat.parse("").size)
@@ -62,14 +60,6 @@ class EqStatTest {
         assertEquals(0, EqStat.parse(sample.lineSequence().filterNot { it.trimStart().firstOrNull()?.isDigit() == true }.joinToString("\n")).size)
     }
 
-    /**
-     * **DEVICE session の値が Kotlin と C++ で一致していること。**
-     *
-     * ⚠️ 同じ値が 2 箇所にある (`EqStat.DEVICE_SESSION` と `ca_eq_shm.h` の
-     * `CA_AUDIO_SESSION_DEVICE`)。git は片方だけの変更を衝突と報告しない。
-     * 食い違うと「イヤホン側の枠」を永久に見つけられず、音が流れているのに
-     * 「流れていない」と判定する側へ倒れる。
-     */
     @Test
     fun deviceSessionMatchesTheNativeHeader() {
         val header = repoFile("app/src/main/cpp/ca_eq_shm.h")
@@ -87,7 +77,6 @@ class EqStatTest {
         assertEquals(native, EqStat.DEVICE_SESSION)
     }
 
-    // EqParamsTest と同じ探し方。単体テストの作業ディレクトリは app/ にもリポジトリ直下にもなる
     private fun repoFile(relative: String): File {
         var dir: File? = File("").absoluteFile
         while (dir != null) {

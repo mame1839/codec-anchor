@@ -23,7 +23,7 @@ class AutoEqParserTest {
     fun parametricUsesPreampLineVerbatim() {
         val r = AutoEqParser.parse(parametric) as AutoEqResult.Ok
         assertEquals(EqMode.PARAMETRIC, r.settings.mode)
-        assertEquals(-62, r.settings.preampDb10) // -6.2 dB
+        assertEquals(-62, r.settings.preampDb10)
         assertEquals(3, r.settings.bands.size)
     }
 
@@ -38,9 +38,6 @@ class AutoEqParserTest {
         assertEquals(242, r.settings.bands[1].q100)
     }
 
-    // bandCount はグラフィックの選択肢 (5 / 10 / 15 / 31) しか取れない。
-    // フィルタの本数をここに入れると EqSettings.fromJson が 10 に書き換え、
-    // アプリの encode とフックの再 encode が食い違って hash の往復が永久に壊れる。
     @Test
     fun parametricKeepsBandCountAmongTheGraphicChoices() {
         val r = AutoEqParser.parse(parametric, bandCount = 15) as AutoEqResult.Ok
@@ -49,8 +46,6 @@ class AutoEqParserTest {
         assertEquals(15, r.settings.bandCount)
     }
 
-    // LS / HS は EqualizerAPO では corner frequency 扱いで周波数がシフトする。
-    // 「シェルフだから同じ」で通すと取り込んだ曲線がずれるので、明示的に弾く。
     @Test
     fun cornerShelvesAreRejected() {
         val text = "Preamp: -6.0 dB\nFilter 1: ON LS Fc 105 Hz Gain 0.7 dB Q 0.70"
@@ -79,22 +74,15 @@ class AutoEqParserTest {
         assertEquals(10, r.settings.bands.size)
     }
 
-    // GraphicEQ.txt はプリアンプが曲線に焼き込んである。プリアンプに移すのは
-    // 「曲線全体のオフセット」だけで、ヘッドルームを別途足すと二重に掛かって全体が沈む。
-    // この曲線の平均は -6.6 dB 前後なので、プリアンプはその近傍に出る (ヘッドルームが
-    // 混ざると、さらにバンドの最大ゲイン分 ≈2 dB 下がるので区別できる)。
     @Test
     fun graphicMovesOnlyTheCurveOffsetIntoPreamp() {
         val text = "GraphicEQ: 20 -6.0; 100 -5.0; 1000 -7.0; 10000 -8.0; 20000 -9.0"
         val r = AutoEqParser.parse(text, bandCount = 10) as AutoEqResult.Ok
         assertTrue("preampDb10=${r.settings.preampDb10}", r.settings.preampDb10 in -75..-58)
-        // 形だけが残るのでバンドのゲインは小さい。自動プリアンプを掛け直したときの
-        // 値 (ヘッドルーム) と混ざっていないこと。
         assertTrue(r.settings.bands.all { it.gainDb10 in -30..30 })
         assertEquals((EqSolver.defaultQ(10) * 100).toInt(), r.settings.bands[0].q100)
     }
 
-    // 対数周波数上の線形補間。100 Hz と 1000 Hz の中点は幾何平均の 316 Hz。
     @Test
     fun interpolationIsLogFrequencyLinearDb() {
         val points = listOf(100.0 to 0.0, 1000.0 to 10.0)
