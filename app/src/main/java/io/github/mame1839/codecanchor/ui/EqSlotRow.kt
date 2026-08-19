@@ -36,31 +36,16 @@ import io.github.mame1839.codecanchor.core.DeviceSlots
 import io.github.mame1839.codecanchor.core.EqSlot
 import io.github.mame1839.codecanchor.core.EqSlotBook
 
-/**
- * 未命名スロットに出す既定の番号。**id をそのまま使い、消しても振り直さない** —
- * 位置で振り直すと、あるスロットを消しただけで**別のスロットの名前が変わる**
- * (「カスタム 2」だと思って選んでいたものが「カスタム 1」になる)。
- *
- * 数字でない id は手で書き換えた保存にしか現れない。そのときだけ位置に倒す。
- */
+// 未命名スロットの既定番号は id 由来。位置で振り直すと、消しただけで別スロットの番号が変わる。
 internal fun eqSlotNumber(slot: EqSlot, index: Int): Int = slot.id.toIntOrNull() ?: (index + 1)
 
-/**
- * スロットのチップ行。イコライザーのトグルの下・曲線の上に置く (`llmdocs/eq-slot-design.md` §1)。
- *
- * **1 タップで切り替わる。**ダイアログもドロップダウンも挟まない — これは耳で聞き比べながら
- * 何度も往復する操作で、1 往復あたり 2 タップ増えるだけで使われなくなる。
- *
- * **フラットのチップに編集の入り口が無いこと自体が「これは固定」の説明**なので、
- * 説明文は書かない (2026-08-12 の原則)。選択中のカスタムのチップだけが鉛筆を持ち、
- * もう一度押すとメニューが開く。
- */
+// スロットのチップ行 (トグルの下・曲線の上)。1 タップ切り替え・ダイアログ無しの理由と
+// フラットに編集入り口が無いことの意味は eq-slot-design.md §1。
 @Composable
 internal fun EqSlotRow(vm: MainViewModel, mac: String) {
     val device = vm.slotsOf(mac)
 
-    // 開いているメニュー / ダイアログの相手はスロットの id で持つ。実体で持つと、
-    // 裏で中身が変わったときに古い写しへ書き戻すことになる。
+    // 開いているメニューの相手は id で持つ (実体だと裏で中身が変わったとき古い写しへ書き戻す)。
     var menuFor by rememberSaveable { mutableStateOf<String?>(null) }
     var renaming by rememberSaveable { mutableStateOf<String?>(null) }
     var savingPreset by rememberSaveable { mutableStateOf<String?>(null) }
@@ -85,8 +70,7 @@ internal fun EqSlotRow(vm: MainViewModel, mac: String) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // ⚠️ フラットには鉛筆を付けない。改名も削除もできないことが仕様で、**入り口が
-        // 無いこと自体が「これは固定」の説明**になっている (抜けではない)。
+        // ⚠️ フラットに鉛筆を付けない (改名・削除不可を入り口の無さで示す。eq-slot-design.md §1)。
         FilterChip(
             selected = device.active == EqSlotBook.FLAT_ID,
             onClick = { vm.selectSlot(mac, EqSlotBook.FLAT_ID) },
@@ -146,8 +130,7 @@ internal fun EqSlotRow(vm: MainViewModel, mac: String) {
             }
         }
 
-        // 「+」はフラットを種にした新しいスロット。押した時点で選択も移るので、
-        // 作ってから「どれを編集しているのか」を探す手間が要らない。
+        // 「+」はフラットを種にした新しいスロット。作成と同時に選択も移る。
         AssistChip(
             onClick = { vm.addSlot(mac) },
             label = {
@@ -160,8 +143,7 @@ internal fun EqSlotRow(vm: MainViewModel, mac: String) {
         )
     }
 
-    // 空のまま保存すると未命名に戻る (= 既定名の表示に戻る)。**既定名を書き込まない**ため、
-    // 初期値は既定名ではなく実際の名前 (未命名なら空) で、既定名は placeholder に出す。
+    // 空のまま保存すると未命名 (既定名) に戻る。初期値は実際の名前、既定名は placeholder。
     val renameTarget = renaming?.let { device.slot(it) }
     if (renameTarget != null) {
         val index = device.slots.indexOfFirst { it.id == renameTarget.id }
@@ -254,11 +236,8 @@ internal fun eqSlotLabel(slot: EqSlot, index: Int): String =
     slot.name.ifBlank { stringResource(R.string.eq_slot_default, eqSlotNumber(slot, index)) }
 
 /**
- * 選択中スロットの表示名。チップ行と機器の詳細画面の要約が**同じ 1 本**から名前を取る
- * (訳語と既定名の作り方が 2 箇所に分かれると、片方だけ直る)。
- *
- * 実体の無い選択 (フラット、および壊れた保存で active が宙に浮いた場合) はフラットの訳語。
- * 後者は起動時の和解が立て直すので、ここは「どのカスタムでもない」を一様に扱えばよい。
+ * チップ行と機器詳細の要約が同じ 1 本から名前を取る (訳語と既定名が 2 箇所に分かれると片方だけ直る)。
+ * 実体の無い選択 (フラット・宙に浮いた active) はフラット扱いに倒す。
  */
 @Composable
 internal fun eqActiveSlotLabel(device: DeviceSlots): String {

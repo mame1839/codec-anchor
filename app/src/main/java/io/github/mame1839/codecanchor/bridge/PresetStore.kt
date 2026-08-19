@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.core.content.edit
 import io.github.mame1839.codecanchor.core.EqPresetBook
 
-// 設定 (config) とは別のファイル。フックはプリセットを読まないので MODE_WORLD_READABLE は不要。
+// フックはプリセットを読まないので MODE_WORLD_READABLE は不要。
 class PresetStore(context: Context) {
     private val prefs = context.getSharedPreferences(NAME, Context.MODE_PRIVATE)
 
@@ -14,11 +14,6 @@ class PresetStore(context: Context) {
         prefs.edit { putString(KEY, book.encode()) }
     }
 
-    /**
-     * パラメトリックからグラフィックへ移るときの丸めの確認を、もう出さないか。
-     *
-     * 設定 (config) には載せない。フックが使わない値なので、載せると hash の契約が広がる。
-     */
     fun roundingConfirmed(): Boolean = prefs.getBoolean(KEY_ROUNDING, false)
 
     fun confirmRounding() {

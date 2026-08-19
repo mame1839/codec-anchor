@@ -9,19 +9,10 @@ import io.github.mame1839.codecanchor.core.Spectrum
 import kotlin.math.max
 import kotlin.math.min
 
-/**
- * 題材のギャップレスループ再生。
- *
- * MODE_STREAM に自前の給紙スレッドで書き続ける — ループの折り返しは「同じストリームに
- * 続きを書く」だけなので、折り返し自体には継ぎ目が存在しない。継ぎ目の処理 (等パワーの
- * 短いクロスフェード) は [Spectrum.crossfadeLoop] が PCM に焼き込む。
- * MODE_STATIC + setLoopPoints にしないのは、題材 (数十 MB) の static バッファ確保が
- * 端末依存で失敗しうるため — 確かめられる実機は 1 台しかない。
- *
- * 属性は USAGE_MEDIA / CONTENT_TYPE_MUSIC (実測表で device effect を通っている音楽アプリと
- * 同じ扱いに寄せる)。再生開始時に AudioFocus GAIN を取り、ユーザの音楽アプリを止める。
- * 喪失は [onFocusLost] で呼び出し側へ返す。
- */
+// 題材のギャップレスループ再生。MODE_STREAM に自前の給紙スレッドで書き続ける — 折り返しは
+// 「同じストリームに続きを書く」だけなので継ぎ目が無い (クロスフェードは Spectrum.crossfadeLoop が
+// PCM に焼き込む)。MODE_STATIC + setLoopPoints にしないのは、題材の static バッファ確保が
+// 端末依存で失敗しうるため。再生開始時に AudioFocus GAIN を取り、喪失は onFocusLost で返す。
 class LoopPlayer(private val audioManager: AudioManager?) {
 
     /** フォーカスを失って止まったときに呼ばれる。呼ばれるスレッドはシステム任せ。 */
@@ -44,10 +35,7 @@ class LoopPlayer(private val audioManager: AudioManager?) {
         .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
         .build()
 
-    /**
-     * 題材を受け取り、継ぎ目を焼き込む。再生中なら止める。
-     * PCM はフルスケール ±1.0 の前提 (float トラックは ±1.0 超をクリップする)。
-     */
+    // PCM はフルスケール ±1.0 の前提 (float トラックは超過をクリップする)。
     @Synchronized
     fun prepare(pcm: FloatArray, channels: Int, sampleRate: Int, fadeMs: Int = FADE_MS): Boolean {
         if (channels !in 1..2 || sampleRate !in 4_000..192_000 || pcm.size < channels) return false
@@ -58,7 +46,6 @@ class LoopPlayer(private val audioManager: AudioManager?) {
         return loop.isNotEmpty()
     }
 
-    /** フォーカスを取って再生を始める。失敗 (フォーカス拒否・トラック生成不可) は false。 */
     @Synchronized
     fun play(): Boolean {
         if (feeding) return true

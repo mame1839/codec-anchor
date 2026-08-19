@@ -26,30 +26,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.mame1839.codecanchor.R
 
-/**
- * 2 行の題のまわりに要る余白。バーの高さから行の高さを引いた残り。
- *
- * **既定の文字サイズで測って決めた値** (`EqScreenTitleTest`)。行の高さのほうは下で足す。
- */
+/** 2 行の題のまわりに要る余白 (既定の文字サイズで測って決めた値。EqScreenTitleTest)。 */
 private val EQ_TITLE_BAR_PADDING = 36.dp
 
 /**
- * 題を 2 行 (音響処理 + イヤホン名) にしたときのバーの高さ。
+ * 題を 2 行 (音響処理 + イヤホン名) にしたときのバーの高さ。機序・実測は ui-notes.md §1。
  *
- * **自前で 2 行積んでいるのは、Material3 1.4.0 の `subtitle` 付き `TopAppBar` が internal で
- * 呼べないから。**(JVM の署名は public に見えるので、バイトコードだけ見ると使えると誤読する。)
- * **既定の 64.dp は 1 行ぶんしか無く、2 行を積むと下の行が切れる。**
- *
- * **⚠️ dp の定数で決めてはいけない。**バーの高さは dp、中身の行の高さは sp なので、
- * 端末の文字サイズを上げると**必ずどこかで 2 行目がはみ出す** (76.dp 固定にしていたときは
- * 文字サイズ 200% で 2dp はみ出していた)。だから**いまの行の高さから毎回組み立てる。**
- * `lineHeight` は sp なので、`toDp()` が端末の文字サイズを織り込んでくれる。
- *
- * **⚠️ `Theme.kt` で Typography を差し替えるなら、`lineHeight` を sp のままにすること。**
- * `TextUnit.toDp()` は sp 以外で例外を投げるので、`em` で書くと**この画面を開いた瞬間に落ちる。**
- * いまは M3 の既定 (sp) をそのまま使っているので起きない。
- *
- * `EqScreenTitleTest` が文字サイズ 100% / 130% / 200% で実際に測って固定している。
+ * ⚠️ dp の定数で決めない — 端末の文字サイズを上げると 2 行目がはみ出す。lineHeight (sp) から
+ * toDp() で毎回組み立てること。⚠️ Typography の lineHeight は sp のままにする (em だと落ちる)。
  */
 internal val eqTitleBarHeight: Dp
     @Composable get() = with(LocalDensity.current) {
@@ -59,15 +43,9 @@ internal val eqTitleBarHeight: Dp
     }
 
 /**
- * 音響処理の画面の題。**2 行目はどのイヤホンを編集しているか**で、この画面ではここにしか出ない
- * (下は EQ の値だけ)。
- *
- * **1 行目に `titleMedium` を当てているのは 2 行を収めるため。**`TopAppBar` の既定は
- * `titleLarge` (22sp) で、2 行にするとバーが縦に伸びすぎる。詳細画面の題より一段小さくなるのは
- * その代償で、意図したもの。
- *
- * private ではなく internal なのは、**高さを測るテストが同じものを組むため。**
- * テスト側に同じ見た目を書き写すと、片方だけ直したときに測っているものが実物とずれる。
+ * 音響処理の画面の題 (2 行目はイヤホン名、ここにしか出ない)。1 行目を titleMedium にしている
+ * 理由と internal (private でない) の理由は ui-notes.md §1 — EqScreenTitleTest が同じ
+ * Composable を組んで高さを測る。
  */
 @Composable
 internal fun EqScreenTitle(name: String) {
@@ -88,10 +66,8 @@ internal fun EqScreenTitle(name: String) {
 }
 
 /**
- * 音響処理の画面。詳細画面の行 (`EqSummaryCard`) から開く。
- *
- * 詳細画面の中に置くと縦に長すぎるので分けてある。**遷移の状態を持つのは `MainActivity` 側**で、
- * ここは開かれている間だけ組まれる (`BackHandler` を 1 つに保つため。理由は `MainActivity` に書いてある)。
+ * 音響処理の画面。詳細画面の行 (`EqSummaryCard`) から開く。詳細画面の中に置くと縦に長すぎるので
+ * 分けてある。遷移の状態は `MainActivity` 側が持つ (`BackHandler` を 1 つに保つため)。
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

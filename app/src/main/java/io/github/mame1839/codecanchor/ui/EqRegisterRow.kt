@@ -29,18 +29,11 @@ import io.github.mame1839.codecanchor.core.EqDevicesOutcome
 
 private val NOTICE_PADDING = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
 
-/**
- * 「このイヤホンで音響処理を使う」。**この画面で唯一の重い操作。**
- *
- * `audio_effects.xml` を作り直して audioserver を再起動するので、**再生中の音が一瞬切れる。**
- * だから押す前に確認を挟み、走っている間は押せなくし、終わったら成功も失敗も必ず出す。
- *
- * 切るときも同じ重さ (XML を作り直して再起動する) なので、確認は両方向で出す。
- */
+// 「このイヤホンで音響処理を使う」。この画面で唯一の重い操作 — audio_effects.xml を作り直して
+// audioserver を再起動するので再生中の音が一瞬切れる。オン・オフどちらも同じ重さなので確認は両方向。
 @Composable
 fun EqRegisterRow(vm: MainViewModel, mac: String, availability: EqAvailability) {
-    // 進行中と結果は MAC で突き合わせる。表記が揺れると別の機器のものを出すので、
-    // 揃わない MAC (null) はどちらにも一致させない。
+    // 進行中と結果は MAC で突き合わせる。表記が揺れる (null) 側はどちらにも一致させない。
     val key = EqDevices.normalizeMac(mac)
     val registered = vm.eqRegistered(mac)
     val running = key != null && vm.eqRegisterRunning == key
@@ -54,10 +47,9 @@ fun EqRegisterRow(vm: MainViewModel, mac: String, availability: EqAvailability) 
         description = stringResource(R.string.eq_device_register_desc),
         checked = registered,
         onChange = { pending = it },
-        // 押せなくするのは 2 つだけ。走っている間 (他機器の操作でも同じ。同時には 1 つしか走らない) と、
-        // エフェクトがそもそも登録されていない端末 (su を呼んでも「モジュールが無い」にしかならない)。
-        // オフロード中は音に届かないが、登録そのものは成立するので止めない — 止めると
-        // 「オフロードを切ってから登録する」しかできなくなる。
+        // 押せなくなるのは、走っている間 (同時に 1 つだけ) と、エフェクト未登録の端末だけ。
+        // オフロード中は音に届かないが登録自体は成立するので止めない (止めると「オフロードを
+        // 切ってから登録」しかできなくなる)。
         enabled = vm.eqRegisterRunning == null && availability != EqAvailability.EFFECT_NOT_REGISTERED,
     )
 
@@ -78,8 +70,7 @@ fun EqRegisterRow(vm: MainViewModel, mac: String, availability: EqAvailability) 
                 text = registerMessage(report),
                 contentPadding = NOTICE_PADDING,
             )
-            // 失敗したときだけ、スクリプトと su が出した最後の数行をそのまま添える。
-            // 訳せる文言ではないが、su の拒否理由はここにしか出ない。
+            // 失敗時だけ、スクリプトと su の最後の数行をそのまま添える (訳せないが唯一の手掛かり)。
             val diagnostics = if (ok) "" else report.result.diagnostics()
             if (diagnostics.isNotEmpty()) {
                 Text(
@@ -122,10 +113,8 @@ fun EqRegisterRow(vm: MainViewModel, mac: String, availability: EqAvailability) 
     }
 }
 
-/**
- * 結果の文言。**未知の終了コードは数値ごと出す** — 後からスクリプト側がコードを増やしたときに、
- * 黙って「成功」にも「原因不明」にもしないため。
- */
+// 結果の文言。未知の終了コードは数値ごと出す — 後からスクリプト側が増やしたコードを
+// 黙って「成功」にも「原因不明」にもしないため。
 @Composable
 private fun registerMessage(report: EqRegisterReport): String = when (report.result.outcome) {
     EqDevicesOutcome.OK ->

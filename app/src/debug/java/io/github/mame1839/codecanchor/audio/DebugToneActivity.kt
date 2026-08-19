@@ -35,15 +35,12 @@ import kotlin.concurrent.thread
 import kotlin.random.Random
 
 /**
- * 開発用: eq-finder-design.md §3 の未検証前提 2 つを実機で潰す画面。
+ * 開発用: eq-finder-design.md §3 の未検証前提 2 つを実機で潰す画面。ランチャーには出さない
+ * (exported=false)。起動: `adb shell su -c 'am start -n io.github.mame1839.codecanchor/.audio.DebugToneActivity'`
  *
- * - (a) アプリ自身のループ再生が device effect を通るか — ピンクノイズを鳴らしながら
- *   「経路確認」(caeqstat) で device 枠の in_dBFS と frames の進みを見る
- * - (b) su トグルのレイテンシ — 現在の設定と同一値で [EqParams.apply] を 20 回連打し、
- *   各回の壁時計 ms を logcat (タグ CodecAnchor) と画面に出す。同一値なので音は変わらない
- *
- * ランチャーには出さない (exported=false)。起動:
- * `adb shell su -c 'am start -n io.github.mame1839.codecanchor/.audio.DebugToneActivity'`
+ * 「経路確認」はピンクノイズ再生中に caeqstat の device 枠 in_dBFS/frames を見る (アプリ自身の
+ * ループ再生が device effect を通るかの確認)。「su レイテンシ計測」は同一値で EqParams.apply を
+ * 20 回連打し、壁時計 ms を logcat と画面に出す (同一値なので音は変わらない)。
  */
 class DebugToneActivity : ComponentActivity() {
 

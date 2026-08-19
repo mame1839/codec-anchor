@@ -81,18 +81,13 @@ import kotlin.math.roundToInt
 /** ループ再生する一節の長さ。固定 (仕様)。 */
 internal const val EQ_FINDER_LOOP_MS = 20_000
 
-// ---------------------------------------------------------------------------
-// UI の状態。EqFinderController が組み立て、ここの composable は表示するだけ。
-// ---------------------------------------------------------------------------
-
 enum class EqFinderCandidate { A, B }
 
 enum class EqFinderAnswer { A, SAME, B }
 
 /**
- * [NO_MUSIC] はライブ題材 (いま流れている音楽) 専用。自動で立てて自動で下ろし、
- * 再開ボタンは出さない — 他人のアプリの再生はこちらから再開できない。
- * [FOCUS_LOST] は逆にライブでは到達しない (プレイヤーを使わず、フォーカスも取らない)。
+ * [NO_MUSIC] はライブ題材専用。自動で立てて自動で下ろし、再開ボタンは出さない (他人のアプリの
+ * 再生はこちらから再開できない)。[FOCUS_LOST] は逆にライブでは到達しない (フォーカスを取らない)。
  */
 enum class EqFinderPause { NONE, DISCONNECTED, FOCUS_LOST, NO_MUSIC }
 
@@ -125,11 +120,9 @@ data class EqFinderIntroUi(
 )
 
 /**
- * 「続きから」を出せない理由。null なら再開できる。
- *
- * どちらも**黙って続けると回答と結果の意味が壊れる**食い違い — 設定が変わっていれば、
- * 探索は古い土台の上で進むのに確定はその古い土台で現行設定を上書きする (中間の編集が消える)。
- * 一節が変わっていれば、これまでの回答は別の音についてのもの。だから警告ではなく遮断にする。
+ * 「続きから」を出せない理由。null なら再開できる。どちらも黙って続けると回答と結果の意味が
+ * 壊れる食い違い — 設定変更後は古い土台の確定が現行設定を上書きし、一節変更後はこれまでの
+ * 回答が別の音についてのものになる。だから警告ではなく遮断にする。
  */
 enum class EqFinderResumeBlocked { SETTINGS_CHANGED, SONG_CHANGED }
 
@@ -163,14 +156,13 @@ data class EqFinderAxisDelta(val kind: EqFinderAxisKind, val deltaDb10: Int)
 data class EqFinderBandChoice(val count: Int, val maxErrorDb10: Int)
 
 /**
- * 結果画面のうち、**セッションが決めて以後変わらない**もの。[beforeDb] / [afterDb] は
+ * 結果画面のうち、セッションが決めて以後変わらないもの。[beforeDb] / [afterDb] は
  * [eqFinderResponseDb] で標本化した応答 (data class にしないのは、配列の equals が
  * 参照比較で意味を持たないため)。
  *
- * ⚠️ **適用の途中で変わる状態 (焼き込みの失敗・プリセットの提案) をここに入れないこと。**
- * 混ぜると「旗を 1 つ変えるために全フィールドを写す」形になり、フィールドが増えたときの
- * 写し忘れが「適用したらバンド数の選択肢が消える」ような静かな壊れ方になる。
- * 変わるものはコントローラの状態として持ち、[EqFinderResultContent] へ別の引数で渡す。
+ * ⚠️ 適用の途中で変わる状態 (焼き込みの失敗・プリセットの提案) をここに入れないこと —
+ * 「旗 1 つのために全フィールドを写す」形になり、フィールドが増えたときの写し忘れが
+ * 静かな壊れ方になる。変わるものはコントローラの状態として [EqFinderResultContent] へ別引数で渡す。
  */
 class EqFinderResultUi(
     val axes: List<EqFinderAxisDelta>,
@@ -182,10 +174,6 @@ class EqFinderResultUi(
     /** 焼き込みのバンド数の選択肢。null = 出さない (パラメトリック — fc/Q は手作業の成果物)。 */
     val bandChoices: List<EqFinderBandChoice>? = null,
 )
-
-// ---------------------------------------------------------------------------
-// 入口 (EqScreen のカード)
-// ---------------------------------------------------------------------------
 
 /**
  * 音響処理の画面に置く入口。開けるのは値がいまこの機器の音に届くときだけ —
@@ -250,10 +238,6 @@ fun EqFinderEntryCard(vm: MainViewModel, mac: String, onOpen: () -> Unit) {
     }
 }
 
-// ---------------------------------------------------------------------------
-// 骨格
-// ---------------------------------------------------------------------------
-
 /**
  * 探索画面の枠。題は 2 行 (機能名 + イヤホン名) で、組み方と高さの理由は
  * [EqScreenTitle] / [eqTitleBarHeight] と同じ。
@@ -309,10 +293,6 @@ internal fun EqFinderScaffold(
         }
     }
 }
-
-// ---------------------------------------------------------------------------
-// 導入
-// ---------------------------------------------------------------------------
 
 @Composable
 internal fun EqFinderIntroContent(
@@ -569,8 +549,7 @@ private fun NotesCard(live: Boolean) {
         NoticeRow(icon = R.drawable.ic_info, text = stringResource(R.string.eq_finder_note_volume))
         NoticeRow(icon = R.drawable.ic_headphones, text = stringResource(R.string.eq_finder_note_earphones))
         if (live) {
-            // 題材の選択肢の説明と同じ 1 行。ライブは曲を測らないので、音量合わせの系統誤差と
-            // A/B 間で曲が進む非定常の分だけ精度が下がる — 始める前に正直に出す。
+            // 題材選択の説明と同じ 1 行 (ライブは音量合わせの系統誤差 + A/B 間の非定常分だけ精度が下がる)。
             NoticeRow(
                 icon = R.drawable.ic_info,
                 text = stringResource(R.string.eq_finder_material_live_desc),
@@ -583,10 +562,6 @@ private fun NotesCard(live: Boolean) {
         )
     }
 }
-
-// ---------------------------------------------------------------------------
-// 試行
-// ---------------------------------------------------------------------------
 
 @Composable
 internal fun EqFinderTrialContent(
@@ -667,8 +642,7 @@ internal fun EqFinderTrialContent(
                 ),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
             )
-            // 再開ボタンはフォーカス喪失だけ。切断は接続が戻れば勝手に続き、
-            // ライブの無音は他人のアプリなのでこちらから再開できない。
+            // 再開ボタンはフォーカス喪失だけ (切断は自動復帰、ライブの無音は他人のアプリで再開できない)。
             if (ui.pause == EqFinderPause.FOCUS_LOST) {
                 OutlinedButton(
                     onClick = onResumePlayback,
@@ -741,10 +715,6 @@ private fun RowScope.AnswerButton(text: String, enabled: Boolean, onClick: () ->
         Text(text, textAlign = TextAlign.Center)
     }
 }
-
-// ---------------------------------------------------------------------------
-// 結果
-// ---------------------------------------------------------------------------
 
 /**
  * 結果の画面。
@@ -831,10 +801,9 @@ internal fun EqFinderResultContent(
         }
     }
 
-    // 焼き込みのバンド数 (グラフィックのみ)。選んだ数は保存物にだけ効く — いま鳴っている音も
-    // 上の曲線 (afterDb) もオーバーレイの目標のままで、差は選択肢の副題の数字が言う
-    // (「摘みと曲線の差は仕様」と同じ整理)。押し直さないのは、バンド構成が変わる push が
-    // クリックレス切替の条件を外れて、耳で選んだ after と別物の聴感になるため。
+    // 焼き込みのバンド数 (グラフィックのみ)。選んだ数は保存物にだけ効き、いま鳴っている音・上の曲線
+    // (afterDb) はオーバーレイの目標のまま変えない (差は副題の数字が言う)。押し直さないのは、
+    // バンド構成が変わる push がクリックレス切替の条件を外れ、耳で選んだ after と別物の聴感になるため。
     val choices = ui.bandChoices
     if (choices != null) {
         SettingsCard {
@@ -904,10 +873,8 @@ private fun LegendSwatch(color: Color, label: String) {
     }
 }
 
-// ---------------------------------------------------------------------------
-// 前後の曲線。EqCurve.kt には触らない約束なので、ここに小さな専用の絵を持つ
-// (あちらは編集用でドラッグの受け皿が絡む。こちらは 2 本の応答を見せるだけ)。
-// ---------------------------------------------------------------------------
+// 前後の曲線。EqCurve.kt には触らない約束なので、ここに専用の絵を持つ (あちらは編集用で
+// ドラッグの受け皿が絡む。こちらは 2 本の応答を見せるだけ)。
 
 /** 曲線の標本数。2 本を 1 回描くだけなので、編集画面 (毎フレーム) より粗くてよい。 */
 internal const val EQ_FINDER_CURVE_SAMPLES = 120
@@ -915,8 +882,7 @@ internal const val EQ_FINDER_CURVE_SAMPLES = 120
 private val CURVE_HEIGHT = 132.dp
 private val CURVE_LABEL_GAP = 6.dp
 
-// 対数軸の両端。可聴帯域 (EqCurve.kt と同じ値だが、契約ではない — あちらの軸が変わっても
-// この絵は前後比較の絵として独立に成り立つ)。
+// 対数軸の両端。可聴帯域 (EqCurve.kt と同じ値だが契約ではない — あちらが変わっても独立に成り立つ)。
 private const val CURVE_LO_HZ = 20.0
 private const val CURVE_HI_HZ = 20_000.0
 
@@ -945,7 +911,6 @@ private fun EqFinderCurve(before: DoubleArray, after: DoubleArray) {
     val measurer = rememberTextMeasurer()
     val colors = MaterialTheme.colorScheme
     val labelStyle = MaterialTheme.typography.labelSmall.copy(
-        // 軸のラベルは常に左→右で読む数字なので、RTL の段落から切り離す (EqCurve と同じ理由)。
         textDirection = TextDirection.Ltr,
         letterSpacing = 0.sp,
         color = colors.onSurfaceVariant,
@@ -1038,12 +1003,6 @@ internal fun DrawScope.drawEqFinderCurves(
     }
 }
 
-// ---------------------------------------------------------------------------
-
-/**
- * 一節の位置の表示 ("3:41")。秒は必ず 2 桁 — `%02d` は Formatter がロケールの数字で
- * 埋めるので、固有数字のロケールでもそのまま通る。RTL では数字と区切りが入れ替わるので囲む。
- */
 internal fun eqFinderTimeText(ms: Int): String {
     val totalSeconds = (ms.coerceAtLeast(0)) / 1_000
     return bidiIsolate(

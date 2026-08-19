@@ -25,19 +25,15 @@ import androidx.compose.ui.unit.dp
 import io.github.mame1839.codecanchor.R
 
 /**
- * 最上位の行き先。**並びがそのまま下部ナビの並び**で、先頭が最初に開くタブ。
- *
- * 機器の詳細と音響処理はここに入れない。**下部ナビは「並列に行き来する行き先」**で、
- * 1 台のイヤホンを開いている最中に別のタブへ跳べると、戻ったときどの機器を見ていたのかが
- * 決められない。詳細と音響処理は今までどおり上に乗せる (`AppNavigation`)。
+ * 最上位の行き先。並びがそのまま下部ナビの並び、先頭が最初に開くタブ。機器の詳細と音響処理は
+ * ここに入れない — 下部ナビは並列に行き来する行き先で、1 台を開いている最中に別のタブへ跳べると
+ * 戻ったときどの機器を見ていたか決められない (詳細と音響処理は `AppNavigation` に乗せる)。
  */
 enum class HomeTab { DEVICES, SETTINGS, STATUS }
 
 /**
- * タブの名前と絵。**下部ナビと上の題の両方がここを読む。**
- *
- * `when` を 2 つ書くと、enum の枝の抜けはコンパイラが見てくれるが
- * **どの文言をどのタブに当てたかは見てくれない。**片方だけ直すと黙って食い違う。
+ * タブの名前と絵。下部ナビと上の題の両方がここを読む — `when` の枝の抜けはコンパイラが見るが、
+ * どの文言をどのタブに当てたかまでは見ないので、片方だけ直すと黙って食い違う。
  */
 private val HomeTab.labelRes: Int
     get() = when (this) {
@@ -54,25 +50,19 @@ private val HomeTab.iconRes: Int
     }
 
 /**
- * 状態タブに印を出す条件。
+ * 状態タブに印を出す条件。説明の実体は状態タブに 1 つだけ置き、ここは印だけを上げる
+ * (両方に文言を置くと片方だけ直したときに黙って食い違う)。
  *
- * **説明の実体は状態タブに 1 つだけ置き、ここは印だけを上げる。**両方に文言を置くと、
- * 片方だけ直したときに黙って食い違う。
- *
- * 拾うのは**アプリが何もできない状態だけ。**モジュールが無効なら適用が 1 件も起きず、
- * 設定が壊れていれば読めた設定が無い。オフロードや版の食い違いは**動いてはいる**ので
- * ここには上げない — 常時点いている印は、点いていることに意味が無くなる。
- *
- * private ではなく internal なのは、条件を固定するテストから直接呼ぶため。
+ * 拾うのはアプリが何もできない状態だけ (モジュール無効・設定破損)。オフロードや版の食い違いは
+ * 動いてはいるので上げない — 常時点いている印は意味が無くなる。internal なのは条件を固定する
+ * テストから直接呼ぶため。
  */
 internal fun needsAttention(moduleState: ModuleState, configBroken: Boolean): Boolean =
     moduleState == ModuleState.INACTIVE || configBroken
 
 /**
- * 下部ナビを持つ最上位の画面。
- *
- * **`BackHandler` はここには置かない。**タブを含む画面の位置は [AppNavigation] が平らに持っていて、
- * 戻るの分岐もあちらが 1 箇所で決める。ここに足すと詳細画面を開いている間も生き残り、
+ * 下部ナビを持つ最上位の画面。⚠️ `BackHandler` はここには置かない — 位置と戻るの分岐は
+ * `AppNavigation` が 1 箇所で平らに持つ。ここに足すと詳細画面を開いている間も生き残り、
  * どちらが先に呼ばれるかが composition の深さで決まる。
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -87,22 +77,19 @@ fun HomeScreen(
     onNotify: (String) -> Unit,
 ) {
     val refreshLabel = stringResource(R.string.cd_refresh_status)
-    // タブを切り替えても、開いた折りたたみとスクロールの位置を残す。持たないと、
-    // 設定を見て戻るたびに機器の一覧が先頭へ跳ぶ。
+    // タブを切り替えても開いた折りたたみとスクロール位置を残す (持たないと一覧が先頭へ跳ぶ)。
     val stateHolder = rememberSaveableStateHolder()
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
-                    // 先頭のタブだけアプリの名前にする。最初に開く画面なので、
-                    // ここに「機器」と出してもタブの名前をなぞるだけになる。
+                    // 先頭のタブだけアプリの名前にする (最初に開く画面なので「機器」はタブ名の重複)。
                     val title = if (tab == HomeTab.DEVICES) R.string.app_name else tab.labelRes
                     Text(stringResource(title), maxLines = 1)
                 },
                 actions = {
-                    // 取り直しが目に見えるのは機器タブだけ。状態タブの「再確認」はモジュールが
-                    // 無効なときにしか出ないので、こちらを消してよい理由にはならない。
+                    // 取り直しが目に見えるのは機器タブだけ (状態タブの「再確認」とは別物、消してよい理由にならない)。
                     if (tab == HomeTab.DEVICES) {
                         IconButton(
                             onClick = { vm.refresh() },

@@ -20,7 +20,6 @@ data class CodecInfo(
         put("cs1", codecSpecific1)
     }
 
-    // フックが名前を解決できなかったときは空で届く。
     fun displayName(): String = codecName.ifBlank { CodecKeys.fallbackName(codecType) }
 
     fun summary(): String = buildString {
@@ -48,7 +47,6 @@ data class CodecInfo(
     }
 }
 
-// 直近の適用結果。文言はアプリ側で組み立てるので、フックは種別と値だけを送る。
 enum class ApplyOutcome {
     NONE, APPLIED, FAILED, UNDECIDED;
 
@@ -63,8 +61,7 @@ data class DeviceStatus(
     val connected: Boolean = false,
     val active: Boolean = false,
     val current: CodecInfo? = null,
-    // LDAC の実効ビットレート。ABR では送信中に動く。読めないときと、読んでも無意味な
-    // オフロード中は空 / 0。
+    // 読めないときと、読んでも無意味なオフロード中は空 / 0。
     val ldacQualityMode: String = "",
     val ldacBitrateKbps: Int = 0,
     val selectable: List<CodecInfo> = emptyList(),
@@ -118,10 +115,9 @@ data class StatusReport(
     val hostPackage: String = "",
     val configHash: Int = 0,
     val configLoaded: Boolean = false,
-    // 端末ごとの性質なので機器ではなく報告に載せる。有効だと LDAC の実効ビットレートが読めない端末がある。
+    // 端末ごとの性質なので機器ではなく報告に載せる。
     val a2dpOffloadEnabled: Boolean = false,
-    // フック側の音響処理の受け口の版。報告はフック → アプリの片方向なので hash の契約に縛られず、
-    // 足しても古い側は既定値 0 で吸収される。0 = 音響処理を知らない版。
+    // フック側の音響処理の受け口の版。0 = 音響処理を知らない版。
     val eqSchema: Int = 0,
     val devices: List<DeviceStatus> = emptyList(),
     val codecNames: Map<Int, String> = emptyMap(),

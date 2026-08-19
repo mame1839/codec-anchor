@@ -8,38 +8,18 @@ import kotlin.math.min
 import kotlin.math.sin
 import kotlin.random.Random
 
-/**
- * 題材 (曲の一節) の PCM を扱う純関数。平均スペクトル・ループの継ぎ目・試験信号。
- *
- * 「好みの EQ を見つける機能」の音量等価 (eq-finder-design.md §1) は、ループ再生する一節の
- * 実測パワースペクトルを聴感重みに使う。ここはその実測部分で、Android に依存しない —
- * 正しさはホストの単体テスト (SpectrumTest) で固定し、実機では測り直さない。
- *
- * **dB の絶対値は較正しない。**重みは L_c の分子と分母の両方に掛かるので、
- * 一定のオフセットは結果から消える。テストが当てにするのは下の正規化の定義だけ。
- */
+// 題材 (曲の一節) の PCM を扱う純関数。平均スペクトル・ループの継ぎ目・試験信号。
+// 「好みの EQ を見つける機能」の音量等価 (eq-finder-design.md §1) が聴感重みに使う実測部分。
+// dB の絶対値は較正しない (重みは分子・分母の両方に掛かるので一定のオフセットは結果から消える)。
 object Spectrum {
 
-    /** Welch 平均の窓長。4096 @ 48 kHz で分解能 11.7 Hz、EQ の Q に対して十分細かい。 */
     private const val WINDOW = 4096
-
-    /** 窓 1 枚も置けない入力は題材ではないので、スペクトルを出さずに空を返す。 */
     private const val MIN_WINDOW = 256
 
-    /**
-     * Welch 法の平均パワースペクトル。周期 Hann 窓・50% ホップ。
-     *
-     * 返り値は (binHz, powerDb)。bin は 0 (DC) 〜 fs/2 (Nyquist) の n/2+1 点。
-     * 入力が窓長 4096 より短ければ窓を 2 の冪で縮め、[MIN_WINDOW] を切ったら空の組を返す。
-     *
-     * **契約: 値は PSD (per Hz) の dB。基準 (0 dB の位置) は任意。**
-     * `P[k] = 片側化 × mean|X[k]|² / (fs × Σw²)` — 分母の Σw² が窓の等価雑音帯域幅の補正で、
-     * これを欠くと窓長が縮んだ呼び出しと絶対値が食い違う。白色雑音 (分散 σ²) は窓長に依らず
-     * 10·log10(2σ²/fs) を読む — この既知値がテストの足場。
-     *
-     * **対数ビンへの合算はしない。**EqLoudness 側が対数グリッドの帯域幅補正 (×f) を掛けるので、
-     * ここで束ねると二重補正になる。載せ替えは補間だけ ([resampleDb])。
-     */
+    // Welch 法の平均パワースペクトル (周期 Hann 窓・50% ホップ)。返り値は (binHz, powerDb)。
+    // 契約: 値は PSD (per Hz) の dB、基準は任意。P[k] = 片側化 × mean|X[k]|² / (fs × Σw²) —
+    // Σw² は窓の等価雑音帯域幅の補正で、欠くと窓長が縮んだ呼び出しと絶対値が食い違う。
+    // 対数ビンへの合算はしない (EqLoudness 側が帯域幅補正を掛けるので二重補正になる)。
     fun averageSpectrumDb(pcm: FloatArray, fs: Int): Pair<DoubleArray, DoubleArray> {
         var n = WINDOW
         while (n > 0 && n > pcm.size) n = n shr 1
@@ -66,24 +46,15 @@ object Spectrum {
         val norm = 1.0 / (segments.toDouble() * fs * windowSquaredSum)
         val powerDb = DoubleArray(n / 2 + 1) { k ->
             val sided = if (k == 0 || k == n / 2) 1.0 else 2.0
-            // 1e-20 は完全な無音 (log10(0)) の下駄。-200 dB として読める
+            // 1e-20 は完全な無音 (log10(0)) の下駄
             10.0 * log10(acc[k] * sided * norm + 1e-20)
         }
         return Pair(binHz, powerDb)
     }
 
-    /**
-     * dB 列を別の周波数グリッドへ載せ替える (対数周波数で線形補間)。
-     *
-     * PSD の dB をそのまま補間する — **束ねない・積分しない** (帯域幅の扱いは EqLoudness 側)。
-     *
-     * 呼び出し側が EqLoudness の対数グリッドを渡す。**ここからそのグリッドを import しない** —
-     * 依存の向きを固定するための取り決めで、シグネチャに現れない分ここに書いておく。
-     *
-     * [srcHz] は昇順であること ([averageSpectrumDb] の返りはそう)。DC (0 Hz) は対数軸に
-     * 置けないので読み飛ばす。グリッドの範囲外は端の値で固定 — 外挿すると、題材に無い
-     * 超低域・超高域の重みが傾きの延長で暴れる。
-     */
+    // dB 列を別の周波数グリッドへ載せ替える (対数周波数で線形補間、束ねない・積分しない)。
+    // srcHz は昇順であること。DC (0 Hz) は対数軸に置けないので読み飛ばす。範囲外は端の値で固定
+    // (外挿すると題材に無い超低域・超高域の重みが傾きの延長で暴れる)。
     fun resampleDb(srcHz: DoubleArray, srcDb: DoubleArray, dstHz: DoubleArray): DoubleArray {
         require(srcHz.size == srcDb.size) { "srcHz と srcDb の長さが違う" }
         val first = srcHz.indexOfFirst { it > 0.0 }
@@ -108,16 +79,8 @@ object Spectrum {
         }
     }
 
-    /**
-     * ギャップレスループ用に継ぎ目を仕込む。末尾 [fadeFrames] を切り落とし、切り落とした分を
-     * 先頭に等パワーで重ねる。返りは (frames - fadeFrames) フレーム。
-     *
-     * こうすると折り返しの瞬間 (最終フレーム → 先頭) が「切り落とす前の連続した 2 サンプル」に
-     * なるので、境界そのものにクリックが出ない。音色の混ざりは先頭の fade 区間に移る。
-     *
-     * **無音への fade in/out で凹ませる形にしないこと** (仕様の禁止事項)。等パワー
-     * (sin/cos) なら無相関な素材で実効レベルが保たれる。
-     */
+    // ギャップレスループ用に継ぎ目を仕込む。末尾 fadeFrames を切り落とし、切り落とした分を
+    // 先頭に等パワーで重ねる。⚠️ 無音への fade in/out で凹ませる形にしないこと (仕様の禁止事項)。
     fun crossfadeLoop(pcm: FloatArray, channels: Int, fadeFrames: Int): FloatArray {
         require(channels >= 1) { "channels は 1 以上" }
         val frames = pcm.size / channels
@@ -127,7 +90,6 @@ object Spectrum {
         val out = FloatArray(outFrames * channels)
         for (i in 0 until outFrames) {
             if (i < fade) {
-                // i=0 で head=0 / tail=1 (先頭 = 末尾の続き)、i=fade-1 で head=1 / tail=0
                 val theta = (PI / 2) * i / (fade - 1)
                 val head = sin(theta)
                 val tail = cos(theta)
@@ -143,7 +105,6 @@ object Spectrum {
         return out
     }
 
-    /** インターリーブ PCM をモノラルへ (各チャネルの平均)。スペクトル計測用で、再生には使わない。 */
     fun monoMix(pcm: FloatArray, channels: Int): FloatArray {
         if (channels <= 1) return pcm.copyOf()
         val frames = pcm.size / channels
@@ -156,14 +117,8 @@ object Spectrum {
         return out
     }
 
-    /**
-     * ピンクノイズ (Voss-McCartney、16 行 + 白色 1 行)。デバッグトーンと、
-     * スペクトル計測の傾き検査 (-10 dB/decade) の試験信号。
-     *
-     * 正規化は (行数+1) での割り算 — 各行が ±1 なので**ピークが 1.0 を超えない**ことが
-     * 構造で保証される (実効値は約 -17 dBFS)。ゲインを掛けて稼がないこと。クリップは
-     * デバッグトーンに高調波を混ぜ、device effect の検証で見る対象を汚す。
-     */
+    // ピンクノイズ (Voss-McCartney、16 行 + 白色 1 行)。⚠️ ゲインを掛けて稼がないこと —
+    // 正規化は (行数+1) での割り算でピークが 1.0 を超えないことが構造で保証されている。
     fun pinkNoise(samples: Int, random: Random): FloatArray {
         val rows = 16
         val values = DoubleArray(rows) { random.nextDouble(-1.0, 1.0) }
@@ -183,13 +138,7 @@ object Spectrum {
         return out
     }
 
-    /**
-     * 基数 2 の反復 Cooley-Tukey (in-place)。長さは 2 の冪であること — 呼ぶのは
-     * [averageSpectrumDb] だけで、そこが窓長を 2 の冪に保っている。
-     *
-     * 回転因子は漸化式で回す。誤差は窓長 4096 で 1e-12 のオーダーに収まり、
-     * テストの許容 (0.05 dB) より桁違いに小さい。
-     */
+    // 基数 2 の反復 Cooley-Tukey (in-place)。長さは 2 の冪であること。
     private fun fft(re: DoubleArray, im: DoubleArray) {
         val n = re.size
         var j = 0
