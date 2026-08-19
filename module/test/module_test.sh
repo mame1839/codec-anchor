@@ -219,13 +219,13 @@ fi
 n_ret=$(grep -c '^[[:space:]]*return ' "$GRADLE")
 gexpr=$(sed -n 's/^[[:space:]]*return \(.*\)$/\1/p' "$GRADLE" | tr -d ' _')
 if [ "$n_ret" != 1 ]; then
-    ng "versionCode の式が version.sh と Gradle で一致する ($GRADLE の return が $n_ret 箇所)"
+    ng "Gradle の versionCode の式が期待どおり ($GRADLE の return が $n_ret 箇所)"
 elif [ "$gexpr" != 'parts[0]*10000+parts[1]*100+parts[2]' ]; then
-    ng "versionCode の式が version.sh と Gradle で一致する (Gradle 側が $gexpr)"
+    ng "Gradle の versionCode の式が期待どおり (Gradle 側が $gexpr)"
 elif ! grep -q 'coerceAtLeast(1)' "$GRADLE"; then
-    ng "versionCode の式が version.sh と Gradle で一致する (Gradle 側に下限 1 が無い)"
+    ng "Gradle の versionCode の式が期待どおり (Gradle 側に下限 1 が無い)"
 else
-    ok "versionCode の式が version.sh と Gradle で一致する"
+    ok "Gradle の versionCode の式が期待どおり"
 fi
 
 e=0
