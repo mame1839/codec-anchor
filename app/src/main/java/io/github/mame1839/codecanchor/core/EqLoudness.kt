@@ -14,6 +14,16 @@ import kotlin.math.sin
  * ピーク基準 (クリップ防止が目的) なのでここには使えない — 低域シェルフ +6 dB の候補は
  * 中域が丸ごと −6 dB され、好みと無関係にフラット側が勝ち続ける。
  *
+ * ### 揃える先は「土台の音量」で、絶対的な静けさではない
+ *
+ * preamp_c = [baseLevelDb] − L_c。[baseLevelDb] は探索を始めた設定が普段鳴っている
+ * 聴感レベルなので、**オーバーレイが全部 0 の候補は普段ちょうどそのままの音量**になる。
+ * 引く量が全候補共通の定数だけ ([baseLevelDb]) 動く形なので、候補どうしの公平性は変わらない。
+ *
+ * **クリップ余地を確保するための共通トリムは持たない。**常用経路で自動プリアンプを外した
+ * (= クリップを保証しないと決めた) 以上、探索だけがその保証のために約 12 dB 払うのは
+ * 筋が通らない。聴感レベルは土台のままなので音量は変わらず、動くのはピークだけ。
+ *
  * 全部ランタイムの純関数で、設定 (Config / DeviceProfile) に入るのは
  * [preampDb10] が返す db10 整数だけ。
  */
@@ -28,13 +38,6 @@ object EqLoudness {
 
     /** スペクトルの床。最大値からこれより下と非有限は床に置き換え、ゼロ和・NaN を作らない。 */
     private const val SPECTRUM_FLOOR_DOWN_DB = 100.0
-
-    /**
-     * [preampDb10] の 0.1 dB 丸め (round half up) は上へ最大 0.05 dB はみ出す。
-     * その分を [sessionTrimDb] に足しておかないと、境界の候補で preamp + peak が
-     * 最大 +0.05 dB 正になりクリップ余地が出る。全候補共通なので相対音量には効かない。
-     */
-    private const val PREAMP_ROUND_GUARD_DB = 0.05
 
     // ITU-R BS.1770-4 の K 特性 2 段の係数 (fs = 48 kHz、a0 = 1 に正規化済みの表の値)。
     //   段 1: プリフィルタ (頭部の音響効果を模した高域シェルフ、高域で約 +4 dB)
@@ -129,59 +132,43 @@ object EqLoudness {
     }
 
     /**
-     * 合成応答の [GRID_HZ] 上の最大値 (dB)。クランプしない生値 — 全バンドがカットの候補では
-     * 負になる ([EqSolver.autoPreampDb10] のような 0 での頭打ちをしない)。
+     * 土台 (探索を始めた設定) がいま鳴っている聴感レベル (dB) = プリアンプ + 聴感ゲイン。
+     * 候補はこの高さに揃える。
      *
-     * グリッド点の最大なので点間の真のピークはわずかに取り逃しうるが、セッションの候補は
-     * Q ≤ 1 級の広いシェルフ/ピークで、点間 (幅 1.75 %) に隠れる山を作らない。
-     * 狭い Q の候補を扱うことになったらグリッドごと見直すこと。
+     * **`enabled` の分岐はここ 1 箇所に閉じる。**セッションの土台のバンドが
+     * 「enabled なら bands、切ってあれば素の音」(`EqFinderController.begin` /
+     * [EqFinderMaterialize.bake]) なのと同じ規則で、プリアンプも切ってあれば 0 —
+     * 揃えないと **EQ を切った状態から始めた探索だけ音量がずれる**。
      */
-    fun peakGainDb(bands: List<EqBand>, fs: Int = EqSolver.DEFAULT_FS): Double {
-        var peak = Double.NEGATIVE_INFINITY
-        for (hz in GRID_HZ) {
-            val db = EqSolver.combinedResponseDb(bands, hz, fs)
-            if (db > peak) peak = db
-        }
-        return peak
-    }
-
-    /**
-     * セッション共通トリム t = max(0, max_c(peak_c − L_c) + 0.05)。
-     *
-     * 全候補の preamp を −L_c − t にすると、0.1 dB 丸めの後でも preamp + peak ≤ 0 になる
-     * 最小の共通値 (+0.05 の理由は [PREAMP_ROUND_GUARD_DB])。共通値なので A/B の相対音量は
-     * 崩れない。[candidates] はセッションが提示しうる端の候補群 — ここに無い形を後から
-     * 提示しても ≤ 0 は保証されない。
-     */
-    fun sessionTrimDb(
-        candidates: List<List<EqBand>>,
+    fun baseLevelDb(
+        base: EqSettings,
         weights: DoubleArray,
         fs: Int = EqSolver.DEFAULT_FS,
     ): Double {
-        if (candidates.isEmpty()) return 0.0
-        var worst = Double.NEGATIVE_INFINITY
-        for (c in candidates) {
-            val excess = peakGainDb(c, fs) - perceivedGainDb(c, weights, fs)
-            if (excess > worst) worst = excess
-        }
-        return max(0.0, worst + PREAMP_ROUND_GUARD_DB)
+        if (!base.enabled) return 0.0
+        return base.preampDb10.toDouble() / EqUnits.GAIN_SCALE +
+            perceivedGainDb(base.bands, weights, fs)
     }
 
     /**
-     * 候補 1 つの等価プリアンプ (db10 整数)。round((−L_c − trimDb) × 10) を
+     * 候補 1 つの等価プリアンプ (db10 整数)。round(([baseLevelDb] − L_c) × 10) を
      * [EqSettings.PREAMP_RANGE] にクランプ。
      *
-     * クランプが働くのは L_c + trim が −40〜+12 dB を出る極端な形だけで、そこでは音量等価は
-     * 成立しない。セッションの候補域で働かないことは EqLoudnessTest が端の組で確かめている。
+     * [baseLevelDb] は [EqLoudness.baseLevelDb] が返す値 — セッション中は定数なので、
+     * 候補どうしの差は −L_c の差だけ (= 聴感等価) になる。オーバーレイが全部 0 の候補では
+     * L_c が土台の聴感ゲインと一致し、プリアンプは土台の値そのものに戻る。
+     *
+     * クランプが働くのは差が −40〜+12 dB を出る極端な形だけで、そこでは音量等価は成立しない。
+     * セッションの候補域で働かないことは EqLoudnessTest が端の組で確かめている。
      */
     fun preampDb10(
         bands: List<EqBand>,
         weights: DoubleArray,
-        trimDb: Double,
+        baseLevelDb: Double,
         fs: Int = EqSolver.DEFAULT_FS,
     ): Int {
         val perceived = perceivedGainDb(bands, weights, fs)
-        return Math.round((-perceived - trimDb) * EqUnits.GAIN_SCALE).toInt()
+        return Math.round((baseLevelDb - perceived) * EqUnits.GAIN_SCALE).toInt()
             .coerceIn(EqSettings.PREAMP_RANGE)
     }
 

@@ -102,7 +102,7 @@
     <string name="eq_delivery_failed_root">이 설정이 소리에 반영되지 않았습니다. 루트 권한 요청이 거부되었거나, 이 휴대전화에 루트 매니저가 없습니다. 루트 매니저에서 Codec Anchor를 허용해 주세요.</string>
     <string name="eq_delivery_failed_shm">이 설정이 소리에 반영되지 않았습니다. 음향 처리 모듈이 실행 중이 아닙니다. 휴대전화를 다시 시작해 주세요.</string>
     <string name="eq_delivery_failed_version">이 설정이 소리에 반영되지 않았습니다. 앱과 음향 처리 모듈의 버전이 다릅니다. 두 가지를 같은 버전으로 업데이트한 다음 휴대전화를 다시 시작해 주세요.</string>
-    <string name="eq_delivery_failed_rejected">이 설정이 범위를 벗어난 것으로 거부되어 소리는 그대로입니다. 밴드의 게인을 낮춰 주세요.</string>
+    <string name="eq_delivery_failed_rejected">이 설정이 범위를 벗어난 것으로 거부되어 소리는 그대로입니다. 가장 높은 주파수의 밴드를 낮추거나 삭제해 주세요.</string>
     <string name="eq_delivery_failed_timeout">이 설정을 보내는 작업이 제시간에 끝나지 않아 중단되었습니다.</string>
     <string name="eq_delivery_failed_input">이 설정이 소리에 반영되지 않았습니다. 앱이 요청을 잘못 만들었습니다. 이는 앱의 결함입니다.</string>
     <string name="eq_delivery_failed_unknown">이 설정을 보내는 작업이 이 버전의 앱이 알지 못하는 방식으로 실패했습니다 (코드 %1$d).</string>
@@ -211,8 +211,6 @@
     <string name="eq_type_peaking">피크</string>
     <string name="eq_type_low_shelf">로우 셸프</string>
     <string name="eq_type_high_shelf">하이 셸프</string>
-    <string name="eq_preamp_auto">프리앰프를 자동으로 정하기</string>
-    <string name="eq_preamp_auto_desc">올린 부분이 찌그러지지 않을 만큼만 음량을 낮춥니다 (현재 %1$s)</string>
     <string name="eq_preamp">프리앰프</string>
     <string name="eq_round_title">그래픽으로 바꿀까요?</string>
     <string name="eq_round_body">모든 밴드가 그래픽 이퀄라이저의 고정 주파수 가운데 하나로 옮겨지고 Q도 거기에 맞춰집니다. 곡선의 모양은 최대한 유지되지만 지금의 주파수와 Q 값은 사라집니다.</string>
@@ -264,7 +262,7 @@
     <string name="eq_finder_include_mid_desc">목소리 대역에 세 번째 축을 더합니다. 질문이 조금 늘어납니다.</string>
     <string name="eq_finder_fine_tune">현재 설정 미세 조정</string>
     <string name="eq_finder_notes">시작하기 전에</string>
-    <string name="eq_finder_note_volume">테스트는 평소보다 소리가 조금 작게 재생됩니다. 시작한 뒤에 편한 음량으로 맞추고, 끝날 때까지 바꾸지 마세요.</string>
+    <string name="eq_finder_note_volume">시작한 뒤에 편한 음량으로 맞추고, 끝날 때까지 바꾸지 마세요.</string>
     <string name="eq_finder_note_earphones">이 이어폰으로, 조용한 곳에서 들어 주세요.</string>
     <string name="eq_finder_note_length">질문은 약 25~40회, 10~15분입니다. 언제든 중단하고 나중에 이어서 할 수 있습니다.</string>
     <string name="eq_finder_begin">시작</string>

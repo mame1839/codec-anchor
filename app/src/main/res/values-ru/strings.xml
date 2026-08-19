@@ -105,7 +105,7 @@
     <string name="eq_delivery_failed_root">Эти настройки не дошли до звука: в доступе root было отказано, либо на этом телефоне нет root-менеджера. Разрешите Codec Anchor в своём root-менеджере.</string>
     <string name="eq_delivery_failed_shm">Эти настройки не дошли до звука: модуль обработки звука не запущен. Перезагрузите телефон.</string>
     <string name="eq_delivery_failed_version">Эти настройки не дошли до звука: версии приложения и модуля обработки звука не совпадают. Обновите оба до одной версии и перезагрузите телефон.</string>
-    <string name="eq_delivery_failed_rejected">Эти настройки отклонены как выходящие за допустимый диапазон, поэтому звук не изменился. Уменьшите усиление полос.</string>
+    <string name="eq_delivery_failed_rejected">Эти настройки отклонены как выходящие за допустимый диапазон, поэтому звук не изменился. Понизьте или удалите полосу с самой высокой частотой.</string>
     <string name="eq_delivery_failed_timeout">Отправка этих настроек не завершилась вовремя и была остановлена.</string>
     <string name="eq_delivery_failed_input">Эти настройки не дошли до звука: приложение неверно составило запрос. Это ошибка приложения.</string>
     <string name="eq_delivery_failed_unknown">Отправка этих настроек завершилась ошибкой, которую эта версия приложения не распознаёт (код %1$d).</string>
@@ -217,8 +217,6 @@
     <string name="eq_type_peaking">Колокол</string>
     <string name="eq_type_low_shelf">Низкочастотный шельф</string>
     <string name="eq_type_high_shelf">Высокочастотный шельф</string>
-    <string name="eq_preamp_auto">Подбирать предусиление автоматически</string>
-    <string name="eq_preamp_auto_desc">Снижает уровень ровно настолько, чтобы поднятые участки не искажались (сейчас %1$s)</string>
     <string name="eq_preamp">Предусиление</string>
     <string name="eq_round_title">Перейти к графическому?</string>
     <string name="eq_round_body">Каждая полоса перейдёт на одну из фиксированных частот графического эквалайзера, а её Q будет подобрано под неё. Форма кривой сохранится настолько, насколько это возможно, но нынешние частоты и значения Q будут потеряны.</string>
@@ -270,7 +268,7 @@
     <string name="eq_finder_include_mid_desc">Добавляет третью ось вокруг голосов. Вопросов станет немного больше.</string>
     <string name="eq_finder_fine_tune">Тонкая настройка текущих параметров</string>
     <string name="eq_finder_notes">Перед началом</string>
-    <string name="eq_finder_note_volume">Тест звучит немного тише обычного. Выставьте комфортную громкость после начала и не меняйте её до конца.</string>
+    <string name="eq_finder_note_volume">Выставьте комфортную громкость после начала и не меняйте её до конца.</string>
     <string name="eq_finder_note_earphones">Слушайте в этих наушниках, в тихом месте.</string>
     <string name="eq_finder_note_length">Примерно 25–40 вопросов, 10–15 минут. Можно прерваться в любой момент и продолжить позже.</string>
     <string name="eq_finder_begin">Начать</string>

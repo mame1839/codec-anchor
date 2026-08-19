@@ -389,6 +389,13 @@ class EqFinderTest {
 
     // ------------------------------------------------------------ 焼き込み
 
+    /**
+     * 焼き込みに渡すプリアンプ。**bake はこれをそのまま置くだけ**で、解き直した bands から
+     * 計算し直さない。どの入力からも導けない値にしてあるので、bake が「計算し直す」形に
+     * 戻ったらここが落ちる。値は聴感等価が実際に返す帯 (`EqLoudnessTest`) の中から選んだ。
+     */
+    private val carriedPreampDb10 = -77
+
     // 指示のテスト 5: グラフィックへの焼き込み後、合成応答 ≒ 元の応答 + オーバーレイ応答
     // (バンド中心で 0.2 dB 以内)。土台に入るのは enabled のバンドだけ (下のテストと対)。
     @Test
@@ -405,10 +412,10 @@ class EqFinderTest {
         val overlay = listOf(60, -40)
         val overlayBands = EqFinderMaterialize.candidateBands(emptyList(), axes, overlay)
 
-        val baked = EqFinderMaterialize.bake(base, axes, overlay)
+        val baked = EqFinderMaterialize.bake(base, axes, overlay, carriedPreampDb10)
         assertNotNull(baked)
         assertTrue(baked!!.enabled)
-        assertTrue(baked.preampAuto)
+        assertEquals("渡したプリアンプが落ちた", carriedPreampDb10, baked.preampDb10)
         assertEquals(EqMode.GRAPHIC, baked.mode)
         assertEquals(10, baked.bands.size)
         for (hz in freqs) {
@@ -440,7 +447,7 @@ class EqFinderTest {
         val overlay = listOf(60, -40)
         val overlayBands = EqFinderMaterialize.candidateBands(emptyList(), axes, overlay)
 
-        val baked = EqFinderMaterialize.bake(base, axes, overlay)
+        val baked = EqFinderMaterialize.bake(base, axes, overlay, carriedPreampDb10)
         assertNotNull(baked)
         for (hz in freqs) {
             val heard = EqSolver.combinedResponseDb(overlayBands, hz.toDouble())
@@ -470,6 +477,7 @@ class EqFinderTest {
             EqSettings(mode = EqMode.GRAPHIC, bandCount = 10),
             axes,
             overlay,
+            carriedPreampDb10,
         )
         assertNotNull(baked)
         for (hz in EqSolver.centerFrequencies(10)) {
@@ -489,13 +497,13 @@ class EqFinderTest {
         )
         val axes = EqFinderAxes.default(false)
 
-        assertNull(EqFinderMaterialize.bake(parametric(31), axes, listOf(40, 0)))
+        assertNull(EqFinderMaterialize.bake(parametric(31), axes, listOf(40, 0), carriedPreampDb10))
 
-        val fit = EqFinderMaterialize.bake(parametric(30), axes, listOf(40, 0))
+        val fit = EqFinderMaterialize.bake(parametric(30), axes, listOf(40, 0), carriedPreampDb10)
         assertNotNull(fit)
         assertEquals(31, fit!!.bands.size)
         assertTrue(fit.enabled)
-        assertTrue(fit.preampAuto)
+        assertEquals("渡したプリアンプが落ちた", carriedPreampDb10, fit.preampDb10)
         val added = fit.bands.last()
         assertEquals(EqFinderAxes.BASS.freqHz, added.freqHz)
         assertEquals(EqFinderAxes.BASS.q100, added.q100)
@@ -510,7 +518,7 @@ class EqFinderTest {
         }
 
         // 全軸 0 dB なら何も足さないので、満杯でも通る
-        val unchanged = EqFinderMaterialize.bake(parametric(31), axes, listOf(0, 0))
+        val unchanged = EqFinderMaterialize.bake(parametric(31), axes, listOf(0, 0), carriedPreampDb10)
         assertNotNull(unchanged)
         assertEquals(31, unchanged!!.bands.size)
         assertTrue(unchanged.enabled)
@@ -525,7 +533,7 @@ class EqFinderTest {
             EqBand(freqHz = 4_000, q100 = 200, gainDb10 = -30),
         )
         val base = EqSettings(enabled = true, mode = EqMode.PARAMETRIC, bands = bands)
-        val baked = EqFinderMaterialize.bake(base, EqFinderAxes.default(false), listOf(40, -20))
+        val baked = EqFinderMaterialize.bake(base, EqFinderAxes.default(false), listOf(40, -20), carriedPreampDb10)
         assertNotNull(baked)
         assertEquals(bands, baked!!.bands.take(2))
         assertEquals(listOf(40, -20), baked.bands.drop(2).map { it.gainDb10 })

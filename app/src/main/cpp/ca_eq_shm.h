@@ -223,7 +223,7 @@ typedef struct ca_eq_slot_s {
     uint32_t generation;
     uint32_t flags;                 /* CA_EQ_FLAG_* */
     uint32_t band_count;            /* 0..CA_EQ_MAX_BANDS */
-    float    preamp_db;             /* 解いた後の合成応答のピークから計算済み */
+    float    preamp_db;             /* ユーザが決めた値。求解からは計算しない */
     uint32_t writer_pid;            /* 診断用。書き手が誰か */
     ca_eq_band_t band[CA_EQ_MAX_BANDS];
     /* --- ここまでが版 3 の 520 B ------------------------------------------ */

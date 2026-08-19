@@ -102,7 +102,7 @@
     <string name="eq_delivery_failed_root">この設定は音に反映されませんでした。root 権限の要求が拒否されたか、この端末に root 管理アプリがありません。root 管理アプリで Codec Anchor を許可してください。</string>
     <string name="eq_delivery_failed_shm">この設定は音に反映されませんでした。音響処理モジュールが動いていません。端末を再起動してください。</string>
     <string name="eq_delivery_failed_version">この設定は音に反映されませんでした。アプリと音響処理モジュールのバージョンが違います。両方を同じバージョンに更新してから、端末を再起動してください。</string>
-    <string name="eq_delivery_failed_rejected">この設定は範囲外として拒否されたため、音は変わっていません。バンドのゲインを下げてください。</string>
+    <string name="eq_delivery_failed_rejected">この設定は範囲外として拒否されたため、音は変わっていません。一番高い周波数のバンドを下げるか、消してください。</string>
     <string name="eq_delivery_failed_timeout">この設定の送信が時間内に終わらなかったため中断しました。</string>
     <string name="eq_delivery_failed_input">この設定は音に反映されませんでした。アプリが要求を正しく組み立てられませんでした。これはアプリ側の不具合です。</string>
     <string name="eq_delivery_failed_unknown">この設定の送信が、このバージョンのアプリが把握していない形で失敗しました (コード %1$d)。</string>
@@ -211,8 +211,6 @@
     <string name="eq_type_peaking">ピーク</string>
     <string name="eq_type_low_shelf">ローシェルフ</string>
     <string name="eq_type_high_shelf">ハイシェルフ</string>
-    <string name="eq_preamp_auto">プリアンプを自動で決める</string>
-    <string name="eq_preamp_auto_desc">持ち上げた部分が歪まない分だけ音量を下げます (現在 %1$s)</string>
     <string name="eq_preamp">プリアンプ</string>
     <string name="eq_round_title">グラフィックに切り替えますか</string>
     <string name="eq_round_body">各バンドはグラフィックの固定された周波数へ移り、Q もそれに合わせた値になります。曲線の形はできるだけ保ちますが、いまの周波数と Q は失われます。</string>
@@ -264,7 +262,7 @@
     <string name="eq_finder_include_mid_desc">声のあたりにもう 1 軸を足します。質問が少し増えます。</string>
     <string name="eq_finder_fine_tune">いまの設定を微調整する</string>
     <string name="eq_finder_notes">始める前に</string>
-    <string name="eq_finder_note_volume">テスト中は普段より少し小さめの音になります。始まってから聴きやすい音量に合わせ、終わるまで変えないでください。</string>
+    <string name="eq_finder_note_volume">始まってから聴きやすい音量に合わせ、終わるまで変えないでください。</string>
     <string name="eq_finder_note_earphones">このイヤホンで、静かな場所で聴いてください。</string>
     <string name="eq_finder_note_length">質問はおよそ 25〜40 回、10〜15 分です。いつでも中断して、後で続きからできます。</string>
     <string name="eq_finder_begin">始める</string>

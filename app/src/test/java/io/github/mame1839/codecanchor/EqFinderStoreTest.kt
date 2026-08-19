@@ -36,7 +36,6 @@ class EqFinderStoreTest {
                 EqBand(freqHz = 105, q100 = 71, gainDb10 = 25, type = EqBandType.LOW_SHELF),
                 EqBand(freqHz = 2_500, q100 = 71, gainDb10 = -15, type = EqBandType.HIGH_SHELF),
             ),
-            preampAuto = false,
             preampDb10 = -42,
         ),
         session = JSONObject("""{"axis":1,"step":20,"answers":[0,2,1],"est":[40,-15]}"""),

@@ -102,7 +102,7 @@
     <string name="eq_delivery_failed_root">这些设置没有影响声音：root 权限被拒绝，或者本机没有 root 管理器。请在你的 root 管理器中允许 Codec Anchor。</string>
     <string name="eq_delivery_failed_shm">这些设置没有影响声音：音频处理模块没有在运行。请重启手机。</string>
     <string name="eq_delivery_failed_version">这些设置没有影响声音：应用与音频处理模块的版本不一致。请把两者更新到同一版本，然后重启手机。</string>
-    <string name="eq_delivery_failed_rejected">这些设置因超出范围被拒绝，声音没有变化。请调低各频段的增益。</string>
+    <string name="eq_delivery_failed_rejected">这些设置因超出范围被拒绝，声音没有变化。请调低或删除频率最高的频段。</string>
     <string name="eq_delivery_failed_timeout">发送这些设置未能按时完成，已被中止。</string>
     <string name="eq_delivery_failed_input">这些设置没有影响声音：应用构建请求时出错。这是应用的问题。</string>
     <string name="eq_delivery_failed_unknown">发送这些设置时失败，原因是当前版本应用无法识别的情况（代码 %1$d）。</string>
@@ -211,8 +211,6 @@
     <string name="eq_type_peaking">钟形</string>
     <string name="eq_type_low_shelf">低频搁架</string>
     <string name="eq_type_high_shelf">高频搁架</string>
-    <string name="eq_preamp_auto">自动设定前级增益</string>
-    <string name="eq_preamp_auto_desc">把音量降到刚好让提升的部分不失真（当前 %1$s）</string>
     <string name="eq_preamp">前级增益</string>
     <string name="eq_round_title">要切换到图示均衡器吗</string>
     <string name="eq_round_body">每个频段都会移到图示均衡器的固定频率上，Q 值也会随之调整。曲线的形状会尽量保留，但现在的频率和 Q 值会丢失。</string>
@@ -264,7 +262,7 @@
     <string name="eq_finder_include_mid_desc">在人声附近增加第三个维度。问题会多几个。</string>
     <string name="eq_finder_fine_tune">微调当前设置</string>
     <string name="eq_finder_notes">开始之前</string>
-    <string name="eq_finder_note_volume">测试的音量会比平时略小。开始后再把音量调到舒适的程度，之后到结束都不要再动。</string>
+    <string name="eq_finder_note_volume">开始后再把音量调到舒适的程度，之后到结束都不要再动。</string>
     <string name="eq_finder_note_earphones">请在安静的地方，用这副耳机聆听。</string>
     <string name="eq_finder_note_length">大约 25 到 40 个问题，10 到 15 分钟。随时可以中断，之后接着做。</string>
     <string name="eq_finder_begin">开始</string>

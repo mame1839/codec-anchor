@@ -72,13 +72,19 @@ data class EqBand(
     }
 }
 
+/**
+ * 音響処理の設定。
+ *
+ * **[preampDb10] はユーザが決めた 1 つの値。**アプリが勝手に動かさない — 曲線を変えるたびに
+ * 音量が動くと、耳が「良くなった」ではなく「大きくなった」を拾う。動かしてよいのは
+ * ユーザ自身と、音量を揃えることが目的の操作 (取り込み・探索) だけ。
+ */
 data class EqSettings(
     val enabled: Boolean = false,
     val mode: Int = EqMode.GRAPHIC,
     val bandCount: Int = 10,
     val bands: List<EqBand> = emptyList(),
-    val preampAuto: Boolean = true,
-    val preampDb10: Int = -30,
+    val preampDb10: Int = 0,
     val precision: Int = EqPrecision.STANDARD,
 ) {
     /**
@@ -93,14 +99,13 @@ data class EqSettings(
         get() = enabled && mode == EqMode.GRAPHIC && precision == EqPrecision.HIGH
 
     // put は必ず全部呼ぶ。「既定値なら省略」をやるとアプリとフックでキーの数が変わって
-    // hash が食い違う。**キーを増やしたら EqSupport.SCHEMA を上げること**
-    // (古いフックは知らないキーを落として再 encode するので、hash が永久に食い違う。
-    //  EqSchemaGuardTest がこの 2 つを一緒に動かすよう縛っている)。
+    // hash が食い違う。**キーを増やしても減らしても EqSupport.SCHEMA を上げること**
+    // (古いフックは知らないキーを落とし、消したキーは書き足すので、どちらでも hash が
+    //  永久に食い違う。EqSchemaGuardTest がこの 2 つを一緒に動かすよう縛っている)。
     fun toJson(): JSONObject = JSONObject().apply {
         put("on", enabled)
         put("mode", mode)
         put("n", bandCount)
-        put("pa", preampAuto)
         put("pdb", preampDb10)
         put("prec", precision)
         put("b", JSONArray().also { a -> bands.forEach { a.put(it.toJson()) } })
@@ -121,11 +126,37 @@ data class EqSettings(
                 mode = EqMode.normalize(o.optInt("mode", EqMode.GRAPHIC)),
                 bandCount = normalizeBandCount(o.optInt("n", 10)),
                 bands = bands,
-                preampAuto = o.optBoolean("pa", true),
-                preampDb10 = o.optInt("pdb", -30).coerceIn(PREAMP_RANGE),
+                preampDb10 = preampFrom(o, bands),
                 precision = EqPrecision.normalize(o.optInt("prec", EqPrecision.STANDARD)),
             )
         }
+
+        /**
+         * 自動プリアンプ (`pa`) を持っていた版からの移行。**スロットもプリセットも探索の
+         * 保存も全部 [fromJson] を通る**ので、置き場はここ 1 箇所。
+         *
+         * `pa` が真だったとき実際に鳴っていたプリアンプは、適用の直前に
+         * [EqSolver.autoPreampDb10] が解いた値 (`pdb` は使われていなかった)。同じ関数を
+         * 通すので、**旧版が焼いていた値をそのまま再現する** (クリップを防ぐための計算ではない
+         * — [EqSolver.autoPreampDb10] 参照)。
+         *
+         * **`has("pa")` で古い版の JSON かを切る。**旧版の `toJson` は既定値でも必ず `pa` を
+         * 書いていたので、これは信頼できる判別。ここを `optBoolean("pa", true)` にすると、
+         * `pa` を書かなくなった新形式でも真と読んで、**ユーザが手で決めた値が往復のたびに
+         * 上書きされる**。
+         *
+         * **クランプは [EqSolver.autoPreampDb10] の結果にも掛ける。**掛けないと、アプリが
+         * [PREAMP_RANGE] の外の値を持ったまま `toJson` で書き、それを読んだフックが
+         * ここでクランプして再 encode するので、`AppConfig.hash()` が永久に食い違う。
+         * 代償として、合成ピークが 40 dB を超える曲線は移行の前後で音が変わる
+         * (EqSchemaGuardTest がその限界を固定している)。
+         */
+        private fun preampFrom(o: JSONObject, bands: List<EqBand>): Int =
+            if (o.has("pa") && o.optBoolean("pa", false)) {
+                EqSolver.autoPreampDb10(bands).coerceIn(PREAMP_RANGE)
+            } else {
+                o.optInt("pdb", 0).coerceIn(PREAMP_RANGE)
+            }
 
         // bandCount に BAND_COUNTS 以外を入れると fromJson がここで 10 に書き換えるので、
         // アプリの encode とフックの再 encode が食い違って hash の往復が永久に壊れる。
