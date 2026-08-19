@@ -34,7 +34,6 @@ import io.github.mame1839.codecanchor.core.StatusReport
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
-// Bluetooth プロセスの Context を持ち続けるのは設計どおり (フックはプロセスと同じ寿命)。
 @SuppressLint("StaticFieldLeak")
 internal object A2dpHook {
     private const val CLASS_A2DP_SERVICE = "com.android.bluetooth.a2dp.A2dpService"
@@ -54,11 +53,9 @@ internal object A2dpHook {
 
     private const val SBC_STEP_DELAY_MS = 900L
 
-    // 起動直後に保留した通知を、いつまで有効とみなすか
     private const val PENDING_TOAST_TTL_MS = 3 * 60_000L
     private const val CYCLE_SLACK_MS = 2_000L
 
-    // 適用サイクルの寿命。世代が違う run は打ち切り、締切で総時間を縛る。
     private class Cycle(val generation: Int, val deadline: Long)
 
     @Volatile private var service: Any? = null
@@ -112,8 +109,6 @@ internal object A2dpHook {
         }
     }
 
-    // 積んである適用は mac のトークン単位で取り消す。トークン無しの一括削除はレシーバ配送の
-    // Runnable まで消して、ブロードキャストが完了しないまま残る。
     private fun onServiceGone() {
         service = null
         applyingMacs.forEach { worker.removeCallbacksAndMessages(it.intern()) }
@@ -159,17 +154,14 @@ internal object A2dpHook {
                 val profile = config.profileFor(macOf(device)) ?: return
                 if (!profile.enabled || !profile.hasAnyTarget()) return
                 val status = codecStatusOf(device)
-                // 固定していない項目は呼び出し元の要求をそのまま通すので、現在値ではなく incoming を基底にする。
                 val target = buildTarget(profile, status, Bt.codecInfo(incoming))
                 if (target == null) {
-                    // HD オーディオが無効なときはここで組めない。有効化を伴う通常の適用に回す。
                     scheduleApply(device, "上書き")
                     return
                 }
                 Applying.begin(target, profile.force)
                 param.args[1] = target
                 XLog.i("外部からの変更を上書き: ${macOf(device)} -> ${Bt.codecInfo(target)?.summary()}")
-                // 差し替えた内容が選択可能でないなら、有効化やリトライを伴う通常の適用も走らせる。
                 if (capabilityFor(status, Bt.codecTypeOf(target) ?: return) == null) {
                     scheduleApply(device, "上書きの補完")
                 }
@@ -212,7 +204,6 @@ internal object A2dpHook {
         requestConfig(ctx)
     }
 
-    // start が二度来ると Context が変わる。古い Context に登録を残すと解除できなくなるので張り替える。
     private fun registerReceivers(ctx: Context) {
         if (receiverContext === ctx) return
         unregisterReceivers()
@@ -221,7 +212,6 @@ internal object A2dpHook {
             addAction(ACTION_CONNECTION_STATE_CHANGED)
             addAction(ACTION_ACTIVE_DEVICE_CHANGED)
             addAction(ACTION_CODEC_CONFIG_CHANGED)
-            // 端末の起動直後は画面がトーストを出せる状態になる前に接続が終わる。保留したぶんはここで出す。
             addAction(Intent.ACTION_USER_PRESENT)
             addAction(Intent.ACTION_SCREEN_ON)
         }
@@ -248,7 +238,6 @@ internal object A2dpHook {
         receiverContext = null
     }
 
-    // フックのコールバックと違い、レシーバとハンドラで投げた例外は Bluetooth プロセスを落とす。
     private val btReceiver = object : BroadcastReceiver() {
         override fun onReceive(ctx: Context?, intent: Intent?) {
             safely("A2DP イベント") { handleBtEvent(intent) }
@@ -351,8 +340,6 @@ internal object A2dpHook {
         worker.postDelayed({ runApply(device, profile, 1, reason, generation) }, token, delay)
     }
 
-    // 再トリガは世代を進めて古い run を無効にする。進行中のサイクルの締切は引き継ぐので、
-    // 適用が誘発した再通知で試行が際限なく伸びない。手動適用は新しい要求なので引き直す。
     private fun startCycle(mac: String, profile: DeviceProfile, resetBudget: Boolean): Int {
         val now = SystemClock.uptimeMillis()
         val generation = generations.incrementAndGet()
@@ -383,7 +370,6 @@ internal object A2dpHook {
         return true
     }
 
-    // 新しい世代が始まっていたら、その記録は消さない。
     private fun finishCycle(mac: String, generation: Int) {
         val current = cycles[mac]
         if (current != null && current.generation != generation) return
@@ -391,7 +377,6 @@ internal object A2dpHook {
         applyingMacs.remove(mac)
     }
 
-    // 状態が読めないときは打ち切らない (メーカー改造で欠けている可能性がある)。
     private fun stillConnected(device: BluetoothDevice): Boolean {
         val svc = service ?: return false
         val state = runCatching { XposedHelpers.callMethod(svc, "getConnectionState", device) as? Int }.getOrNull()
@@ -442,14 +427,12 @@ internal object A2dpHook {
         val maxAttempts = profile.retries.coerceIn(DeviceProfile.RETRIES_RANGE)
         val lastAttempt = attempt >= maxAttempts
 
-        // HD オーディオが無効だと非必須コーデックが選択肢から消え、目標を組めなくなる。組む前に有効化する。
         if (profile.autoEnableHd && ensureOptionalCodecs(svc, device, profile.codecType)) {
             status = codecStatusOf(device)
         }
 
         val target = buildTarget(profile, status)
         if (target == null) {
-            // 有効化の直後はケーパビリティの再交渉が終わっていないことがあるので、残り試行があれば待つ
             if (!lastAttempt) {
                 worker.postDelayed(
                     { runApply(device, profile, attempt + 1, reason, generation) },
@@ -571,8 +554,6 @@ internal object A2dpHook {
         )
     }
 
-    // 対応範囲が分からないまま表の最大値を選ぶと、端末が受け付けない組み合わせになる。
-    // 引き継げる現在値も無いなら決めずに null を返す。
     private fun pickMask(
         requested: Int,
         currentValue: Int?,
@@ -594,7 +575,6 @@ internal object A2dpHook {
         return Bt.codecInfo(selectable ?: local)
     }
 
-    // ネイティブ直叩きは検証を全部飛ばす。端末が持っていないコーデックは載せない。
     private fun locallySupported(codecStatus: Any?, target: Any): Boolean {
         val codecType = Bt.codecTypeOf(target) ?: return false
         return Bt.localCapabilities(codecStatus).any { Bt.codecTypeOf(it) == codecType }
@@ -631,7 +611,6 @@ internal object A2dpHook {
         setCodec(svc, device, sbc, force = false, useNative = false)
     }
 
-    // 有効化したときだけ true。呼び出し元はケーパビリティを読み直す。
     private fun ensureOptionalCodecs(svc: Any, device: BluetoothDevice, codecType: Int): Boolean {
         if (codecType == CodecKeys.CODEC_TYPE_SBC) return false
         return runCatching {
@@ -680,13 +659,9 @@ internal object A2dpHook {
         }
     }
 
-    // ダンプの A2DP 区画は今のストリーム 1 本分しかないので、複数台が LDAC で繋がっているときは
-    // アクティブな機器にだけ紐づける (他の機器に他人の値を出さない)。
     private fun refreshLdacStats(device: BluetoothDevice, codecStatus: Any?) {
         val mac = macOf(device) ?: return
         val svc = service ?: return
-        // オフロード中はホスト側のエンコーダが動かないので、ダンプの値を更新する主体が居ない
-        // (ネゴシエートした公称値がそのまま残る)。1 回で数秒かかる読み取りを、意味の無い値のために払わない。
         if (a2dpOffloadEnabled()) {
             LdacStats.forget(mac)
             return
@@ -705,7 +680,6 @@ internal object A2dpHook {
         return runCatching { XposedHelpers.callMethod(svc, "getActiveDevice") }.getOrNull()
     }
 
-    // Bluetooth プロセスの中で動くので BLUETOOTH_CONNECT は常に許可されている
     @SuppressLint("MissingPermission")
     private fun refreshStatus(
         device: BluetoothDevice,
@@ -720,7 +694,6 @@ internal object A2dpHook {
         }.getOrDefault(false)
         val active = device == activeDevice()
         val current = Bt.codecInfo(Bt.currentConfig(codecStatus))
-        // 読み取りは状態要求の経路だけで行う (適用サイクル中の報告にも直近の値を載せる)。
         val ldac = if (CodecKeys.isLdac(current?.displayName())) LdacStats.cached(mac) else null
         val fresh = DeviceStatus(
             mac = mac,
@@ -736,7 +709,6 @@ internal object A2dpHook {
             outcomeValue = outcomeValue,
             updatedAt = System.currentTimeMillis(),
         )
-        // 適用結果の引き継ぎは読みと書きを 1 操作にまとめる。別スレッドの観測で APPLIED が消える。
         return statuses.compute(mac) { _, prev ->
             if (outcome != null) {
                 fresh
@@ -766,8 +738,6 @@ internal object A2dpHook {
         }
     }
 
-    // 接続時はコーデック変更の通知が接続完了より先に届く。これから自分で変えるコーデックについて
-    // 「変更しました」と言わないよう、目標と一致するまでは黙っておく。
     private fun onCodecObserved(device: BluetoothDevice, codecStatus: Any?) {
         val mac = macOf(device) ?: return
         val status = refreshStatus(device, codecStatus)
@@ -781,7 +751,6 @@ internal object A2dpHook {
         if (announced.put(mac, summary) != summary) announceChanged(device, summary)
     }
 
-    // 同じ変化について codecConfigUpdated のフックとブロードキャストの両方から呼ばれる。
     private fun changedSinceReport(mac: String, status: DeviceStatus?): Boolean {
         if (status == null) return true
         val prev = reported.put(mac, status)
@@ -826,7 +795,6 @@ internal object A2dpHook {
         toast(macOf(device).orEmpty(), text)
     }
 
-    // 画面が消えている / ロック中は出しても捨てられるので保留し、使える状態になってから出す。
     private fun toast(key: String, text: String) {
         if (!config.notifyChanges) return
         val ctx = context ?: return
@@ -845,7 +813,6 @@ internal object A2dpHook {
         }
     }
 
-    // 判定できないときは出す側に倒す (通知が消えるより、出て困らないほうを選ぶ)。
     private fun screenUsable(ctx: Context): Boolean = runCatching {
         val power = ctx.getSystemService(PowerManager::class.java)
         val keyguard = ctx.getSystemService(KeyguardManager::class.java)
@@ -872,13 +839,6 @@ internal object A2dpHook {
         runCatching { buildAndSendReport(ctx, mac) }.onFailure { XLog.d("報告を送れない: ${it.message}") }
     }
 
-    /**
-     * 報告を組み立てる。**フックが自分の身元として押す欄 (`moduleVersion` / `eqSchema`) を
-     * 埋めるのはここ 1 箇所だけ。**残りは引数で受け取る — 単体テストから呼べるようにするため。
-     *
-     * `A2dpHook` の中に置いてあるのは、このオブジェクトが Bluetooth プロセスで既に読み込まれて
-     * いるから。トップレベル関数や companion にすると、そこだけのためにクラスが 1 つ増える。
-     */
     internal fun buildReport(
         hostPackage: String,
         configHash: Int,
@@ -893,9 +853,6 @@ internal object A2dpHook {
         configHash = configHash,
         configLoaded = configLoaded,
         a2dpOffloadEnabled = a2dpOffloadEnabled,
-        // ⚠️ 渡し忘れると既定の 0 が乗り、アプリは「フックが古い」を出し続ける
-        // (0 < EqSupport.SCHEMA なので、全ビルドで必ずそうなる)。実際に一度そうなっていた。
-        // EqSupport.SCHEMA は const なのでリテラルに畳まれる。EqSupport のクラスロードは起きない。
         eqSchema = EqSupport.SCHEMA,
         devices = devices,
         codecNames = codecNames,
@@ -921,9 +878,6 @@ internal object A2dpHook {
         ctx.sendBroadcast(intent)
     }
 
-    // オフロード中はエンコードが DSP の中で行われるので、ホスト側のダンプに出る実効ビットレートは
-    // 更新されない (値が残っていても測定値ではない)。ダンプを読むかどうかの判断と、画面に理由を
-    // 出すための材料として報告に載せる。
     private fun a2dpOffloadEnabled(): Boolean {
         val svc = service ?: return false
         runCatching { XposedHelpers.getBooleanField(svc, "mA2dpOffloadEnabled") }
