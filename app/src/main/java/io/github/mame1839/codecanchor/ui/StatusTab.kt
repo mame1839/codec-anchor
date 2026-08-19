@@ -26,13 +26,6 @@ import io.github.mame1839.codecanchor.BuildConfig
 import io.github.mame1839.codecanchor.R
 import io.github.mame1839.codecanchor.core.ModuleVersionState
 
-/**
- * 状態タブ。**選ぶものではなく確かめるもの**だけを置く。
- *
- * ここに集めたのは全部**端末側の事情**で、正常なときはモジュールのカードが 2 行出るだけになる。
- * うまく動いていない理由の説明は**ここにしか置かない** — 下部ナビの印
- * ([needsAttention]) は「ここを見ろ」と言うだけで、理由は繰り返さない。
- */
 @Composable
 fun StatusTab(vm: MainViewModel, contentPadding: PaddingValues, onNotify: (String) -> Unit) {
     val pushedMessage = stringResource(R.string.msg_config_pushed)
@@ -63,8 +56,6 @@ fun StatusTab(vm: MainViewModel, contentPadding: PaddingValues, onNotify: (Strin
             }
         }
 
-        // オフロードは端末全体の設定なので、機器ごとの詳細ではなくここに出す。報告が届いて
-        // いなければ offloadEnabled は false になるので、モジュールが動いていない間は出ない。
         if (vm.a2dpOffloadEnabled) {
             SettingsCard(container = MaterialTheme.colorScheme.surfaceContainerHighest) {
                 NoticeRow(
@@ -72,14 +63,10 @@ fun StatusTab(vm: MainViewModel, contentPadding: PaddingValues, onNotify: (Strin
                     text = stringResource(R.string.offload_hint),
                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 2.dp),
                 )
-                // 切り方は音響処理の画面にも同じものが出る。文言と出し分けは OffloadTurnOffLines が持つ。
                 OffloadTurnOffLines(vm = vm, modifier = Modifier.padding(bottom = 10.dp))
             }
         }
 
-        // 音響処理モジュールとアプリは別々に更新されるので、片方だけ古い状態が普通に起きる。
-        // UNKNOWN (プロパティが空 = モジュールが入っていないか、版を出さない古いモジュール) では
-        // 何も出さない — 音響処理が使えない理由と二重になるため。
         if (vm.moduleVersionState == ModuleVersionState.MISMATCHED) {
             SettingsCard(container = MaterialTheme.colorScheme.surfaceContainerHighest) {
                 NoticeRow(
@@ -141,7 +128,6 @@ private fun ModuleCard(vm: MainViewModel, onPush: () -> Unit) {
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    // 届いているときは何も出さない。異常だけを知らせる。
                     when {
                         report?.configLoaded != true -> {
                             Spacer(Modifier.height(8.dp))
