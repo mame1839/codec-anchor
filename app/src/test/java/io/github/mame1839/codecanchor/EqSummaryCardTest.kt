@@ -20,7 +20,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 
-/** 詳細画面の行が、開かなくても状態を伝えること (要約を出す理由は ui-notes.md §2)。 */
 @RunWith(RobolectricTestRunner::class)
 class EqSummaryCardTest {
 
@@ -41,7 +40,6 @@ class EqSummaryCardTest {
         compose.onNodeWithText(bands(3), substring = true).assertExists()
     }
 
-    // 切ってあるときにモードやバンド数を出すと、効いていない値を読ませることになる。
     @Test
     fun theRowSaysOnlyOffWhileTheEqualiserIsOff() {
         show(on.copy(enabled = false))
@@ -50,7 +48,6 @@ class EqSummaryCardTest {
         compose.onNodeWithText(string(R.string.eq_mode_parametric), substring = true).assertDoesNotExist()
     }
 
-    // 理由は開いた先が出す。行が言うのは「使えない」ことだけ。
     @Test
     fun theRowSaysWhenItCannotBeUsed() {
         show(on, EqAvailability.OFFLOAD_ENABLED)
@@ -66,7 +63,6 @@ class EqSummaryCardTest {
         compose.onNodeWithText(string(R.string.eq_summary_unavailable), substring = true).assertDoesNotExist()
     }
 
-    /** いまどれを聴いているかも要約に要る (理由は ui-notes.md §2)。 */
     @Test
     fun theRowNamesTheSlotYouAreListeningTo() {
         show(on, slots = DeviceSlots(active = "2", slots = listOf(slot("1", "昼用"), slot("2", "夜用"))))
@@ -75,7 +71,6 @@ class EqSummaryCardTest {
         compose.onNodeWithText("昼用", substring = true).assertDoesNotExist()
     }
 
-    /** 未命名は表示側の既定名。データには焼かれていないので、ここで組み立てられる。 */
     @Test
     fun anUnnamedSlotShowsTheDefaultName() {
         show(on, slots = DeviceSlots(active = "2", slots = listOf(slot("1"), slot("2"))))
@@ -83,7 +78,6 @@ class EqSummaryCardTest {
         compose.onNodeWithText(string(R.string.eq_slot_default, 2), substring = true).assertExists()
     }
 
-    /** フラットも名乗る (実体は保存されないが、聴いているのはこれ)。 */
     @Test
     fun theFlatSlotIsNamedToo() {
         show(on, slots = DeviceSlots(active = EqSlotBook.FLAT_ID, slots = listOf(slot("1", "夜用"))))
@@ -92,8 +86,6 @@ class EqSummaryCardTest {
         compose.onNodeWithText("夜用", substring = true).assertDoesNotExist()
     }
 
-    // 切ってあるときスロットの行は画面から隠れる (オフは主電源、スロットはオンの中の層)。
-    // 要約だけが名前を出し続けると、行の無いものを指すことになる。
     @Test
     fun theRowNamesNoSlotWhileTheEqualiserIsOff() {
         show(on.copy(enabled = false), slots = DeviceSlots(active = "1", slots = listOf(slot("1", "夜用"))))
