@@ -1,0 +1,5 @@
+allow mtk_hal_audio mtk_audiohal_data_file file { open read write map getattr lock }
+allow mtk_hal_audio mtk_audiohal_data_file dir { search getattr }
+allow hal_audio_default mtk_audiohal_data_file file { open read write map getattr lock }
+allow hal_audio_default mtk_audiohal_data_file dir { search getattr }
+allow audioserver mtk_audiohal_data_file file { open read write map getattr lock }

@@ -13,6 +13,8 @@
     <string name="action_resend">Yeniden gönder</string>
     <string name="action_recheck">Yeniden kontrol et</string>
     <string name="action_grant">İzni ver</string>
+    <string name="action_save">Kaydet</string>
+    <string name="action_continue">Devam et</string>
 
     <string name="value_keep">Değiştirme</string>
     <string name="value_unknown">Bilinmiyor</string>
@@ -26,24 +28,31 @@
 
     <string name="cd_refresh_status">Durumu yeniden kontrol et</string>
     <string name="cd_back">Geri</string>
+    <string name="cd_eq_slot_menu">Yuva seçenekleri</string>
+    <string name="cd_eq_slot_add">Yuva ekle</string>
     <string name="state_expanded">Genişletildi</string>
     <string name="state_collapsed">Daraltıldı</string>
 
+    <string name="tab_devices">Cihazlar</string>
+    <string name="tab_settings">Ayarlar</string>
+    <string name="tab_status">Durum</string>
+    <string name="cd_needs_attention">Dikkat gerekiyor</string>
+
     <string name="section_general">Genel ayarlar</string>
     <string name="toggle_auto_apply">Ayarları otomatik uygula</string>
-    <string name="toggle_auto_apply_desc">Kapalıyken hiçbir cihazda bir şey değiştirilmez</string>
     <string name="toggle_enforce">Sistemin veya diğer uygulamaların değişikliklerini geri al</string>
-    <string name="toggle_enforce_desc">Sistem veya başka bir uygulama kodeği değiştirirse, sabitlediğiniz değere döndürür</string>
     <string name="toggle_notify">Kodek değişimini bildir</string>
-    <string name="toggle_notify_desc">Kodek değiştiğinde kısa bir mesaj gösterir</string>
     <string name="toggle_verbose">Ayrıntılı günlük tut</string>
-    <string name="toggle_verbose_desc">Geçiş yapmayan cihazları incelemek için</string>
+    <string name="toggle_free_offload_switch">Geliştirici seçeneklerindeki A2DP donanım aktarımı anahtarını serbest bırak</string>
 
     <string name="permission_title">Bluetooth izni gerekiyor</string>
     <string name="permission_body">İzin verdiğinizde uygulama eşleştirilmiş cihazlarınızı ve adlarını okuyabilir.</string>
     <string name="permission_denied">İzin engellendi. Lütfen sistem ayarlarından izin verin.</string>
     <string name="bluetooth_off">Bluetooth kapalı. Eşleştirilmiş cihazlarınızı görmek için açın.</string>
     <string name="config_broken">Kaydedilmiş ayarlar okunamadı, bu yüzden düzenleme yapılamıyor. Yeniden başlamak için bir yedek içe aktarın.</string>
+    <string name="offload_hint">Bluetooth A2DP donanım aktarımı etkin; bu yüzden telefon LDAC\'ı kendisi kodlamıyor ve bit hızı bağlantıya uyum sağlayamıyor.</string>
+    <string name="offload_turn_off">Geliştirici seçeneklerinde \"Bluetooth A2DP donanım aktarımını devre dışı bırak\" seçeneğini açın.</string>
+    <string name="offload_hint_scope">Bu cihazda o anahtar kullanılamıyor. Ayarlar uygulamasını modülün kapsamına ekleyin, sonra serbest bırakmak için geliştirici seçeneklerini yeniden açın.</string>
 
     <string name="section_audio_devices">Ses cihazları</string>
     <string name="devices_empty">Eşleştirilmiş ses cihazı bulunamadı.</string>
@@ -65,6 +74,41 @@
     <string name="module_inactive_hint">Ayarları yine de düzenleyip kaydedebilirsiniz. Modül çalışmaya başladığında geçerli olurlar.</string>
     <string name="msg_config_pushed">Ayarlar yeniden gönderildi</string>
 
+    <string name="eq_unavailable_not_registered">Ses işleme kullanılamıyor: ses işleme modülü kurulu değil ya da bu telefon modülü henüz yüklemedi. Modülü kurun, sonra telefonu yeniden başlatın.</string>
+    <string name="eq_unavailable_offload">Bluetooth A2DP donanım boşaltma açıkken ses işleme kullanılamaz.</string>
+    <string name="eq_unavailable_hook_old">Ses işleme kullanılamıyor: Bluetooth sürecinde çalışan modül, bunu bilmeyen eski bir sürüm. Bluetooth\'u kapatıp yeniden açın.</string>
+    <string name="eq_unavailable_device">Bu kulaklık ses işleme için kayıtlı değil, bu yüzden burada ayarladığınız hiçbir şey sese yansımaz.</string>
+
+    <string name="eq_device_register">Bu kulaklıkla ses işleme kullan</string>
+    <string name="eq_device_register_desc">Uygulanırken ses bir an için kesilir.</string>
+    <string name="eq_device_confirm_on_title">Bu kulaklık için ses işleme açılsın mı?</string>
+    <string name="eq_device_confirm_off_title">Bu kulaklık için ses işleme kapatılsın mı?</string>
+    <string name="eq_device_confirm_body">Telefonun ses hizmeti yeniden başlar, bu yüzden şu anda çalan her şey birkaç saniyeliğine sessize düşer. Bluetooth bağlı kalır ve ekolayzır ayarlarınız her durumda korunur.</string>
+    <string name="eq_device_running">Uygulanıyor. Ses birkaç saniye içinde geri gelir.</string>
+    <string name="eq_device_result_on">Bu kulaklık ses işleme için kayıtlı.</string>
+    <string name="eq_device_result_off">Bu kulaklık artık ses işleme için kayıtlı değil.</string>
+    <string name="eq_device_failed_no_module">Hiçbir şey değişmedi: ses işleme modülü kurulu değil.</string>
+    <string name="eq_device_failed_root">Hiçbir şey değişmedi: root erişimi reddedildi ya da bu telefonda root yöneticisi yok. Root yöneticinizde Codec Anchor\'a izin verin, sonra yeniden deneyin.</string>
+    <string name="eq_device_failed_script">Hiçbir şey değişmedi: root erişimi başarılı oldu, ama ses işleme modülü çalışmadı. Dosyaları eksik veya bozuk. Modülü yeniden kurun, sonra telefonu yeniden başlatın.</string>
+    <string name="eq_device_failed_timeout">Zamanında bitmediği için durduruldu. Ses hizmeti hâlâ yeniden başlıyor olabilir. Birazdan yeniden kontrol edin.</string>
+    <string name="eq_device_failed_input">Hiçbir şey değişmedi: uygulama, modülün okuyamadığı bir şey gönderdi. Bu, uygulamadaki bir hata.</string>
+    <string name="eq_device_failed_no_state">Hiçbir şey değişmedi: ses işleme modülü başlamadı. Telefonu yeniden başlatın, sonra yeniden deneyin.</string>
+    <string name="eq_device_failed_xml">Telefonun ses ayarları dosyası yeniden oluşturulamadı, bu yüzden hiçbir şey değişmedi.</string>
+    <string name="eq_device_failed_apply">Yeniden oluşturulan ses ayarları yerleştirilemedi, bu yüzden hiçbir şey değişmedi.</string>
+    <string name="eq_device_failed_audioserver">Ses hizmeti geri gelmedi. Telefonu yeniden başlatın.</string>
+    <string name="eq_device_failed_unknown">Uygulamanın bu sürümünün bilmediği bir şekilde başarısız oldu (kod %1$d).</string>
+
+    <string name="eq_delivery_other">Şu anda başka bir kulaklık bağlı, bu yüzden burada yaptığınız değişiklikler sese henüz yansımıyor. Bu kulaklığı bağladığınızda uygulanır.</string>
+    <string name="eq_delivery_ambiguous">Birden fazla kulaklık efekti çalışıyor ve uygulama hangisinin bu kulaklığa ait olduğunu ayırt edemiyor, bu yüzden hiçbir şey gönderilmedi. Diğer kulaklığın bağlantısını kesin, sonra burada yeniden bir şey değiştirin.</string>
+    <string name="eq_delivery_slots_full">Bu ayarlar sese yansımadı. Bu kulaklık için ses işlemeyi kapatıp yeniden açın; bu da düzeltmezse telefonu yeniden başlatın.</string>
+    <string name="eq_delivery_failed_root">Bu ayarlar sese yansımadı: root erişimi reddedildi ya da bu telefonda root yöneticisi yok. Root yöneticinizde Codec Anchor\'a izin verin.</string>
+    <string name="eq_delivery_failed_shm">Bu ayarlar sese yansımadı: ses işleme modülü çalışmıyor. Telefonu yeniden başlatın.</string>
+    <string name="eq_delivery_failed_version">Bu ayarlar sese yansımadı: uygulama ile ses işleme modülü farklı sürümlerde. İkisini de aynı sürüme güncelleyin, sonra telefonu yeniden başlatın.</string>
+    <string name="eq_delivery_failed_rejected">Bu ayarlar aralık dışı olduğu için reddedildi, ses değişmedi. En yüksek frekanslı bandı düşürün veya kaldırın.</string>
+    <string name="eq_delivery_failed_timeout">Bu ayarların gönderilmesi zamanında bitmediği için durduruldu.</string>
+    <string name="eq_delivery_failed_input">Bu ayarlar sese yansımadı: uygulama isteği yanlış oluşturdu. Bu, uygulamadaki bir hata.</string>
+    <string name="eq_delivery_failed_unknown">Bu ayarların gönderilmesi, uygulamanın bu sürümünün bilmediği bir şekilde başarısız oldu (kod %1$d).</string>
+
     <string name="tag_connected">Bağlı</string>
     <string name="tag_disconnected">Bağlı değil</string>
     <string name="tag_active">Çalıyor</string>
@@ -76,7 +120,6 @@
     <string name="profile_no_target">Henüz bir şey sabitlenmedi</string>
 
     <string name="section_backup">Yedekleme</string>
-    <string name="backup_body">Tüm ayarları bir JSON dosyasına kaydeder.</string>
     <string name="backup_export">Dışa aktar</string>
     <string name="backup_import">İçe aktar</string>
     <string name="backup_confirm_title">Yedek içe aktarılsın mı?</string>
@@ -89,7 +132,6 @@
     <string name="msg_backup_failed">Dosya okunamadı</string>
 
     <string name="detail_auto_apply">Bu kulaklığa uygula</string>
-    <string name="detail_auto_apply_desc">Her bağlandığında aşağıdaki ayarlara geçer</string>
     <string name="detail_current_codec">Mevcut kodek: %1$s</string>
     <string name="ldac_bitrate_offload">Bluetooth A2DP donanım aktarımı etkin olduğu için gerçek bit hızı okunamıyor.</string>
     <string name="detail_note">Son sonuç: %1$s</string>
@@ -116,9 +158,7 @@
     <string name="adv_force">Geçişi zorla</string>
     <string name="adv_force_desc">Cihazın bildirmediği kombinasyonları da dener</string>
     <string name="adv_via_sbc">SBC üzerinden geçiş yap</string>
-    <string name="adv_via_sbc_desc">Önce SBC\'ye düşer, sonra seçtiğiniz kodeğe geçer</string>
     <string name="adv_auto_hd">HD sesi otomatik aç</string>
-    <string name="adv_auto_hd_desc">Sistemde HD ses kapalıysa açar</string>
     <string name="adv_delay">Uygulamadan önce bekleme</string>
     <string name="adv_delay_desc">Bazı cihazlar bağlandıktan hemen sonra geçiş yapmaz</string>
     <string name="adv_retries">Deneme sayısı</string>
@@ -131,4 +171,77 @@
     <string name="msg_apply_requested">Modülden ayarları uygulaması istendi</string>
     <string name="msg_apply_module_inactive">Modül çalışmadığı için istek iletilemiyor</string>
     <string name="msg_apply_not_connected">Cihaz bağlı olmadığı için şimdi uygulanamaz</string>
+
+    <string name="msg_preset_exported">Hazır ayar dışa aktarıldı</string>
+    <string name="msg_preset_export_failed">Dosya yazılamadı</string>
+    <string name="msg_preset_imported">Hazır ayar içe aktarıldı</string>
+    <string name="msg_preset_invalid">Bu dosya bir Codec Anchor hazır ayarı değil</string>
+    <string name="msg_autoeq_imported">AutoEQ filtreleri içe aktarıldı</string>
+    <string name="msg_autoeq_failed">Dosya okunamadı</string>
+    <string name="msg_autoeq_invalid">Bu dosya bir AutoEQ sonucu değil</string>
+    <string name="msg_autoeq_corner_shelf">Bu AutoEQ dosyası desteklenmeyen LS veya HS filtreleri kullanıyor</string>
+    <string name="msg_autoeq_no_bands">Bu AutoEQ dosyasında filtre yok</string>
+
+    <string name="section_eq">Ses işleme</string>
+    <string name="eq_summary_on">Açık</string>
+    <string name="eq_summary_off">Kapalı</string>
+    <plurals name="eq_summary_bands">
+        <item quantity="one">%1$d bant</item>
+        <item quantity="other">%1$d bant</item>
+    </plurals>
+    <string name="eq_summary_unavailable">Şu anda kullanılamıyor. Nedenini görmek için açın.</string>
+    <string name="eq_enabled">Ekolayzır</string>
+    <string name="eq_latency_zero">Eklenen gecikme: 0 ms</string>
+    <string name="eq_mode">Düzenleme biçimi</string>
+    <string name="eq_mode_graphic">Grafik</string>
+    <string name="eq_mode_graphic_desc">Her bant sabit bir frekansta durur</string>
+    <string name="eq_mode_parametric">Parametrik</string>
+    <string name="eq_mode_parametric_desc">Her bandı istediğiniz yere koyabilirsiniz</string>
+    <string name="eq_band_count">Bant sayısı</string>
+    <string name="eq_band_count_desc">Bu bir performans ayarı değildir: bant sayısı kaç olursa olsun telefon aynı işi yapar.</string>
+    <string name="eq_precision">Eğri doğruluğu</string>
+    <string name="eq_precision_standard">Standart (önerilir)</string>
+    <string name="eq_precision_standard_desc">Bantlar arasında eğri biraz sapar</string>
+    <string name="eq_precision_high">Yüksek doğruluk</string>
+    <string name="eq_precision_high_desc">Bantları birleştiren çizgiyi daha yakından izler</string>
+    <string name="eq_precision_fallback">Bu ses standart doğrulukla çalınıyor.</string>
+    <string name="eq_band_none">Henüz bant yok. Bir tane ekleyin veya bir AutoEQ dosyası alın.</string>
+    <string name="eq_band_add">Bant ekle</string>
+    <string name="eq_band_remove">Bu bandı kaldır</string>
+    <string name="eq_band_type">Biçim</string>
+    <string name="eq_band_frequency">Frekans</string>
+    <string name="eq_band_q">Q</string>
+    <string name="eq_band_gain">Kazanç</string>
+    <string name="eq_type_peaking">Çan</string>
+    <string name="eq_type_low_shelf">Alt raf</string>
+    <string name="eq_type_high_shelf">Üst raf</string>
+    <string name="eq_preamp">Ön yükseltme</string>
+    <string name="eq_round_title">Grafiğe geçilsin mi?</string>
+    <string name="eq_round_body">Her bant grafik ekolayzırın sabit frekanslarından birine taşınır ve Q değeri ona göre ayarlanır. Eğrinin biçimi olabildiğince korunur ama şu anki frekanslar ve Q değerleri kaybolur.</string>
+    <string name="eq_round_quiet">Bir daha sorma</string>
+    <string name="eq_reset">Tümünü sıfırla</string>
+    <string name="eq_reset_title">Tümü sıfırlansın mı?</string>
+    <string name="eq_reset_body">Tüm kazançlar ve elle ayarlanan ön yükseltme 0 dB\'ye döner, ekolayzır artık sesi değiştirmez. Bantlar yerlerinde kalır ama şu anki eğri, hazır ayar olarak kaydedilmediyse geri gelmez.</string>
+
+    <string name="eq_slot_flat">Düz</string>
+    <string name="eq_slot_default">Özel %1$d</string>
+    <string name="eq_slot_rename">Yeniden adlandır</string>
+    <string name="eq_slot_rename_title">Yuvanın adı</string>
+    <string name="eq_slot_duplicate">Çoğalt</string>
+    <string name="eq_slot_save_preset">Hazır ayar olarak kaydet</string>
+    <string name="eq_slot_delete_title">Yuva silinsin mi?</string>
+    <string name="eq_slot_delete_body">“%1$s” silinir. Şu anda onu dinliyorsanız, ses Düz ayarına döner.</string>
+
+    <string name="eq_presets">Hazır ayarlar</string>
+    <string name="eq_preset_empty">Henüz kaydedilmiş bir şey yok. Kullandığınız yuvanın menüsünden kaydedebilirsiniz.</string>
+    <string name="eq_preset_save_title">Hazır ayarın adı</string>
+    <string name="eq_preset_name">Ad</string>
+    <string name="eq_preset_apply">Uygula</string>
+    <string name="eq_preset_export">Dışa aktar</string>
+    <string name="eq_preset_import">Hazır ayar al</string>
+    <string name="eq_preset_delete_title">Hazır ayar silinsin mi?</string>
+    <string name="eq_preset_delete_body">“%1$s” silinir. Kulaklığınızda hâlihazırda ayarlı olan şeyler olduğu gibi kalır.</string>
+    <string name="eq_autoeq_import">AutoEQ al</string>
+    <string name="eq_autoeq_desc">AutoEQ\'nun ParametricEQ.txt veya GraphicEQ.txt dosyasını okur ve yeni bir yuvaya yükler.</string>
+    <string name="eq_curve_desc">Bu ayarların sesi nasıl değiştirdiğini gösteren eğri</string>
 </resources>

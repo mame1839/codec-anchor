@@ -13,6 +13,8 @@
     <string name="action_resend">إرسال مرة أخرى</string>
     <string name="action_recheck">تحقّق مرة أخرى</string>
     <string name="action_grant">منح الإذن</string>
+    <string name="action_save">حفظ</string>
+    <string name="action_continue">متابعة</string>
 
     <string name="value_keep">دون تغيير</string>
     <string name="value_unknown">غير معروف</string>
@@ -30,24 +32,31 @@
 
     <string name="cd_refresh_status">التحقّق من الحالة مرة أخرى</string>
     <string name="cd_back">رجوع</string>
+    <string name="cd_eq_slot_menu">خيارات الخانة</string>
+    <string name="cd_eq_slot_add">إضافة خانة</string>
     <string name="state_expanded">موسّع</string>
     <string name="state_collapsed">مطوي</string>
 
+    <string name="tab_devices">الأجهزة</string>
+    <string name="tab_settings">الإعدادات</string>
+    <string name="tab_status">الحالة</string>
+    <string name="cd_needs_attention">يحتاج إلى انتباه</string>
+
     <string name="section_general">إعدادات عامة</string>
     <string name="toggle_auto_apply">تطبيق الإعدادات تلقائيًا</string>
-    <string name="toggle_auto_apply_desc">عند إيقافه لا يُغيَّر أي شيء على أي جهاز</string>
     <string name="toggle_enforce">التراجع عن تغييرات النظام أو التطبيقات الأخرى</string>
-    <string name="toggle_enforce_desc">إذا غيّر النظام أو تطبيق آخر الكوديك، يُعاد إلى ما ثبّتته</string>
     <string name="toggle_notify">الإشعار عند تغيّر الكوديك</string>
-    <string name="toggle_notify_desc">يعرض رسالة قصيرة عند تحويل الكوديك</string>
     <string name="toggle_verbose">كتابة سجلات مفصّلة</string>
-    <string name="toggle_verbose_desc">لفحص الأجهزة التي لا تقبل التحويل</string>
+    <string name="toggle_free_offload_switch">تحرير مفتاح التفريغ العتادي لـ A2DP في خيارات المطوّر</string>
 
     <string name="permission_title">إذن Bluetooth مطلوب</string>
     <string name="permission_body">منح الإذن يتيح للتطبيق قراءة أجهزتك المقترنة وأسمائها.</string>
     <string name="permission_denied">تم حظر الإذن. يُرجى منحه من إعدادات النظام.</string>
     <string name="bluetooth_off">تم إيقاف Bluetooth. شغّله لعرض أجهزتك المقترنة.</string>
     <string name="config_broken">تعذّرت قراءة الإعدادات المحفوظة، لذا لا يمكن تعديل أي شيء. استورد نسخة احتياطية للبدء من جديد.</string>
+    <string name="offload_hint">التفريغ العتادي لـ Bluetooth A2DP مُمكَّن، لذلك لا يُرمّز الهاتف LDAC بنفسه ولا يتكيّف معدل البت مع الاتصال.</string>
+    <string name="offload_turn_off">فعّل «إيقاف التفريغ العتادي لـ Bluetooth A2DP» في خيارات المطوّر.</string>
+    <string name="offload_hint_scope">لا يمكن استخدام هذا المفتاح على هذا الجهاز. أضف تطبيق الإعدادات إلى نطاق الوحدة، ثم افتح خيارات المطوّر مرة أخرى لتحريره.</string>
 
     <string name="section_audio_devices">أجهزة الصوت</string>
     <string name="devices_empty">لم يُعثر على أي جهاز صوت مقترن.</string>
@@ -69,6 +78,41 @@
     <string name="module_inactive_hint">لا يزال بإمكانك تعديل الإعدادات وحفظها. تصبح سارية عندما تبدأ الوحدة بالعمل.</string>
     <string name="msg_config_pushed">تم إرسال الإعدادات مرة أخرى</string>
 
+    <string name="eq_unavailable_not_registered">معالجة الصوت غير متاحة: وحدة معالجة الصوت غير مثبّتة، أو أن هذا الهاتف لم يحمّلها بعد. ثبّتها، ثم أعد تشغيل الهاتف.</string>
+    <string name="eq_unavailable_offload">معالجة الصوت غير متاحة ما دام تفريغ Bluetooth A2DP بالعتاد مفعّلًا.</string>
+    <string name="eq_unavailable_hook_old">معالجة الصوت غير متاحة: الوحدة العاملة في عملية Bluetooth إصدار أقدم لا يعرفها. أوقف Bluetooth ثم شغّله مرة أخرى.</string>
+    <string name="eq_unavailable_device">هذه السماعات غير مسجَّلة لمعالجة الصوت، لذلك لا يصل أي مما يُضبط هنا إلى الصوت الفعلي.</string>
+
+    <string name="eq_device_register">استخدام معالجة الصوت مع هذه السماعات</string>
+    <string name="eq_device_register_desc">يتوقف الصوت للحظة أثناء التطبيق.</string>
+    <string name="eq_device_confirm_on_title">تفعيل معالجة الصوت لهذه السماعات؟</string>
+    <string name="eq_device_confirm_off_title">إيقاف معالجة الصوت لهذه السماعات؟</string>
+    <string name="eq_device_confirm_body">تُعاد تشغيل خدمة الصوت في الهاتف، لذا يتوقف أي صوت قيد التشغيل الآن لبضع ثوانٍ. يبقى Bluetooth متصلًا، وتُحفظ إعدادات المُعادل في كلتا الحالتين.</string>
+    <string name="eq_device_running">جارٍ التطبيق. سيعود الصوت خلال ثوانٍ قليلة.</string>
+    <string name="eq_device_result_on">هذه السماعات مسجَّلة لمعالجة الصوت.</string>
+    <string name="eq_device_result_off">هذه السماعات لم تعد مسجَّلة لمعالجة الصوت.</string>
+    <string name="eq_device_failed_no_module">لم يتغيّر شيء: وحدة معالجة الصوت غير مثبَّتة.</string>
+    <string name="eq_device_failed_root">لم يتغيّر شيء: رُفض الوصول بصلاحيات root، أو لا يملك هذا الهاتف مدير صلاحيات root. اسمح لـ Codec Anchor في مدير صلاحيات root، ثم أعد المحاولة.</string>
+    <string name="eq_device_failed_script">لم يتغيّر شيء: نجح الوصول بصلاحيات root، لكن وحدة معالجة الصوت لم تعمل. ملفاتها مفقودة أو تالفة. ثبّت الوحدة من جديد، ثم أعد تشغيل الهاتف.</string>
+    <string name="eq_device_failed_timeout">لم تكتمل العملية في الوقت المحدد فأُوقفت. قد تكون خدمة الصوت لا تزال تُعاد تشغيلها. تحقّق مرة أخرى بعد قليل.</string>
+    <string name="eq_device_failed_input">لم يتغيّر شيء: أرسل التطبيق شيئًا تعذّر على الوحدة قراءته. هذا خطأ في التطبيق.</string>
+    <string name="eq_device_failed_no_state">لم يتغيّر شيء: وحدة معالجة الصوت لم تبدأ العمل بعد. أعد تشغيل الهاتف، ثم أعد المحاولة.</string>
+    <string name="eq_device_failed_xml">تعذّرت إعادة بناء ملف إعدادات الصوت في الهاتف، لذا لم يتغيّر شيء.</string>
+    <string name="eq_device_failed_apply">تعذّر وضع إعدادات الصوت المُعاد بناؤها موضع التنفيذ، لذا لم يتغيّر شيء.</string>
+    <string name="eq_device_failed_audioserver">لم تعد خدمة الصوت إلى العمل. أعد تشغيل الهاتف.</string>
+    <string name="eq_device_failed_unknown">فشلت العملية بطريقة لا تعرفها هذه النسخة من التطبيق (الرمز %1$d).</string>
+
+    <string name="eq_delivery_other">سماعات أخرى متصلة الآن، لذلك لا يصل ما تغيّره هنا إلى الصوت بعد. وصّل هذه السماعات ليُطبَّق الإعداد.</string>
+    <string name="eq_delivery_ambiguous">تعمل أكثر من مجموعة من مؤثرات السماعات، ولا يستطيع التطبيق تحديد أيها يخص هذه السماعات، لذا لم يُرسَل أي شيء. افصل السماعات الأخرى، ثم غيّر شيئًا هنا مرة أخرى.</string>
+    <string name="eq_delivery_slots_full">لم تصل هذه الإعدادات إلى الصوت. أوقف معالجة الصوت لهذه السماعات ثم أعد تفعيلها؛ إذا لم يُصلح ذلك المشكلة، أعد تشغيل الهاتف.</string>
+    <string name="eq_delivery_failed_root">لم تصل هذه الإعدادات إلى الصوت: رُفض الوصول بصلاحيات root، أو لا يملك هذا الهاتف مدير صلاحيات root. اسمح لـ Codec Anchor في مدير صلاحيات root.</string>
+    <string name="eq_delivery_failed_shm">لم تصل هذه الإعدادات إلى الصوت: وحدة معالجة الصوت لا تعمل. أعد تشغيل الهاتف.</string>
+    <string name="eq_delivery_failed_version">لم تصل هذه الإعدادات إلى الصوت: التطبيق ووحدة معالجة الصوت بإصدارين مختلفين. حدّث كليهما إلى الإصدار نفسه، ثم أعد تشغيل الهاتف.</string>
+    <string name="eq_delivery_failed_rejected">رُفضت هذه الإعدادات لخروجها عن المدى المسموح، فلم يتغيّر الصوت. اخفض النطاق ذا التردد الأعلى أو احذفه.</string>
+    <string name="eq_delivery_failed_timeout">لم يكتمل إرسال هذه الإعدادات في الوقت المحدد فأُوقف.</string>
+    <string name="eq_delivery_failed_input">لم تصل هذه الإعدادات إلى الصوت: بنى التطبيق الطلب بشكل خاطئ. هذا خطأ في التطبيق.</string>
+    <string name="eq_delivery_failed_unknown">فشل إرسال هذه الإعدادات بطريقة لا تعرفها هذه النسخة من التطبيق (الرمز %1$d).</string>
+
     <string name="tag_connected">متصل</string>
     <string name="tag_disconnected">غير متصل</string>
     <string name="tag_active">قيد التشغيل</string>
@@ -80,7 +124,6 @@
     <string name="profile_no_target">لم يُثبَّت أي شيء بعد</string>
 
     <string name="section_backup">النسخ الاحتياطي</string>
-    <string name="backup_body">يحفظ كل الإعدادات في ملف JSON.</string>
     <string name="backup_export">تصدير</string>
     <string name="backup_import">استيراد</string>
     <string name="backup_confirm_title">استيراد نسخة احتياطية؟</string>
@@ -93,7 +136,6 @@
     <string name="msg_backup_failed">تعذّرت قراءة الملف</string>
 
     <string name="detail_auto_apply">التطبيق على هذه السماعة</string>
-    <string name="detail_auto_apply_desc">يحوّل إلى الإعدادات أدناه في كل مرة تتصل فيها السماعة</string>
     <string name="detail_current_codec">الكوديك الحالي: %1$s</string>
     <string name="ldac_bitrate_offload">لا يمكن قراءة معدل البت الفعلي لأن التفريغ العتادي لـ Bluetooth A2DP مُمكَّن.</string>
     <string name="detail_note">النتيجة الأخيرة: %1$s</string>
@@ -120,9 +162,7 @@
     <string name="adv_force">إجبار التحويل</string>
     <string name="adv_force_desc">يجرّب أيضًا تركيبات لا يعلن الجهاز عن دعمها</string>
     <string name="adv_via_sbc">التحويل عبر SBC</string>
-    <string name="adv_via_sbc_desc">ينزل إلى SBC أولًا، ثم ينتقل إلى الكوديك الذي اخترته</string>
     <string name="adv_auto_hd">تشغيل صوت HD تلقائيًا</string>
-    <string name="adv_auto_hd_desc">يشغّل صوت HD عندما يكون النظام قد أوقفه</string>
     <string name="adv_delay">الانتظار قبل التطبيق</string>
     <string name="adv_delay_desc">بعض الأجهزة ترفض التحويل بعد الاتصال مباشرة</string>
     <string name="adv_retries">عدد المحاولات</string>
@@ -135,4 +175,81 @@
     <string name="msg_apply_requested">تم الطلب من الوحدة تطبيق الإعدادات</string>
     <string name="msg_apply_module_inactive">الوحدة لا تعمل، لذا لا يمكن إيصال الطلب</string>
     <string name="msg_apply_not_connected">الجهاز غير متصل، لذا لا يمكن تطبيق أي شيء الآن</string>
+
+    <string name="msg_preset_exported">تم تصدير الإعداد المسبق</string>
+    <string name="msg_preset_export_failed">تعذّرت الكتابة في الملف</string>
+    <string name="msg_preset_imported">تم استيراد الإعداد المسبق</string>
+    <string name="msg_preset_invalid">هذا الملف ليس إعدادًا مسبقًا من Codec Anchor</string>
+    <string name="msg_autoeq_imported">تم استيراد مرشحات AutoEQ</string>
+    <string name="msg_autoeq_failed">تعذّرت قراءة الملف</string>
+    <string name="msg_autoeq_invalid">هذا الملف ليس نتيجة من AutoEQ</string>
+    <string name="msg_autoeq_corner_shelf">يستخدم ملف AutoEQ هذا مرشحات LS أو HS غير المدعومة</string>
+    <string name="msg_autoeq_no_bands">لا يحتوي ملف AutoEQ هذا على أي مرشحات</string>
+
+    <string name="section_eq">معالجة الصوت</string>
+    <string name="eq_summary_on">مُفعَّلة</string>
+    <string name="eq_summary_off">مُعطَّلة</string>
+    <plurals name="eq_summary_bands">
+        <item quantity="zero">%1$d نطاق</item>
+        <item quantity="one">%1$d نطاق</item>
+        <item quantity="two">%1$d نطاقان</item>
+        <item quantity="few">%1$d نطاقات</item>
+        <item quantity="many">%1$d نطاقًا</item>
+        <item quantity="other">%1$d نطاق</item>
+    </plurals>
+    <string name="eq_summary_unavailable">غير متاحة الآن. افتحها لمعرفة السبب.</string>
+    <string name="eq_enabled">المُعادل</string>
+    <string name="eq_latency_zero">التأخير المُضاف: 0 مللي ثانية</string>
+    <string name="eq_mode">طريقة التحرير</string>
+    <string name="eq_mode_graphic">رسومي</string>
+    <string name="eq_mode_graphic_desc">يبقى كل نطاق على تردد ثابت</string>
+    <string name="eq_mode_parametric">بارامتري</string>
+    <string name="eq_mode_parametric_desc">يمكنك وضع كل نطاق حيث تشاء</string>
+    <string name="eq_band_count">عدد النطاقات</string>
+    <string name="eq_band_count_desc">هذا ليس إعداد أداء: الهاتف يقوم بالقدر نفسه من العمل أيًّا كان عدد النطاقات.</string>
+    <string name="eq_precision">دقة المنحنى</string>
+    <string name="eq_precision_standard">قياسي (موصى به)</string>
+    <string name="eq_precision_standard_desc">ينحرف المنحنى قليلاً بين النطاقات</string>
+    <string name="eq_precision_high">دقة عالية</string>
+    <string name="eq_precision_high_desc">يتبع الخط الواصل بين النطاقات بدقة أكبر</string>
+    <string name="eq_precision_fallback">يُشغَّل هذا الصوت بالدقة القياسية.</string>
+    <string name="eq_band_none">لا توجد نطاقات بعد. أضِف نطاقًا أو استورد ملف AutoEQ.</string>
+    <string name="eq_band_add">إضافة نطاق</string>
+    <string name="eq_band_remove">إزالة هذا النطاق</string>
+    <string name="eq_band_type">الشكل</string>
+    <string name="eq_band_frequency">التردد</string>
+    <string name="eq_band_q">Q</string>
+    <string name="eq_band_gain">الكسب</string>
+    <string name="eq_type_peaking">قمة</string>
+    <string name="eq_type_low_shelf">رف منخفض</string>
+    <string name="eq_type_high_shelf">رف مرتفع</string>
+    <string name="eq_preamp">التضخيم المسبق</string>
+    <string name="eq_round_title">التبديل إلى الوضع الرسومي؟</string>
+    <string name="eq_round_body">سينتقل كل نطاق إلى أحد الترددات الثابتة للمعادل الرسومي وسيُضبط معامل Q الخاص به تبعًا لذلك. سيُحافظ على شكل المنحنى قدر الإمكان، لكن الترددات وقيم Q الحالية ستُفقد.</string>
+    <string name="eq_round_quiet">عدم السؤال مرة أخرى</string>
+    <string name="eq_reset">إعادة كل شيء إلى الصفر</string>
+    <string name="eq_reset_title">إعادة كل شيء إلى الصفر؟</string>
+    <string name="eq_reset_body">يعود كل كسب والتضخيم المسبق اليدوي إلى 0 ديسيبل، فيتوقف المعادل عن تغيير الصوت. تبقى النطاقات في أماكنها، لكن المنحنى الحالي سيُفقد ما لم يُحفظ ضمن الإعدادات المحفوظة.</string>
+
+    <string name="eq_slot_flat">محايد</string>
+    <string name="eq_slot_default">مخصص %1$d</string>
+    <string name="eq_slot_rename">إعادة التسمية</string>
+    <string name="eq_slot_rename_title">اسم الخانة</string>
+    <string name="eq_slot_duplicate">تكرار</string>
+    <string name="eq_slot_save_preset">الحفظ كإعداد</string>
+    <string name="eq_slot_delete_title">حذف الخانة؟</string>
+    <string name="eq_slot_delete_body">يحذف \"%1$s\". وإذا كان هو ما تستمع إليه الآن، يعود الصوت إلى \"محايد\".</string>
+
+    <string name="eq_presets">الإعدادات المحفوظة</string>
+    <string name="eq_preset_empty">لم يُحفظ أي شيء بعد. يمكنك الحفظ من قائمة الخانة التي تستخدمها.</string>
+    <string name="eq_preset_save_title">اسم الإعداد</string>
+    <string name="eq_preset_name">الاسم</string>
+    <string name="eq_preset_apply">تطبيق</string>
+    <string name="eq_preset_export">تصدير</string>
+    <string name="eq_preset_import">استيراد إعداد</string>
+    <string name="eq_preset_delete_title">حذف الإعداد؟</string>
+    <string name="eq_preset_delete_body">يحذف \"%1$s\". ويبقى ما هو مضبوط على سماعاتك كما هو.</string>
+    <string name="eq_autoeq_import">استيراد AutoEQ</string>
+    <string name="eq_autoeq_desc">يقرأ ملف ParametricEQ.txt أو GraphicEQ.txt من AutoEQ ويحمّله في خانة جديدة.</string>
+    <string name="eq_curve_desc">منحنى يوضّح كيف تغيّر هذه الإعدادات الصوت</string>
 </resources>

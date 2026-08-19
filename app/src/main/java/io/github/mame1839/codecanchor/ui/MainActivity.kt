@@ -54,9 +54,7 @@ private fun CodecAnchorApp(vm: MainViewModel = viewModel()) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
-    var selectedMac by rememberSaveable { mutableStateOf<String?>(null) }
 
-    // 報告の送信元が Bluetooth プロセス (別 uid) なので EXPORTED で登録する。
     DisposableEffect(context) {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(from: Context?, intent: Intent?) {
@@ -90,7 +88,6 @@ private fun CodecAnchorApp(vm: MainViewModel = viewModel()) {
         }
     }
 
-    // ViewModel は画面より長生きするので、書き出し / 復元の結果はここで受け取って消費済みにする。
     val pendingMessage = vm.pendingMessage
     val pendingText = pendingMessage?.let { stringResource(it) }
     LaunchedEffect(pendingText) {
@@ -102,7 +99,6 @@ private fun CodecAnchorApp(vm: MainViewModel = viewModel()) {
 
     val activity = LocalActivity.current
     val deniedMessage = stringResource(R.string.permission_denied)
-    // 恒久拒否のあとは要求ダイアログが出ずに即 false が返るので、設定アプリへ案内する。
     val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         vm.refreshDevices()
         val blocked = !granted &&
@@ -120,26 +116,63 @@ private fun CodecAnchorApp(vm: MainViewModel = viewModel()) {
         }
     }
 
+    AppNavigation(
+        vm = vm,
+        snackbarHostState = snackbarHostState,
+        onRequestPermission = { permissionLauncher.launch(Manifest.permission.BLUETOOTH_CONNECT) },
+        onNotify = notify,
+    )
+}
+
+@Composable
+internal fun AppNavigation(
+    vm: MainViewModel,
+    snackbarHostState: SnackbarHostState,
+    onRequestPermission: () -> Unit,
+    onNotify: (String) -> Unit,
+) {
+    var tab by rememberSaveable { mutableStateOf(HomeTab.DEVICES) }
+    var selectedMac by rememberSaveable { mutableStateOf<String?>(null) }
+    var eqOpen by rememberSaveable { mutableStateOf(false) }
+
     val mac = selectedMac
-    if (mac == null) {
-        DeviceListScreen(
-            vm = vm,
-            snackbarHostState = snackbarHostState,
-            onOpenDevice = { target ->
-                vm.ensureProfile(target)
-                selectedMac = target
-            },
-            onRequestPermission = { permissionLauncher.launch(Manifest.permission.BLUETOOTH_CONNECT) },
-            onNotify = notify,
-        )
-    } else {
-        BackHandler { selectedMac = null }
-        DeviceDetailScreen(
-            vm = vm,
-            mac = mac,
-            snackbarHostState = snackbarHostState,
-            onBack = { selectedMac = null },
-            onNotify = notify,
-        )
+    when {
+        mac == null -> {
+            BackHandler(enabled = tab != HomeTab.DEVICES) { tab = HomeTab.DEVICES }
+            HomeScreen(
+                vm = vm,
+                tab = tab,
+                onSelectTab = { tab = it },
+                snackbarHostState = snackbarHostState,
+                onOpenDevice = { target ->
+                    vm.ensureProfile(target)
+                    selectedMac = target
+                },
+                onRequestPermission = onRequestPermission,
+                onNotify = onNotify,
+            )
+        }
+
+        eqOpen -> {
+            BackHandler { eqOpen = false }
+            EqScreen(
+                vm = vm,
+                mac = mac,
+                snackbarHostState = snackbarHostState,
+                onBack = { eqOpen = false },
+            )
+        }
+
+        else -> {
+            BackHandler { selectedMac = null }
+            DeviceDetailScreen(
+                vm = vm,
+                mac = mac,
+                snackbarHostState = snackbarHostState,
+                onBack = { selectedMac = null },
+                onOpenEq = { eqOpen = true },
+                onNotify = onNotify,
+            )
+        }
     }
 }

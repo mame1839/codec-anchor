@@ -7,8 +7,11 @@ import io.github.mame1839.codecanchor.core.Bridge
 
 class HookRequestReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action != Bridge.ACTION_REQUEST_CONFIG) return
-        pushSaved(context)
+        when (intent.action) {
+            Bridge.ACTION_REQUEST_CONFIG -> pushSaved(context)
+            Bridge.ACTION_REQUEST_SETTINGS_HOOK -> pushSettingsHook(context)
+            Bridge.ACTION_SETTINGS_HOOKED -> runCatching { SettingsStore(context).markSettingsHooked() }
+        }
     }
 }
 
@@ -19,12 +22,18 @@ class BootReceiver : BroadcastReceiver() {
     }
 }
 
-// exported なレシーバには明示 Intent で任意の action が届くので、受け取る action を絞る。
 private val BOOT_ACTIONS = setOf(Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED)
 
-// onReceive で投げた例外はアプリのプロセスを落とす。
 private fun pushSaved(context: Context) {
     runCatching {
-        SettingsStore(context).load()?.let { BridgeClient.pushConfig(context, it) }
+        val store = SettingsStore(context)
+        BridgeClient.pushSettingsHook(context, store.freeOffloadSwitch())
+        store.load()?.let { BridgeClient.pushConfig(context, it) }
+    }
+}
+
+private fun pushSettingsHook(context: Context) {
+    runCatching {
+        BridgeClient.pushSettingsHook(context, SettingsStore(context).freeOffloadSwitch())
     }
 }

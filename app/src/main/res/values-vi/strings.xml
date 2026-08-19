@@ -13,6 +13,8 @@
     <string name="action_resend">Gửi lại</string>
     <string name="action_recheck">Kiểm tra lại</string>
     <string name="action_grant">Cấp quyền</string>
+    <string name="action_save">Lưu</string>
+    <string name="action_continue">Tiếp tục</string>
 
     <string name="value_keep">Giữ nguyên</string>
     <string name="value_unknown">Không rõ</string>
@@ -25,24 +27,31 @@
 
     <string name="cd_refresh_status">Kiểm tra lại trạng thái</string>
     <string name="cd_back">Quay lại</string>
+    <string name="cd_eq_slot_menu">Tuỳ chọn của ô</string>
+    <string name="cd_eq_slot_add">Thêm một ô</string>
     <string name="state_expanded">Đã mở rộng</string>
     <string name="state_collapsed">Đã thu gọn</string>
 
+    <string name="tab_devices">Thiết bị</string>
+    <string name="tab_settings">Cài đặt</string>
+    <string name="tab_status">Trạng thái</string>
+    <string name="cd_needs_attention">Cần chú ý</string>
+
     <string name="section_general">Cài đặt chung</string>
     <string name="toggle_auto_apply">Tự động áp dụng cài đặt</string>
-    <string name="toggle_auto_apply_desc">Khi tắt, không thiết bị nào bị thay đổi</string>
     <string name="toggle_enforce">Hoàn tác thay đổi của hệ thống hoặc ứng dụng khác</string>
-    <string name="toggle_enforce_desc">Nếu hệ thống hoặc ứng dụng khác đổi codec, chuyển lại như đã cố định</string>
     <string name="toggle_notify">Thông báo khi codec thay đổi</string>
-    <string name="toggle_notify_desc">Hiện một thông báo ngắn khi codec được chuyển</string>
     <string name="toggle_verbose">Ghi nhật ký chi tiết</string>
-    <string name="toggle_verbose_desc">Dùng để tìm hiểu các thiết bị không chuyển được</string>
+    <string name="toggle_free_offload_switch">Mở khóa công tắc giảm tải phần cứng A2DP trong tùy chọn cho nhà phát triển</string>
 
     <string name="permission_title">Cần quyền Bluetooth</string>
     <string name="permission_body">Cấp quyền để ứng dụng đọc được các thiết bị đã ghép nối và tên của chúng.</string>
     <string name="permission_denied">Quyền đang bị chặn. Hãy cấp quyền trong cài đặt hệ thống.</string>
     <string name="bluetooth_off">Bluetooth đang tắt. Hãy bật để xem các thiết bị đã ghép nối.</string>
     <string name="config_broken">Không đọc được cài đặt đã lưu nên không thể chỉnh sửa. Hãy nhập một bản sao lưu để bắt đầu lại.</string>
+    <string name="offload_hint">Tính năng giảm tải phần cứng Bluetooth A2DP đang được bật nên điện thoại không tự mã hóa LDAC và bitrate không thể thay đổi theo kết nối.</string>
+    <string name="offload_turn_off">Hãy bật \"Tắt tính năng giảm tải phần cứng Bluetooth A2DP\" trong tùy chọn cho nhà phát triển.</string>
+    <string name="offload_hint_scope">Trên máy này, công tắc đó không dùng được. Hãy thêm ứng dụng Cài đặt vào phạm vi của mô-đun rồi mở lại tùy chọn cho nhà phát triển để mở khóa.</string>
 
     <string name="section_audio_devices">Thiết bị âm thanh</string>
     <string name="devices_empty">Không tìm thấy thiết bị âm thanh nào đã ghép nối.</string>
@@ -64,6 +73,41 @@
     <string name="module_inactive_hint">Bạn vẫn sửa và lưu được cài đặt. Cài đặt có hiệu lực khi mô-đun bắt đầu chạy.</string>
     <string name="msg_config_pushed">Đã gửi lại cài đặt</string>
 
+    <string name="eq_unavailable_not_registered">Không dùng được xử lý âm thanh: chưa cài mô-đun xử lý âm thanh, hoặc máy này chưa nạp nó. Hãy cài đặt, rồi khởi động lại điện thoại.</string>
+    <string name="eq_unavailable_offload">Không dùng được xử lý âm thanh khi Bluetooth A2DP hardware offload đang bật.</string>
+    <string name="eq_unavailable_hook_old">Không dùng được xử lý âm thanh: mô-đun đang chạy trong tiến trình Bluetooth là phiên bản cũ, chưa biết đến nó. Hãy tắt Bluetooth rồi bật lại.</string>
+    <string name="eq_unavailable_device">Tai nghe này chưa được đăng ký để xử lý âm thanh, nên mọi thứ đặt ở đây đều không ảnh hưởng đến âm thanh.</string>
+
+    <string name="eq_device_register">Dùng xử lý âm thanh với tai nghe này</string>
+    <string name="eq_device_register_desc">Âm thanh sẽ ngắt một lúc trong khi áp dụng.</string>
+    <string name="eq_device_confirm_on_title">Bật xử lý âm thanh cho tai nghe này?</string>
+    <string name="eq_device_confirm_off_title">Tắt xử lý âm thanh cho tai nghe này?</string>
+    <string name="eq_device_confirm_body">Dịch vụ âm thanh của điện thoại sẽ khởi động lại, nên bất cứ thứ gì đang phát sẽ im lặng trong vài giây. Bluetooth vẫn giữ kết nối, và cài đặt bộ chỉnh âm của bạn vẫn được giữ nguyên dù kết quả thế nào.</string>
+    <string name="eq_device_running">Đang áp dụng. Âm thanh sẽ trở lại sau vài giây.</string>
+    <string name="eq_device_result_on">Tai nghe này đã được đăng ký để xử lý âm thanh.</string>
+    <string name="eq_device_result_off">Tai nghe này không còn được đăng ký để xử lý âm thanh.</string>
+    <string name="eq_device_failed_no_module">Không có gì thay đổi: chưa cài mô-đun xử lý âm thanh.</string>
+    <string name="eq_device_failed_root">Không có gì thay đổi: quyền root bị từ chối, hoặc máy này không có ứng dụng quản lý root. Hãy cho phép Codec Anchor trong ứng dụng quản lý root của bạn, rồi thử lại.</string>
+    <string name="eq_device_failed_script">Không có gì thay đổi: quyền root đã hoạt động, nhưng mô-đun xử lý âm thanh không chạy. Tệp của mô-đun bị thiếu hoặc hỏng. Hãy cài lại mô-đun, rồi khởi động lại điện thoại.</string>
+    <string name="eq_device_failed_timeout">Không xong kịp thời gian nên đã bị dừng. Dịch vụ âm thanh có thể vẫn đang khởi động lại. Hãy kiểm tra lại sau một lát.</string>
+    <string name="eq_device_failed_input">Không có gì thay đổi: ứng dụng đã gửi thứ mà mô-đun không đọc được. Đây là lỗi của ứng dụng.</string>
+    <string name="eq_device_failed_no_state">Không có gì thay đổi: mô-đun xử lý âm thanh chưa khởi động. Hãy khởi động lại điện thoại rồi thử lại.</string>
+    <string name="eq_device_failed_xml">Không thể tạo lại tệp cài đặt âm thanh của điện thoại, nên không có gì thay đổi.</string>
+    <string name="eq_device_failed_apply">Không thể áp dụng cài đặt âm thanh vừa tạo lại, nên không có gì thay đổi.</string>
+    <string name="eq_device_failed_audioserver">Dịch vụ âm thanh không hoạt động trở lại. Hãy khởi động lại điện thoại.</string>
+    <string name="eq_device_failed_unknown">Thất bại theo cách mà phiên bản ứng dụng này chưa biết đến (mã %1$d).</string>
+
+    <string name="eq_delivery_other">Hiện đang kết nối tai nghe khác, nên những gì bạn thay đổi ở đây chưa ảnh hưởng đến âm thanh. Hãy kết nối tai nghe này thì cài đặt sẽ được áp dụng.</string>
+    <string name="eq_delivery_ambiguous">Có nhiều hiệu ứng tai nghe đang chạy và ứng dụng không phân biệt được cái nào thuộc về tai nghe này, nên chưa gửi gì cả. Hãy ngắt kết nối tai nghe kia, rồi thay đổi lại thứ gì đó ở đây.</string>
+    <string name="eq_delivery_slots_full">Các cài đặt này không ảnh hưởng đến âm thanh. Hãy tắt xử lý âm thanh cho tai nghe này rồi bật lại; nếu vẫn không được, hãy khởi động lại điện thoại.</string>
+    <string name="eq_delivery_failed_root">Các cài đặt này không ảnh hưởng đến âm thanh: quyền root bị từ chối, hoặc máy này không có ứng dụng quản lý root. Hãy cho phép Codec Anchor trong ứng dụng quản lý root của bạn.</string>
+    <string name="eq_delivery_failed_shm">Các cài đặt này không ảnh hưởng đến âm thanh: mô-đun xử lý âm thanh không chạy. Hãy khởi động lại điện thoại.</string>
+    <string name="eq_delivery_failed_version">Các cài đặt này không ảnh hưởng đến âm thanh: ứng dụng và mô-đun xử lý âm thanh khác phiên bản. Hãy cập nhật cả hai lên cùng một phiên bản, rồi khởi động lại điện thoại.</string>
+    <string name="eq_delivery_failed_rejected">Các cài đặt này bị từ chối vì vượt quá phạm vi, nên âm thanh không đổi. Hãy hạ dải có tần số cao nhất hoặc xóa dải đó.</string>
+    <string name="eq_delivery_failed_timeout">Việc gửi các cài đặt này không xong kịp thời gian nên đã bị dừng.</string>
+    <string name="eq_delivery_failed_input">Các cài đặt này không ảnh hưởng đến âm thanh: ứng dụng đã tạo yêu cầu sai. Đây là lỗi của ứng dụng.</string>
+    <string name="eq_delivery_failed_unknown">Việc gửi các cài đặt này thất bại theo cách mà phiên bản ứng dụng này chưa biết đến (mã %1$d).</string>
+
     <string name="tag_connected">Đã kết nối</string>
     <string name="tag_disconnected">Chưa kết nối</string>
     <string name="tag_active">Đang phát</string>
@@ -75,7 +119,6 @@
     <string name="profile_no_target">Chưa cố định giá trị nào</string>
 
     <string name="section_backup">Sao lưu</string>
-    <string name="backup_body">Lưu toàn bộ cài đặt vào một tệp JSON.</string>
     <string name="backup_export">Xuất</string>
     <string name="backup_import">Nhập</string>
     <string name="backup_confirm_title">Nhập bản sao lưu?</string>
@@ -88,7 +131,6 @@
     <string name="msg_backup_failed">Không đọc được tệp</string>
 
     <string name="detail_auto_apply">Áp dụng cho tai nghe này</string>
-    <string name="detail_auto_apply_desc">Chuyển sang các cài đặt bên dưới mỗi lần tai nghe kết nối</string>
     <string name="detail_current_codec">Codec hiện tại: %1$s</string>
     <string name="ldac_bitrate_offload">Không thể đọc bitrate thực tế vì tính năng giảm tải phần cứng Bluetooth A2DP đang được bật.</string>
     <string name="detail_note">Kết quả gần nhất: %1$s</string>
@@ -115,9 +157,7 @@
     <string name="adv_force">Buộc chuyển đổi</string>
     <string name="adv_force_desc">Thử cả những tổ hợp mà thiết bị không khai báo</string>
     <string name="adv_via_sbc">Chuyển qua SBC</string>
-    <string name="adv_via_sbc_desc">Hạ về SBC trước, rồi mới sang codec bạn chọn</string>
     <string name="adv_auto_hd">Tự động bật âm thanh HD</string>
-    <string name="adv_auto_hd_desc">Bật âm thanh HD khi hệ thống đang tắt nó</string>
     <string name="adv_delay">Chờ trước khi áp dụng</string>
     <string name="adv_delay_desc">Một số thiết bị không nhận chuyển đổi ngay sau khi kết nối</string>
     <string name="adv_retries">Số lần thử</string>
@@ -130,4 +170,76 @@
     <string name="msg_apply_requested">Đã yêu cầu mô-đun áp dụng cài đặt</string>
     <string name="msg_apply_module_inactive">Mô-đun không chạy nên không gửi được yêu cầu</string>
     <string name="msg_apply_not_connected">Thiết bị chưa kết nối nên bây giờ không áp dụng được</string>
+
+    <string name="msg_preset_exported">Đã xuất cài đặt sẵn</string>
+    <string name="msg_preset_export_failed">Không ghi được tệp</string>
+    <string name="msg_preset_imported">Đã nhập cài đặt sẵn</string>
+    <string name="msg_preset_invalid">Tệp đó không phải cài đặt sẵn của Codec Anchor</string>
+    <string name="msg_autoeq_imported">Đã nhập bộ lọc AutoEQ</string>
+    <string name="msg_autoeq_failed">Không đọc được tệp</string>
+    <string name="msg_autoeq_invalid">Tệp đó không phải kết quả của AutoEQ</string>
+    <string name="msg_autoeq_corner_shelf">Tệp AutoEQ đó dùng bộ lọc LS hoặc HS, vốn không được hỗ trợ</string>
+    <string name="msg_autoeq_no_bands">Tệp AutoEQ đó không có bộ lọc nào</string>
+
+    <string name="section_eq">Xử lý âm thanh</string>
+    <string name="eq_summary_on">Bật</string>
+    <string name="eq_summary_off">Tắt</string>
+    <plurals name="eq_summary_bands">
+        <item quantity="other">%1$d dải</item>
+    </plurals>
+    <string name="eq_summary_unavailable">Hiện chưa dùng được. Mở ra để xem lý do.</string>
+    <string name="eq_enabled">Bộ chỉnh âm</string>
+    <string name="eq_latency_zero">Độ trễ thêm vào: 0 ms</string>
+    <string name="eq_mode">Cách chỉnh</string>
+    <string name="eq_mode_graphic">Đồ họa</string>
+    <string name="eq_mode_graphic_desc">Mỗi dải ở một tần số cố định</string>
+    <string name="eq_mode_parametric">Tham số</string>
+    <string name="eq_mode_parametric_desc">Đặt từng dải ở đâu tùy ý</string>
+    <string name="eq_band_count">Số dải</string>
+    <string name="eq_band_count_desc">Đây không phải thiết lập về tốc độ: điện thoại làm cùng một khối lượng việc với bất kỳ số dải nào.</string>
+    <string name="eq_precision">Độ chính xác của đường cong</string>
+    <string name="eq_precision_standard">Tiêu chuẩn (khuyến nghị)</string>
+    <string name="eq_precision_standard_desc">Giữa các dải, đường cong lệch đi một chút</string>
+    <string name="eq_precision_high">Độ chính xác cao</string>
+    <string name="eq_precision_high_desc">Bám sát hơn đường nối các dải</string>
+    <string name="eq_precision_fallback">Âm thanh này đang phát ở độ chính xác tiêu chuẩn.</string>
+    <string name="eq_band_none">Chưa có dải nào. Hãy thêm một dải, hoặc nhập tệp AutoEQ.</string>
+    <string name="eq_band_add">Thêm dải</string>
+    <string name="eq_band_remove">Bỏ dải này</string>
+    <string name="eq_band_type">Dạng</string>
+    <string name="eq_band_frequency">Tần số</string>
+    <string name="eq_band_q">Q</string>
+    <string name="eq_band_gain">Độ lợi</string>
+    <string name="eq_type_peaking">Đỉnh</string>
+    <string name="eq_type_low_shelf">Kệ trầm</string>
+    <string name="eq_type_high_shelf">Kệ cao</string>
+    <string name="eq_preamp">Tiền khuếch đại</string>
+    <string name="eq_round_title">Chuyển sang đồ họa?</string>
+    <string name="eq_round_body">Mỗi dải sẽ dời về một trong các tần số cố định của bộ chỉnh âm đồ họa và Q của nó được đặt cho khớp. Hình dạng đường cong được giữ lại nhiều nhất có thể, nhưng tần số và các giá trị Q hiện nay sẽ mất.</string>
+    <string name="eq_round_quiet">Đừng hỏi lại</string>
+    <string name="eq_reset">Đưa tất cả về 0</string>
+    <string name="eq_reset_title">Đưa tất cả về 0?</string>
+    <string name="eq_reset_body">Mọi độ lợi và tiền khuếch đại chỉnh tay sẽ trở về 0 dB, bộ chỉnh âm không còn thay đổi âm thanh nữa. Các dải vẫn ở nguyên chỗ, nhưng đường cong hiện tại sẽ mất nếu chưa được lưu thành thiết lập sẵn.</string>
+
+    <string name="eq_slot_flat">Phẳng</string>
+    <string name="eq_slot_default">Tuỳ chỉnh %1$d</string>
+    <string name="eq_slot_rename">Đổi tên</string>
+    <string name="eq_slot_rename_title">Tên của ô</string>
+    <string name="eq_slot_duplicate">Nhân đôi</string>
+    <string name="eq_slot_save_preset">Lưu thành thiết lập sẵn</string>
+    <string name="eq_slot_delete_title">Xóa ô?</string>
+    <string name="eq_slot_delete_body">Xóa “%1$s”. Nếu đang nghe ô này, âm thanh sẽ trở về Phẳng.</string>
+
+    <string name="eq_presets">Thiết lập sẵn</string>
+    <string name="eq_preset_empty">Chưa lưu gì cả. Bạn có thể lưu từ menu của ô đang dùng.</string>
+    <string name="eq_preset_save_title">Tên của thiết lập</string>
+    <string name="eq_preset_name">Tên</string>
+    <string name="eq_preset_apply">Áp dụng</string>
+    <string name="eq_preset_export">Xuất</string>
+    <string name="eq_preset_import">Nhập thiết lập</string>
+    <string name="eq_preset_delete_title">Xóa thiết lập?</string>
+    <string name="eq_preset_delete_body">Xóa “%1$s”. Những gì đã đặt trên tai nghe của bạn vẫn giữ nguyên.</string>
+    <string name="eq_autoeq_import">Nhập AutoEQ</string>
+    <string name="eq_autoeq_desc">Đọc tệp ParametricEQ.txt hoặc GraphicEQ.txt của AutoEQ và nạp vào một ô mới.</string>
+    <string name="eq_curve_desc">Đường cong cho biết các cài đặt này thay đổi âm thanh như thế nào</string>
 </resources>

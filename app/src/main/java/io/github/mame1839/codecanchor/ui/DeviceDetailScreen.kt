@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -38,8 +36,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
@@ -48,18 +46,18 @@ import io.github.mame1839.codecanchor.R
 import io.github.mame1839.codecanchor.core.ApplyOutcome
 import io.github.mame1839.codecanchor.core.CodecKeys
 import io.github.mame1839.codecanchor.core.DeviceProfile
+import io.github.mame1839.codecanchor.core.DeviceSlots
 import io.github.mame1839.codecanchor.core.DeviceStatus
+import io.github.mame1839.codecanchor.core.EqAvailability
+import io.github.mame1839.codecanchor.core.EqMode
+import io.github.mame1839.codecanchor.core.EqSettings
 
 private val DELAY_STEPS = listOf(0, 500, 1000, 1500, 2000, 3000, 5000, 8000)
 private val RETRY_STEPS = listOf(1, 2, 3, 4, 5, 8, 10)
 private val RETRY_DELAY_STEPS = listOf(500, 1000, 1500, 2000, 3000, 5000)
 
-// ネイティブのダンプが書く品質モードの表記。
 private const val ABR_MODE = "ABR"
 
-// 実効ビットレートは ABR のときだけ動く。固定の音質では上のコーデック行と同じ値になるので出さないし、
-// 取り直す意味もない。オフロード中はフックがダンプを読まないのでモードは常に空になる。そのときは
-// 今のコーデック設定が持つ音質 (codecSpecific1) だけで判断する。
 private fun DeviceStatus.isLdacAbr(): Boolean =
     CodecKeys.isLdac(current?.displayName()) &&
         (ldacQualityMode.equals(ABR_MODE, ignoreCase = true) || current?.codecSpecific1 == CodecKeys.LDAC_ABR)
@@ -71,6 +69,7 @@ fun DeviceDetailScreen(
     mac: String,
     snackbarHostState: SnackbarHostState,
     onBack: () -> Unit,
+    onOpenEq: () -> Unit,
     onNotify: (String) -> Unit,
 ) {
     val profile = vm.config.profileFor(mac)
@@ -85,8 +84,6 @@ fun DeviceDetailScreen(
     var confirmDelete by rememberSaveable { mutableStateOf(false) }
     var advancedExpanded by rememberSaveable { mutableStateOf(false) }
 
-    // 取り直しが要るのは動く値があるときだけ。固定の音質では開いていても問い合わせないし、
-    // オフロード中は誰も値を更新しないので取り直しても変わらない。
     val watchBitrate = status?.connected == true && status.isLdacAbr() && !vm.a2dpOffloadEnabled
     LifecycleResumeEffect(watchBitrate) {
         if (watchBitrate) vm.startWatching()
@@ -115,14 +112,11 @@ fun DeviceDetailScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { inner ->
-        val layoutDirection = LocalLayoutDirection.current
         Column(
-            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(
-                start = inner.calculateStartPadding(layoutDirection) + 16.dp,
-                end = inner.calculateEndPadding(layoutDirection) + 16.dp,
-                top = inner.calculateTopPadding() + 8.dp,
-                bottom = inner.calculateBottomPadding() + 24.dp,
-            ),
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(screenPadding(inner)),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             DeviceHeader(name = name, mac = mac, status = status, offloadEnabled = vm.a2dpOffloadEnabled)
@@ -130,13 +124,19 @@ fun DeviceDetailScreen(
             SettingsCard {
                 SwitchRow(
                     title = stringResource(R.string.detail_auto_apply),
-                    description = stringResource(R.string.detail_auto_apply_desc),
                     checked = profile.enabled,
                     onChange = { value -> vm.updateProfile(mac) { it.copy(enabled = value) } },
                 )
             }
 
             TargetCard(vm = vm, mac = mac, profile = profile, status = status)
+
+            EqSummaryCard(
+                eq = profile.eq,
+                slots = vm.slotsOf(mac),
+                availability = vm.eqAvailability(mac),
+                onOpen = onOpenEq,
+            )
 
             SettingsCard {
                 ExpandableHeader(
@@ -154,13 +154,11 @@ fun DeviceDetailScreen(
                     )
                     SwitchRow(
                         title = stringResource(R.string.adv_via_sbc),
-                        description = stringResource(R.string.adv_via_sbc_desc),
                         checked = profile.viaSbc,
                         onChange = { value -> vm.updateProfile(mac) { it.copy(viaSbc = value) } },
                     )
                     SwitchRow(
                         title = stringResource(R.string.adv_auto_hd),
-                        description = stringResource(R.string.adv_auto_hd_desc),
                         checked = profile.autoEnableHd,
                         onChange = { value -> vm.updateProfile(mac) { it.copy(autoEnableHd = value) } },
                     )
@@ -244,7 +242,7 @@ private fun DeviceHeader(name: String, mac: String, status: DeviceStatus?, offlo
         Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
             Text(name, style = MaterialTheme.typography.titleMedium)
             Text(
-                text = mac,
+                text = bidiIsolate(mac),
                 style = MaterialTheme.typography.bodySmall,
                 fontFamily = FontFamily.Monospace,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -271,11 +269,12 @@ private fun DeviceHeader(name: String, mac: String, status: DeviceStatus?, offlo
             Spacer(Modifier.height(8.dp))
             val unknown = stringResource(R.string.value_unknown)
             Text(
-                text = stringResource(R.string.detail_current_codec, status?.current?.summary() ?: unknown),
+                text = stringResource(
+                    R.string.detail_current_codec,
+                    status?.current?.let { codecSummary(it) } ?: unknown,
+                ),
                 style = MaterialTheme.typography.bodyMedium,
             )
-            // オフロード中はホスト側のエンコーダが動かないので、ダンプの数値は誰にも更新されず
-            // ネゴシエートした公称値のまま残る。読めても実効値ではないので、値の有無より先に判断する。
             if (status != null && status.isLdacAbr()) {
                 if (offloadEnabled) {
                     Text(
@@ -285,10 +284,12 @@ private fun DeviceHeader(name: String, mac: String, status: DeviceStatus?, offlo
                     )
                 } else if (status.ldacBitrateKbps > 0) {
                     Text(
-                        text = stringResource(
-                            R.string.ldac_bitrate,
-                            status.ldacBitrateKbps,
-                            status.ldacQualityMode.ifBlank { unknown },
+                        text = bidiIsolate(
+                            stringResource(
+                                R.string.ldac_bitrate,
+                                status.ldacBitrateKbps,
+                                status.ldacQualityMode.ifBlank { unknown },
+                            ),
                         ),
                         style = MaterialTheme.typography.bodyMedium,
                     )
@@ -324,6 +325,39 @@ private fun DeviceHeader(name: String, mac: String, status: DeviceStatus?, offlo
 }
 
 @Composable
+internal fun EqSummaryCard(
+    eq: EqSettings,
+    slots: DeviceSlots,
+    availability: EqAvailability,
+    onOpen: () -> Unit,
+) {
+    val summary = if (!eq.enabled) {
+        stringResource(R.string.eq_summary_off)
+    } else {
+        listOf(
+            stringResource(R.string.eq_summary_on),
+            bidiIsolate(eqActiveSlotLabel(slots)),
+            stringResource(
+                if (eq.mode == EqMode.GRAPHIC) R.string.eq_mode_graphic else R.string.eq_mode_parametric,
+            ),
+            bidiIsolate(pluralStringResource(R.plurals.eq_summary_bands, eq.bands.size, eq.bands.size)),
+        ).joinToString(" · ")
+    }
+    SettingsCard {
+        NavigationRow(
+            title = stringResource(R.string.section_eq),
+            value = summary,
+            description = if (availability == EqAvailability.OK) {
+                null
+            } else {
+                stringResource(R.string.eq_summary_unavailable)
+            },
+            onClick = onOpen,
+        )
+    }
+}
+
+@Composable
 private fun TargetCard(
     vm: MainViewModel,
     mac: String,
@@ -351,14 +385,11 @@ private fun TargetCard(
     }
 
     val capability = if (profile.codecType == CodecKeys.KEEP_INT) null else status?.capabilityOf(profile.codecType)
-    // 行の有無が報告の到着で変わると、開いているダイアログが閉じたり下のボタンが動いたりする。
-    // 判断材料は非同期に変わらない profile だけに限る。
     val ldacEnabled = profile.codecType == CodecKeys.KEEP_INT ||
         CodecKeys.isLdac(codecLabel(profile.codecType, vm.codecNames)) ||
         profile.codecSpecific1 != CodecKeys.KEEP_LONG
 
     SettingsCard(title = stringResource(R.string.section_target)) {
-        // 未接続なら「読めなかった」ではなく「まだ読めない」ので、警告にはしない。
         if (selectable.isEmpty()) {
             NoticeRow(
                 icon = if (connected) R.drawable.ic_warning else R.drawable.ic_bluetooth,
@@ -412,14 +443,15 @@ private fun maskOptions(
 ): List<Pair<Int, String>> {
     val allowed = CodecKeys.options(table, capability).map { it.first }.toMutableSet()
     if (selected != CodecKeys.KEEP_MASK) allowed += selected
-    return listOf(CodecKeys.KEEP_MASK to keepLabel) + table.filter { it.first in allowed }
+    return listOf(CodecKeys.KEEP_MASK to keepLabel) +
+        table.filter { it.first in allowed }.map { it.first to bidiIsolate(it.second) }
 }
 
 private fun ldacOptions(res: Resources, selected: Long, keepLabel: String): List<Pair<Long, String>> = buildList {
     add(CodecKeys.KEEP_LONG to keepLabel)
     CodecKeys.LDAC_QUALITIES.forEach { (value, label) -> add(value to ldacQualityLabel(res, value, label)) }
     if (selected != CodecKeys.KEEP_LONG && none { it.first == selected }) {
-        add(selected to CodecKeys.ldacQualityLabel(selected))
+        add(selected to ldacQualityText(selected))
     }
 }
 

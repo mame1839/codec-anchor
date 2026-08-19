@@ -13,6 +13,8 @@
     <string name="action_resend">Отправить снова</string>
     <string name="action_recheck">Проверить снова</string>
     <string name="action_grant">Выдать разрешение</string>
+    <string name="action_save">Сохранить</string>
+    <string name="action_continue">Продолжить</string>
 
     <string name="value_keep">Не менять</string>
     <string name="value_unknown">Неизвестно</string>
@@ -28,24 +30,31 @@
 
     <string name="cd_refresh_status">Проверить состояние снова</string>
     <string name="cd_back">Назад</string>
+    <string name="cd_eq_slot_menu">Действия со слотом</string>
+    <string name="cd_eq_slot_add">Добавить слот</string>
     <string name="state_expanded">Развёрнуто</string>
     <string name="state_collapsed">Свёрнуто</string>
 
+    <string name="tab_devices">Устройства</string>
+    <string name="tab_settings">Настройки</string>
+    <string name="tab_status">Состояние</string>
+    <string name="cd_needs_attention">Требует внимания</string>
+
     <string name="section_general">Общие настройки</string>
     <string name="toggle_auto_apply">Применять настройки автоматически</string>
-    <string name="toggle_auto_apply_desc">Пока выключено, ни на одном устройстве ничего не меняется</string>
     <string name="toggle_enforce">Отменять изменения системы и других приложений</string>
-    <string name="toggle_enforce_desc">Если система или другое приложение меняет кодек, возвращает закреплённое значение</string>
     <string name="toggle_notify">Сообщать о смене кодека</string>
-    <string name="toggle_notify_desc">Показывает короткое сообщение при переключении кодека</string>
     <string name="toggle_verbose">Вести подробный журнал</string>
-    <string name="toggle_verbose_desc">Для разбора устройств, которые не переключаются</string>
+    <string name="toggle_free_offload_switch">Разблокировать переключатель аппаратной разгрузки A2DP в разделе «Для разработчиков»</string>
 
     <string name="permission_title">Нужно разрешение на Bluetooth</string>
     <string name="permission_body">С ним приложение сможет читать сопряжённые устройства и их имена.</string>
     <string name="permission_denied">Разрешение заблокировано. Выдайте его в настройках системы.</string>
     <string name="bluetooth_off">Bluetooth выключен. Включите его, чтобы увидеть сопряжённые устройства.</string>
     <string name="config_broken">Не удалось прочитать сохранённые настройки, поэтому изменять их нельзя. Импортируйте резервную копию, чтобы начать заново.</string>
+    <string name="offload_hint">Аппаратная разгрузка Bluetooth A2DP включена, поэтому телефон не кодирует LDAC сам, а битрейт не подстраивается под соединение.</string>
+    <string name="offload_turn_off">Включите «Отключить аппаратную разгрузку Bluetooth A2DP» в разделе «Для разработчиков».</string>
+    <string name="offload_hint_scope">На этом устройстве этот переключатель недоступен. Добавьте приложение «Настройки» в область действия модуля и снова откройте раздел «Для разработчиков», чтобы разблокировать его.</string>
 
     <string name="section_audio_devices">Аудиоустройства</string>
     <string name="devices_empty">Сопряжённых аудиоустройств не найдено.</string>
@@ -67,6 +76,41 @@
     <string name="module_inactive_hint">Настройки всё равно можно изменять и сохранять. Они вступят в силу, когда модуль начнёт работать.</string>
     <string name="msg_config_pushed">Настройки отправлены снова</string>
 
+    <string name="eq_unavailable_not_registered">Обработка звука недоступна: модуль обработки звука не установлен или телефон ещё не загрузил его. Установите его и перезагрузите телефон.</string>
+    <string name="eq_unavailable_offload">Обработка звука недоступна, пока включена аппаратная разгрузка Bluetooth A2DP.</string>
+    <string name="eq_unavailable_hook_old">Обработка звука недоступна: в процессе Bluetooth работает более старая версия модуля, которая о ней не знает. Выключите Bluetooth и включите снова.</string>
+    <string name="eq_unavailable_device">Эти наушники не зарегистрированы для обработки звука, поэтому ничего из настроенного здесь не доходит до звука.</string>
+
+    <string name="eq_device_register">Использовать обработку звука с этими наушниками</string>
+    <string name="eq_device_register_desc">Во время применения звук на мгновение пропадает.</string>
+    <string name="eq_device_confirm_on_title">Включить обработку звука для этих наушников?</string>
+    <string name="eq_device_confirm_off_title">Выключить обработку звука для этих наушников?</string>
+    <string name="eq_device_confirm_body">Звуковая служба телефона перезапускается, поэтому то, что сейчас играет, на несколько секунд затихнет. Bluetooth останется подключён, а настройки эквалайзера в любом случае сохранятся.</string>
+    <string name="eq_device_running">Применение. Звук вернётся через несколько секунд.</string>
+    <string name="eq_device_result_on">Эти наушники зарегистрированы для обработки звука.</string>
+    <string name="eq_device_result_off">Эти наушники больше не зарегистрированы для обработки звука.</string>
+    <string name="eq_device_failed_no_module">Ничего не изменено: модуль обработки звука не установлен.</string>
+    <string name="eq_device_failed_root">Ничего не изменено: в доступе root было отказано, либо на этом телефоне нет root-менеджера. Разрешите Codec Anchor в своём root-менеджере и попробуйте снова.</string>
+    <string name="eq_device_failed_script">Ничего не изменено: доступ root сработал, но модуль обработки звука не сработал. Его файлы отсутствуют или повреждены. Установите модуль заново, затем перезагрузите телефон.</string>
+    <string name="eq_device_failed_timeout">Не завершилось вовремя и было остановлено. Звуковая служба, возможно, ещё перезапускается. Проверьте ещё раз через некоторое время.</string>
+    <string name="eq_device_failed_input">Ничего не изменено: приложение отправило то, что модуль не смог прочитать. Это ошибка приложения.</string>
+    <string name="eq_device_failed_no_state">Ничего не изменено: модуль обработки звука не запущен. Перезагрузите телефон и попробуйте снова.</string>
+    <string name="eq_device_failed_xml">Не удалось пересобрать файл звуковых настроек телефона, поэтому ничего не изменено.</string>
+    <string name="eq_device_failed_apply">Не удалось применить пересобранные звуковые настройки, поэтому ничего не изменено.</string>
+    <string name="eq_device_failed_audioserver">Звуковая служба не восстановилась. Перезагрузите телефон.</string>
+    <string name="eq_device_failed_unknown">Произошла ошибка, которую эта версия приложения не распознаёт (код %1$d).</string>
+
+    <string name="eq_delivery_other">Сейчас подключены другие наушники, поэтому то, что вы меняете здесь, пока не доходит до звука. Подключите эти наушники, и настройки применятся.</string>
+    <string name="eq_delivery_ambiguous">Запущено несколько эффектов для наушников, и приложение не может определить, какой из них относится к этим наушникам, поэтому ничего не отправлено. Отключите другие наушники, затем измените здесь что-нибудь ещё раз.</string>
+    <string name="eq_delivery_slots_full">Эти настройки не дошли до звука. Выключите обработку звука для этих наушников и снова включите её; если это не поможет, перезагрузите телефон.</string>
+    <string name="eq_delivery_failed_root">Эти настройки не дошли до звука: в доступе root было отказано, либо на этом телефоне нет root-менеджера. Разрешите Codec Anchor в своём root-менеджере.</string>
+    <string name="eq_delivery_failed_shm">Эти настройки не дошли до звука: модуль обработки звука не запущен. Перезагрузите телефон.</string>
+    <string name="eq_delivery_failed_version">Эти настройки не дошли до звука: версии приложения и модуля обработки звука не совпадают. Обновите оба до одной версии и перезагрузите телефон.</string>
+    <string name="eq_delivery_failed_rejected">Эти настройки отклонены как выходящие за допустимый диапазон, поэтому звук не изменился. Понизьте или удалите полосу с самой высокой частотой.</string>
+    <string name="eq_delivery_failed_timeout">Отправка этих настроек не завершилась вовремя и была остановлена.</string>
+    <string name="eq_delivery_failed_input">Эти настройки не дошли до звука: приложение неверно составило запрос. Это ошибка приложения.</string>
+    <string name="eq_delivery_failed_unknown">Отправка этих настроек завершилась ошибкой, которую эта версия приложения не распознаёт (код %1$d).</string>
+
     <string name="tag_connected">Подключено</string>
     <string name="tag_disconnected">Не подключено</string>
     <string name="tag_active">Воспроизведение</string>
@@ -78,7 +122,6 @@
     <string name="profile_no_target">Пока ничего не закреплено</string>
 
     <string name="section_backup">Резервная копия</string>
-    <string name="backup_body">Сохраняет все настройки в файл JSON.</string>
     <string name="backup_export">Экспорт</string>
     <string name="backup_import">Импорт</string>
     <string name="backup_confirm_title">Импортировать резервную копию?</string>
@@ -91,7 +134,6 @@
     <string name="msg_backup_failed">Не удалось прочитать файл</string>
 
     <string name="detail_auto_apply">Применять к этим наушникам</string>
-    <string name="detail_auto_apply_desc">При подключении переключает на настройки ниже</string>
     <string name="detail_current_codec">Текущий кодек: %1$s</string>
     <string name="ldac_bitrate_offload">Не удаётся получить фактический битрейт, так как включена аппаратная разгрузка Bluetooth A2DP.</string>
     <string name="detail_note">Последний результат: %1$s</string>
@@ -118,9 +160,7 @@
     <string name="adv_force">Принудительное переключение</string>
     <string name="adv_force_desc">Пробует и комбинации, которые устройство не объявляет</string>
     <string name="adv_via_sbc">Переключать через SBC</string>
-    <string name="adv_via_sbc_desc">Сначала опускает до SBC, затем переходит на выбранный кодек</string>
     <string name="adv_auto_hd">Включать HD-звук автоматически</string>
-    <string name="adv_auto_hd_desc">Включает HD-звук, если в системе он выключен</string>
     <string name="adv_delay">Задержка перед применением</string>
     <string name="adv_delay_desc">Некоторые устройства не переключаются сразу после подключения</string>
     <string name="adv_retries">Число попыток</string>
@@ -133,4 +173,79 @@
     <string name="msg_apply_requested">Модулю отправлен запрос на применение</string>
     <string name="msg_apply_module_inactive">Модуль не работает, поэтому запрос доставить нельзя</string>
     <string name="msg_apply_not_connected">Устройство не подключено, поэтому применить сейчас нельзя</string>
+
+    <string name="msg_preset_exported">Пресет экспортирован</string>
+    <string name="msg_preset_export_failed">Не удалось записать файл</string>
+    <string name="msg_preset_imported">Пресет импортирован</string>
+    <string name="msg_preset_invalid">Это не пресет Codec Anchor</string>
+    <string name="msg_autoeq_imported">Фильтры AutoEQ импортированы</string>
+    <string name="msg_autoeq_failed">Не удалось прочитать файл</string>
+    <string name="msg_autoeq_invalid">Это не результат AutoEQ</string>
+    <string name="msg_autoeq_corner_shelf">В этом файле AutoEQ используются фильтры LS или HS, которые не поддерживаются</string>
+    <string name="msg_autoeq_no_bands">В этом файле AutoEQ нет фильтров</string>
+
+    <string name="section_eq">Обработка звука</string>
+    <string name="eq_summary_on">Включена</string>
+    <string name="eq_summary_off">Выключена</string>
+    <plurals name="eq_summary_bands">
+        <item quantity="one">%1$d полоса</item>
+        <item quantity="few">%1$d полосы</item>
+        <item quantity="many">%1$d полос</item>
+        <item quantity="other">%1$d полосы</item>
+    </plurals>
+    <string name="eq_summary_unavailable">Сейчас недоступна. Откройте, чтобы узнать причину.</string>
+    <string name="eq_enabled">Эквалайзер</string>
+    <string name="eq_latency_zero">Добавленная задержка: 0 мс</string>
+    <string name="eq_mode">Способ настройки</string>
+    <string name="eq_mode_graphic">Графический</string>
+    <string name="eq_mode_graphic_desc">Каждая полоса стоит на фиксированной частоте</string>
+    <string name="eq_mode_parametric">Параметрический</string>
+    <string name="eq_mode_parametric_desc">Полосу можно поставить куда угодно</string>
+    <string name="eq_band_count">Число полос</string>
+    <string name="eq_band_count_desc">Это не настройка производительности: телефон считает одинаково при любом числе полос.</string>
+    <string name="eq_precision">Точность кривой</string>
+    <string name="eq_precision_standard">Обычная (рекомендуется)</string>
+    <string name="eq_precision_standard_desc">Между полосами кривая немного отклоняется</string>
+    <string name="eq_precision_high">Высокая точность</string>
+    <string name="eq_precision_high_desc">Точнее следует линии, соединяющей полосы</string>
+    <string name="eq_precision_fallback">Это аудио воспроизводится с обычной точностью.</string>
+    <string name="eq_band_none">Полос пока нет. Добавьте полосу или загрузите файл AutoEQ.</string>
+    <string name="eq_band_add">Добавить полосу</string>
+    <string name="eq_band_remove">Удалить эту полосу</string>
+    <string name="eq_band_type">Форма</string>
+    <string name="eq_band_frequency">Частота</string>
+    <string name="eq_band_q">Q</string>
+    <string name="eq_band_gain">Усиление</string>
+    <string name="eq_type_peaking">Колокол</string>
+    <string name="eq_type_low_shelf">Низкочастотный шельф</string>
+    <string name="eq_type_high_shelf">Высокочастотный шельф</string>
+    <string name="eq_preamp">Предусиление</string>
+    <string name="eq_round_title">Перейти к графическому?</string>
+    <string name="eq_round_body">Каждая полоса перейдёт на одну из фиксированных частот графического эквалайзера, а её Q будет подобрано под неё. Форма кривой сохранится настолько, насколько это возможно, но нынешние частоты и значения Q будут потеряны.</string>
+    <string name="eq_round_quiet">Больше не спрашивать</string>
+    <string name="eq_reset">Сбросить всё в ноль</string>
+    <string name="eq_reset_title">Сбросить всё в ноль?</string>
+    <string name="eq_reset_body">Все усиления и ручное предусиление вернутся к 0 дБ, и эквалайзер перестанет менять звук. Полосы останутся на своих местах, но нынешняя кривая будет потеряна, если она не сохранена как пресет.</string>
+
+    <string name="eq_slot_flat">Нейтрально</string>
+    <string name="eq_slot_default">Свой %1$d</string>
+    <string name="eq_slot_rename">Переименовать</string>
+    <string name="eq_slot_rename_title">Название слота</string>
+    <string name="eq_slot_duplicate">Дублировать</string>
+    <string name="eq_slot_save_preset">Сохранить как пресет</string>
+    <string name="eq_slot_delete_title">Удалить слот?</string>
+    <string name="eq_slot_delete_body">Удаляет «%1$s». Если сейчас звучит именно он, звук вернётся к «Нейтрально».</string>
+
+    <string name="eq_presets">Пресеты</string>
+    <string name="eq_preset_empty">Пока ничего не сохранено. Сохранить пресет можно из меню слота, который вы используете.</string>
+    <string name="eq_preset_save_title">Название пресета</string>
+    <string name="eq_preset_name">Название</string>
+    <string name="eq_preset_apply">Применить</string>
+    <string name="eq_preset_export">Экспорт</string>
+    <string name="eq_preset_import">Загрузить пресет</string>
+    <string name="eq_preset_delete_title">Удалить пресет?</string>
+    <string name="eq_preset_delete_body">Удаляет «%1$s». То, что уже настроено на наушниках, остаётся как есть.</string>
+    <string name="eq_autoeq_import">Загрузить AutoEQ</string>
+    <string name="eq_autoeq_desc">Читает ParametricEQ.txt или GraphicEQ.txt из AutoEQ и загружает в новый слот.</string>
+    <string name="eq_curve_desc">Кривая того, как эти настройки меняют звук</string>
 </resources>

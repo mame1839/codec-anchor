@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- debug だけの追記。release APK には DebugToneActivity ごと載らない -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <activity
+            android:name="io.github.mame1839.codecanchor.audio.DebugToneActivity"
+            android:exported="false" />
+    </application>
+</manifest>

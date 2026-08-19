@@ -13,6 +13,8 @@
     <string name="action_resend">फिर भेजें</string>
     <string name="action_recheck">फिर जाँचें</string>
     <string name="action_grant">अनुमति दें</string>
+    <string name="action_save">सहेजें</string>
+    <string name="action_continue">जारी रखें</string>
 
     <string name="value_keep">न बदलें</string>
     <string name="value_unknown">अज्ञात</string>
@@ -26,24 +28,31 @@
 
     <string name="cd_refresh_status">स्थिति फिर जाँचें</string>
     <string name="cd_back">पीछे</string>
+    <string name="cd_eq_slot_menu">स्लॉट के विकल्प</string>
+    <string name="cd_eq_slot_add">स्लॉट जोड़ें</string>
     <string name="state_expanded">फैला हुआ</string>
     <string name="state_collapsed">समेटा हुआ</string>
 
+    <string name="tab_devices">डिवाइस</string>
+    <string name="tab_settings">सेटिंग</string>
+    <string name="tab_status">स्थिति</string>
+    <string name="cd_needs_attention">ध्यान देने की आवश्यकता है</string>
+
     <string name="section_general">सामान्य सेटिंग</string>
     <string name="toggle_auto_apply">सेटिंग अपने आप लागू करें</string>
-    <string name="toggle_auto_apply_desc">बंद रहने पर किसी भी डिवाइस पर कुछ नहीं बदला जाता</string>
     <string name="toggle_enforce">सिस्टम या दूसरे ऐप के बदलाव पलट दें</string>
-    <string name="toggle_enforce_desc">सिस्टम या कोई दूसरा ऐप कोडेक बदले, तो उसे तय किए मान पर लौटा दिया जाता है</string>
     <string name="toggle_notify">कोडेक बदलने पर बताएँ</string>
-    <string name="toggle_notify_desc">कोडेक बदलते समय छोटा संदेश दिखाता है</string>
     <string name="toggle_verbose">विस्तृत लॉग लिखें</string>
-    <string name="toggle_verbose_desc">जो डिवाइस नहीं बदलते, उनकी जाँच के लिए</string>
+    <string name="toggle_free_offload_switch">डेवलपर विकल्प में A2DP हार्डवेयर ऑफ़लोड का स्विच खोलें</string>
 
     <string name="permission_title">Bluetooth की अनुमति चाहिए</string>
     <string name="permission_body">अनुमति देने पर ऐप आपके जोड़े गए डिवाइस और उनके नाम पढ़ सकता है।</string>
     <string name="permission_denied">अनुमति ब्लॉक है। सिस्टम की सेटिंग से अनुमति दें।</string>
     <string name="bluetooth_off">Bluetooth बंद है। जोड़े गए डिवाइस देखने के लिए इसे चालू करें।</string>
     <string name="config_broken">सहेजी गई सेटिंग पढ़ी नहीं जा सकी, इसलिए कुछ भी बदला नहीं जा सकता। फिर से शुरू करने के लिए बैकअप इंपोर्ट करें।</string>
+    <string name="offload_hint">Bluetooth A2DP हार्डवेयर ऑफ़लोड चालू है, इसलिए फ़ोन खुद LDAC एन्कोड नहीं करता और बिटरेट कनेक्शन के हिसाब से नहीं बदल पाता।</string>
+    <string name="offload_turn_off">डेवलपर विकल्प में \"Bluetooth A2DP हार्डवेयर ऑफ़लोड बंद करें\" चालू करें।</string>
+    <string name="offload_hint_scope">इस डिवाइस पर वह स्विच इस्तेमाल नहीं किया जा सकता। मॉड्यूल के स्कोप में सेटिंग ऐप जोड़ें, फिर उसे खोलने के लिए डेवलपर विकल्प दोबारा खोलें।</string>
 
     <string name="section_audio_devices">ऑडियो डिवाइस</string>
     <string name="devices_empty">जोड़ा गया कोई ऑडियो डिवाइस नहीं मिला।</string>
@@ -65,6 +74,41 @@
     <string name="module_inactive_hint">इस हालत में भी सेटिंग बदली और सहेजी जा सकती है। मॉड्यूल चलने पर वह लागू हो जाएगी।</string>
     <string name="msg_config_pushed">सेटिंग फिर भेज दी</string>
 
+    <string name="eq_unavailable_not_registered">ऑडियो प्रोसेसिंग उपलब्ध नहीं है: ऑडियो प्रोसेसिंग मॉड्यूल इंस्टॉल नहीं है, या इस फ़ोन ने उसे अभी तक लोड नहीं किया। उसे इंस्टॉल करें, फिर फ़ोन को रीस्टार्ट करें।</string>
+    <string name="eq_unavailable_offload">जब तक Bluetooth A2DP हार्डवेयर ऑफ़लोड चालू है, ऑडियो प्रोसेसिंग उपलब्ध नहीं है।</string>
+    <string name="eq_unavailable_hook_old">ऑडियो प्रोसेसिंग उपलब्ध नहीं है: Bluetooth प्रोसेस में चल रहा मॉड्यूल पुराने वर्शन का है और उसे नहीं जानता। Bluetooth बंद करके फिर चालू करें।</string>
+    <string name="eq_unavailable_device">इन ईयरफ़ोन के लिए ऑडियो प्रोसेसिंग रजिस्टर नहीं है, इसलिए यहाँ जो भी सेट किया जाए, वह आवाज़ तक नहीं पहुँचता।</string>
+
+    <string name="eq_device_register">इन ईयरफ़ोन के साथ ऑडियो प्रोसेसिंग इस्तेमाल करें</string>
+    <string name="eq_device_register_desc">लागू होते समय आवाज़ पल भर के लिए रुक जाती है।</string>
+    <string name="eq_device_confirm_on_title">इन ईयरफ़ोन के लिए ऑडियो प्रोसेसिंग चालू करें?</string>
+    <string name="eq_device_confirm_off_title">इन ईयरफ़ोन के लिए ऑडियो प्रोसेसिंग बंद करें?</string>
+    <string name="eq_device_confirm_body">फ़ोन की ऑडियो सर्विस फिर शुरू होती है, इसलिए अभी जो भी चल रहा है वह कुछ सेकंड के लिए शांत हो जाता है। Bluetooth जुड़ा रहता है, और आपकी इक्वलाइज़र सेटिंग हर हाल में बनी रहती है।</string>
+    <string name="eq_device_running">लागू हो रहा है। कुछ सेकंड में आवाज़ वापस आ जाएगी।</string>
+    <string name="eq_device_result_on">इन ईयरफ़ोन के लिए ऑडियो प्रोसेसिंग रजिस्टर हो गई है।</string>
+    <string name="eq_device_result_off">इन ईयरफ़ोन के लिए ऑडियो प्रोसेसिंग अब रजिस्टर नहीं है।</string>
+    <string name="eq_device_failed_no_module">कुछ नहीं बदला: ऑडियो प्रोसेसिंग मॉड्यूल इंस्टॉल नहीं है।</string>
+    <string name="eq_device_failed_root">कुछ नहीं बदला: root ऐक्सेस से मना कर दिया गया, या इस फ़ोन में कोई root मैनेजर नहीं है। अपने root मैनेजर में Codec Anchor को अनुमति दें, फिर दोबारा कोशिश करें।</string>
+    <string name="eq_device_failed_script">कुछ नहीं बदला: root ऐक्सेस मिल गया, लेकिन ऑडियो प्रोसेसिंग मॉड्यूल नहीं चला। इसकी फ़ाइलें गायब हैं या खराब हैं। मॉड्यूल को दोबारा इंस्टॉल करें, फिर फ़ोन को रीस्टार्ट करें।</string>
+    <string name="eq_device_failed_timeout">यह समय पर पूरा नहीं हुआ और रोक दिया गया। हो सकता है ऑडियो सर्विस अभी भी फिर शुरू हो रही हो। थोड़ी देर बाद फिर जाँचें।</string>
+    <string name="eq_device_failed_input">कुछ नहीं बदला: ऐप ने कुछ ऐसा भेजा जिसे मॉड्यूल पढ़ नहीं सका। यह ऐप की गड़बड़ी है।</string>
+    <string name="eq_device_failed_no_state">कुछ नहीं बदला: ऑडियो प्रोसेसिंग मॉड्यूल शुरू नहीं हुआ है। फ़ोन को रीस्टार्ट करें, फिर दोबारा कोशिश करें।</string>
+    <string name="eq_device_failed_xml">फ़ोन की ऑडियो सेटिंग फ़ाइल फिर से नहीं बन सकी, इसलिए कुछ नहीं बदला।</string>
+    <string name="eq_device_failed_apply">फिर से बनाई गई ऑडियो सेटिंग लागू नहीं हो सकी, इसलिए कुछ नहीं बदला।</string>
+    <string name="eq_device_failed_audioserver">ऑडियो सर्विस वापस नहीं आई। फ़ोन को रीस्टार्ट करें।</string>
+    <string name="eq_device_failed_unknown">यह ऐसी तरह से विफल हुआ जिसे ऐप का यह वर्शन नहीं जानता (कोड %1$d)।</string>
+
+    <string name="eq_delivery_other">अभी दूसरे ईयरफ़ोन कनेक्ट हैं, इसलिए यहाँ किया गया बदलाव अभी आवाज़ तक नहीं पहुँचता। इन ईयरफ़ोन को कनेक्ट करें, तब यह लागू हो जाएगा।</string>
+    <string name="eq_delivery_ambiguous">ईयरफ़ोन के एक से ज़्यादा इफ़ेक्ट चल रहे हैं और ऐप यह नहीं बता सकता कि इनमें से कौन-सा इन ईयरफ़ोन का है, इसलिए कुछ नहीं भेजा गया। दूसरे ईयरफ़ोन डिसकनेक्ट करें, फिर यहाँ दोबारा कुछ बदलें।</string>
+    <string name="eq_delivery_slots_full">ये सेटिंग आवाज़ तक नहीं पहुँचीं। इन ईयरफ़ोन की ऑडियो प्रोसेसिंग बंद करके फिर से चालू करें; अगर इससे ठीक न हो, तो फ़ोन को रीस्टार्ट करें।</string>
+    <string name="eq_delivery_failed_root">ये सेटिंग आवाज़ तक नहीं पहुँचीं: root ऐक्सेस से मना कर दिया गया, या इस फ़ोन में कोई root मैनेजर नहीं है। अपने root मैनेजर में Codec Anchor को अनुमति दें।</string>
+    <string name="eq_delivery_failed_shm">ये सेटिंग आवाज़ तक नहीं पहुँचीं: ऑडियो प्रोसेसिंग मॉड्यूल चल नहीं रहा। फ़ोन को रीस्टार्ट करें।</string>
+    <string name="eq_delivery_failed_version">ये सेटिंग आवाज़ तक नहीं पहुँचीं: ऐप और ऑडियो प्रोसेसिंग मॉड्यूल के वर्शन अलग हैं। दोनों को एक ही वर्शन पर अपडेट करें, फिर फ़ोन को रीस्टार्ट करें।</string>
+    <string name="eq_delivery_failed_rejected">ये सेटिंग सीमा से बाहर होने के कारण अस्वीकार कर दी गईं, इसलिए आवाज़ में कोई बदलाव नहीं हुआ। सबसे ऊँची आवृत्ति वाले बैंड को नीचे करें या हटा दें।</string>
+    <string name="eq_delivery_failed_timeout">ये सेटिंग भेजने का काम समय पर पूरा नहीं हुआ और रोक दिया गया।</string>
+    <string name="eq_delivery_failed_input">ये सेटिंग आवाज़ तक नहीं पहुँचीं: ऐप ने अनुरोध ग़लत तरीक़े से बनाया। यह ऐप की गड़बड़ी है।</string>
+    <string name="eq_delivery_failed_unknown">ये सेटिंग भेजना ऐसी तरह से विफल हुआ जिसे ऐप का यह वर्शन नहीं जानता (कोड %1$d)।</string>
+
     <string name="tag_connected">कनेक्ट है</string>
     <string name="tag_disconnected">कनेक्ट नहीं है</string>
     <string name="tag_active">चल रहा है</string>
@@ -76,7 +120,6 @@
     <string name="profile_no_target">अभी कुछ तय नहीं किया गया</string>
 
     <string name="section_backup">बैकअप</string>
-    <string name="backup_body">सारी सेटिंग एक JSON फ़ाइल में सहेजता है।</string>
     <string name="backup_export">एक्सपोर्ट</string>
     <string name="backup_import">इंपोर्ट</string>
     <string name="backup_confirm_title">बैकअप इंपोर्ट करें?</string>
@@ -89,7 +132,6 @@
     <string name="msg_backup_failed">फ़ाइल पढ़ी नहीं जा सकी</string>
 
     <string name="detail_auto_apply">इस ईयरफ़ोन पर लागू करें</string>
-    <string name="detail_auto_apply_desc">जब भी ईयरफ़ोन कनेक्ट हो, नीचे दी गई सेटिंग पर बदल देता है</string>
     <string name="detail_current_codec">मौजूदा कोडेक: %1$s</string>
     <string name="ldac_bitrate_offload">Bluetooth A2DP हार्डवेयर ऑफ़लोड चालू होने के कारण प्रभावी बिटरेट पढ़ा नहीं जा सकता।</string>
     <string name="detail_note">पिछला नतीजा: %1$s</string>
@@ -116,9 +158,7 @@
     <string name="adv_force">ज़बरदस्ती बदलें</string>
     <string name="adv_force_desc">जिन संयोजनों की घोषणा डिवाइस नहीं करता, वे भी आज़माता है</string>
     <string name="adv_via_sbc">SBC के रास्ते बदलें</string>
-    <string name="adv_via_sbc_desc">पहले SBC पर उतरता है, फिर आपके चुने कोडेक पर जाता है</string>
     <string name="adv_auto_hd">HD ऑडियो अपने आप चालू करें</string>
-    <string name="adv_auto_hd_desc">सिस्टम में HD ऑडियो बंद हो, तो उसे चालू कर देता है</string>
     <string name="adv_delay">लागू करने से पहले रुकें</string>
     <string name="adv_delay_desc">कुछ डिवाइस कनेक्ट होते ही बदलाव नहीं मानते</string>
     <string name="adv_retries">कोशिशों की संख्या</string>
@@ -131,4 +171,77 @@
     <string name="msg_apply_requested">मॉड्यूल से सेटिंग लागू करने को कहा</string>
     <string name="msg_apply_module_inactive">मॉड्यूल नहीं चल रहा, इसलिए अनुरोध भेजा नहीं जा सकता</string>
     <string name="msg_apply_not_connected">डिवाइस कनेक्ट नहीं है, इसलिए अभी कुछ लागू नहीं हो सकता</string>
+
+    <string name="msg_preset_exported">प्रीसेट एक्सपोर्ट हो गया</string>
+    <string name="msg_preset_export_failed">फ़ाइल में लिखा नहीं जा सका</string>
+    <string name="msg_preset_imported">प्रीसेट इंपोर्ट हो गया</string>
+    <string name="msg_preset_invalid">यह फ़ाइल Codec Anchor का प्रीसेट नहीं है</string>
+    <string name="msg_autoeq_imported">AutoEQ के फ़िल्टर इंपोर्ट हो गए</string>
+    <string name="msg_autoeq_failed">फ़ाइल पढ़ी नहीं जा सकी</string>
+    <string name="msg_autoeq_invalid">यह फ़ाइल AutoEQ का नतीजा नहीं है</string>
+    <string name="msg_autoeq_corner_shelf">इस AutoEQ फ़ाइल में LS या HS फ़िल्टर हैं, जो समर्थित नहीं हैं</string>
+    <string name="msg_autoeq_no_bands">इस AutoEQ फ़ाइल में कोई फ़िल्टर नहीं है</string>
+
+    <string name="section_eq">ध्वनि प्रसंस्करण</string>
+    <string name="eq_summary_on">चालू</string>
+    <string name="eq_summary_off">बंद</string>
+    <plurals name="eq_summary_bands">
+        <item quantity="one">%1$d बैंड</item>
+        <item quantity="other">%1$d बैंड</item>
+    </plurals>
+    <string name="eq_summary_unavailable">अभी इस्तेमाल नहीं हो सकता। कारण देखने के लिए खोलें।</string>
+    <string name="eq_enabled">इक्वलाइज़र</string>
+    <string name="eq_latency_zero">अतिरिक्त विलंब: 0 ms</string>
+    <string name="eq_mode">संपादन का तरीक़ा</string>
+    <string name="eq_mode_graphic">ग्राफ़िक</string>
+    <string name="eq_mode_graphic_desc">हर बैंड एक तय आवृत्ति पर रहता है</string>
+    <string name="eq_mode_parametric">पैरामीट्रिक</string>
+    <string name="eq_mode_parametric_desc">हर बैंड को जहाँ चाहें रख सकते हैं</string>
+    <string name="eq_band_count">बैंड की संख्या</string>
+    <string name="eq_band_count_desc">यह गति की सेटिंग नहीं है: बैंड चाहे जितने हों, फ़ोन उतना ही काम करता है।</string>
+    <string name="eq_precision">कर्व की सटीकता</string>
+    <string name="eq_precision_standard">मानक (अनुशंसित)</string>
+    <string name="eq_precision_standard_desc">बैंड के बीच कर्व थोड़ा हट जाता है</string>
+    <string name="eq_precision_high">उच्च सटीकता</string>
+    <string name="eq_precision_high_desc">बैंड को जोड़ने वाली रेखा का ज़्यादा नज़दीकी से पालन करता है</string>
+    <string name="eq_precision_fallback">यह ऑडियो मानक सटीकता पर चल रहा है।</string>
+    <string name="eq_band_none">अभी कोई बैंड नहीं है। एक जोड़ें, या AutoEQ फ़ाइल पढ़वाएँ।</string>
+    <string name="eq_band_add">बैंड जोड़ें</string>
+    <string name="eq_band_remove">यह बैंड हटाएँ</string>
+    <string name="eq_band_type">आकार</string>
+    <string name="eq_band_frequency">आवृत्ति</string>
+    <string name="eq_band_q">Q</string>
+    <string name="eq_band_gain">गेन</string>
+    <string name="eq_type_peaking">पीक</string>
+    <string name="eq_type_low_shelf">लो शेल्फ़</string>
+    <string name="eq_type_high_shelf">हाई शेल्फ़</string>
+    <string name="eq_preamp">प्रीऐम्प</string>
+    <string name="eq_round_title">ग्राफ़िक पर जाएँ?</string>
+    <string name="eq_round_body">हर बैंड ग्राफ़िक इक्वलाइज़र की तय आवृत्तियों में से एक पर चला जाएगा और उसका Q भी उसी के अनुसार बैठ जाएगा। वक्र का आकार जितना बन सके उतना बचाया जाएगा, पर अभी की आवृत्तियाँ और Q मान चले जाएँगे।</string>
+    <string name="eq_round_quiet">दोबारा न पूछें</string>
+    <string name="eq_reset">सब कुछ शून्य पर लौटाएँ</string>
+    <string name="eq_reset_title">सब कुछ शून्य पर लौटाएँ?</string>
+    <string name="eq_reset_body">हर गेन और हाथ से तय किया गया प्रीऐम्प 0 dB पर लौट जाएगा, और इक्वलाइज़र ध्वनि को बदलना बंद कर देगा। बैंड अपनी जगह बने रहेंगे, पर अभी का वक्र प्रीसेट के रूप में सहेजा न हो तो वापस नहीं मिलेगा।</string>
+
+    <string name="eq_slot_flat">सपाट</string>
+    <string name="eq_slot_default">कस्टम %1$d</string>
+    <string name="eq_slot_rename">नाम बदलें</string>
+    <string name="eq_slot_rename_title">स्लॉट का नाम</string>
+    <string name="eq_slot_duplicate">डुप्लिकेट बनाएँ</string>
+    <string name="eq_slot_save_preset">प्रीसेट के रूप में सहेजें</string>
+    <string name="eq_slot_delete_title">स्लॉट मिटाएँ?</string>
+    <string name="eq_slot_delete_body">\"%1$s\" हटा देता है। अगर आप अभी इसे सुन रहे हैं, तो आवाज़ वापस सपाट पर चली जाती है।</string>
+
+    <string name="eq_presets">प्रीसेट</string>
+    <string name="eq_preset_empty">अभी कुछ भी सहेजा नहीं गया। जिस स्लॉट का उपयोग कर रहे हैं, उसके मेन्यू से सहेज सकते हैं।</string>
+    <string name="eq_preset_save_title">प्रीसेट का नाम</string>
+    <string name="eq_preset_name">नाम</string>
+    <string name="eq_preset_apply">लागू करें</string>
+    <string name="eq_preset_export">निर्यात</string>
+    <string name="eq_preset_import">प्रीसेट पढ़वाएँ</string>
+    <string name="eq_preset_delete_title">प्रीसेट मिटाएँ?</string>
+    <string name="eq_preset_delete_body">\"%1$s\" हटा देता है। आपके ईयरफ़ोन पर जो पहले से लगा है, वह वैसा ही रहता है।</string>
+    <string name="eq_autoeq_import">AutoEQ पढ़वाएँ</string>
+    <string name="eq_autoeq_desc">AutoEQ की ParametricEQ.txt या GraphicEQ.txt पढ़ता है और उसे नए स्लॉट में लोड करता है।</string>
+    <string name="eq_curve_desc">यह वक्र दिखाता है कि ये सेटिंग ध्वनि को कैसे बदलती हैं</string>
 </resources>

@@ -13,6 +13,8 @@
     <string name="action_resend">Enviar de nuevo</string>
     <string name="action_recheck">Comprobar de nuevo</string>
     <string name="action_grant">Conceder el permiso</string>
+    <string name="action_save">Guardar</string>
+    <string name="action_continue">Continuar</string>
 
     <string name="value_keep">Sin cambios</string>
     <string name="value_unknown">Desconocido</string>
@@ -27,24 +29,31 @@
 
     <string name="cd_refresh_status">Comprobar el estado de nuevo</string>
     <string name="cd_back">Atrás</string>
+    <string name="cd_eq_slot_menu">Opciones del espacio</string>
+    <string name="cd_eq_slot_add">Añadir un espacio</string>
     <string name="state_expanded">Expandido</string>
     <string name="state_collapsed">Contraído</string>
 
+    <string name="tab_devices">Dispositivos</string>
+    <string name="tab_settings">Ajustes</string>
+    <string name="tab_status">Estado</string>
+    <string name="cd_needs_attention">Requiere atención</string>
+
     <string name="section_general">Ajustes generales</string>
     <string name="toggle_auto_apply">Aplicar los ajustes automáticamente</string>
-    <string name="toggle_auto_apply_desc">Mientras esté desactivado, no se cambia nada en ningún dispositivo</string>
     <string name="toggle_enforce">Revertir los cambios de otras apps</string>
-    <string name="toggle_enforce_desc">Si el sistema u otra app cambia el códec, se vuelve a lo que has fijado</string>
     <string name="toggle_notify">Avisar cuando cambie el códec</string>
-    <string name="toggle_notify_desc">Muestra un mensaje breve al cambiar de códec</string>
     <string name="toggle_verbose">Registro detallado</string>
-    <string name="toggle_verbose_desc">Para investigar los dispositivos que no cambian</string>
+    <string name="toggle_free_offload_switch">Desbloquear el interruptor de descarga por hardware de A2DP en Opciones para desarrolladores</string>
 
     <string name="permission_title">Se necesita el permiso de Bluetooth</string>
     <string name="permission_body">Al concederlo, la app puede leer tus dispositivos emparejados y sus nombres.</string>
     <string name="permission_denied">El permiso está bloqueado. Concédelo desde los ajustes del sistema.</string>
     <string name="bluetooth_off">El Bluetooth está desactivado. Actívalo para ver tus dispositivos emparejados.</string>
     <string name="config_broken">No se han podido leer los ajustes guardados, así que no se puede editar nada. Importa una copia de seguridad para empezar de nuevo.</string>
+    <string name="offload_hint">La descarga por hardware de Bluetooth A2DP está activada, así que el teléfono no codifica LDAC por su cuenta y la tasa de bits no puede adaptarse al enlace.</string>
+    <string name="offload_turn_off">Activa «Inhabilitar la descarga por hardware de Bluetooth A2DP» en Opciones para desarrolladores.</string>
+    <string name="offload_hint_scope">En este dispositivo ese interruptor no se puede tocar. Añade la app Ajustes a su ámbito y vuelve a abrir Opciones para desarrolladores para liberarlo.</string>
 
     <string name="section_audio_devices">Dispositivos de audio</string>
     <string name="devices_empty">No se ha encontrado ningún dispositivo de audio emparejado.</string>
@@ -66,6 +75,41 @@
     <string name="module_inactive_hint">Aun así puedes editar y guardar los ajustes. Se aplicarán cuando el módulo empiece a funcionar.</string>
     <string name="msg_config_pushed">Ajustes enviados de nuevo</string>
 
+    <string name="eq_unavailable_not_registered">El procesamiento de audio no está disponible: el módulo de procesamiento de audio no está instalado, o este teléfono aún no lo ha cargado. Instálalo y reinicia el teléfono.</string>
+    <string name="eq_unavailable_offload">El procesamiento de audio no está disponible mientras la descarga por hardware de Bluetooth A2DP esté activada.</string>
+    <string name="eq_unavailable_hook_old">El procesamiento de audio no está disponible: el módulo que se ejecuta en el proceso de Bluetooth es de una versión anterior que no lo conoce. Desactiva el Bluetooth y vuelve a activarlo.</string>
+    <string name="eq_unavailable_device">Estos auriculares no están registrados para el procesamiento de audio, así que nada de lo que ajustes aquí llega al sonido.</string>
+
+    <string name="eq_device_register">Usar el procesamiento de audio con estos auriculares</string>
+    <string name="eq_device_register_desc">El sonido se interrumpe un momento mientras se aplica.</string>
+    <string name="eq_device_confirm_on_title">¿Activar el procesamiento de audio para estos auriculares?</string>
+    <string name="eq_device_confirm_off_title">¿Desactivar el procesamiento de audio para estos auriculares?</string>
+    <string name="eq_device_confirm_body">El servicio de audio del teléfono se reinicia, así que lo que esté sonando ahora se silencia unos segundos. El Bluetooth sigue conectado, y tus ajustes del ecualizador se conservan en cualquier caso.</string>
+    <string name="eq_device_running">Aplicando. El sonido vuelve en unos segundos.</string>
+    <string name="eq_device_result_on">Estos auriculares están registrados para el procesamiento de audio.</string>
+    <string name="eq_device_result_off">Estos auriculares ya no están registrados para el procesamiento de audio.</string>
+    <string name="eq_device_failed_no_module">No se ha cambiado nada: el módulo de procesamiento de audio no está instalado.</string>
+    <string name="eq_device_failed_root">No se ha cambiado nada: se denegó el acceso root, o este teléfono no tiene gestor de root. Permite Codec Anchor en tu gestor de root e inténtalo de nuevo.</string>
+    <string name="eq_device_failed_script">No se ha cambiado nada: el acceso root funcionó, pero el módulo de procesamiento de audio no se ejecutó. Sus archivos faltan o están dañados. Reinstala el módulo y luego reinicia el teléfono.</string>
+    <string name="eq_device_failed_timeout">No terminó a tiempo y se detuvo. Puede que el servicio de audio todavía se esté reiniciando. Comprueba de nuevo en un momento.</string>
+    <string name="eq_device_failed_input">No se ha cambiado nada: la app envió algo que el módulo no pudo leer. Este es un fallo de la app.</string>
+    <string name="eq_device_failed_no_state">No se ha cambiado nada: el módulo de procesamiento de audio no se ha iniciado. Reinicia el teléfono e inténtalo de nuevo.</string>
+    <string name="eq_device_failed_xml">No se pudo reconstruir el archivo de ajustes de audio del teléfono, así que no se ha cambiado nada.</string>
+    <string name="eq_device_failed_apply">No se pudieron aplicar los ajustes de audio reconstruidos, así que no se ha cambiado nada.</string>
+    <string name="eq_device_failed_audioserver">El servicio de audio no volvió a funcionar. Reinicia el teléfono.</string>
+    <string name="eq_device_failed_unknown">Ha fallado de una forma que esta versión de la app no reconoce (código %1$d).</string>
+
+    <string name="eq_delivery_other">Ahora mismo hay otros auriculares conectados, así que lo que cambies aquí todavía no llega al sonido. Conecta estos auriculares y se aplicará.</string>
+    <string name="eq_delivery_ambiguous">Hay más de un efecto de auriculares en marcha y la app no puede saber cuál corresponde a estos auriculares, así que no se ha enviado nada. Desconecta los otros auriculares y luego vuelve a cambiar algo aquí.</string>
+    <string name="eq_delivery_slots_full">Estos ajustes no han llegado al sonido. Desactiva el procesamiento de audio de estos auriculares y vuelve a activarlo; si eso no lo arregla, reinicia el teléfono.</string>
+    <string name="eq_delivery_failed_root">Estos ajustes no han llegado al sonido: se denegó el acceso root, o este teléfono no tiene gestor de root. Permite Codec Anchor en tu gestor de root.</string>
+    <string name="eq_delivery_failed_shm">Estos ajustes no han llegado al sonido: el módulo de procesamiento de audio no está en marcha. Reinicia el teléfono.</string>
+    <string name="eq_delivery_failed_version">Estos ajustes no han llegado al sonido: la app y el módulo de procesamiento de audio tienen versiones distintas. Actualiza ambos a la misma versión y reinicia el teléfono.</string>
+    <string name="eq_delivery_failed_rejected">Estos ajustes se rechazaron por estar fuera de rango, así que el sonido no ha cambiado. Baja o quita la banda de frecuencia más alta.</string>
+    <string name="eq_delivery_failed_timeout">El envío de estos ajustes no terminó a tiempo y se detuvo.</string>
+    <string name="eq_delivery_failed_input">Estos ajustes no han llegado al sonido: la app construyó mal la petición. Este es un fallo de la app.</string>
+    <string name="eq_delivery_failed_unknown">El envío de estos ajustes ha fallado de una forma que esta versión de la app no reconoce (código %1$d).</string>
+
     <string name="tag_connected">Conectado</string>
     <string name="tag_disconnected">Sin conexión</string>
     <string name="tag_active">Reproduciendo</string>
@@ -77,7 +121,6 @@
     <string name="profile_no_target">Todavía no has fijado nada</string>
 
     <string name="section_backup">Copia de seguridad</string>
-    <string name="backup_body">Guarda todos los ajustes en un archivo JSON.</string>
     <string name="backup_export">Exportar</string>
     <string name="backup_import">Importar</string>
     <string name="backup_confirm_title">¿Importar una copia de seguridad?</string>
@@ -90,7 +133,6 @@
     <string name="msg_backup_failed">No se pudo leer el archivo</string>
 
     <string name="detail_auto_apply">Aplicar a estos auriculares</string>
-    <string name="detail_auto_apply_desc">Cambia a los ajustes de abajo cada vez que se conecten</string>
     <string name="detail_current_codec">Códec actual: %1$s</string>
     <string name="ldac_bitrate_offload">No se puede leer la tasa de bits efectiva porque la descarga por hardware de Bluetooth A2DP está activada.</string>
     <string name="detail_note">Último resultado: %1$s</string>
@@ -117,9 +159,7 @@
     <string name="adv_force">Forzar el cambio</string>
     <string name="adv_force_desc">Prueba también combinaciones que el dispositivo no declara</string>
     <string name="adv_via_sbc">Cambiar pasando por SBC</string>
-    <string name="adv_via_sbc_desc">Baja primero a SBC y después pasa al códec elegido</string>
     <string name="adv_auto_hd">Activar el audio HD automáticamente</string>
-    <string name="adv_auto_hd_desc">Lo activa cuando el sistema lo tiene desactivado</string>
     <string name="adv_delay">Espera antes de aplicar</string>
     <string name="adv_delay_desc">Algunos dispositivos no aceptan el cambio justo tras conectarse</string>
     <string name="adv_retries">Número de intentos</string>
@@ -132,4 +172,78 @@
     <string name="msg_apply_requested">Se ha pedido aplicar los ajustes</string>
     <string name="msg_apply_module_inactive">El módulo no está funcionando, así que la petición no llega</string>
     <string name="msg_apply_not_connected">El dispositivo no está conectado, así que no se puede aplicar ahora</string>
+
+    <string name="msg_preset_exported">Preajuste exportado</string>
+    <string name="msg_preset_export_failed">No se pudo escribir el archivo</string>
+    <string name="msg_preset_imported">Preajuste importado</string>
+    <string name="msg_preset_invalid">Ese archivo no es un preajuste de Codec Anchor</string>
+    <string name="msg_autoeq_imported">Filtros de AutoEQ importados</string>
+    <string name="msg_autoeq_failed">No se pudo leer el archivo</string>
+    <string name="msg_autoeq_invalid">Ese archivo no es un resultado de AutoEQ</string>
+    <string name="msg_autoeq_corner_shelf">Ese archivo de AutoEQ usa filtros LS o HS, que no son compatibles</string>
+    <string name="msg_autoeq_no_bands">Ese archivo de AutoEQ no tiene filtros</string>
+
+    <string name="section_eq">Procesamiento de sonido</string>
+    <string name="eq_summary_on">Activado</string>
+    <string name="eq_summary_off">Desactivado</string>
+    <plurals name="eq_summary_bands">
+        <item quantity="one">%1$d banda</item>
+        <item quantity="many">%1$d bandas</item>
+        <item quantity="other">%1$d bandas</item>
+    </plurals>
+    <string name="eq_summary_unavailable">Ahora mismo no se puede usar. Abre para ver el motivo.</string>
+    <string name="eq_enabled">Ecualizador</string>
+    <string name="eq_latency_zero">Retardo añadido: 0 ms</string>
+    <string name="eq_mode">Modo de edición</string>
+    <string name="eq_mode_graphic">Gráfico</string>
+    <string name="eq_mode_graphic_desc">Cada banda se mantiene en una frecuencia fija</string>
+    <string name="eq_mode_parametric">Paramétrico</string>
+    <string name="eq_mode_parametric_desc">Puedes colocar cada banda donde quieras</string>
+    <string name="eq_band_count">Número de bandas</string>
+    <string name="eq_band_count_desc">No es un ajuste de rendimiento: el teléfono trabaja igual con cualquier número de bandas.</string>
+    <string name="eq_precision">Precisión de la curva</string>
+    <string name="eq_precision_standard">Estándar (recomendado)</string>
+    <string name="eq_precision_standard_desc">Entre bandas la curva se desvía un poco</string>
+    <string name="eq_precision_high">Alta precisión</string>
+    <string name="eq_precision_high_desc">Sigue más de cerca la línea que une las bandas</string>
+    <string name="eq_precision_fallback">Este audio se está reproduciendo con la precisión estándar.</string>
+    <string name="eq_band_none">Todavía no hay ninguna banda. Añade una o importa un archivo de AutoEQ.</string>
+    <string name="eq_band_add">Añadir una banda</string>
+    <string name="eq_band_remove">Quitar esta banda</string>
+    <string name="eq_band_type">Forma</string>
+    <string name="eq_band_frequency">Frecuencia</string>
+    <string name="eq_band_q">Q</string>
+    <string name="eq_band_gain">Ganancia</string>
+    <string name="eq_type_peaking">Campana</string>
+    <string name="eq_type_low_shelf">Shelf de graves</string>
+    <string name="eq_type_high_shelf">Shelf de agudos</string>
+    <string name="eq_preamp">Preamplificador</string>
+    <string name="eq_round_title">¿Cambiar a gráfico?</string>
+    <string name="eq_round_body">Cada banda se mueve a una de las frecuencias fijas del ecualizador gráfico y su Q se ajusta a ella. La forma de la curva se conserva todo lo posible, pero se pierden las frecuencias y los valores de Q actuales.</string>
+    <string name="eq_round_quiet">No volver a preguntar</string>
+    <string name="eq_reset">Poner todo a cero</string>
+    <string name="eq_reset_title">¿Poner todo a cero?</string>
+    <string name="eq_reset_body">Todas las ganancias y el preamplificador manual vuelven a 0 dB, y el ecualizador deja de cambiar el sonido. Las bandas se quedan donde están, pero la curva actual se pierde si no se ha guardado como preajuste.</string>
+
+    <string name="eq_slot_flat">Plano</string>
+    <string name="eq_slot_default">Personalizado %1$d</string>
+    <string name="eq_slot_rename">Cambiar el nombre</string>
+    <string name="eq_slot_rename_title">Nombre del espacio</string>
+    <string name="eq_slot_duplicate">Duplicar</string>
+    <string name="eq_slot_save_preset">Guardar como preajuste</string>
+    <string name="eq_slot_delete_title">¿Eliminar el espacio?</string>
+    <string name="eq_slot_delete_body">Elimina «%1$s». Si es el que estás escuchando, el sonido vuelve a Plano.</string>
+
+    <string name="eq_presets">Preajustes</string>
+    <string name="eq_preset_empty">Todavía no hay nada guardado. Puedes guardar uno desde el menú del espacio que estás usando.</string>
+    <string name="eq_preset_save_title">Nombre del preajuste</string>
+    <string name="eq_preset_name">Nombre</string>
+    <string name="eq_preset_apply">Aplicar</string>
+    <string name="eq_preset_export">Exportar</string>
+    <string name="eq_preset_import">Importar un preajuste</string>
+    <string name="eq_preset_delete_title">¿Eliminar el preajuste?</string>
+    <string name="eq_preset_delete_body">Elimina «%1$s». Lo que ya está puesto en tus auriculares se queda como está.</string>
+    <string name="eq_autoeq_import">Importar AutoEQ</string>
+    <string name="eq_autoeq_desc">Lee un ParametricEQ.txt o GraphicEQ.txt de AutoEQ y lo carga como un espacio nuevo.</string>
+    <string name="eq_curve_desc">Curva de cómo estos ajustes cambian el sonido</string>
 </resources>

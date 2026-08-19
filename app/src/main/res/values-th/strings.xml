@@ -13,6 +13,8 @@
     <string name="action_resend">ส่งอีกครั้ง</string>
     <string name="action_recheck">ตรวจสอบอีกครั้ง</string>
     <string name="action_grant">ให้สิทธิ์</string>
+    <string name="action_save">บันทึก</string>
+    <string name="action_continue">ดำเนินการต่อ</string>
 
     <string name="value_keep">ไม่เปลี่ยน</string>
     <string name="value_unknown">ไม่ทราบ</string>
@@ -25,24 +27,31 @@
 
     <string name="cd_refresh_status">ตรวจสอบสถานะอีกครั้ง</string>
     <string name="cd_back">ย้อนกลับ</string>
+    <string name="cd_eq_slot_menu">ตัวเลือกของช่อง</string>
+    <string name="cd_eq_slot_add">เพิ่มช่อง</string>
     <string name="state_expanded">ขยายอยู่</string>
     <string name="state_collapsed">ยุบอยู่</string>
 
+    <string name="tab_devices">อุปกรณ์</string>
+    <string name="tab_settings">การตั้งค่า</string>
+    <string name="tab_status">สถานะ</string>
+    <string name="cd_needs_attention">ต้องตรวจสอบ</string>
+
     <string name="section_general">การตั้งค่าทั่วไป</string>
     <string name="toggle_auto_apply">ใช้การตั้งค่าโดยอัตโนมัติ</string>
-    <string name="toggle_auto_apply_desc">เมื่อปิด จะไม่มีการเปลี่ยนแปลงกับอุปกรณ์ใด</string>
     <string name="toggle_enforce">ย้อนการเปลี่ยนแปลงจากระบบหรือแอปอื่น</string>
-    <string name="toggle_enforce_desc">ถ้าระบบหรือแอปอื่นเปลี่ยนโคเดก จะเปลี่ยนกลับเป็นค่าที่ตรึงไว้</string>
     <string name="toggle_notify">แจ้งเมื่อโคเดกเปลี่ยน</string>
-    <string name="toggle_notify_desc">แสดงข้อความสั้น ๆ เมื่อโคเดกถูกเปลี่ยน</string>
     <string name="toggle_verbose">บันทึกล็อกแบบละเอียด</string>
-    <string name="toggle_verbose_desc">สำหรับตรวจหาสาเหตุที่อุปกรณ์ไม่ยอมเปลี่ยน</string>
+    <string name="toggle_free_offload_switch">ปลดล็อกสวิตช์การถ่ายโอนงานด้วยฮาร์ดแวร์ของ A2DP ในตัวเลือกสำหรับนักพัฒนา</string>
 
     <string name="permission_title">ต้องมีสิทธิ์ Bluetooth</string>
     <string name="permission_body">เมื่อให้สิทธิ์ แอปจะอ่านอุปกรณ์ที่จับคู่ไว้และชื่อของอุปกรณ์ได้</string>
     <string name="permission_denied">สิทธิ์ถูกบล็อกอยู่ โปรดให้สิทธิ์จากการตั้งค่าของระบบ</string>
     <string name="bluetooth_off">Bluetooth ปิดอยู่ เปิดเพื่อดูอุปกรณ์ที่จับคู่ไว้</string>
     <string name="config_broken">อ่านการตั้งค่าที่บันทึกไว้ไม่ได้ จึงแก้ไขอะไรไม่ได้ นำเข้าข้อมูลสำรองเพื่อเริ่มต้นใหม่</string>
+    <string name="offload_hint">การถ่ายโอนงานด้วยฮาร์ดแวร์ของ Bluetooth A2DP เปิดใช้งานอยู่ เครื่องจึงไม่ได้เข้ารหัส LDAC เองและบิตเรตปรับตามสัญญาณไม่ได้</string>
+    <string name="offload_turn_off">ให้เปิด \"ปิดใช้การถ่ายโอนงานด้วยฮาร์ดแวร์ของ Bluetooth A2DP\" ในตัวเลือกสำหรับนักพัฒนา</string>
+    <string name="offload_hint_scope">บนเครื่องนี้สวิตช์ดังกล่าวใช้งานไม่ได้ ให้เพิ่มแอปการตั้งค่าในขอบเขตของโมดูล แล้วเปิดตัวเลือกสำหรับนักพัฒนาอีกครั้งเพื่อปลดล็อก</string>
 
     <string name="section_audio_devices">อุปกรณ์เสียง</string>
     <string name="devices_empty">ไม่พบอุปกรณ์เสียงที่จับคู่ไว้</string>
@@ -64,6 +73,41 @@
     <string name="module_inactive_hint">คุณยังแก้ไขและบันทึกการตั้งค่าได้ ค่าจะมีผลเมื่อโมดูลเริ่มทำงาน</string>
     <string name="msg_config_pushed">ส่งการตั้งค่าอีกครั้งแล้ว</string>
 
+    <string name="eq_unavailable_not_registered">ใช้การประมวลผลเสียงไม่ได้ เพราะยังไม่ได้ติดตั้งโมดูลประมวลผลเสียง หรือเครื่องนี้ยังไม่ได้โหลดโมดูล โปรดติดตั้งแล้วรีสตาร์ทเครื่อง</string>
+    <string name="eq_unavailable_offload">ใช้การประมวลผลเสียงไม่ได้ขณะที่เปิด Bluetooth A2DP hardware offload อยู่</string>
+    <string name="eq_unavailable_hook_old">ใช้การประมวลผลเสียงไม่ได้ เพราะโมดูลที่ทำงานอยู่ในโปรเซส Bluetooth เป็นเวอร์ชันเก่าที่ยังไม่รู้จักการประมวลผลเสียง โปรดปิด Bluetooth แล้วเปิดอีกครั้ง</string>
+    <string name="eq_unavailable_device">หูฟังคู่นี้ยังไม่ได้ลงทะเบียนสำหรับการประมวลผลเสียง สิ่งที่ตั้งค่าไว้ที่นี่จึงไม่มีผลกับเสียงที่ได้ยิน</string>
+
+    <string name="eq_device_register">ใช้การประมวลผลเสียงกับหูฟังคู่นี้</string>
+    <string name="eq_device_register_desc">เสียงจะหยุดชั่วขณะระหว่างที่กำลังใช้ค่า</string>
+    <string name="eq_device_confirm_on_title">เปิดการประมวลผลเสียงสำหรับหูฟังคู่นี้ไหม</string>
+    <string name="eq_device_confirm_off_title">ปิดการประมวลผลเสียงสำหรับหูฟังคู่นี้ไหม</string>
+    <string name="eq_device_confirm_body">บริการเสียงของเครื่องจะรีสตาร์ท เสียงที่กำลังเล่นอยู่ตอนนี้จึงเงียบไปสองสามวินาที การเชื่อมต่อ Bluetooth ยังคงอยู่ และการตั้งค่าอีควอไลเซอร์ของคุณจะยังคงอยู่ไม่ว่าผลจะเป็นอย่างไร</string>
+    <string name="eq_device_running">กำลังใช้ค่า เสียงจะกลับมาในอีกไม่กี่วินาที</string>
+    <string name="eq_device_result_on">หูฟังคู่นี้ลงทะเบียนสำหรับการประมวลผลเสียงแล้ว</string>
+    <string name="eq_device_result_off">หูฟังคู่นี้เลิกลงทะเบียนสำหรับการประมวลผลเสียงแล้ว</string>
+    <string name="eq_device_failed_no_module">ไม่มีการเปลี่ยนแปลง: ยังไม่ได้ติดตั้งโมดูลประมวลผลเสียง</string>
+    <string name="eq_device_failed_root">ไม่มีการเปลี่ยนแปลง: สิทธิ์ root ถูกปฏิเสธ หรือเครื่องนี้ไม่มีตัวจัดการสิทธิ์ root โปรดอนุญาต Codec Anchor ในตัวจัดการสิทธิ์ root ของคุณ แล้วลองใหม่</string>
+    <string name="eq_device_failed_script">ไม่มีการเปลี่ยนแปลง: สิทธิ์ root ผ่านแล้ว แต่โมดูลประมวลผลเสียงไม่ทำงาน ไฟล์ของโมดูลหายไปหรือเสียหาย โปรดติดตั้งโมดูลใหม่แล้วรีสตาร์ทเครื่อง</string>
+    <string name="eq_device_failed_timeout">ทำไม่เสร็จทันเวลาจึงถูกหยุดไว้ บริการเสียงอาจยังอยู่ระหว่างรีสตาร์ท โปรดตรวจสอบอีกครั้งในอีกสักครู่</string>
+    <string name="eq_device_failed_input">ไม่มีการเปลี่ยนแปลง: แอปส่งข้อมูลที่โมดูลอ่านไม่ได้ นี่เป็นข้อบกพร่องของแอป</string>
+    <string name="eq_device_failed_no_state">ไม่มีการเปลี่ยนแปลง: โมดูลประมวลผลเสียงยังไม่เริ่มทำงาน โปรดรีสตาร์ทเครื่องแล้วลองใหม่</string>
+    <string name="eq_device_failed_xml">สร้างไฟล์การตั้งค่าเสียงของเครื่องขึ้นใหม่ไม่ได้ จึงไม่มีการเปลี่ยนแปลง</string>
+    <string name="eq_device_failed_apply">นำการตั้งค่าเสียงที่สร้างใหม่ไปใช้ไม่ได้ จึงไม่มีการเปลี่ยนแปลง</string>
+    <string name="eq_device_failed_audioserver">บริการเสียงไม่กลับมาทำงาน โปรดรีสตาร์ทเครื่อง</string>
+    <string name="eq_device_failed_unknown">ล้มเหลวในแบบที่แอปเวอร์ชันนี้ยังไม่รู้จัก (รหัส %1$d)</string>
+
+    <string name="eq_delivery_other">ตอนนี้มีหูฟังคู่อื่นเชื่อมต่ออยู่ สิ่งที่เปลี่ยนที่นี่จึงยังไม่มีผลกับเสียง เมื่อเชื่อมต่อหูฟังคู่นี้แล้วจะถูกนำไปใช้</string>
+    <string name="eq_delivery_ambiguous">มีเอฟเฟกต์สำหรับหูฟังทำงานอยู่มากกว่าหนึ่งชุด และแอปแยกไม่ออกว่าชุดใดเป็นของหูฟังคู่นี้ จึงยังไม่ได้ส่งอะไรเลย โปรดยกเลิกการเชื่อมต่อหูฟังคู่อื่น แล้วเปลี่ยนอะไรบางอย่างที่นี่อีกครั้ง</string>
+    <string name="eq_delivery_slots_full">การตั้งค่านี้ไม่มีผลกับเสียง โปรดปิดการประมวลผลเสียงของหูฟังคู่นี้แล้วเปิดใหม่ หากยังไม่หาย โปรดรีสตาร์ทเครื่อง</string>
+    <string name="eq_delivery_failed_root">การตั้งค่านี้ไม่มีผลกับเสียง: สิทธิ์ root ถูกปฏิเสธ หรือเครื่องนี้ไม่มีตัวจัดการสิทธิ์ root โปรดอนุญาต Codec Anchor ในตัวจัดการสิทธิ์ root ของคุณ</string>
+    <string name="eq_delivery_failed_shm">การตั้งค่านี้ไม่มีผลกับเสียง: โมดูลประมวลผลเสียงไม่ได้ทำงานอยู่ โปรดรีสตาร์ทเครื่อง</string>
+    <string name="eq_delivery_failed_version">การตั้งค่านี้ไม่มีผลกับเสียง: แอปกับโมดูลประมวลผลเสียงเป็นคนละเวอร์ชัน โปรดอัปเดตทั้งสองให้เป็นเวอร์ชันเดียวกัน แล้วรีสตาร์ทเครื่อง</string>
+    <string name="eq_delivery_failed_rejected">การตั้งค่านี้ถูกปฏิเสธเพราะอยู่นอกช่วงที่รับได้ เสียงจึงไม่เปลี่ยน โปรดลดแบนด์ที่ความถี่สูงที่สุดลง หรือลบแบนด์นั้นออก</string>
+    <string name="eq_delivery_failed_timeout">การส่งการตั้งค่านี้ทำไม่เสร็จทันเวลาจึงถูกหยุดไว้</string>
+    <string name="eq_delivery_failed_input">การตั้งค่านี้ไม่มีผลกับเสียง: แอปสร้างคำขอไม่ถูกต้อง นี่เป็นข้อบกพร่องของแอป</string>
+    <string name="eq_delivery_failed_unknown">การส่งการตั้งค่านี้ล้มเหลวในแบบที่แอปเวอร์ชันนี้ยังไม่รู้จัก (รหัส %1$d)</string>
+
     <string name="tag_connected">เชื่อมต่อแล้ว</string>
     <string name="tag_disconnected">ไม่ได้เชื่อมต่อ</string>
     <string name="tag_active">กำลังเล่น</string>
@@ -75,7 +119,6 @@
     <string name="profile_no_target">ยังไม่ได้ตรึงค่าใด</string>
 
     <string name="section_backup">การสำรองข้อมูล</string>
-    <string name="backup_body">บันทึกการตั้งค่าทั้งหมดเป็นไฟล์ JSON</string>
     <string name="backup_export">ส่งออก</string>
     <string name="backup_import">นำเข้า</string>
     <string name="backup_confirm_title">นำเข้าข้อมูลสำรองไหม</string>
@@ -88,7 +131,6 @@
     <string name="msg_backup_failed">อ่านไฟล์ไม่ได้</string>
 
     <string name="detail_auto_apply">ใช้กับหูฟังนี้</string>
-    <string name="detail_auto_apply_desc">เปลี่ยนไปใช้การตั้งค่าด้านล่างทุกครั้งที่หูฟังเชื่อมต่อ</string>
     <string name="detail_current_codec">โคเดกปัจจุบัน: %1$s</string>
     <string name="ldac_bitrate_offload">ไม่สามารถอ่านบิตเรตที่ใช้จริงได้ เนื่องจากเปิดใช้งานการถ่ายโอนงานด้วยฮาร์ดแวร์ของ Bluetooth A2DP อยู่</string>
     <string name="detail_note">ผลล่าสุด: %1$s</string>
@@ -115,9 +157,7 @@
     <string name="adv_force">บังคับให้เปลี่ยน</string>
     <string name="adv_force_desc">ลองชุดค่าที่อุปกรณ์ไม่ได้ประกาศว่ารองรับด้วย</string>
     <string name="adv_via_sbc">เปลี่ยนผ่าน SBC</string>
-    <string name="adv_via_sbc_desc">ลดไปที่ SBC ก่อน แล้วจึงเปลี่ยนเป็นโคเดกที่เลือก</string>
     <string name="adv_auto_hd">เปิดเสียง HD อัตโนมัติ</string>
-    <string name="adv_auto_hd_desc">เปิดเสียง HD เมื่อระบบปิดไว้</string>
     <string name="adv_delay">รอก่อนใช้ค่า</string>
     <string name="adv_delay_desc">อุปกรณ์บางรุ่นไม่ยอมเปลี่ยนทันทีหลังเชื่อมต่อ</string>
     <string name="adv_retries">จำนวนครั้งที่ลอง</string>
@@ -130,4 +170,76 @@
     <string name="msg_apply_requested">ขอให้โมดูลใช้การตั้งค่าแล้ว</string>
     <string name="msg_apply_module_inactive">โมดูลไม่ทำงาน จึงส่งคำขอไม่ได้</string>
     <string name="msg_apply_not_connected">อุปกรณ์ไม่ได้เชื่อมต่อ จึงยังใช้ค่าไม่ได้</string>
+
+    <string name="msg_preset_exported">ส่งออกพรีเซ็ตแล้ว</string>
+    <string name="msg_preset_export_failed">เขียนไฟล์ไม่ได้</string>
+    <string name="msg_preset_imported">นำเข้าพรีเซ็ตแล้ว</string>
+    <string name="msg_preset_invalid">ไฟล์นั้นไม่ใช่พรีเซ็ตของ Codec Anchor</string>
+    <string name="msg_autoeq_imported">นำเข้าฟิลเตอร์ AutoEQ แล้ว</string>
+    <string name="msg_autoeq_failed">อ่านไฟล์ไม่ได้</string>
+    <string name="msg_autoeq_invalid">ไฟล์นั้นไม่ใช่ผลลัพธ์ของ AutoEQ</string>
+    <string name="msg_autoeq_corner_shelf">ไฟล์ AutoEQ นี้ใช้ฟิลเตอร์ LS หรือ HS ซึ่งไม่รองรับ</string>
+    <string name="msg_autoeq_no_bands">ไฟล์ AutoEQ นี้ไม่มีฟิลเตอร์</string>
+
+    <string name="section_eq">การประมวลผลเสียง</string>
+    <string name="eq_summary_on">เปิด</string>
+    <string name="eq_summary_off">ปิด</string>
+    <plurals name="eq_summary_bands">
+        <item quantity="other">%1$d แบนด์</item>
+    </plurals>
+    <string name="eq_summary_unavailable">ตอนนี้ยังใช้ไม่ได้ เปิดดูเพื่อทราบเหตุผล</string>
+    <string name="eq_enabled">อีควอไลเซอร์</string>
+    <string name="eq_latency_zero">ดีเลย์ที่เพิ่มขึ้น: 0 มิลลิวินาที</string>
+    <string name="eq_mode">วิธีปรับ</string>
+    <string name="eq_mode_graphic">กราฟิก</string>
+    <string name="eq_mode_graphic_desc">แต่ละแบนด์ตรึงอยู่ที่ความถี่ตายตัว</string>
+    <string name="eq_mode_parametric">พาราเมตริก</string>
+    <string name="eq_mode_parametric_desc">วางแต่ละแบนด์ได้ตามต้องการ</string>
+    <string name="eq_band_count">จำนวนแบนด์</string>
+    <string name="eq_band_count_desc">นี่ไม่ใช่การตั้งค่าเรื่องความเร็ว เครื่องทำงานหนักเท่ากันไม่ว่าจะมีกี่แบนด์</string>
+    <string name="eq_precision">ความแม่นยำของเส้นโค้ง</string>
+    <string name="eq_precision_standard">มาตรฐาน (แนะนำ)</string>
+    <string name="eq_precision_standard_desc">ระหว่างแบนด์ เส้นโค้งจะเบี่ยงเล็กน้อย</string>
+    <string name="eq_precision_high">ความแม่นยำสูง</string>
+    <string name="eq_precision_high_desc">ตามเส้นที่ลากผ่านแบนด์ได้ใกล้เคียงกว่า</string>
+    <string name="eq_precision_fallback">เสียงนี้กำลังเล่นด้วยความแม่นยำมาตรฐาน</string>
+    <string name="eq_band_none">ยังไม่มีแบนด์ เพิ่มสักอันหรือนำเข้าไฟล์ AutoEQ</string>
+    <string name="eq_band_add">เพิ่มแบนด์</string>
+    <string name="eq_band_remove">ลบแบนด์นี้</string>
+    <string name="eq_band_type">รูปแบบ</string>
+    <string name="eq_band_frequency">ความถี่</string>
+    <string name="eq_band_q">Q</string>
+    <string name="eq_band_gain">เกน</string>
+    <string name="eq_type_peaking">พีค</string>
+    <string name="eq_type_low_shelf">โลว์เชลฟ์</string>
+    <string name="eq_type_high_shelf">ไฮเชลฟ์</string>
+    <string name="eq_preamp">พรีแอมป์</string>
+    <string name="eq_round_title">เปลี่ยนเป็นกราฟิกไหม</string>
+    <string name="eq_round_body">ทุกแบนด์จะย้ายไปอยู่ที่ความถี่ตายตัวของอีควอไลเซอร์แบบกราฟิก และค่า Q จะถูกตั้งให้เข้ากัน รูปเส้นโค้งจะถูกรักษาไว้เท่าที่ทำได้ แต่ความถี่และค่า Q ที่มีอยู่ตอนนี้จะหายไป</string>
+    <string name="eq_round_quiet">ไม่ต้องถามอีก</string>
+    <string name="eq_reset">รีเซ็ตทั้งหมดเป็นศูนย์</string>
+    <string name="eq_reset_title">รีเซ็ตทั้งหมดเป็นศูนย์ไหม</string>
+    <string name="eq_reset_body">เกนทั้งหมดและพรีแอมป์ที่ตั้งเองจะกลับเป็น 0 เดซิเบล และอีควอไลเซอร์จะไม่เปลี่ยนเสียงอีก แบนด์ยังอยู่ที่เดิม แต่เส้นโค้งตอนนี้จะหายไปถ้ายังไม่ได้บันทึกเป็นพรีเซ็ต</string>
+
+    <string name="eq_slot_flat">แบน</string>
+    <string name="eq_slot_default">กำหนดเอง %1$d</string>
+    <string name="eq_slot_rename">เปลี่ยนชื่อ</string>
+    <string name="eq_slot_rename_title">ชื่อช่อง</string>
+    <string name="eq_slot_duplicate">ทำสำเนา</string>
+    <string name="eq_slot_save_preset">บันทึกเป็นพรีเซ็ต</string>
+    <string name="eq_slot_delete_title">ลบช่องไหม</string>
+    <string name="eq_slot_delete_body">ลบ \"%1$s\" ถ้ากำลังฟังช่องนี้อยู่ เสียงจะกลับไปเป็นแบน</string>
+
+    <string name="eq_presets">พรีเซ็ต</string>
+    <string name="eq_preset_empty">ยังไม่ได้บันทึกอะไรไว้ บันทึกได้จากเมนูของช่องที่ใช้อยู่</string>
+    <string name="eq_preset_save_title">ชื่อพรีเซ็ต</string>
+    <string name="eq_preset_name">ชื่อ</string>
+    <string name="eq_preset_apply">ใช้งาน</string>
+    <string name="eq_preset_export">ส่งออก</string>
+    <string name="eq_preset_import">นำเข้าพรีเซ็ต</string>
+    <string name="eq_preset_delete_title">ลบพรีเซ็ตไหม</string>
+    <string name="eq_preset_delete_body">ลบ \"%1$s\" ส่วนที่ตั้งไว้กับหูฟังแล้วยังคงอยู่เหมือนเดิม</string>
+    <string name="eq_autoeq_import">นำเข้า AutoEQ</string>
+    <string name="eq_autoeq_desc">อ่านไฟล์ ParametricEQ.txt หรือ GraphicEQ.txt ของ AutoEQ แล้วโหลดเป็นช่องใหม่</string>
+    <string name="eq_curve_desc">เส้นโค้งแสดงว่าการตั้งค่านี้เปลี่ยนเสียงอย่างไร</string>
 </resources>

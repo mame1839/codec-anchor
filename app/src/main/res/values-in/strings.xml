@@ -13,6 +13,8 @@
     <string name="action_resend">Kirim lagi</string>
     <string name="action_recheck">Periksa lagi</string>
     <string name="action_grant">Beri izin</string>
+    <string name="action_save">Simpan</string>
+    <string name="action_continue">Lanjutkan</string>
 
     <string name="value_keep">Jangan ubah</string>
     <string name="value_unknown">Tidak diketahui</string>
@@ -25,24 +27,31 @@
 
     <string name="cd_refresh_status">Periksa status lagi</string>
     <string name="cd_back">Kembali</string>
+    <string name="cd_eq_slot_menu">Opsi slot</string>
+    <string name="cd_eq_slot_add">Tambah slot</string>
     <string name="state_expanded">Diperluas</string>
     <string name="state_collapsed">Diciutkan</string>
 
+    <string name="tab_devices">Perangkat</string>
+    <string name="tab_settings">Setelan</string>
+    <string name="tab_status">Status</string>
+    <string name="cd_needs_attention">Perlu perhatian</string>
+
     <string name="section_general">Setelan umum</string>
     <string name="toggle_auto_apply">Terapkan setelan otomatis</string>
-    <string name="toggle_auto_apply_desc">Saat nonaktif, tidak ada perangkat yang diubah</string>
     <string name="toggle_enforce">Batalkan perubahan dari sistem atau aplikasi lain</string>
-    <string name="toggle_enforce_desc">Jika sistem atau aplikasi lain mengubah codec, kembalikan seperti yang dikunci</string>
     <string name="toggle_notify">Beri tahu saat codec berubah</string>
-    <string name="toggle_notify_desc">Menampilkan pesan singkat saat codec beralih</string>
     <string name="toggle_verbose">Tulis log terperinci</string>
-    <string name="toggle_verbose_desc">Untuk menelusuri perangkat yang tidak mau beralih</string>
+    <string name="toggle_free_offload_switch">Buka kunci sakelar offload perangkat keras A2DP di opsi developer</string>
 
     <string name="permission_title">Perlu izin Bluetooth</string>
     <string name="permission_body">Dengan izin ini, aplikasi dapat membaca perangkat yang disandingkan beserta namanya.</string>
     <string name="permission_denied">Izin diblokir. Berikan izin dari setelan sistem.</string>
     <string name="bluetooth_off">Bluetooth nonaktif. Aktifkan untuk melihat perangkat yang disandingkan.</string>
     <string name="config_broken">Setelan yang tersimpan tidak dapat dibaca, jadi tidak ada yang bisa diubah. Impor cadangan untuk memulai dari awal.</string>
+    <string name="offload_hint">Offload perangkat keras Bluetooth A2DP aktif, jadi ponsel tidak mengodekan LDAC sendiri dan bitrate tidak bisa mengikuti koneksi.</string>
+    <string name="offload_turn_off">Aktifkan \"Nonaktifkan offload perangkat keras Bluetooth A2DP\" di opsi developer.</string>
+    <string name="offload_hint_scope">Di perangkat ini sakelar tersebut tidak bisa digunakan. Tambahkan aplikasi Setelan ke cakupan modul, lalu buka opsi developer lagi untuk membukanya.</string>
 
     <string name="section_audio_devices">Perangkat audio</string>
     <string name="devices_empty">Tidak ada perangkat audio yang disandingkan.</string>
@@ -64,6 +73,41 @@
     <string name="module_inactive_hint">Setelan tetap dapat diubah dan disimpan. Setelan berlaku begitu modul mulai berjalan.</string>
     <string name="msg_config_pushed">Setelan dikirim lagi</string>
 
+    <string name="eq_unavailable_not_registered">Pemrosesan audio tidak tersedia: modul pemrosesan audio belum terpasang, atau ponsel ini belum memuatnya. Pasang modulnya, lalu mulai ulang ponsel.</string>
+    <string name="eq_unavailable_offload">Pemrosesan audio tidak tersedia selama offload perangkat keras Bluetooth A2DP aktif.</string>
+    <string name="eq_unavailable_hook_old">Pemrosesan audio tidak tersedia: modul yang berjalan di proses Bluetooth adalah versi lama yang belum mengenalnya. Matikan Bluetooth, lalu nyalakan lagi.</string>
+    <string name="eq_unavailable_device">Earphone ini belum terdaftar untuk pemrosesan audio, jadi apa pun yang disetel di sini tidak berpengaruh pada suara.</string>
+
+    <string name="eq_device_register">Gunakan pemrosesan audio dengan earphone ini</string>
+    <string name="eq_device_register_desc">Suara terhenti sebentar saat diterapkan.</string>
+    <string name="eq_device_confirm_on_title">Aktifkan pemrosesan audio untuk earphone ini?</string>
+    <string name="eq_device_confirm_off_title">Nonaktifkan pemrosesan audio untuk earphone ini?</string>
+    <string name="eq_device_confirm_body">Layanan audio ponsel dimulai ulang, jadi apa pun yang sedang diputar akan senyap selama beberapa detik. Bluetooth tetap tersambung, dan setelan ekualiser Anda tetap tersimpan apa pun hasilnya.</string>
+    <string name="eq_device_running">Menerapkan. Suara akan kembali dalam beberapa detik.</string>
+    <string name="eq_device_result_on">Earphone ini terdaftar untuk pemrosesan audio.</string>
+    <string name="eq_device_result_off">Earphone ini tidak lagi terdaftar untuk pemrosesan audio.</string>
+    <string name="eq_device_failed_no_module">Tidak ada yang diubah: modul pemrosesan audio belum terpasang.</string>
+    <string name="eq_device_failed_root">Tidak ada yang diubah: akses root ditolak, atau ponsel ini tidak punya pengelola root. Izinkan Codec Anchor di pengelola root Anda, lalu coba lagi.</string>
+    <string name="eq_device_failed_script">Tidak ada yang diubah: akses root berhasil, tetapi modul pemrosesan audio gagal berjalan. Berkasnya hilang atau rusak. Pasang ulang modul, lalu mulai ulang ponsel.</string>
+    <string name="eq_device_failed_timeout">Tidak selesai tepat waktu sehingga dihentikan. Layanan audio mungkin masih dimulai ulang. Periksa lagi sesaat lagi.</string>
+    <string name="eq_device_failed_input">Tidak ada yang diubah: aplikasi mengirim sesuatu yang tidak dapat dibaca modul. Ini kesalahan pada aplikasi.</string>
+    <string name="eq_device_failed_no_state">Tidak ada yang diubah: modul pemrosesan audio belum berjalan. Mulai ulang ponsel, lalu coba lagi.</string>
+    <string name="eq_device_failed_xml">Berkas setelan audio ponsel tidak dapat dibuat ulang, jadi tidak ada yang diubah.</string>
+    <string name="eq_device_failed_apply">Setelan audio yang dibuat ulang tidak dapat diterapkan, jadi tidak ada yang diubah.</string>
+    <string name="eq_device_failed_audioserver">Layanan audio tidak kembali berjalan. Mulai ulang ponsel.</string>
+    <string name="eq_device_failed_unknown">Gagal dengan cara yang tidak dikenali oleh versi aplikasi ini (kode %1$d).</string>
+
+    <string name="eq_delivery_other">Saat ini earphone lain sedang tersambung, jadi apa yang Anda ubah di sini belum berpengaruh pada suara. Sambungkan earphone ini, maka setelan akan diterapkan.</string>
+    <string name="eq_delivery_ambiguous">Ada lebih dari satu efek earphone yang berjalan, dan aplikasi tidak dapat membedakan mana yang milik earphone ini, jadi tidak ada yang dikirim. Putuskan sambungan earphone yang lain, lalu ubah lagi sesuatu di sini.</string>
+    <string name="eq_delivery_slots_full">Setelan ini tidak berpengaruh pada suara. Matikan pemrosesan audio untuk earphone ini lalu nyalakan lagi; jika belum teratasi, mulai ulang ponsel.</string>
+    <string name="eq_delivery_failed_root">Setelan ini tidak berpengaruh pada suara: akses root ditolak, atau ponsel ini tidak punya pengelola root. Izinkan Codec Anchor di pengelola root Anda.</string>
+    <string name="eq_delivery_failed_shm">Setelan ini tidak berpengaruh pada suara: modul pemrosesan audio tidak berjalan. Mulai ulang ponsel.</string>
+    <string name="eq_delivery_failed_version">Setelan ini tidak berpengaruh pada suara: aplikasi dan modul pemrosesan audio berbeda versi. Perbarui keduanya ke versi yang sama, lalu mulai ulang ponsel.</string>
+    <string name="eq_delivery_failed_rejected">Setelan ini ditolak karena di luar rentang, jadi suara tidak berubah. Turunkan atau hapus pita dengan frekuensi tertinggi.</string>
+    <string name="eq_delivery_failed_timeout">Pengiriman setelan ini tidak selesai tepat waktu sehingga dihentikan.</string>
+    <string name="eq_delivery_failed_input">Setelan ini tidak berpengaruh pada suara: aplikasi salah menyusun permintaan. Ini kesalahan pada aplikasi.</string>
+    <string name="eq_delivery_failed_unknown">Pengiriman setelan ini gagal dengan cara yang tidak dikenali oleh versi aplikasi ini (kode %1$d).</string>
+
     <string name="tag_connected">Tersambung</string>
     <string name="tag_disconnected">Tidak tersambung</string>
     <string name="tag_active">Memutar</string>
@@ -75,7 +119,6 @@
     <string name="profile_no_target">Belum ada yang dikunci</string>
 
     <string name="section_backup">Pencadangan</string>
-    <string name="backup_body">Menyimpan seluruh setelan sebagai berkas JSON.</string>
     <string name="backup_export">Ekspor</string>
     <string name="backup_import">Impor</string>
     <string name="backup_confirm_title">Impor cadangan?</string>
@@ -88,7 +131,6 @@
     <string name="msg_backup_failed">Berkas tidak dapat dibaca</string>
 
     <string name="detail_auto_apply">Terapkan ke earphone ini</string>
-    <string name="detail_auto_apply_desc">Beralih ke setelan di bawah setiap kali earphone tersambung</string>
     <string name="detail_current_codec">Codec saat ini: %1$s</string>
     <string name="ldac_bitrate_offload">Bitrate efektif tidak dapat dibaca karena offload perangkat keras Bluetooth A2DP aktif.</string>
     <string name="detail_note">Hasil terakhir: %1$s</string>
@@ -115,9 +157,7 @@
     <string name="adv_force">Paksa peralihan</string>
     <string name="adv_force_desc">Coba juga kombinasi yang tidak diumumkan perangkat</string>
     <string name="adv_via_sbc">Beralih melalui SBC</string>
-    <string name="adv_via_sbc_desc">Turun ke SBC dulu, lalu pindah ke codec yang Anda pilih</string>
     <string name="adv_auto_hd">Aktifkan audio HD otomatis</string>
-    <string name="adv_auto_hd_desc">Mengaktifkan audio HD saat sistem mematikannya</string>
     <string name="adv_delay">Tunggu sebelum menerapkan</string>
     <string name="adv_delay_desc">Sebagian perangkat menolak beralih tepat setelah tersambung</string>
     <string name="adv_retries">Jumlah percobaan</string>
@@ -130,4 +170,76 @@
     <string name="msg_apply_requested">Modul diminta menerapkan setelan</string>
     <string name="msg_apply_module_inactive">Modul tidak berjalan, jadi permintaan tidak dapat dikirim</string>
     <string name="msg_apply_not_connected">Perangkat tidak tersambung, jadi tidak ada yang bisa diterapkan sekarang</string>
+
+    <string name="msg_preset_exported">Preset diekspor</string>
+    <string name="msg_preset_export_failed">Berkas tidak dapat ditulis</string>
+    <string name="msg_preset_imported">Preset diimpor</string>
+    <string name="msg_preset_invalid">Berkas itu bukan preset Codec Anchor</string>
+    <string name="msg_autoeq_imported">Filter AutoEQ diimpor</string>
+    <string name="msg_autoeq_failed">Berkas tidak dapat dibaca</string>
+    <string name="msg_autoeq_invalid">Berkas itu bukan hasil AutoEQ</string>
+    <string name="msg_autoeq_corner_shelf">Berkas AutoEQ itu memakai filter LS atau HS yang tidak didukung</string>
+    <string name="msg_autoeq_no_bands">Berkas AutoEQ itu tidak punya filter</string>
+
+    <string name="section_eq">Pengolahan suara</string>
+    <string name="eq_summary_on">Aktif</string>
+    <string name="eq_summary_off">Nonaktif</string>
+    <plurals name="eq_summary_bands">
+        <item quantity="other">%1$d pita</item>
+    </plurals>
+    <string name="eq_summary_unavailable">Belum bisa dipakai sekarang. Buka untuk melihat alasannya.</string>
+    <string name="eq_enabled">Ekualiser</string>
+    <string name="eq_latency_zero">Tundaan tambahan: 0 ms</string>
+    <string name="eq_mode">Cara menyunting</string>
+    <string name="eq_mode_graphic">Grafis</string>
+    <string name="eq_mode_graphic_desc">Setiap pita berada pada frekuensi tetap</string>
+    <string name="eq_mode_parametric">Parametrik</string>
+    <string name="eq_mode_parametric_desc">Tiap pita bisa ditaruh sesuka Anda</string>
+    <string name="eq_band_count">Jumlah pita</string>
+    <string name="eq_band_count_desc">Ini bukan setelan kecepatan: ponsel bekerja sama beratnya berapa pun jumlah pitanya.</string>
+    <string name="eq_precision">Akurasi kurva</string>
+    <string name="eq_precision_standard">Standar (disarankan)</string>
+    <string name="eq_precision_standard_desc">Di antara pita, kurva sedikit menyimpang</string>
+    <string name="eq_precision_high">Akurasi tinggi</string>
+    <string name="eq_precision_high_desc">Lebih dekat mengikuti garis yang menghubungkan pita</string>
+    <string name="eq_precision_fallback">Audio ini diputar dengan akurasi standar.</string>
+    <string name="eq_band_none">Belum ada pita. Tambahkan satu, atau impor berkas AutoEQ.</string>
+    <string name="eq_band_add">Tambah pita</string>
+    <string name="eq_band_remove">Hapus pita ini</string>
+    <string name="eq_band_type">Bentuk</string>
+    <string name="eq_band_frequency">Frekuensi</string>
+    <string name="eq_band_q">Q</string>
+    <string name="eq_band_gain">Penguatan</string>
+    <string name="eq_type_peaking">Puncak</string>
+    <string name="eq_type_low_shelf">Shelf rendah</string>
+    <string name="eq_type_high_shelf">Shelf tinggi</string>
+    <string name="eq_preamp">Preamp</string>
+    <string name="eq_round_title">Beralih ke grafis?</string>
+    <string name="eq_round_body">Setiap pita pindah ke salah satu frekuensi tetap milik ekualiser grafis dan nilai Q-nya disesuaikan. Bentuk kurva dipertahankan sebisa mungkin, tetapi frekuensi dan nilai Q yang sekarang akan hilang.</string>
+    <string name="eq_round_quiet">Jangan tanya lagi</string>
+    <string name="eq_reset">Nolkan semuanya</string>
+    <string name="eq_reset_title">Nolkan semuanya?</string>
+    <string name="eq_reset_body">Semua penguatan dan preamp manual kembali ke 0 dB, dan ekualiser berhenti mengubah suara. Pita tetap di tempatnya, tetapi kurva yang sekarang akan hilang jika belum disimpan sebagai prasetel.</string>
+
+    <string name="eq_slot_flat">Datar</string>
+    <string name="eq_slot_default">Kustom %1$d</string>
+    <string name="eq_slot_rename">Ganti nama</string>
+    <string name="eq_slot_rename_title">Nama slot</string>
+    <string name="eq_slot_duplicate">Duplikat</string>
+    <string name="eq_slot_save_preset">Simpan sebagai prasetel</string>
+    <string name="eq_slot_delete_title">Hapus slot?</string>
+    <string name="eq_slot_delete_body">Menghapus \"%1$s\". Kalau itu yang sedang Anda dengar, suaranya kembali ke Datar.</string>
+
+    <string name="eq_presets">Prasetel</string>
+    <string name="eq_preset_empty">Belum ada yang disimpan. Anda bisa menyimpannya dari menu slot yang sedang dipakai.</string>
+    <string name="eq_preset_save_title">Nama prasetel</string>
+    <string name="eq_preset_name">Nama</string>
+    <string name="eq_preset_apply">Terapkan</string>
+    <string name="eq_preset_export">Ekspor</string>
+    <string name="eq_preset_import">Impor prasetel</string>
+    <string name="eq_preset_delete_title">Hapus prasetel?</string>
+    <string name="eq_preset_delete_body">Menghapus \"%1$s\". Yang sudah tersetel di earphone Anda tetap seperti apa adanya.</string>
+    <string name="eq_autoeq_import">Impor AutoEQ</string>
+    <string name="eq_autoeq_desc">Membaca ParametricEQ.txt atau GraphicEQ.txt dari AutoEQ dan memuatnya sebagai slot baru.</string>
+    <string name="eq_curve_desc">Kurva yang menunjukkan cara setelan ini mengubah suara</string>
 </resources>

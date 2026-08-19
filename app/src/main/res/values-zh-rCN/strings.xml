@@ -13,6 +13,8 @@
     <string name="action_resend">重新发送</string>
     <string name="action_recheck">重新检查</string>
     <string name="action_grant">授予权限</string>
+    <string name="action_save">保存</string>
+    <string name="action_continue">继续</string>
 
     <string name="value_keep">保持不变</string>
     <string name="value_unknown">未知</string>
@@ -25,24 +27,31 @@
 
     <string name="cd_refresh_status">重新检查状态</string>
     <string name="cd_back">返回</string>
+    <string name="cd_eq_slot_menu">方案选项</string>
+    <string name="cd_eq_slot_add">添加方案</string>
     <string name="state_expanded">已展开</string>
     <string name="state_collapsed">已收起</string>
 
+    <string name="tab_devices">设备</string>
+    <string name="tab_settings">设置</string>
+    <string name="tab_status">状态</string>
+    <string name="cd_needs_attention">需要处理</string>
+
     <string name="section_general">通用设置</string>
     <string name="toggle_auto_apply">自动应用设置</string>
-    <string name="toggle_auto_apply_desc">关闭后，任何设备都不会被修改</string>
     <string name="toggle_enforce">覆盖其他应用的修改</string>
-    <string name="toggle_enforce_desc">系统或其他应用改变编解码器时，切换回你设定的内容</string>
     <string name="toggle_notify">编解码器变化时提示</string>
-    <string name="toggle_notify_desc">切换完成后显示一条简短提示</string>
     <string name="toggle_verbose">输出详细日志</string>
-    <string name="toggle_verbose_desc">用于排查无法切换的设备</string>
+    <string name="toggle_free_offload_switch">解除开发者选项中 A2DP 硬件卸载开关的锁定</string>
 
     <string name="permission_title">需要蓝牙权限</string>
     <string name="permission_body">授予后即可读取已配对的设备及其名称。</string>
     <string name="permission_denied">权限已被阻止，请在系统设置中授予。</string>
     <string name="bluetooth_off">蓝牙已关闭。开启后即可看到已配对的设备。</string>
     <string name="config_broken">无法读取已保存的设置，因此无法编辑任何内容。导入备份即可重新开始。</string>
+    <string name="offload_hint">蓝牙 A2DP 硬件卸载已启用，手机不会自行编码 LDAC，码率也无法随链路变化。</string>
+    <string name="offload_turn_off">请在开发者选项中打开“停用蓝牙 A2DP 硬件卸载”。</string>
+    <string name="offload_hint_scope">本机上该开关无法操作。把“设置”应用加入模块的作用域，再重新打开开发者选项即可解除。</string>
 
     <string name="section_audio_devices">音频设备</string>
     <string name="devices_empty">未找到已配对的音频设备。</string>
@@ -64,6 +73,41 @@
     <string name="module_inactive_hint">此时仍可编辑并保存设置，模块开始运行后会生效。</string>
     <string name="msg_config_pushed">已重新发送设置</string>
 
+    <string name="eq_unavailable_not_registered">无法使用音频处理：尚未安装音频处理模块，或本机还没有加载它。请先安装，然后重启手机。</string>
+    <string name="eq_unavailable_offload">蓝牙 A2DP 硬件卸载开启期间无法使用音频处理。</string>
+    <string name="eq_unavailable_hook_old">无法使用音频处理：蓝牙进程中运行的模块是不认识音频处理的旧版本。请关闭蓝牙后再重新开启。</string>
+    <string name="eq_unavailable_device">这副耳机还没有注册音频处理，因此这里设置的任何内容都不会影响声音。</string>
+
+    <string name="eq_device_register">对这副耳机使用音频处理</string>
+    <string name="eq_device_register_desc">应用期间声音会中断片刻。</string>
+    <string name="eq_device_confirm_on_title">要为这副耳机开启音频处理吗</string>
+    <string name="eq_device_confirm_off_title">要为这副耳机关闭音频处理吗</string>
+    <string name="eq_device_confirm_body">手机的音频服务会重启，此刻正在播放的声音会中断几秒钟。蓝牙连接不受影响，均衡器设置无论如何都会保留。</string>
+    <string name="eq_device_running">正在应用，几秒后声音会恢复。</string>
+    <string name="eq_device_result_on">这副耳机已注册音频处理。</string>
+    <string name="eq_device_result_off">这副耳机已取消注册音频处理。</string>
+    <string name="eq_device_failed_no_module">未做任何更改：尚未安装音频处理模块。</string>
+    <string name="eq_device_failed_root">未做任何更改：root 权限被拒绝，或者本机没有 root 管理器。请在你的 root 管理器中允许 Codec Anchor，然后重试。</string>
+    <string name="eq_device_failed_script">未做任何更改：root 权限已通过，但音频处理模块没有运行。它的文件缺失或已损坏。请重新安装模块，然后重启手机。</string>
+    <string name="eq_device_failed_timeout">未能按时完成，已被中止。音频服务可能仍在重启。请稍后再次检查。</string>
+    <string name="eq_device_failed_input">未做任何更改：应用发送的内容模块无法读取。这是应用的问题。</string>
+    <string name="eq_device_failed_no_state">未做任何更改：音频处理模块尚未启动。请重启手机后重试。</string>
+    <string name="eq_device_failed_xml">无法重新生成手机的音频设置文件，因此未做任何更改。</string>
+    <string name="eq_device_failed_apply">无法应用重新生成的音频设置，因此未做任何更改。</string>
+    <string name="eq_device_failed_audioserver">音频服务未能恢复。请重启手机。</string>
+    <string name="eq_device_failed_unknown">失败原因是当前版本应用无法识别的情况（代码 %1$d）。</string>
+
+    <string name="eq_delivery_other">现在连接的是另一副耳机，所以这里的改动还不会影响声音。连接这副耳机后即可生效。</string>
+    <string name="eq_delivery_ambiguous">有多个耳机音效正在运行，应用无法分辨哪一个属于这副耳机，因此没有发送任何内容。请断开另一副耳机，然后在这里重新改动一次。</string>
+    <string name="eq_delivery_slots_full">这些设置没有影响声音。请先关闭这副耳机的音频处理，再重新打开；如果仍未解决，请重启手机。</string>
+    <string name="eq_delivery_failed_root">这些设置没有影响声音：root 权限被拒绝，或者本机没有 root 管理器。请在你的 root 管理器中允许 Codec Anchor。</string>
+    <string name="eq_delivery_failed_shm">这些设置没有影响声音：音频处理模块没有在运行。请重启手机。</string>
+    <string name="eq_delivery_failed_version">这些设置没有影响声音：应用与音频处理模块的版本不一致。请把两者更新到同一版本，然后重启手机。</string>
+    <string name="eq_delivery_failed_rejected">这些设置因超出范围被拒绝，声音没有变化。请调低或删除频率最高的频段。</string>
+    <string name="eq_delivery_failed_timeout">发送这些设置未能按时完成，已被中止。</string>
+    <string name="eq_delivery_failed_input">这些设置没有影响声音：应用构建请求时出错。这是应用的问题。</string>
+    <string name="eq_delivery_failed_unknown">发送这些设置时失败，原因是当前版本应用无法识别的情况（代码 %1$d）。</string>
+
     <string name="tag_connected">已连接</string>
     <string name="tag_disconnected">未连接</string>
     <string name="tag_active">正在播放</string>
@@ -75,7 +119,6 @@
     <string name="profile_no_target">还没有锁定任何项目</string>
 
     <string name="section_backup">备份</string>
-    <string name="backup_body">把所有设置导出为 JSON 文件。</string>
     <string name="backup_export">导出</string>
     <string name="backup_import">导入</string>
     <string name="backup_confirm_title">要导入备份吗</string>
@@ -88,7 +131,6 @@
     <string name="msg_backup_failed">无法读取文件</string>
 
     <string name="detail_auto_apply">对这副耳机自动应用</string>
-    <string name="detail_auto_apply_desc">连接时切换为下面的设置</string>
     <string name="detail_current_codec">当前编解码器：%1$s</string>
     <string name="ldac_bitrate_offload">由于已启用蓝牙 A2DP 硬件卸载，无法读取实际码率。</string>
     <string name="detail_note">最近的结果：%1$s</string>
@@ -115,9 +157,7 @@
     <string name="adv_force">强制应用</string>
     <string name="adv_force_desc">也尝试设备没有声明支持的组合</string>
     <string name="adv_via_sbc">经由 SBC 切换</string>
-    <string name="adv_via_sbc_desc">先降到 SBC，再切换到你选择的编解码器</string>
     <string name="adv_auto_hd">自动开启高清音频</string>
-    <string name="adv_auto_hd_desc">系统关闭了高清音频时自动开启</string>
     <string name="adv_delay">应用前的等待时间</string>
     <string name="adv_delay_desc">有些设备刚连接时不接受切换</string>
     <string name="adv_retries">重试次数</string>
@@ -130,4 +170,76 @@
     <string name="msg_apply_requested">已请求应用设置</string>
     <string name="msg_apply_module_inactive">模块没有运行，请求无法送达</string>
     <string name="msg_apply_not_connected">设备未连接，现在无法应用</string>
+
+    <string name="msg_preset_exported">已导出预设</string>
+    <string name="msg_preset_export_failed">无法写入文件</string>
+    <string name="msg_preset_imported">已导入预设</string>
+    <string name="msg_preset_invalid">这不是 Codec Anchor 的预设文件</string>
+    <string name="msg_autoeq_imported">已导入 AutoEQ 滤波器</string>
+    <string name="msg_autoeq_failed">无法读取文件</string>
+    <string name="msg_autoeq_invalid">这不是 AutoEQ 的结果文件</string>
+    <string name="msg_autoeq_corner_shelf">该 AutoEQ 文件使用了不支持的 LS 或 HS 滤波器</string>
+    <string name="msg_autoeq_no_bands">该 AutoEQ 文件没有滤波器</string>
+
+    <string name="section_eq">音频处理</string>
+    <string name="eq_summary_on">已开启</string>
+    <string name="eq_summary_off">已关闭</string>
+    <plurals name="eq_summary_bands">
+        <item quantity="other">%1$d 个频段</item>
+    </plurals>
+    <string name="eq_summary_unavailable">目前无法使用。打开可查看原因。</string>
+    <string name="eq_enabled">均衡器</string>
+    <string name="eq_latency_zero">额外延迟：0 ms</string>
+    <string name="eq_mode">调整方式</string>
+    <string name="eq_mode_graphic">图示</string>
+    <string name="eq_mode_graphic_desc">每个频段固定在特定频率上</string>
+    <string name="eq_mode_parametric">参数</string>
+    <string name="eq_mode_parametric_desc">频段可以放在任意位置</string>
+    <string name="eq_band_count">频段数量</string>
+    <string name="eq_band_count_desc">这不是性能选项：无论多少个频段，手机的运算量都相同。</string>
+    <string name="eq_precision">曲线精度</string>
+    <string name="eq_precision_standard">标准（推荐）</string>
+    <string name="eq_precision_standard_desc">频段之间的曲线会略有偏差</string>
+    <string name="eq_precision_high">高精度</string>
+    <string name="eq_precision_high_desc">更贴近连接各频段的折线</string>
+    <string name="eq_precision_fallback">当前音源以标准精度播放。</string>
+    <string name="eq_band_none">还没有频段。请添加一个，或读取 AutoEQ 文件。</string>
+    <string name="eq_band_add">添加频段</string>
+    <string name="eq_band_remove">删除此频段</string>
+    <string name="eq_band_type">形状</string>
+    <string name="eq_band_frequency">频率</string>
+    <string name="eq_band_q">Q</string>
+    <string name="eq_band_gain">增益</string>
+    <string name="eq_type_peaking">钟形</string>
+    <string name="eq_type_low_shelf">低频搁架</string>
+    <string name="eq_type_high_shelf">高频搁架</string>
+    <string name="eq_preamp">前级增益</string>
+    <string name="eq_round_title">要切换到图示均衡器吗</string>
+    <string name="eq_round_body">每个频段都会移到图示均衡器的固定频率上，Q 值也会随之调整。曲线的形状会尽量保留，但现在的频率和 Q 值会丢失。</string>
+    <string name="eq_round_quiet">不再提示</string>
+    <string name="eq_reset">全部归零</string>
+    <string name="eq_reset_title">要全部归零吗</string>
+    <string name="eq_reset_body">所有增益和手动前级增益都会回到 0 dB，均衡器不再改变声音。频段会留在原处，但如果没有存成预设，现在的曲线将无法找回。</string>
+
+    <string name="eq_slot_flat">平直</string>
+    <string name="eq_slot_default">自定义 %1$d</string>
+    <string name="eq_slot_rename">重命名</string>
+    <string name="eq_slot_rename_title">方案名称</string>
+    <string name="eq_slot_duplicate">复制</string>
+    <string name="eq_slot_save_preset">保存为预设</string>
+    <string name="eq_slot_delete_title">要删除方案吗</string>
+    <string name="eq_slot_delete_body">删除“%1$s”。如果正在听的就是它，声音会回到平直。</string>
+
+    <string name="eq_presets">预设</string>
+    <string name="eq_preset_empty">还没有保存任何预设。可以从正在使用的方案的菜单中保存。</string>
+    <string name="eq_preset_save_title">预设名称</string>
+    <string name="eq_preset_name">名称</string>
+    <string name="eq_preset_apply">应用</string>
+    <string name="eq_preset_export">导出</string>
+    <string name="eq_preset_import">读取预设</string>
+    <string name="eq_preset_delete_title">要删除预设吗</string>
+    <string name="eq_preset_delete_body">删除“%1$s”。耳机上已经设置的内容保持不变。</string>
+    <string name="eq_autoeq_import">读取 AutoEQ</string>
+    <string name="eq_autoeq_desc">读取 AutoEQ 的 ParametricEQ.txt 或 GraphicEQ.txt，并载入为新的方案。</string>
+    <string name="eq_curve_desc">显示这些设置如何改变声音的曲线</string>
 </resources>

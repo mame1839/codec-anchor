@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -38,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -47,6 +50,17 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.mame1839.codecanchor.R
+
+@Composable
+fun screenPadding(inner: PaddingValues): PaddingValues {
+    val layoutDirection = LocalLayoutDirection.current
+    return PaddingValues(
+        start = inner.calculateStartPadding(layoutDirection) + 16.dp,
+        end = inner.calculateEndPadding(layoutDirection) + 16.dp,
+        top = inner.calculateTopPadding() + 8.dp,
+        bottom = inner.calculateBottomPadding() + 24.dp,
+    )
+}
 
 @Composable
 fun SettingsCard(
@@ -128,6 +142,7 @@ fun <T> ChoiceRow(
     onSelect: (T) -> Unit,
     modifier: Modifier = Modifier,
     description: String? = null,
+    optionDescriptions: Map<T, String> = emptyMap(),
     enabled: Boolean = true,
 ) {
     var open by rememberSaveable { mutableStateOf(false) }
@@ -187,7 +202,16 @@ fun <T> ChoiceRow(
                         ) {
                             RadioButton(selected = value == selected, onClick = null)
                             Spacer(Modifier.width(8.dp))
-                            Text(label, style = MaterialTheme.typography.bodyLarge)
+                            Column {
+                                Text(label, style = MaterialTheme.typography.bodyLarge)
+                                optionDescriptions[value]?.let {
+                                    Text(
+                                        text = it,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -195,6 +219,47 @@ fun <T> ChoiceRow(
             confirmButton = {
                 TextButton(onClick = { open = false }) { Text(stringResource(R.string.action_close)) }
             },
+        )
+    }
+}
+
+@Composable
+fun NavigationRow(
+    title: String,
+    value: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    description: String? = null,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.small)
+            .clickable(onClick = onClick)
+            .semantics { role = Role.Button }
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
+            if (description != null) {
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        Spacer(Modifier.width(12.dp))
+        Icon(
+            painter = painterResource(R.drawable.ic_chevron_right),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }

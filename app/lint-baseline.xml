@@ -24,17 +24,6 @@
     </issue>
 
     <issue
-        id="UnspecifiedRegisterReceiverFlag"
-        message="`receiver` is missing `RECEIVER_EXPORTED` or `RECEIVER_NOT_EXPORTED` flag for unprotected broadcasts registered for an IntentFilter that cannot be inspected by lint"
-        errorLine1="            ctx.registerReceiver(receiver, filter, permission, worker)"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/io/github/mame1839/codecanchor/xposed/A2dpHook.kt"
-            line="253"
-            column="13"/>
-    </issue>
-
-    <issue
         id="LocalContextResourcesRead"
         message="Reading Resources using LocalContext.current.resources"
         errorLine1="    val resources = LocalContext.current.resources"
@@ -62,8 +51,8 @@
         errorLine1="    val resources = LocalContext.current.resources"
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/io/github/mame1839/codecanchor/ui/DeviceListScreen.kt"
-            line="443"
+            file="src/main/java/io/github/mame1839/codecanchor/ui/DeviceListTab.kt"
+            line="173"
             column="21"/>
     </issue>
 

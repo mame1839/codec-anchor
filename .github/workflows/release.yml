@@ -7,13 +7,11 @@ on:
 permissions:
   contents: read
 
-# タグを 2 本まとめて push しても Release の書き込みが並走しないよう直列化する。
 concurrency:
   group: release
   cancel-in-progress: false
 
 env:
-  # 公開する APK がリリース鍵で署名されていることを確認するための証明書 SHA-256。
   RELEASE_CERT_SHA256: d797d242717368f2053ee3fc63c192f96edf117206d40b9bed1e7bf04bf05b36
 
 jobs:
@@ -29,8 +27,9 @@ jobs:
       - name: タグと版を決める
         id: version
         run: |
-          if [[ ! "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "タグ名が v<major>.<minor>.<patch> ではない: $GITHUB_REF_NAME" >&2
+          . module/version.sh
+          if [[ ! "$GITHUB_REF_NAME" =~ ^${CA_APP_TAG_PREFIX}[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "タグ名が ${CA_APP_TAG_PREFIX}<major>.<minor>.<patch> ではない: $GITHUB_REF_NAME" >&2
             exit 1
           fi
           git fetch --no-tags --force origin main:refs/remotes/origin/main
@@ -38,10 +37,9 @@ jobs:
             echo "このタグは main に含まれないコミットを指している。" >&2
             exit 1
           fi
-          version="${GITHUB_REF_NAME#v}"
-          IFS=. read -r major minor patch <<< "$version"
+          version="${GITHUB_REF_NAME#"$CA_APP_TAG_PREFIX"}"
           echo "name=$version" >> "$GITHUB_OUTPUT"
-          echo "code=$((10#$major * 10000 + 10#$minor * 100 + 10#$patch))" >> "$GITHUB_OUTPUT"
+          echo "code=$(ca_version_code "$version")" >> "$GITHUB_OUTPUT"
 
       - name: 署名鍵を復元
         env:
@@ -102,7 +100,8 @@ jobs:
           cp app/build/outputs/apk/release/app-release.apk "dist/CodecAnchor-${GITHUB_REF_NAME}.apk"
           ls -la dist
 
-      - uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
+      - uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228
         with:
           files: dist/*.apk
+          fail_on_unmatched_files: true
           generate_release_notes: true

@@ -5,8 +5,6 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-// 署名鍵は keystore/release.jks (git 管理外)。CI では secret から復元する。
-// 鍵が無い環境では release も自動的に未署名ビルドになる。
 val keystoreFile = rootProject.file("keystore/release.jks")
 val keystoreProps = Properties().apply {
     val f = rootProject.file("keystore/release.properties")
@@ -16,8 +14,6 @@ val keystoreProps = Properties().apply {
 fun secret(name: String, default: String = ""): String =
     keystoreProps.getProperty(name) ?: System.getenv(name) ?: default
 
-// 版は release.yml がタグから -PversionName / -PversionCode で渡す。既定値は debug とローカル用なので、
-// プロパティが渡されているのに読めないときは既定値に落とさず失敗させる。
 val versionNameProp = (findProperty("versionName") as String?)?.trim()
 val versionCodeProp = (findProperty("versionCode") as String?)?.trim()
 if (versionNameProp != null && versionNameProp.isEmpty()) {
@@ -27,15 +23,15 @@ if (versionCodeProp != null && versionCodeProp.toIntOrNull() == null) {
     error("versionCode プロパティが整数でない: \"$versionCodeProp\"")
 }
 
-// プロパティが無いローカルビルドは直近のタグに合わせる。literal を書くとタグと二重管理になり、
-// 実機に入れたビルドの版が古いまま表示される。
-val latestTag: String = providers.exec {
-    commandLine("git", "describe", "--tags", "--abbrev=0")
+val latestTag: String? = providers.exec {
+    commandLine("git", "describe", "--tags", "--abbrev=0", "--match", "v[0-9]*")
     isIgnoreExitValue = true
 }.standardOutput.asText.map { it.trim().removePrefix("v") }.orNull
-    ?.takeIf { Regex("^\\d+\\.\\d+\\.\\d+$").matches(it) } ?: "0.0.0"
+    ?.takeIf { Regex("^\\d+\\.\\d+\\.\\d+$").matches(it) }
 
-// release.yml と同じ式にする (major * 10000 + minor * 100 + patch)。
+val resolvedVersionName: String = versionNameProp ?: latestTag
+    ?: error("版が決まらない: v<major>.<minor>.<patch> のタグが読めず -PversionName も無い")
+
 fun versionCodeOf(name: String): Int {
     val parts = name.split(".").map { it.toInt() }
     return parts[0] * 10_000 + parts[1] * 100 + parts[2]
@@ -49,9 +45,24 @@ android {
         applicationId = "io.github.mame1839.codecanchor"
         minSdk = 31
         targetSdk = 36
-        // タグが取れない環境 (浅い clone、アーカイブ展開) では 0 になるが、0 は AGP が受け付けない
-        versionCode = versionCodeProp?.toInt() ?: versionCodeOf(latestTag).coerceAtLeast(1)
-        versionName = versionNameProp ?: latestTag
+        versionCode = versionCodeProp?.toInt() ?: versionCodeOf(resolvedVersionName).coerceAtLeast(1)
+        versionName = resolvedVersionName
+
+        externalNativeBuild {
+            cmake {
+                abiFilters += "arm64-v8a"
+                arguments += listOf("-DANDROID_STL=c++_static", "-DANDROID_PLATFORM=android-31")
+            }
+        }
+    }
+
+    ndkVersion = "29.0.14206865"
+
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.31.6"
+        }
     }
 
     signingConfigs {
@@ -61,8 +72,6 @@ android {
                 storePassword = secret("CA_STORE_PASSWORD")
                 keyAlias = secret("CA_KEY_ALIAS", "codecanchor")
                 keyPassword = secret("CA_KEY_PASSWORD")
-                // v3 が無いと将来の鍵ローテーションができない。片方だけ指定すると
-                // もう片方が既定値の false に落ちるので v2 も明示する。
                 enableV2Signing = true
                 enableV3Signing = true
             }
@@ -71,8 +80,6 @@ android {
 
     buildTypes {
         release {
-            // 未使用コードの削除だけ行う。クラス名は proguard-rules.pro の -dontobfuscate で保つ
-            // (Xposed はエントリクラスを名前で読み込む)
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
@@ -93,19 +100,31 @@ android {
         buildConfig = true
     }
 
-    // 既存の指摘は lint-baseline.xml に記録済み。新しい指摘だけ落とす。
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
+
     lint {
         baseline = file("lint-baseline.xml")
         warningsAsErrors = true
+        disable += setOf("AndroidGradlePluginVersion", "NewerVersionAvailable", "GradleDependency")
     }
 
     packaging {
         resources.excludes += setOf("/META-INF/{AL2.0,LGPL2.1}", "META-INF/*.version")
+        jniLibs.useLegacyPackaging = true
     }
 }
 
+tasks.withType<Test>().configureEach {
+    inputs.dir(layout.projectDirectory.dir("src/main/cpp"))
+        .withPropertyName("nativeSourcesReadByTests")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
 dependencies {
-    // Xposed API は実行時に LSPosed が提供するので APK には含めない
     compileOnly(files("libs/xposed-api-82.jar"))
 
     implementation(libs.androidx.core.ktx)
@@ -117,4 +136,10 @@ dependencies {
     implementation(libs.compose.ui.graphics)
     implementation(libs.compose.material3)
     debugImplementation(libs.compose.ui.tooling.preview)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(platform(libs.compose.bom))
+    testImplementation(libs.compose.ui.test.junit4)
+    debugImplementation(libs.compose.ui.test.manifest)
 }

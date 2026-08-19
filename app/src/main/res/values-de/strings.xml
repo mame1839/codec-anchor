@@ -13,6 +13,8 @@
     <string name="action_resend">Erneut senden</string>
     <string name="action_recheck">Erneut prüfen</string>
     <string name="action_grant">Berechtigung erteilen</string>
+    <string name="action_save">Speichern</string>
+    <string name="action_continue">Weiter</string>
 
     <string name="value_keep">Unverändert lassen</string>
     <string name="value_unknown">Unbekannt</string>
@@ -26,24 +28,31 @@
 
     <string name="cd_refresh_status">Status erneut prüfen</string>
     <string name="cd_back">Zurück</string>
+    <string name="cd_eq_slot_menu">Optionen für diesen Speicherplatz</string>
+    <string name="cd_eq_slot_add">Speicherplatz hinzufügen</string>
     <string name="state_expanded">Ausgeklappt</string>
     <string name="state_collapsed">Eingeklappt</string>
 
+    <string name="tab_devices">Geräte</string>
+    <string name="tab_settings">Einstellungen</string>
+    <string name="tab_status">Status</string>
+    <string name="cd_needs_attention">Erfordert Aufmerksamkeit</string>
+
     <string name="section_general">Allgemein</string>
     <string name="toggle_auto_apply">Einstellungen automatisch anwenden</string>
-    <string name="toggle_auto_apply_desc">Solange dies aus ist, wird an keinem Gerät etwas geändert</string>
     <string name="toggle_enforce">Änderungen des Systems oder anderer Apps zurücknehmen</string>
-    <string name="toggle_enforce_desc">Wenn das System oder eine andere App den Codec ändert, wird zurückgeschaltet</string>
     <string name="toggle_notify">Codec-Wechsel melden</string>
-    <string name="toggle_notify_desc">Zeigt beim Umschalten des Codecs eine kurze Meldung</string>
     <string name="toggle_verbose">Ausführliche Logs schreiben</string>
-    <string name="toggle_verbose_desc">Zum Untersuchen von Geräten, die nicht umschalten</string>
+    <string name="toggle_free_offload_switch">Schalter für die A2DP-Hardware-Auslagerung in den Entwickleroptionen freigeben</string>
 
     <string name="permission_title">Bluetooth-Berechtigung erforderlich</string>
     <string name="permission_body">Mit ihr kann die App die gekoppelten Geräte und ihre Namen lesen.</string>
     <string name="permission_denied">Die Berechtigung ist blockiert. Erteile sie bitte in den Systemeinstellungen.</string>
     <string name="bluetooth_off">Bluetooth ist aus. Schalte es ein, um die gekoppelten Geräte zu sehen.</string>
     <string name="config_broken">Die gespeicherten Einstellungen konnten nicht gelesen werden, daher lässt sich nichts bearbeiten. Importiere ein Backup, um neu zu beginnen.</string>
+    <string name="offload_hint">Die Hardware-Auslagerung von Bluetooth A2DP ist aktiviert, deshalb codiert das Telefon LDAC nicht selbst und die Bitrate kann der Verbindung nicht folgen.</string>
+    <string name="offload_turn_off">Schalte in den Entwickleroptionen „Bluetooth A2DP-Hardware-Auslagerung deaktivieren“ ein.</string>
+    <string name="offload_hint_scope">Auf diesem Gerät lässt sich dieser Schalter nicht bedienen. Füge die Einstellungen-App zum Anwendungsbereich des Moduls hinzu und öffne die Entwickleroptionen erneut, um ihn freizugeben.</string>
 
     <string name="section_audio_devices">Audiogeräte</string>
     <string name="devices_empty">Es wurde kein gekoppeltes Audiogerät gefunden.</string>
@@ -65,6 +74,41 @@
     <string name="module_inactive_hint">Einstellungen lassen sich weiterhin bearbeiten und speichern. Sie greifen, sobald das Modul läuft.</string>
     <string name="msg_config_pushed">Einstellungen erneut gesendet</string>
 
+    <string name="eq_unavailable_not_registered">Audiobearbeitung ist nicht verfügbar: Das Audiobearbeitungsmodul ist nicht installiert, oder dieses Telefon hat es noch nicht geladen. Installiere es und starte das Telefon neu.</string>
+    <string name="eq_unavailable_offload">Audiobearbeitung ist nicht verfügbar, solange die Bluetooth-A2DP-Hardware-Auslagerung aktiviert ist.</string>
+    <string name="eq_unavailable_hook_old">Audiobearbeitung ist nicht verfügbar: Im Bluetooth-Prozess läuft eine ältere Version des Moduls, die sie noch nicht kennt. Schalte Bluetooth aus und wieder ein.</string>
+    <string name="eq_unavailable_device">Diese Kopfhörer sind nicht für die Audiobearbeitung registriert, daher wirkt sich hier nichts Eingestelltes auf den Klang aus.</string>
+
+    <string name="eq_device_register">Audiobearbeitung für diese Kopfhörer verwenden</string>
+    <string name="eq_device_register_desc">Der Ton setzt kurz aus, während dies angewendet wird.</string>
+    <string name="eq_device_confirm_on_title">Audiobearbeitung für diese Kopfhörer einschalten?</string>
+    <string name="eq_device_confirm_off_title">Audiobearbeitung für diese Kopfhörer ausschalten?</string>
+    <string name="eq_device_confirm_body">Der Audiodienst des Telefons wird neu gestartet, daher verstummt alles, was gerade abgespielt wird, für einige Sekunden. Bluetooth bleibt verbunden, und Ihre Equalizer-Einstellungen bleiben in jedem Fall erhalten.</string>
+    <string name="eq_device_running">Wird angewendet. Der Ton kommt in wenigen Sekunden zurück.</string>
+    <string name="eq_device_result_on">Diese Kopfhörer sind für die Audiobearbeitung registriert.</string>
+    <string name="eq_device_result_off">Diese Kopfhörer sind nicht mehr für die Audiobearbeitung registriert.</string>
+    <string name="eq_device_failed_no_module">Nichts wurde geändert: Das Audiobearbeitungsmodul ist nicht installiert.</string>
+    <string name="eq_device_failed_root">Nichts wurde geändert: Der Root-Zugriff wurde verweigert, oder dieses Telefon hat keinen Root-Manager. Erlauben Sie Codec Anchor in Ihrem Root-Manager und versuchen Sie es erneut.</string>
+    <string name="eq_device_failed_script">Nichts wurde geändert: Der Root-Zugriff hat funktioniert, aber das Audiobearbeitungsmodul wurde nicht ausgeführt. Seine Dateien fehlen oder sind beschädigt. Installieren Sie das Modul erneut und starten Sie dann das Telefon neu.</string>
+    <string name="eq_device_failed_timeout">Es wurde nicht rechtzeitig abgeschlossen und daher gestoppt. Der Audiodienst startet möglicherweise noch neu. Prüfen Sie es gleich noch einmal.</string>
+    <string name="eq_device_failed_input">Nichts wurde geändert: Die App hat etwas gesendet, was das Modul nicht lesen konnte. Das ist ein Fehler der App.</string>
+    <string name="eq_device_failed_no_state">Nichts wurde geändert: Das Audiobearbeitungsmodul ist noch nicht gestartet. Starten Sie das Telefon neu und versuchen Sie es erneut.</string>
+    <string name="eq_device_failed_xml">Die Audioeinstellungsdatei des Telefons konnte nicht neu erstellt werden, daher wurde nichts geändert.</string>
+    <string name="eq_device_failed_apply">Die neu erstellten Audioeinstellungen konnten nicht eingesetzt werden, daher wurde nichts geändert.</string>
+    <string name="eq_device_failed_audioserver">Der Audiodienst ist nicht wieder gestartet. Starten Sie das Telefon neu.</string>
+    <string name="eq_device_failed_unknown">Es ist auf eine Weise fehlgeschlagen, die diese Version der App nicht kennt (Code %1$d).</string>
+
+    <string name="eq_delivery_other">Zurzeit sind andere Kopfhörer verbunden, daher wirkt sich das, was Sie hier ändern, noch nicht auf den Klang aus. Verbinden Sie diese Kopfhörer, dann wird es angewendet.</string>
+    <string name="eq_delivery_ambiguous">Es laufen mehrere Kopfhörer-Effekte, und die App kann nicht erkennen, welcher zu diesen Kopfhörern gehört, daher wurde nichts gesendet. Trennen Sie die anderen Kopfhörer, und ändern Sie hier dann noch einmal etwas.</string>
+    <string name="eq_delivery_slots_full">Diese Einstellungen wirken sich nicht auf den Klang aus. Schalten Sie die Audiobearbeitung für diese Kopfhörer aus und wieder ein; hilft das nicht, starten Sie das Telefon neu.</string>
+    <string name="eq_delivery_failed_root">Diese Einstellungen wirken sich nicht auf den Klang aus: Der Root-Zugriff wurde verweigert, oder dieses Telefon hat keinen Root-Manager. Erlauben Sie Codec Anchor in Ihrem Root-Manager.</string>
+    <string name="eq_delivery_failed_shm">Diese Einstellungen wirken sich nicht auf den Klang aus: Das Audiobearbeitungsmodul läuft nicht. Starten Sie das Telefon neu.</string>
+    <string name="eq_delivery_failed_version">Diese Einstellungen wirken sich nicht auf den Klang aus: Die App und das Audiobearbeitungsmodul haben unterschiedliche Versionen. Bringen Sie beide auf dieselbe Version und starten Sie dann das Telefon neu.</string>
+    <string name="eq_delivery_failed_rejected">Diese Einstellungen wurden als außerhalb des zulässigen Bereichs abgelehnt, der Klang bleibt daher unverändert. Senken Sie das Band mit der höchsten Frequenz ab oder entfernen Sie es.</string>
+    <string name="eq_delivery_failed_timeout">Das Senden dieser Einstellungen wurde nicht rechtzeitig abgeschlossen und daher gestoppt.</string>
+    <string name="eq_delivery_failed_input">Diese Einstellungen wirken sich nicht auf den Klang aus: Die App hat die Anfrage falsch aufgebaut. Das ist ein Fehler der App.</string>
+    <string name="eq_delivery_failed_unknown">Das Senden dieser Einstellungen ist auf eine Weise fehlgeschlagen, die diese Version der App nicht kennt (Code %1$d).</string>
+
     <string name="tag_connected">Verbunden</string>
     <string name="tag_disconnected">Nicht verbunden</string>
     <string name="tag_active">Wiedergabe</string>
@@ -76,7 +120,6 @@
     <string name="profile_no_target">Es ist noch nichts fixiert</string>
 
     <string name="section_backup">Backup</string>
-    <string name="backup_body">Speichert alle Einstellungen als JSON-Datei.</string>
     <string name="backup_export">Exportieren</string>
     <string name="backup_import">Importieren</string>
     <string name="backup_confirm_title">Backup importieren?</string>
@@ -89,7 +132,6 @@
     <string name="msg_backup_failed">Datei konnte nicht gelesen werden</string>
 
     <string name="detail_auto_apply">Auf diesen Kopfhörer anwenden</string>
-    <string name="detail_auto_apply_desc">Schaltet bei jeder Verbindung auf die Einstellungen unten um</string>
     <string name="detail_current_codec">Aktueller Codec: %1$s</string>
     <string name="ldac_bitrate_offload">Die effektive Bitrate kann nicht gelesen werden, da die Hardware-Auslagerung von Bluetooth A2DP aktiviert ist.</string>
     <string name="detail_note">Letztes Ergebnis: %1$s</string>
@@ -116,9 +158,7 @@
     <string name="adv_force">Umschalten erzwingen</string>
     <string name="adv_force_desc">Probiert auch Kombinationen, die das Gerät nicht angibt</string>
     <string name="adv_via_sbc">Über SBC umschalten</string>
-    <string name="adv_via_sbc_desc">Wechselt zuerst auf SBC und dann auf den gewählten Codec</string>
     <string name="adv_auto_hd">HD-Audio automatisch einschalten</string>
-    <string name="adv_auto_hd_desc">Schaltet HD-Audio ein, wenn das System es deaktiviert hat</string>
     <string name="adv_delay">Wartezeit vor dem Anwenden</string>
     <string name="adv_delay_desc">Manche Geräte schalten direkt nach dem Verbinden nicht um</string>
     <string name="adv_retries">Anzahl der Versuche</string>
@@ -131,4 +171,77 @@
     <string name="msg_apply_requested">Das Modul wurde gebeten, die Einstellungen anzuwenden</string>
     <string name="msg_apply_module_inactive">Das Modul läuft nicht, daher kann die Anfrage nicht übermittelt werden</string>
     <string name="msg_apply_not_connected">Das Gerät ist nicht verbunden, daher kann jetzt nichts angewendet werden</string>
+
+    <string name="msg_preset_exported">Voreinstellung exportiert</string>
+    <string name="msg_preset_export_failed">Datei konnte nicht geschrieben werden</string>
+    <string name="msg_preset_imported">Voreinstellung importiert</string>
+    <string name="msg_preset_invalid">Diese Datei ist keine Voreinstellung von Codec Anchor</string>
+    <string name="msg_autoeq_imported">AutoEQ-Filter importiert</string>
+    <string name="msg_autoeq_failed">Datei konnte nicht gelesen werden</string>
+    <string name="msg_autoeq_invalid">Diese Datei ist kein AutoEQ-Ergebnis</string>
+    <string name="msg_autoeq_corner_shelf">Diese AutoEQ-Datei verwendet LS- oder HS-Filter, die nicht unterstützt werden</string>
+    <string name="msg_autoeq_no_bands">Diese AutoEQ-Datei enthält keine Filter</string>
+
+    <string name="section_eq">Klangbearbeitung</string>
+    <string name="eq_summary_on">Ein</string>
+    <string name="eq_summary_off">Aus</string>
+    <plurals name="eq_summary_bands">
+        <item quantity="one">%1$d Band</item>
+        <item quantity="other">%1$d Bänder</item>
+    </plurals>
+    <string name="eq_summary_unavailable">Zurzeit nicht nutzbar. Öffnen Sie sie, um den Grund zu sehen.</string>
+    <string name="eq_enabled">Equalizer</string>
+    <string name="eq_latency_zero">Zusätzliche Verzögerung: 0 ms</string>
+    <string name="eq_mode">Art der Bearbeitung</string>
+    <string name="eq_mode_graphic">Grafisch</string>
+    <string name="eq_mode_graphic_desc">Jedes Band bleibt auf einer festen Frequenz</string>
+    <string name="eq_mode_parametric">Parametrisch</string>
+    <string name="eq_mode_parametric_desc">Jedes Band lässt sich frei setzen</string>
+    <string name="eq_band_count">Anzahl der Bänder</string>
+    <string name="eq_band_count_desc">Das ist keine Leistungseinstellung: Das Telefon rechnet bei jeder Anzahl gleich viel.</string>
+    <string name="eq_precision">Kurvengenauigkeit</string>
+    <string name="eq_precision_standard">Standard (empfohlen)</string>
+    <string name="eq_precision_standard_desc">Zwischen den Bändern weicht die Kurve leicht ab</string>
+    <string name="eq_precision_high">Hohe Genauigkeit</string>
+    <string name="eq_precision_high_desc">Folgt der Linie durch die Bänder genauer</string>
+    <string name="eq_precision_fallback">Dieses Audio wird mit der Standardgenauigkeit wiedergegeben.</string>
+    <string name="eq_band_none">Noch kein Band. Fügen Sie eines hinzu oder laden Sie eine AutoEQ-Datei.</string>
+    <string name="eq_band_add">Band hinzufügen</string>
+    <string name="eq_band_remove">Dieses Band entfernen</string>
+    <string name="eq_band_type">Form</string>
+    <string name="eq_band_frequency">Frequenz</string>
+    <string name="eq_band_q">Q</string>
+    <string name="eq_band_gain">Verstärkung</string>
+    <string name="eq_type_peaking">Glocke</string>
+    <string name="eq_type_low_shelf">Tiefen-Shelf</string>
+    <string name="eq_type_high_shelf">Höhen-Shelf</string>
+    <string name="eq_preamp">Vorverstärkung</string>
+    <string name="eq_round_title">Zu grafisch wechseln?</string>
+    <string name="eq_round_body">Jedes Band rückt auf eine der festen Frequenzen des grafischen Equalizers, und sein Q wird passend gesetzt. Die Form der Kurve bleibt so weit wie möglich erhalten, aber die jetzigen Frequenzen und Q-Werte gehen verloren.</string>
+    <string name="eq_round_quiet">Nicht mehr nachfragen</string>
+    <string name="eq_reset">Alles auf null zurücksetzen</string>
+    <string name="eq_reset_title">Alles auf null zurücksetzen?</string>
+    <string name="eq_reset_body">Jede Verstärkung und die manuelle Vorverstärkung gehen auf 0 dB zurück, der Equalizer verändert den Klang dann nicht mehr. Die Bänder bleiben, wo sie sind, aber die jetzige Kurve geht verloren, wenn sie nicht als Voreinstellung gespeichert wurde.</string>
+
+    <string name="eq_slot_flat">Neutral</string>
+    <string name="eq_slot_default">Eigene %1$d</string>
+    <string name="eq_slot_rename">Umbenennen</string>
+    <string name="eq_slot_rename_title">Name des Speicherplatzes</string>
+    <string name="eq_slot_duplicate">Duplizieren</string>
+    <string name="eq_slot_save_preset">Als Voreinstellung speichern</string>
+    <string name="eq_slot_delete_title">Speicherplatz löschen?</string>
+    <string name="eq_slot_delete_body">Entfernt „%1$s“. Wenn Sie ihn gerade hören, geht der Klang zurück auf Neutral.</string>
+
+    <string name="eq_presets">Voreinstellungen</string>
+    <string name="eq_preset_empty">Noch nichts gespeichert. Speichern lässt sich eine über das Menü des Speicherplatzes, den Sie gerade verwenden.</string>
+    <string name="eq_preset_save_title">Name der Voreinstellung</string>
+    <string name="eq_preset_name">Name</string>
+    <string name="eq_preset_apply">Anwenden</string>
+    <string name="eq_preset_export">Exportieren</string>
+    <string name="eq_preset_import">Voreinstellung laden</string>
+    <string name="eq_preset_delete_title">Voreinstellung löschen?</string>
+    <string name="eq_preset_delete_body">Entfernt „%1$s“. Was bereits an Ihren Kopfhörern eingestellt ist, bleibt bestehen.</string>
+    <string name="eq_autoeq_import">AutoEQ laden</string>
+    <string name="eq_autoeq_desc">Liest eine ParametricEQ.txt oder GraphicEQ.txt von AutoEQ und legt sie als neuen Speicherplatz an.</string>
+    <string name="eq_curve_desc">Kurve: So verändern diese Einstellungen den Klang</string>
 </resources>

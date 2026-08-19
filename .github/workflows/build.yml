@@ -17,7 +17,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      # 版は直近のタグから決めるので、タグも取ってくる
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
@@ -29,10 +28,13 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v6
 
-      # 署名鍵は復元しない。ここの release は未署名で、構成が壊れていないかだけを見る
-      # (本番鍵で署名した APK を作業中のブランチから配ってしまわないため)。
       - name: ビルドと lint
         run: ./gradlew assembleDebug assembleRelease :app:lintRelease --stacktrace
+
+      - name: モジュールが組めるか見る
+        env:
+          CA_VERSION_NAME: 0.0.0
+        run: bash module/build.sh
 
       - name: APK を保存
         uses: actions/upload-artifact@v7
@@ -48,3 +50,24 @@ jobs:
           name: lint
           path: app/build/reports/lint-results-release.*
           if-no-files-found: ignore
+
+  shell-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: モジュールのシェルスクリプトを検証する
+        run: |
+          bash module/test/patch_xml_test.sh
+          bash module/test/module_test.sh
+
+  dsp-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: EQ のオフラインハーネスをビルドする
+        run: cmake -S app/src/main/cpp/test -B build/ca_eq_test && cmake --build build/ca_eq_test --parallel
+
+      - name: EQ のオフラインハーネスを走らせる
+        run: ./build/ca_eq_test/ca_eq_test
