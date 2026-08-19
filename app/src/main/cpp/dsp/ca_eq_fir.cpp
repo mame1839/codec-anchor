@@ -23,8 +23,6 @@ bool FirDesigner::start(const FirDesignSpec& spec, const FftPlan* plan_m,
     if (spec.taps <= 0) return false;
     if (!fftSizeValid(spec.m) || spec.m < 2 * spec.taps) return false;
     if (!convBlockSizeValid(spec.block)) return false;
-    // 分割セグメントの詰め替え先を data の末尾 2P 本に取る (kPartition の説明)。
-    // 2P ≤ taps ≤ m/2 なら完成した IR (先頭 taps 本) と重ならない。
     if (2 * spec.block > spec.taps) return false;
     if (spec.window == FirWindow::kTailTaper &&
         (spec.taper <= 0 || spec.taper > spec.taps)) {
@@ -53,11 +51,6 @@ void FirDesigner::abort() {
     pos_    = 0;
 }
 
-// 曲線 → 大 FFT の線形ビン。参照実装 (11_fir_vs_biquad.py) は
-// 10^(dB/20) を作ってから log(mag + 1e-300) を取るが、log(10^(dB/20)) = dB·ln10/20
-// なので直接掛ける (double では相対 1e-16 で同一。+1e-300 の柵は dB の床 -100 が
-// あるかぎり mag ≥ 1e-5 なので届かない)。床の -100 も検査済み曲線 (|dB| ≤ 40) では
-// 発火しないが、参照実装と同じ式であることを崩さないために残す。
 void FirDesigner::resampleRange(int from, int to) {
     const int    half = spec_.m / 2;
     const double step = spec_.fs / static_cast<double>(spec_.m);
@@ -65,8 +58,7 @@ void FirDesigner::resampleRange(int from, int to) {
         double db = curveDbAt(spec_.curve_db, static_cast<double>(k) * step);
         if (db < -100.0) db = -100.0;
         const float lnmag = static_cast<float>(db * (kLn10 / 20.0));
-        // 順序付き実スペクトルの並び: [X0, XM/2, Re X1, Im X1, ...]。log|H| は実数なので
-        // 虚部は 0。
+        // 順序付き実スペクトルの並び: [X0, XM/2, Re X1, Im X1, ...]。log|H| は実数なので虚部は 0。
         if (k == 0) {
             data_[0] = lnmag;
         } else if (k == half) {
@@ -78,9 +70,8 @@ void FirDesigner::resampleRange(int from, int to) {
     }
 }
 
-// 実ケプストラムの折り返し + 逆変換の 1/M。cep[0] と cep[M/2] はそのまま (×1/M)、
-// cep[1..M/2-1] は 2 倍 (×2/M)、上半分はゼロ。M が 2 の冪なら 1/M も 2/M も
-// f32 で厳密なので、この工程は丸めを足さない。
+// cep[0]/cep[M/2] は ×1/M、cep[1..M/2-1] は ×2/M、上半分はゼロ。
+// M は 2 の冪なので 1/M も 2/M も f32 で厳密 (丸めを足さない)。
 void FirDesigner::foldRange(int from, int to) {
     const int   half = spec_.m / 2;
     const float inv  = 1.0f / static_cast<float>(spec_.m);
@@ -96,7 +87,6 @@ void FirDesigner::foldRange(int from, int to) {
     }
 }
 
-// 複素 exp。ビン 0 と M/2 は実数 (packed の先頭 2 本)。
 void FirDesigner::expRange(int from, int to) {
     const int half = spec_.m / 2;
     for (int k = from; k < to; k++) {
@@ -114,9 +104,6 @@ void FirDesigner::expRange(int from, int to) {
     }
 }
 
-// 窓 + 逆変換の 1/M + 有限性の検査。検査済み曲線からは数学的に NaN が出ないが、
-// ここが FIR 側で唯一の「完成品を耳に出す前の門」なので安い保険を置く
-// (biquad 側の「ブロックごとの状態検査」に対応する位置)。
 void FirDesigner::windowRange(int from, int to) {
     const double taps = static_cast<double>(spec_.taps);
     const float  inv  = 1.0f / static_cast<float>(spec_.m);
@@ -140,8 +127,6 @@ void FirDesigner::windowRange(int from, int to) {
         }
         float h = static_cast<float>(w) * data_[n] * inv;
 #ifdef CA_EQ_DSP_TEST_HOOKS
-        // **1 回だけ**撃つ。撃ちっぱなしにすると次の設計も必ず失敗し、
-        // 「新しい曲線が来たら再挑戦できる」を試験できなくなる。
         if (inject_nan_ && n == 0) {
             h = std::numeric_limits<float>::quiet_NaN();
             inject_nan_ = false;
@@ -152,9 +137,6 @@ void FirDesigner::windowRange(int from, int to) {
     }
 }
 
-// セグメント k を 2P へゼロ詰めして順序なし実 FFT。**畳み込みの 1/(2P) はここで
-// タップに焼く** — process() 側の MAC (zconvolve) は scaling = 1 で回り、
-// どの分割数でも正規化がちょうど 1 回になる。
 void FirDesigner::partitionOne(int k) {
     const int    p     = spec_.block;
     const int    n     = 2 * p;
@@ -213,7 +195,6 @@ bool FirDesigner::step(int64_t budget_ns) {
         case Phase::kIrFft: {
             const int64_t cost = fircost::fftNs(spec_.m);
             if (!first && left < cost) return false;
-            // in == out は pffft が work 経由で扱う (ca_eq_fft.h)。
             if (phase_ == Phase::kSpecFft) {
                 plan_m_->forwardOrdered(data_, data_, work_);
             } else {
@@ -278,8 +259,6 @@ bool FirDesigner::step(int64_t budget_ns) {
             pos_ += n;
             left -= static_cast<int64_t>(n) * fircost::kWindowNsPerTap;
             first = false;
-            // **非有限を見つけたらそこで止める。**先へ進めても NaN を面へ FFT するだけで、
-            // その面は使えない (ヘッダの「失敗として止まる」はこの分岐が担保する)。
             if (failed_) {
                 phase_ = Phase::kDone;
                 pos_   = 0;
