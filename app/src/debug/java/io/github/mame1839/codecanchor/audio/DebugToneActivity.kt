@@ -34,25 +34,15 @@ import io.github.mame1839.codecanchor.xposed.XLog
 import kotlin.concurrent.thread
 import kotlin.random.Random
 
-/**
- * 開発用: eq-finder-design.md §3 の未検証前提 2 つを実機で潰す画面。ランチャーには出さない
- * (exported=false)。起動: `adb shell su -c 'am start -n io.github.mame1839.codecanchor/.audio.DebugToneActivity'`
- *
- * 「経路確認」はピンクノイズ再生中に caeqstat の device 枠 in_dBFS/frames を見る (アプリ自身の
- * ループ再生が device effect を通るかの確認)。「su レイテンシ計測」は同一値で EqParams.apply を
- * 20 回連打し、壁時計 ms を logcat と画面に出す (同一値なので音は変わらない)。
- */
 class DebugToneActivity : ComponentActivity() {
 
     private var player: LoopPlayer? = null
 
-    // Compose の snapshot はスレッドを選ばないので、ワーカースレッドから直接書く
     private var playing by mutableStateOf(false)
     private var status by mutableStateOf("準備中…")
     private var busy by mutableStateOf(false)
     private var lines by mutableStateOf(listOf<String>())
 
-    /** 「経路確認」の前回の frames。2 回押して差を見るための控え。 */
     private var previousFrames = mapOf<Int, Long>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -105,11 +95,6 @@ class DebugToneActivity : ComponentActivity() {
         }
     }
 
-    /**
-     * [EqParams.apply] のレイテンシ分布。**pushEqParams と同じ選び方で「いまの値」を書く**
-     * (同一値の上書きなので音は変わらない)。持ち主が居なければ NO_LIVE_SLOT の往復を測る
-     * ことになる — outcome を並記するので、どちらを測ったかは結果から分かる。
-     */
     private fun runLatencyMeasurement(): List<String> {
         val dir = applicationInfo.nativeLibraryDir.orEmpty()
         val config = SettingsStore(this).load()
@@ -139,7 +124,6 @@ class DebugToneActivity : ComponentActivity() {
         return out
     }
 
-    /** caeqstat で device 枠の in_dBFS / frames を見る。2 回押すと frames の差も出す。 */
     private fun probeEffectPath() {
         if (busy) return
         busy = true

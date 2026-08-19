@@ -5,9 +5,6 @@ import android.media.AudioManager
 import android.media.AudioPlaybackConfiguration
 import android.os.Handler
 
-// 「端末でいま音楽 (USAGE_MEDIA) が鳴っているか」の検知。[active] は消える方向だけ
-// [quietDelayMs] 遅らせたデバウンス値 (曲間の一瞬の無音で明滅させないため)。現れる方向は即時。
-// [rawActive] はデバウンス無しの生値 ("聴いた" 判定はこちらを見る)。[handler] は main looper であること。
 class MusicPlaybackMonitor(
     private val audioManager: AudioManager?,
     private val handler: Handler,
@@ -19,7 +16,6 @@ class MusicPlaybackMonitor(
     var rawActive: Boolean = false
         private set
 
-    // [start] の初期読みでは呼ばない。
     var onChange: ((Boolean) -> Unit)? = null
 
     private var started = false
@@ -49,7 +45,6 @@ class MusicPlaybackMonitor(
         runCatching { audioManager?.unregisterAudioPlaybackCallback(callback) }
     }
 
-    // internal なのはテストが直接振るため — 実機では [callback] だけが呼ぶ。
     internal fun onRaw(nowActive: Boolean) {
         rawActive = nowActive
         pendingQuiet?.let { handler.removeCallbacks(it) }
