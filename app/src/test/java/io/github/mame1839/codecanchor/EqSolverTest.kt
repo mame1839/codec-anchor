@@ -2,6 +2,7 @@ package io.github.mame1839.codecanchor
 
 import io.github.mame1839.codecanchor.core.AutoEqParser
 import io.github.mame1839.codecanchor.core.EqBand
+import io.github.mame1839.codecanchor.core.EqBandType
 import io.github.mame1839.codecanchor.core.EqSolver
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -327,5 +328,71 @@ class EqSolverTest {
         )
         assertEquals((EqSolver.defaultQ(31) * 100).toInt(), fit.bands.first().q100)
         assertTrue(fit.bands.any { abs(it.gainDb10) > 200 })
+    }
+
+    @Test
+    fun theExpandedBandResponseAgreesWithTheComplexReference() {
+        val freqs = listOf(20, 105, 1_000, 2_500, 8_000, 16_000)
+        val gains = listOf(-400, -120, -35, 40, 120, 400)
+        var worst = 0.0
+        var worstLabel = ""
+        var points = 0
+        for (type in listOf(EqBandType.PEAKING, EqBandType.LOW_SHELF, EqBandType.HIGH_SHELF)) {
+            val q100s = if (type == EqBandType.PEAKING) {
+                listOf(10, 50, 71, 141, 400, 1_000, 4_000)
+            } else {
+                listOf(10, 50, 71, 100)
+            }
+            for (freqHz in freqs) {
+                for (q100 in q100s) {
+                    for (gainDb10 in gains) {
+                        val band = EqBand(freqHz, q100, gainDb10, type)
+                        for (hz in EqReferenceResponse.GRID_HZ) {
+                            val diff =
+                                abs(EqReferenceResponse.bandDb(band, hz) - EqSolver.bandResponseDb(band, hz))
+                            points++
+                            if (diff > worst) {
+                                worst = diff
+                                worstLabel = "type=%d f=%d q100=%d g=%d at=%.1f Hz"
+                                    .format(type, freqHz, q100, gainDb10, hz)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        println("展開 vs 複素評価: %d 点の最大差 %.3e dB (%s)".format(points, worst, worstLabel))
+        assertTrue("展開と複素評価の最大差 $worst dB ($worstLabel)", worst < 1e-8)
+    }
+
+    @Test
+    fun aStackedCurveAgreesWithTheComplexReference() {
+        val stack = listOf(
+            EqBand(105, 71, 40, EqBandType.LOW_SHELF),
+            EqBand(2_500, 71, -20, EqBandType.HIGH_SHELF),
+            EqBand(32, 50, 30),
+            EqBand(250, 50, -50),
+            EqBand(1_000, 141, 120),
+            EqBand(4_000, 400, -120),
+            EqBand(16_000, 50, 20),
+        )
+        val reference = EqReferenceResponse.curveDb(stack)
+        EqReferenceResponse.GRID_HZ.forEachIndexed { i, hz ->
+            assertEquals("%.1f Hz".format(hz), reference[i], EqSolver.combinedResponseDb(stack, hz), 1e-9)
+        }
+    }
+
+    @Test
+    fun theReferenceRefusesTheShelfDomainThatTheProductClamps() {
+        val outOfDomain = EqBand(100, 400, 400, EqBandType.LOW_SHELF)
+        val fromReference = runCatching { EqReferenceResponse.bandDb(outOfDomain, 1_000.0) }
+        assertTrue(
+            "参照が想定外のシェルフを黙って返した: ${fromReference.getOrNull()}",
+            fromReference.exceptionOrNull() is IllegalArgumentException,
+        )
+        assertTrue(
+            "製品側はクランプして有限値を返すこと",
+            EqSolver.bandResponseDb(outOfDomain, 1_000.0).isFinite(),
+        )
     }
 }
