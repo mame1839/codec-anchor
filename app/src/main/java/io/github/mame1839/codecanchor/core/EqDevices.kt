@@ -2,9 +2,6 @@ package io.github.mame1839.codecanchor.core
 
 import java.util.concurrent.TimeUnit
 
-// 「このイヤホンで音響処理を使う」の実行。契約は eq-route.md §2。
-// ⚠️ このファイルのパスと名前を変えないこと。モジュール側のテストがここを読んで終了コードの
-// 綴りと値を突き合わせる。数値は式で組み立てず literal で書く (シェルから grep で拾うため)。
 object EqDevices {
 
     const val PROPERTY_DIR = "ro.codecanchor.module_dir"
@@ -37,13 +34,11 @@ object EqDevices {
     fun normalizeAll(macs: Collection<String>): List<String> =
         macs.mapNotNull(::normalizeMac).distinct().sorted()
 
-    // トグルした 1 台ではなく、これを丸ごと流す。正規化できない MAC では現在の一覧をそのまま返す。
     fun withDevice(current: Collection<String>, mac: String, registered: Boolean): List<String> {
         val key = normalizeMac(mac) ?: return normalizeAll(current)
         return normalizeAll(if (registered) current + key else current - key)
     }
 
-    // 成功したときだけ送った一覧を採る (TIMEOUT も採らない)。記録が遅れても次の依頼で送り直すので追いつく。
     fun recordAfter(
         current: List<String>,
         sent: List<String>,
@@ -64,7 +59,6 @@ object EqDevices {
         else -> EqDevicesOutcome.SCRIPT_FAILED
     }
 
-    // ⚠️ 呼び出しは同期で、最長 TIMEOUT_MS 掛かる。オーディオが止まるので UI スレッドから呼ばないこと。
     fun apply(macs: List<String>): EqDevicesResult {
         val dir = ModuleVersion.read(PROPERTY_DIR).trim()
         if (!DIR_PATTERN.matches(dir)) return EqDevicesResult(EqDevicesOutcome.NO_MODULE)
@@ -84,9 +78,6 @@ object EqDevices {
     }
 
     private fun drive(process: Process, macs: List<String>): EqDevicesResult {
-        // 読み取りを別スレッドに出す。同じスレッドで読み切ってから waitFor すると、
-        // 黙って固まったプロセスに上限が効かない。逆に読まずに待つと、パイプが埋まった時点で
-        // 相手が書き込みで止まり、偽のタイムアウトになる。
         val output = StringBuilder()
         val reader = Thread {
             runCatching {
@@ -100,7 +91,6 @@ object EqDevices {
         reader.isDaemon = true
         reader.start()
 
-        // 空の入力 = 全解除。close だけして渡す。
         runCatching {
             process.outputStream.bufferedWriter().use { writer ->
                 macs.forEach { writer.append(it).append('\n') }
@@ -119,8 +109,6 @@ object EqDevices {
     }
 }
 
-// ⚠️ ROOT_DENIED と SCRIPT_MISSING を混ぜない。混ぜるとスクリプトが置かれていないだけのときに
-// ユーザを root マネージャへ行かせることになる (eq-route.md §2「失敗の3分類」)。
 enum class EqDevicesOutcome {
     OK,
     NO_MODULE,
@@ -130,7 +118,6 @@ enum class EqDevicesOutcome {
     SCRIPT_FAILED,
 }
 
-// exitCode を読むのは SCRIPT_FAILED のときだけ。output はパースしない (stdout は契約ではない)。
 data class EqDevicesResult(
     val outcome: EqDevicesOutcome,
     val exitCode: Int = -1,
