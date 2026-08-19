@@ -19,6 +19,11 @@ object Bridge {
     // 全機器の MAC と名前が乗る JSON を渡すことになる。あちらが要る値だけを extra で持たせる。
     val ACTION_PUSH_SETTINGS_HOOK = "$PKG.action.PUSH_SETTINGS_HOOK"
 
+    // 設定アプリのフックが起動時に投げる要求。**ACTION_REQUEST_CONFIG を使い回さない** —
+    // あちらに答えると Bluetooth プロセスへも設定が飛び、接続中の全機器の取り直し
+    // (LDAC の実効ビットレートは 1 台で数秒かかる) が開発者向けオプションを開くたびに走る。
+    val ACTION_REQUEST_SETTINGS_HOOK = "$PKG.action.REQUEST_SETTINGS_HOOK"
+
     const val EXTRA_JSON = "json"
     const val EXTRA_MAC = "mac"
     const val EXTRA_FREE_OFFLOAD_SWITCH = "freeOffloadSwitch"
@@ -41,6 +46,14 @@ object Bridge {
      * 独立した鍵にすれば、どちらの側も何も落とさない。
      */
     const val PREFS_KEY_FREE_OFFLOAD_SWITCH = "freeOffloadSwitch"
+
+    /**
+     * [PREFS_KEY_FREE_OFFLOAD_SWITCH] の既定。**保存にも、受信の取りこぼしにも、フック側の
+     * 初期値にも同じものを使う** — 別々に書くと、経路のどれか 1 本だけ既定が違う状態になる。
+     *
+     * `const` なので参照側でリテラルに畳まれ、フックが読んでも [Bridge] のクラスロードは増えない。
+     */
+    const val FREE_OFFLOAD_SWITCH_DEFAULT = true
 
     const val HOOK_REQUEST_RECEIVER = "io.github.mame1839.codecanchor.bridge.HookRequestReceiver"
 

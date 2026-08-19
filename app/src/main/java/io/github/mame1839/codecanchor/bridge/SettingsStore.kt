@@ -29,10 +29,13 @@ class SettingsStore(private val context: Context) {
 
     // 設定アプリのフックが XSharedPreferences で同じ鍵を読む (ブロードキャストを取り逃したとき、
     // および設定アプリのプロセスが立った直後の 1 回目の描画のため)。
-    fun freeOffloadSwitch(): Boolean = prefs.getBoolean(Bridge.PREFS_KEY_FREE_OFFLOAD_SWITCH, true)
+    fun freeOffloadSwitch(): Boolean =
+        prefs.getBoolean(Bridge.PREFS_KEY_FREE_OFFLOAD_SWITCH, Bridge.FREE_OFFLOAD_SWITCH_DEFAULT)
 
+    // commit で書く (apply は write-behind)。読むのが別プロセスの XSharedPreferences なので、
+    // 切った直後に開発者向けオプションを開くと、ファイルが書かれる前に読まれうる。
     fun setFreeOffloadSwitch(value: Boolean) {
-        prefs.edit { putBoolean(Bridge.PREFS_KEY_FREE_OFFLOAD_SWITCH, value) }
+        prefs.edit(commit = true) { putBoolean(Bridge.PREFS_KEY_FREE_OFFLOAD_SWITCH, value) }
     }
 
     companion object {
