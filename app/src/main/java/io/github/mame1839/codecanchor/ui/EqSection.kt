@@ -45,9 +45,11 @@ import io.github.mame1839.codecanchor.core.EqSolver
 // private ではなく internal なのは、単体テストが写しではなく実物の刻みを見るため。
 internal val GAIN_SCALE = EqScale.Linear(EQ_GAIN_RANGE, EQ_GAIN_STEP)
 
-// プリアンプは下げる方向だけ。上げると解いたゲインの持ち上がりと足し合わさって歪む。
-// 刻みは dB のスライダーで揃えて 0.1 dB。
-internal val PREAMP_SCALE = EqScale.Linear(-300..0, 1)
+// 範囲は EqSettings.PREAMP_RANGE をそのまま引く。**モデルが持てる値の全部に届かせること** —
+// EqScale.Linear.fromPosition は範囲でクランプするので、届かない値を持つ設定に触ると
+// 摘みが動いていなくても保存値が書き換わる。取り込み (AutoEQ) と探索の焼き込みは
+// 正のプリアンプも負の深い値も作る。刻みは dB のスライダーで揃えて 0.1 dB。
+internal val PREAMP_SCALE = EqScale.Linear(EqSettings.PREAMP_RANGE, 1)
 
 // 可聴帯域。AutoEQ が出す fc もこの中に収まる。
 private val FREQ_SCALE = EqScale.Log(20..20_000)
@@ -211,25 +213,13 @@ fun EqSection(vm: MainViewModel, mac: String, profile: DeviceProfile) {
 
             RowDivider()
 
-            // 自動のときも値を出す。出さないと何 dB 引かれているのか分からない。
-            // 求めた値は保存しない — preampDb10 は手動で決めた値の置き場で、自動のときは
-            // 適用する側が同じ式で解く (EqSolver.autoPreampDb10)。両方に書くと出どころが 2 つになる。
-            val autoPreamp = remember(eq.bands) { EqSolver.autoPreampDb10(eq.bands) }
-            SwitchRow(
-                title = stringResource(R.string.eq_preamp_auto),
-                description = stringResource(R.string.eq_preamp_auto_desc, gainText(autoPreamp)),
-                checked = eq.preampAuto,
-                onChange = { value -> vm.updateEq(mac) { it.copy(preampAuto = value) } },
+            EqSliderRow(
+                label = stringResource(R.string.eq_preamp),
+                value = eq.preampDb10,
+                scale = PREAMP_SCALE,
+                valueText = gainText,
+                onCommit = { value -> vm.updateEq(mac) { it.copy(preampDb10 = value) } },
             )
-            if (!eq.preampAuto) {
-                EqSliderRow(
-                    label = stringResource(R.string.eq_preamp),
-                    value = eq.preampDb10,
-                    scale = PREAMP_SCALE,
-                    valueText = gainText,
-                    onCommit = { value -> vm.updateEq(mac) { it.copy(preampDb10 = value) } },
-                )
-            }
         }
 
         RowDivider()
@@ -653,8 +643,6 @@ internal fun toParametric(settings: EqSettings): EqSettings {
  *   fc と Q はアプリが決めるものなので、作り直しても失われる情報は無い
  * - パラメトリックはゲインだけ 0 にする。fc と Q はユーザが置いたものなので保つ —
  *   バンドごと消すのはリセットではなく削除
- * - preampAuto は触らない。自動か手動かは値ではなく方式の選択で、0 に戻す対象ではない。
- *   自動は平らな曲線から 0 dB を導くので、リセット後はどちらを選んでいても 0 dB になる
  *
  * private ではなく internal なのは単体テストから呼ぶため。
  */
@@ -673,7 +661,7 @@ internal fun resetToZero(settings: EqSettings): EqSettings = when (settings.mode
  * `EqSlotSelectionTest.theFlatCurveIsWhatTheLedgerCallsNeutral` がこの一致を見張っている。
  */
 internal fun flatEq(base: EqSettings): EqSettings = withStartingBands(
-    base.copy(mode = EqMode.GRAPHIC, bands = emptyList(), preampAuto = true, preampDb10 = 0),
+    base.copy(mode = EqMode.GRAPHIC, bands = emptyList(), preampDb10 = 0),
 )
 
 /**

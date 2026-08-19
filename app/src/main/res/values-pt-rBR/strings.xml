@@ -215,8 +215,6 @@
     <string name="eq_type_peaking">Sino</string>
     <string name="eq_type_low_shelf">Shelf de graves</string>
     <string name="eq_type_high_shelf">Shelf de agudos</string>
-    <string name="eq_preamp_auto">Definir o pré-amplificador automaticamente</string>
-    <string name="eq_preamp_auto_desc">Baixa o nível só o suficiente para as partes realçadas não distorcerem (agora %1$s)</string>
     <string name="eq_preamp">Pré-amplificador</string>
     <string name="eq_round_title">Mudar para gráfico?</string>
     <string name="eq_round_body">Cada banda vai para uma das frequências fixas do equalizador gráfico e o Q dela é ajustado. O formato da curva é mantido o quanto for possível, mas as frequências e os valores de Q atuais são perdidos.</string>
@@ -268,7 +266,7 @@
     <string name="eq_finder_include_mid_desc">Adiciona um terceiro eixo em torno das vozes. Algumas perguntas a mais.</string>
     <string name="eq_finder_fine_tune">Ajuste fino das configurações atuais</string>
     <string name="eq_finder_notes">Antes de começar</string>
-    <string name="eq_finder_note_volume">O teste toca um pouco mais baixo que o normal. Ajuste um volume confortável depois do início e não mexa nele até o fim.</string>
+    <string name="eq_finder_note_volume">Ajuste um volume confortável depois do início e não mexa nele até o fim.</string>
     <string name="eq_finder_note_earphones">Ouça com estes fones, em um lugar silencioso.</string>
     <string name="eq_finder_note_length">Cerca de 25 a 40 perguntas, 10 a 15 minutos. Você pode parar a qualquer momento e continuar depois.</string>
     <string name="eq_finder_begin">Começar</string>

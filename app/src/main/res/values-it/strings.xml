@@ -215,8 +215,6 @@
     <string name="eq_type_peaking">Campana</string>
     <string name="eq_type_low_shelf">Shelf bassi</string>
     <string name="eq_type_high_shelf">Shelf alti</string>
-    <string name="eq_preamp_auto">Imposta il preamplificatore automaticamente</string>
-    <string name="eq_preamp_auto_desc">Abbassa il livello quel tanto che basta perché le parti alzate non distorcano (ora %1$s)</string>
     <string name="eq_preamp">Preamplificatore</string>
     <string name="eq_round_title">Passare al grafico?</string>
     <string name="eq_round_body">Ogni banda si sposta su una delle frequenze fisse dell\'equalizzatore grafico e il suo Q viene adattato. La forma della curva viene mantenuta il più possibile, ma le frequenze e i valori di Q attuali vanno persi.</string>
@@ -268,7 +266,7 @@
     <string name="eq_finder_include_mid_desc">Aggiunge un terzo asse attorno alle voci. Qualche domanda in più.</string>
     <string name="eq_finder_fine_tune">Rifinisci le impostazioni attuali</string>
     <string name="eq_finder_notes">Prima di iniziare</string>
-    <string name="eq_finder_note_volume">Il test suona un po\' più piano del solito. Regola un volume comodo dopo l\'inizio e non cambiarlo fino alla fine.</string>
+    <string name="eq_finder_note_volume">Regola un volume comodo dopo l\'inizio e non cambiarlo fino alla fine.</string>
     <string name="eq_finder_note_earphones">Ascolta con questi auricolari, in un luogo tranquillo.</string>
     <string name="eq_finder_note_length">Circa 25–40 domande, 10–15 minuti. Puoi interrompere in qualsiasi momento e riprendere più tardi.</string>
     <string name="eq_finder_begin">Inizia</string>

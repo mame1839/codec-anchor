@@ -217,8 +217,6 @@
     <string name="eq_type_peaking">Колокол</string>
     <string name="eq_type_low_shelf">Низкочастотный шельф</string>
     <string name="eq_type_high_shelf">Высокочастотный шельф</string>
-    <string name="eq_preamp_auto">Подбирать предусиление автоматически</string>
-    <string name="eq_preamp_auto_desc">Снижает уровень ровно настолько, чтобы поднятые участки не искажались (сейчас %1$s)</string>
     <string name="eq_preamp">Предусиление</string>
     <string name="eq_round_title">Перейти к графическому?</string>
     <string name="eq_round_body">Каждая полоса перейдёт на одну из фиксированных частот графического эквалайзера, а её Q будет подобрано под неё. Форма кривой сохранится настолько, насколько это возможно, но нынешние частоты и значения Q будут потеряны.</string>
@@ -270,7 +268,7 @@
     <string name="eq_finder_include_mid_desc">Добавляет третью ось вокруг голосов. Вопросов станет немного больше.</string>
     <string name="eq_finder_fine_tune">Тонкая настройка текущих параметров</string>
     <string name="eq_finder_notes">Перед началом</string>
-    <string name="eq_finder_note_volume">Тест звучит немного тише обычного. Выставьте комфортную громкость после начала и не меняйте её до конца.</string>
+    <string name="eq_finder_note_volume">Выставьте комфортную громкость после начала и не меняйте её до конца.</string>
     <string name="eq_finder_note_earphones">Слушайте в этих наушниках, в тихом месте.</string>
     <string name="eq_finder_note_length">Примерно 25–40 вопросов, 10–15 минут. Можно прерваться в любой момент и продолжить позже.</string>
     <string name="eq_finder_begin">Начать</string>

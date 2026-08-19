@@ -3,6 +3,7 @@ package io.github.mame1839.codecanchor
 import io.github.mame1839.codecanchor.core.EqBand
 import io.github.mame1839.codecanchor.core.EqBandType
 import io.github.mame1839.codecanchor.core.EqFinderAxes
+import io.github.mame1839.codecanchor.core.EqLoudness
 import io.github.mame1839.codecanchor.core.EqMode
 import io.github.mame1839.codecanchor.core.EqSettings
 import io.github.mame1839.codecanchor.core.EqSolver
@@ -32,6 +33,11 @@ import kotlin.math.abs
 class EqFinderBakePlanTest {
 
     private val axes = EqFinderAxes.default(false)
+
+    private val weights = EqLoudness.defaultWeights()
+
+    private fun planOf(base: EqSettings, overlay: List<Int>) =
+        eqFinderBakePlan(base, axes, overlay, weights, EqLoudness.baseLevelDb(base, weights))
 
     /** 10 バンドのグリッドに乗った非平坦なバンド列 (ゲインは素の値。摘みの値ではない)。 */
     private val tenBandFreqs = listOf(32, 63, 125, 250, 500, 1_000, 2_000, 4_000, 8_000, 16_000)
@@ -89,7 +95,7 @@ class EqFinderBakePlanTest {
                 EqSolver.defaultQ(10),
             ),
         )
-        val plan = eqFinderBakePlan(base, axes, listOf(0, 0))
+        val plan = planOf(base, listOf(0, 0))
         for (count in EqSettings.BAND_COUNTS) {
             val baked = plan[count]
             assertNotNull("$count バンドが焼けていない", baked)
@@ -118,7 +124,7 @@ class EqFinderBakePlanTest {
         val knobPoints = tenBandFreqs.map { hz ->
             hz.toDouble() to EqReferenceResponse.combinedDb(base.bands, hz.toDouble())
         }
-        val plan = eqFinderBakePlan(base, axes, listOf(0, 0))
+        val plan = planOf(base, listOf(0, 0))
         for (count in EqSettings.BAND_COUNTS) {
             val bands = plan[count]!!.settings.bands
             for (band in bands) {
@@ -136,7 +142,7 @@ class EqFinderBakePlanTest {
     /** baked.bands はちょうど選んだ数のグリッドに乗り、bandCount も一緒に更新される。 */
     @Test
     fun bakedBandsSitOnTheChosenGridWithMatchingCount() {
-        val plan = eqFinderBakePlan(graphicBase(enabled = true), axes, listOf(35, -20))
+        val plan = planOf(graphicBase(enabled = true), listOf(35, -20))
         assertEquals(EqSettings.BAND_COUNTS.toSet(), plan.keys)
         for (count in EqSettings.BAND_COUNTS) {
             val settings = plan[count]!!.settings
@@ -168,7 +174,7 @@ class EqFinderBakePlanTest {
         for (enabled in listOf(true, false)) {
             val base = graphicBase(enabled)
             val heard = refHeardDb(base, overlay)
-            val plan = eqFinderBakePlan(base, axes, overlay)
+            val plan = planOf(base, overlay)
             for (count in EqSettings.BAND_COUNTS) {
                 val baked = plan[count]!!
                 val got = EqReferenceResponse.curveDb(baked.settings.bands)
@@ -214,7 +220,7 @@ class EqFinderBakePlanTest {
         val overlay = listOf(40, -20)
         for (enabled in listOf(true, false)) {
             val base = EqSettings(enabled = enabled, mode = EqMode.PARAMETRIC, bands = bands)
-            val plan = eqFinderBakePlan(base, axes, overlay)
+            val plan = planOf(base, overlay)
             assertEquals(setOf(base.bandCount), plan.keys)
             val baked = plan[base.bandCount]!!
             assertEquals(0.0, baked.maxErrorDb, 0.0)
@@ -226,6 +232,41 @@ class EqFinderBakePlanTest {
         }
     }
 
+    /**
+     * **焼き込みのプリアンプは、耳で聴いた候補の値**。どのバンド数を選んでも同じ 1 つの値で、
+     * 解き直した `bands` からは取り直さない (取り直すと解の残差の分だけ音量が動き、
+     * 不変条件「試聴した音と同じ応答」が音量の側で崩れる)。
+     *
+     * literal の期待値: 土台は素の音 (`enabled = false`) で、オーバーレイは低域シェルフ
+     * +4.0 dB (105 Hz / Q 0.71) のみ。その聴感ゲインは既定重みで +0.44 dB なので
+     * preamp_c = 0 − 0.44 → **−4 db10**。
+     *
+     * ⚠️ **同値だけの釘にしないこと。**「押し込んだ設定と焼き込んだ設定の preamp が等しい」は
+     * 片方が他方から導出されているので、両方同時に壊れる変更を素通りさせる。
+     * ここは値そのものを見る。
+     */
+    @Test
+    fun everyBandCountBakesTheHeardPreamp() {
+        val bare = EqSettings(enabled = false, mode = EqMode.GRAPHIC, bandCount = 10)
+        val plan = planOf(bare, listOf(40, 0))
+        for (count in EqSettings.BAND_COUNTS) {
+            assertEquals("$count バンド", -4, plan[count]!!.settings.preampDb10)
+        }
+
+        // 土台のプリアンプが乗る形も 1 つ。−6.0 dB の土台 (低域 +4.5 / 高域 −2.5 dB) に
+        // 同じオーバーレイ → −6.9 db10 分だけ深い。
+        val on = EqSettings(
+            enabled = true,
+            mode = EqMode.PARAMETRIC,
+            bands = listOf(
+                EqBand(105, 71, 45, EqBandType.LOW_SHELF),
+                EqBand(2_500, 71, -25, EqBandType.HIGH_SHELF),
+            ),
+            preampDb10 = -60,
+        )
+        assertEquals(-69, planOf(on, listOf(40, 0))[on.bandCount]!!.settings.preampDb10)
+    }
+
     /** 満杯のパラメトリックは焼けない (値が null)。選択肢の構造はそれでも壊れない。 */
     @Test
     fun anOverfullParametricPlanCarriesNullInsteadOfLying() {
@@ -234,7 +275,7 @@ class EqFinderBakePlanTest {
             mode = EqMode.PARAMETRIC,
             bands = List(31) { EqBand(freqHz = 50 + it * 100, q100 = 141, gainDb10 = 10) },
         )
-        val plan = eqFinderBakePlan(base, axes, listOf(40, 0))
+        val plan = planOf(base, listOf(40, 0))
         assertEquals(setOf(base.bandCount), plan.keys)
         assertEquals(null, plan[base.bandCount])
     }

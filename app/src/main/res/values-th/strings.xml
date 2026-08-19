@@ -211,8 +211,6 @@
     <string name="eq_type_peaking">พีค</string>
     <string name="eq_type_low_shelf">โลว์เชลฟ์</string>
     <string name="eq_type_high_shelf">ไฮเชลฟ์</string>
-    <string name="eq_preamp_auto">ตั้งพรีแอมป์อัตโนมัติ</string>
-    <string name="eq_preamp_auto_desc">ลดระดับลงเท่าที่จำเป็น เพื่อไม่ให้ส่วนที่ยกขึ้นเสียงแตก (ตอนนี้ %1$s)</string>
     <string name="eq_preamp">พรีแอมป์</string>
     <string name="eq_round_title">เปลี่ยนเป็นกราฟิกไหม</string>
     <string name="eq_round_body">ทุกแบนด์จะย้ายไปอยู่ที่ความถี่ตายตัวของอีควอไลเซอร์แบบกราฟิก และค่า Q จะถูกตั้งให้เข้ากัน รูปเส้นโค้งจะถูกรักษาไว้เท่าที่ทำได้ แต่ความถี่และค่า Q ที่มีอยู่ตอนนี้จะหายไป</string>
@@ -264,7 +262,7 @@
     <string name="eq_finder_include_mid_desc">เพิ่มแกนที่สามรอบ ๆ เสียงร้อง คำถามจะเพิ่มขึ้นเล็กน้อย</string>
     <string name="eq_finder_fine_tune">ปรับละเอียดจากค่าปัจจุบัน</string>
     <string name="eq_finder_notes">ก่อนเริ่ม</string>
-    <string name="eq_finder_note_volume">การทดสอบจะเบากว่าปกติเล็กน้อย ปรับระดับเสียงให้ฟังสบายหลังจากเริ่มแล้ว และอย่าเปลี่ยนจนกว่าจะจบ</string>
+    <string name="eq_finder_note_volume">ปรับระดับเสียงให้ฟังสบายหลังจากเริ่มแล้ว และอย่าเปลี่ยนจนกว่าจะจบ</string>
     <string name="eq_finder_note_earphones">ฟังด้วยหูฟังคู่นี้ในที่เงียบ</string>
     <string name="eq_finder_note_length">ราว 25–40 คำถาม ใช้เวลา 10–15 นาที หยุดพักเมื่อไรก็ได้แล้วค่อยทำต่อ</string>
     <string name="eq_finder_begin">เริ่ม</string>

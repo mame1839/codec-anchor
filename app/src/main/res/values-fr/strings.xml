@@ -215,8 +215,6 @@
     <string name="eq_type_peaking">Cloche</string>
     <string name="eq_type_low_shelf">Plateau grave</string>
     <string name="eq_type_high_shelf">Plateau aigu</string>
-    <string name="eq_preamp_auto">Régler le préampli automatiquement</string>
-    <string name="eq_preamp_auto_desc">Baisse le niveau juste assez pour que les parties amplifiées ne saturent pas (actuellement %1$s)</string>
     <string name="eq_preamp">Préampli</string>
     <string name="eq_round_title">Passer en graphique ?</string>
     <string name="eq_round_body">Chaque bande est déplacée sur l\'une des fréquences fixes de l\'égaliseur graphique et son Q est ajusté en conséquence. La forme de la courbe est conservée autant que possible, mais les fréquences et les Q actuels sont perdus.</string>
@@ -268,7 +266,7 @@
     <string name="eq_finder_include_mid_desc">Ajoute un troisième axe autour des voix. Quelques questions de plus.</string>
     <string name="eq_finder_fine_tune">Affiner les réglages actuels</string>
     <string name="eq_finder_notes">Avant de commencer</string>
-    <string name="eq_finder_note_volume">Le test joue un peu moins fort que d\'habitude. Réglez un volume confortable après le début, puis n\'y touchez plus jusqu\'à la fin.</string>
+    <string name="eq_finder_note_volume">Réglez un volume confortable après le début, puis n\'y touchez plus jusqu\'à la fin.</string>
     <string name="eq_finder_note_earphones">Écoutez avec ces écouteurs, dans un endroit calme.</string>
     <string name="eq_finder_note_length">Environ 25 à 40 questions, 10 à 15 minutes. Vous pouvez interrompre à tout moment et reprendre plus tard.</string>
     <string name="eq_finder_begin">Commencer</string>

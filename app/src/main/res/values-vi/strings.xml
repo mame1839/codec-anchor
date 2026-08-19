@@ -211,8 +211,6 @@
     <string name="eq_type_peaking">Đỉnh</string>
     <string name="eq_type_low_shelf">Kệ trầm</string>
     <string name="eq_type_high_shelf">Kệ cao</string>
-    <string name="eq_preamp_auto">Tự đặt tiền khuếch đại</string>
-    <string name="eq_preamp_auto_desc">Hạ mức vừa đủ để những chỗ được nâng lên không bị vỡ tiếng (hiện %1$s)</string>
     <string name="eq_preamp">Tiền khuếch đại</string>
     <string name="eq_round_title">Chuyển sang đồ họa?</string>
     <string name="eq_round_body">Mỗi dải sẽ dời về một trong các tần số cố định của bộ chỉnh âm đồ họa và Q của nó được đặt cho khớp. Hình dạng đường cong được giữ lại nhiều nhất có thể, nhưng tần số và các giá trị Q hiện nay sẽ mất.</string>
@@ -264,7 +262,7 @@
     <string name="eq_finder_include_mid_desc">Thêm trục thứ ba quanh giọng hát. Số câu hỏi tăng một chút.</string>
     <string name="eq_finder_fine_tune">Tinh chỉnh thiết lập hiện tại</string>
     <string name="eq_finder_notes">Trước khi bắt đầu</string>
-    <string name="eq_finder_note_volume">Bài kiểm tra phát hơi nhỏ hơn bình thường. Hãy chỉnh âm lượng dễ nghe sau khi bắt đầu, rồi giữ nguyên đến hết.</string>
+    <string name="eq_finder_note_volume">Hãy chỉnh âm lượng dễ nghe sau khi bắt đầu, rồi giữ nguyên đến hết.</string>
     <string name="eq_finder_note_earphones">Nghe bằng tai nghe này, ở nơi yên tĩnh.</string>
     <string name="eq_finder_note_length">Khoảng 25–40 câu hỏi, 10–15 phút. Có thể dừng bất cứ lúc nào và tiếp tục sau.</string>
     <string name="eq_finder_begin">Bắt đầu</string>

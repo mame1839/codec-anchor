@@ -297,7 +297,7 @@ class EqFinderLiveTest {
         c1.begin()
         c1.dispose()
 
-        vm.updateEq(mac) { it.copy(preampDb10 = -50, preampAuto = false) }
+        vm.updateEq(mac) { it.copy(preampDb10 = -50) }
         val m2 = monitor()
         val c2 = controller(vm, m2)
         m2.onRaw(true)

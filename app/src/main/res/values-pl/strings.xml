@@ -217,8 +217,6 @@
     <string name="eq_type_peaking">Dzwon</string>
     <string name="eq_type_low_shelf">Półka dolna</string>
     <string name="eq_type_high_shelf">Półka górna</string>
-    <string name="eq_preamp_auto">Ustawiaj przedwzmacniacz automatycznie</string>
-    <string name="eq_preamp_auto_desc">Obniża poziom dokładnie na tyle, żeby podbite miejsca się nie przesterowały (teraz %1$s)</string>
     <string name="eq_preamp">Przedwzmacniacz</string>
     <string name="eq_round_title">Przełączyć na graficzny?</string>
     <string name="eq_round_body">Każde pasmo przejdzie na jedną ze stałych częstotliwości korektora graficznego, a jego Q zostanie do niej dopasowane. Kształt krzywej zostanie zachowany na tyle, na ile to możliwe, ale obecne częstotliwości i wartości Q przepadną.</string>
@@ -270,7 +268,7 @@
     <string name="eq_finder_include_mid_desc">Dodaje trzecią oś wokół wokali. Kilka pytań więcej.</string>
     <string name="eq_finder_fine_tune">Dostrój obecne ustawienia</string>
     <string name="eq_finder_notes">Zanim zaczniesz</string>
-    <string name="eq_finder_note_volume">Test gra nieco ciszej niż zwykle. Ustaw wygodną głośność po rozpoczęciu i nie zmieniaj jej do końca.</string>
+    <string name="eq_finder_note_volume">Ustaw wygodną głośność po rozpoczęciu i nie zmieniaj jej do końca.</string>
     <string name="eq_finder_note_earphones">Słuchaj na tych słuchawkach, w cichym miejscu.</string>
     <string name="eq_finder_note_length">Około 25–40 pytań, 10–15 minut. Można przerwać w dowolnej chwili i wrócić później.</string>
     <string name="eq_finder_begin">Rozpocznij</string>

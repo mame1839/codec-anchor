@@ -24,7 +24,6 @@ class AutoEqParserTest {
         val r = AutoEqParser.parse(parametric) as AutoEqResult.Ok
         assertEquals(EqMode.PARAMETRIC, r.settings.mode)
         assertEquals(-62, r.settings.preampDb10) // -6.2 dB
-        assertEquals(false, r.settings.preampAuto) // 再計算させない
         assertEquals(3, r.settings.bands.size)
     }
 
@@ -78,7 +77,6 @@ class AutoEqParserTest {
         val r = AutoEqParser.parse(text, bandCount = 10) as AutoEqResult.Ok
         assertEquals(EqMode.GRAPHIC, r.settings.mode)
         assertEquals(10, r.settings.bands.size)
-        assertEquals(false, r.settings.preampAuto)
     }
 
     // GraphicEQ.txt はプリアンプが曲線に焼き込んである。プリアンプに移すのは

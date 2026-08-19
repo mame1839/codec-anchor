@@ -79,14 +79,16 @@ object EqSupport {
      * 読み込み、[effectRegistered] 経由で `AudioEffect` に触る — **コンパイルもテストも通り、
      * 実機のフックだけが壊れる。**EqSupportTest がこれを固定している。
      *
-     * **⚠️ [EqSettings] の JSON のキーを増やしたら必ずここを上げる。**古いフックは
-     * 知らないキーを落として再 encode するので `AppConfig.hash()` が永久に食い違い、
-     * アプリは理由を言えないまま「設定が届いていません」と出し続ける。上げてあれば
-     * 「フックが古い」と名指しできる。`EqSchemaGuardTest` がこの 2 つを一緒に動かすよう縛っている。
+     * **⚠️ [EqSettings] の JSON のキーを増やしても減らしても必ずここを上げる。**古いフックは
+     * 知らないキーを落とし、消したキーは自分の既定で書き足すので、どちらでも
+     * `AppConfig.hash()` が永久に食い違い、アプリは理由を言えないまま
+     * 「設定が届いていません」と出し続ける。上げてあれば「フックが古い」と名指しできる。
+     * `EqSchemaGuardTest` がこの 2 つを一緒に動かすよう縛っている。
      *
-     * 版の履歴: 1 = 音響処理の受け口 / 2 = `EqSettings.precision` (処理方式)
+     * 版の履歴: 1 = 音響処理の受け口 / 2 = `EqSettings.precision` (処理方式) /
+     * 3 = 自動プリアンプ (`pa`) の廃止
      */
-    const val SCHEMA = 2
+    const val SCHEMA = 3
 
     /**
      * エフェクトが登録されているか。

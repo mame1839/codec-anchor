@@ -211,8 +211,6 @@
     <string name="eq_type_peaking">피크</string>
     <string name="eq_type_low_shelf">로우 셸프</string>
     <string name="eq_type_high_shelf">하이 셸프</string>
-    <string name="eq_preamp_auto">프리앰프를 자동으로 정하기</string>
-    <string name="eq_preamp_auto_desc">올린 부분이 찌그러지지 않을 만큼만 음량을 낮춥니다 (현재 %1$s)</string>
     <string name="eq_preamp">프리앰프</string>
     <string name="eq_round_title">그래픽으로 바꿀까요?</string>
     <string name="eq_round_body">모든 밴드가 그래픽 이퀄라이저의 고정 주파수 가운데 하나로 옮겨지고 Q도 거기에 맞춰집니다. 곡선의 모양은 최대한 유지되지만 지금의 주파수와 Q 값은 사라집니다.</string>
@@ -264,7 +262,7 @@
     <string name="eq_finder_include_mid_desc">목소리 대역에 세 번째 축을 더합니다. 질문이 조금 늘어납니다.</string>
     <string name="eq_finder_fine_tune">현재 설정 미세 조정</string>
     <string name="eq_finder_notes">시작하기 전에</string>
-    <string name="eq_finder_note_volume">테스트는 평소보다 소리가 조금 작게 재생됩니다. 시작한 뒤에 편한 음량으로 맞추고, 끝날 때까지 바꾸지 마세요.</string>
+    <string name="eq_finder_note_volume">시작한 뒤에 편한 음량으로 맞추고, 끝날 때까지 바꾸지 마세요.</string>
     <string name="eq_finder_note_earphones">이 이어폰으로, 조용한 곳에서 들어 주세요.</string>
     <string name="eq_finder_note_length">질문은 약 25~40회, 10~15분입니다. 언제든 중단하고 나중에 이어서 할 수 있습니다.</string>
     <string name="eq_finder_begin">시작</string>

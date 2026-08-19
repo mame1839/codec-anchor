@@ -213,8 +213,6 @@
     <string name="eq_type_peaking">पीक</string>
     <string name="eq_type_low_shelf">लो शेल्फ़</string>
     <string name="eq_type_high_shelf">हाई शेल्फ़</string>
-    <string name="eq_preamp_auto">प्रीऐम्प अपने आप तय करें</string>
-    <string name="eq_preamp_auto_desc">उतना ही स्तर घटाता है जितना ज़रूरी हो, ताकि उभारे गए हिस्से बिगड़ें नहीं (अभी %1$s)</string>
     <string name="eq_preamp">प्रीऐम्प</string>
     <string name="eq_round_title">ग्राफ़िक पर जाएँ?</string>
     <string name="eq_round_body">हर बैंड ग्राफ़िक इक्वलाइज़र की तय आवृत्तियों में से एक पर चला जाएगा और उसका Q भी उसी के अनुसार बैठ जाएगा। वक्र का आकार जितना बन सके उतना बचाया जाएगा, पर अभी की आवृत्तियाँ और Q मान चले जाएँगे।</string>
@@ -266,7 +264,7 @@
     <string name="eq_finder_include_mid_desc">आवाज़ों के आस-पास एक तीसरी धुरी जोड़ता है। कुछ सवाल बढ़ जाते हैं।</string>
     <string name="eq_finder_fine_tune">मौजूदा सेटिंग बारीकी से सुधारें</string>
     <string name="eq_finder_notes">शुरू करने से पहले</string>
-    <string name="eq_finder_note_volume">परीक्षण सामान्य से थोड़ा धीमा बजता है। शुरू होने के बाद आरामदायक आवाज़ सेट करें और अंत तक न बदलें।</string>
+    <string name="eq_finder_note_volume">शुरू होने के बाद आरामदायक आवाज़ सेट करें और अंत तक न बदलें।</string>
     <string name="eq_finder_note_earphones">इन ईयरफ़ोन से, किसी शांत जगह पर सुनें।</string>
     <string name="eq_finder_note_length">लगभग 25 से 40 सवाल, 10 से 15 मिनट। कभी भी रोककर बाद में जारी रख सकते हैं।</string>
     <string name="eq_finder_begin">शुरू करें</string>

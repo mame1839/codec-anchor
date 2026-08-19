@@ -221,8 +221,6 @@
     <string name="eq_type_peaking">قمة</string>
     <string name="eq_type_low_shelf">رف منخفض</string>
     <string name="eq_type_high_shelf">رف مرتفع</string>
-    <string name="eq_preamp_auto">ضبط التضخيم المسبق تلقائيًا</string>
-    <string name="eq_preamp_auto_desc">يخفض المستوى بالقدر الكافي فقط كي لا تتشوه الأجزاء المرفوعة (الآن %1$s)</string>
     <string name="eq_preamp">التضخيم المسبق</string>
     <string name="eq_round_title">التبديل إلى الوضع الرسومي؟</string>
     <string name="eq_round_body">سينتقل كل نطاق إلى أحد الترددات الثابتة للمعادل الرسومي وسيُضبط معامل Q الخاص به تبعًا لذلك. سيُحافظ على شكل المنحنى قدر الإمكان، لكن الترددات وقيم Q الحالية ستُفقد.</string>
@@ -274,7 +272,7 @@
     <string name="eq_finder_include_mid_desc">يضيف محورًا ثالثًا حول الأصوات. بضعة أسئلة إضافية.</string>
     <string name="eq_finder_fine_tune">ضبط دقيق للإعدادات الحالية</string>
     <string name="eq_finder_notes">قبل البدء</string>
-    <string name="eq_finder_note_volume">يُشغَّل الاختبار بصوت أخفض قليلًا من المعتاد. اضبط مستوى صوت مريحًا بعد البدء ولا تغيّره حتى النهاية.</string>
+    <string name="eq_finder_note_volume">اضبط مستوى صوت مريحًا بعد البدء ولا تغيّره حتى النهاية.</string>
     <string name="eq_finder_note_earphones">استمع بهذه السماعات في مكان هادئ.</string>
     <string name="eq_finder_note_length">نحو 25 إلى 40 سؤالًا، من 10 إلى 15 دقيقة. يمكنك التوقف في أي وقت والمتابعة لاحقًا.</string>
     <string name="eq_finder_begin">ابدأ</string>

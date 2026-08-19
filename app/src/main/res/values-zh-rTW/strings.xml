@@ -211,8 +211,6 @@
     <string name="eq_type_peaking">鐘形</string>
     <string name="eq_type_low_shelf">低頻棚化</string>
     <string name="eq_type_high_shelf">高頻棚化</string>
-    <string name="eq_preamp_auto">自動設定前級增益</string>
-    <string name="eq_preamp_auto_desc">把音量降到剛好讓提升的部分不失真（目前 %1$s）</string>
     <string name="eq_preamp">前級增益</string>
     <string name="eq_round_title">要切換到圖示等化器嗎</string>
     <string name="eq_round_body">每個頻段都會移到圖示等化器的固定頻率上，Q 值也會跟著調整。曲線的形狀會盡量保留，但目前的頻率和 Q 值會消失。</string>
@@ -264,7 +262,7 @@
     <string name="eq_finder_include_mid_desc">在人聲附近增加第三個維度。問題會多幾題。</string>
     <string name="eq_finder_fine_tune">微調目前設定</string>
     <string name="eq_finder_notes">開始之前</string>
-    <string name="eq_finder_note_volume">測試的音量會比平常略小。開始後再把音量調到舒適的程度，之後到結束都不要再動。</string>
+    <string name="eq_finder_note_volume">開始後再把音量調到舒適的程度，之後到結束都不要再動。</string>
     <string name="eq_finder_note_earphones">請在安靜的地方，用這副耳機聆聽。</string>
     <string name="eq_finder_note_length">大約 25 到 40 題，10 到 15 分鐘。隨時可以中斷，之後接著做。</string>
     <string name="eq_finder_begin">開始</string>
