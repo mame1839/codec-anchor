@@ -27,13 +27,6 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import java.io.File
 
-/**
- * 曲線の再現 (標準 / 高精度) の行を、**出す場所と出さない場所**。
- *
- * - グラフィックにだけ出す。パラメトリックは biquad が定義どおりの厳密値なので、
- *   切り替えても何も変わらないトグルになる
- * - フラットのスロットでは編集の行が全部消えるので、ここも出ない
- */
 @RunWith(RobolectricTestRunner::class)
 class EqPrecisionRowTest {
 
@@ -78,7 +71,6 @@ class EqPrecisionRowTest {
         show(viewModel())
         compose.onNodeWithText(string(R.string.eq_precision)).assertExists()
         compose.onNodeWithText(string(R.string.eq_band_count)).assertExists()
-        // 既定は標準。行の下に選択中の値が出る。
         compose.onNodeWithText(string(R.string.eq_precision_standard)).assertExists()
     }
 
@@ -97,7 +89,6 @@ class EqPrecisionRowTest {
         compose.onNodeWithText(string(R.string.eq_precision)).assertDoesNotExist()
     }
 
-    /** 選ぶと設定に残ること。**残らないと、押しても何も起きない行になる。** */
     @Test
     fun pickingHighAccuracyIsStored() {
         val vm = viewModel()
@@ -111,19 +102,6 @@ class EqPrecisionRowTest {
         compose.onNodeWithText(string(R.string.eq_precision_high)).assertExists()
     }
 
-    /**
-     * 文言の縛り (eq-fir-design.md §0 と段 3 の指示)。**18 ロケール全部を見る** —
-     * `getString` は既定ロケールしか返さないので、それだけだと 17 言語が無検査になる。
-     *
-     * 言語に依らず言えることだけを見張る:
-     * - **数字を書かない** — 遅延 (0 ms) も精度も、こちらから数を約束しない。
-     *   20〜32 Hz には物理の床があり、「0 ms」はこちらから言うと無かった心配を作る。
-     *   標準へ落ちた理由 (44.1 kHz・ブロック長) も同じ — 数字はユーザに意味がない
-     * - **6 つのキーがどのロケールにも揃っている** — 抜けた言語は既定の英語に落ちるだけで、
-     *   画面は壊れないので気づけない
-     *
-     * 言語ごとの言い回し (「高速」「高音質」など) は、既定の英語と日本語だけ名指しで見る。
-     */
     @Test
     fun theWordingMakesNoPromiseAboutDelayOrNumbers() {
         val keys = listOf(
@@ -170,7 +148,6 @@ class EqPrecisionRowTest {
             .find(xml)?.groupValues?.get(1)
     }
 
-    /** リポジトリの根。**見つからなければ落とす** (黙って読み飛ばすと何も見ていないテストになる)。 */
     private fun repoDir(): File {
         var dir: File? = File(System.getProperty("user.dir") ?: ".").absoluteFile
         while (dir != null) {

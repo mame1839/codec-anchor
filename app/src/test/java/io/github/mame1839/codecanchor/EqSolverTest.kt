@@ -12,13 +12,6 @@ import kotlin.math.ln
 
 class EqSolverTest {
 
-    // tools/eq/05_geq_gain_solve_10band.py の参照値。
-    // 素朴なカスケードは 10 バンド全部 +6 dB でピーク +8.85 dB になる。
-    //
-    // ここの q100 = 141 は 05_*.py の条件をそのまま再現するための値で、
-    // defaultQ(10) (= 0.5) とは別物。参照値と対で決まっているので defaultQ に置き換えない。
-    // 製品の Q=0.5 での同じピークは +17.31 dB (EqCurveTest が固定している)。
-    // 8.85 を製品の数字として読まないこと。
     @Test
     fun naiveCascadeOvershoots() {
         val freqs = EqSolver.centerFrequencies(10)
@@ -31,10 +24,6 @@ class EqSolverTest {
         assertTrue("期待は約 8.85 dB、実際は $peak", peak in 8.0..9.5)
     }
 
-    // 解いたらバンド中心で目標に一致すること。
-    //
-    // 許容の 0.05 dB は保存の刻み (0.1 dB) の半分。solveBands が量子化の後に
-    // 整数で詰めているので、ここまで詰まる。緩めると下の linearised... の見張りが効かなくなる。
     @Test
     fun solvedGainsHitTheTarget() {
         val freqs = EqSolver.centerFrequencies(10)
@@ -47,17 +36,6 @@ class EqSolverTest {
         }
     }
 
-    /**
-     * **求解は実応答を評価すること。相互作用行列を応答として使わないこと。**
-     *
-     * M[i][j] は「バンド j に **1 dB** 入れたときの中心 i での応答」で、
-     * RBJ peaking の裾はゲインに比例しない。2 kHz のバンドの 1 kHz での応答は
-     * 1 dB なら 0.3048 dB、12 dB なら 3.9307 dB (比例なら 3.6580 dB)。
-     * M を応答として使うと 10 バンド +12 dB の目標で中心が **0.32 dB** ずれる。
-     *
-     * ゲインが大きいほど効くので、+6 dB では 0.04 dB しか出ず**気づけない**。
-     * この試験が +12 dB を使っているのはそのため。下げないこと。
-     */
     @Test
     fun solvedGainsHitTheTargetAtLargeGainsToo() {
         for (n in listOf(5, 10, 15, 31)) {
@@ -71,17 +49,6 @@ class EqSolverTest {
         }
     }
 
-    /**
-     * **ユーザの訴えそのもの: 全バンドを同じ値にしたら曲線が平らになること。**
-     *
-     * 2026-08-11 の報告「全部 12 dB にしたら波々になってる」。原因は干渉補正が
-     * スライダー操作で走っていなかったこと。素のカスケードだと中央部 (125 Hz〜8 kHz) に
-     * **4.9 dB** (Q=1.0) のうねりが出る。補正 + 平ら目標で選んだ Q なら 0.2 dB 以下。
-     * バンド数ごとの上限は [flatTargetsStayFlatBetweenTheCentres] が締めている。
-     *
-     * 全域ではなく 125 Hz〜8 kHz を見るのは、両端のバンド (32 Hz / 16 kHz) の外側が
-     * 必ず垂れるため。そこは補正の対象ではない (目標点が片側にしか無い)。
-     */
     @Test
     fun allBandsAtTheSameTargetGiveAFlatCurve() {
         val freqs = EqSolver.centerFrequencies(10)
@@ -89,27 +56,12 @@ class EqSolverTest {
         val ripple = rippleDb(bands, 125.0, 8_000.0)
         assertTrue("補正後のうねりが $ripple dB (期待は 1.5 dB 以下)", ripple <= 1.5)
 
-        // 素のカスケード (補正なし) だと同じ条件で 3 dB を超える。
-        // この行が落ちたら「補正が要らなくなった」のではなく、比較の前提が崩れている。
         val naive = freqs.map { EqBand(freqHz = it, q100 = 100, gainDb10 = 120) }
         assertTrue("補正なしのうねりが ${rippleDb(naive, 125.0, 8_000.0)} dB しかない", rippleDb(naive, 125.0, 8_000.0) > 3.0)
     }
 
-    /**
-     * **全バンドを同じ値にしたら、中心と中心の間も同じ値に留まること。**バンド数ごとに固定する。
-     *
-     * 2026-08-12 の報告「32 から 16K までどの位置でとってもプラス 12 じゃないとおかしくない?」。
-     * 摘み (バンド中心) は解けば必ず合うので、見張る対象は**中心間の谷**のほう。
-     * 谷の深さは既定 Q でほぼ決まる — Q を上げるほど深くなる (V&R 2016 Fig.8)。
-     * この上限は既定 Q の実測 + 余裕で、**Q の表を上げ直すとここが落ちる。**
-     *
-     * 31 バンドだけ上限が緩いのは、最上バンド (20 kHz) が fs=48k の Nyquist で潰れて
-     * 16k–20k の 1 区間に谷が残るため (実測 2.9 dB)。**可聴域 (16 kHz まで) は別に締める。**
-     */
     @Test
     fun flatTargetsStayFlatBetweenTheCentres() {
-        // 実測 (solveBands 込み): 5 -> 0.94 / 10 -> 0.45 / 15 -> 0.36 / 31 -> 2.88。
-        // 10/15 の最悪点は谷ではなく低域端の山 (41 Hz / 30 Hz の +0.4 dB)。
         val limits = mapOf(5 to 1.2, 10 to 0.6, 15 to 0.6, 31 to 3.3)
         for ((n, limit) in limits) {
             val freqs = EqSolver.centerFrequencies(n)
@@ -117,7 +69,6 @@ class EqSolverTest {
             val whole = maxDeviationDb(bands, freqs.first().toDouble(), freqs.last().toDouble(), 12.0)
             assertTrue("n=$n の中心間のずれが $whole dB (上限 $limit)", whole <= limit)
         }
-        // 31 バンドの可聴域。ユーザの訴えの範囲 (〜16 kHz) では 1 dB 未満であること。
         val freqs = EqSolver.centerFrequencies(31)
         val bands = EqSolver.solveBands(DoubleArray(31) { 12.0 }, freqs, EqSolver.defaultQ(31))
         val audible = maxDeviationDb(bands, 20.0, 16_000.0, 12.0)
@@ -134,21 +85,12 @@ class EqSolverTest {
         return worst
     }
 
-    /**
-     * **エスカレートした Q は、目標が穏やかに戻ったら既定へ戻ること。**
-     *
-     * [EqSolver.withGraphicTarget] が解く種を保存済みの q100 から取ると、スパイクで一度
-     * 上がった Q が**戻す操作をしても残り続ける** (全 +12 が細い Q の櫛で鳴る —
-     * 2026-08-12 の実機のスクリーンショットの再現条件)。種は毎回 [EqSolver.defaultQ] から
-     * 取り直し、エスカレーションは solve() がその目標のためだけに毎回やり直す。
-     */
     @Test
     fun escalatedQAnnealsBackWhenTheTargetCalmsDown() {
         val n = 31
         val defaultQ100 = (EqSolver.defaultQ(n) * 100).toInt()
         var bands = EqSolver.solveBands(DoubleArray(n) { 0.0 }, EqSolver.centerFrequencies(n), EqSolver.defaultQ(n))
         bands = EqSolver.withGraphicTarget(bands, 15, 120)
-        // 前提: スパイク 1 本は既定 Q では 20 dB に収まらず、エスカレーションが要る。
         assertTrue("前提が崩れた: スパイクで Q が上がっていない", bands.first().q100 > defaultQ100)
         assertEquals(120, EqSolver.graphicTargetsDb10(bands)[15])
 
@@ -169,10 +111,6 @@ class EqSolverTest {
         return hi - lo
     }
 
-    /**
-     * **摘みの値は保存していない。バンドのゲインから復元する。**
-     * 設定したとおりの値が読み戻せること — 読み戻せないと「+12.0 にしたのに +11.9 と出る」。
-     */
     @Test
     fun graphicTargetsRoundTripThroughTheStoredGains() {
         for (n in listOf(5, 10, 15, 31)) {
@@ -187,20 +125,12 @@ class EqSolverTest {
         }
     }
 
-    /**
-     * **ドラッグ 1 コマ分の予算。**
-     *
-     * 摘みを動かしている間、絵は毎コマ [EqSolver.withGraphicTarget] を通る
-     * (`EqCurve.withPreview`)。画面は 144 Hz = 1 コマ 6.9 ms で、曲線の描画と
-     * 文字の測定が既にその大半を使っている (PLAN.md 2026-08-07)。
-     * 31 バンドが最悪ケース。
-     */
     @Test
     fun solvingIsFastEnoughForOneDragFrame() {
         for (n in listOf(10, 31)) {
             val freqs = EqSolver.centerFrequencies(n)
             val bands = EqSolver.solveBands(DoubleArray(n) { 4.0 }, freqs, EqSolver.defaultQ(n))
-            repeat(20) { EqSolver.withGraphicTarget(bands, n / 2, 60) } // JIT を温める
+            repeat(20) { EqSolver.withGraphicTarget(bands, n / 2, 60) }
             val started = System.nanoTime()
             val rounds = 50
             repeat(rounds) { EqSolver.withGraphicTarget(bands, n / 2, 60) }
@@ -210,7 +140,6 @@ class EqSolverTest {
         }
     }
 
-    /** 1 本だけ動かしたとき、他のバンドの表示値が動かないこと。動くと勝手に音が変わる。 */
     @Test
     fun movingOneBandLeavesTheOthersWhereTheyWere() {
         val freqs = EqSolver.centerFrequencies(10)
@@ -224,12 +153,6 @@ class EqSolverTest {
         }
     }
 
-    /**
-     * 操作を重ねても値が溜まらないこと。
-     *
-     * 目標値を保存せずバンドのゲインから復元する設計なので、往復のたびに
-     * 0.1 dB の量子化を通る。ここが溜まると、触っていないバンドが少しずつずれていく。
-     */
     @Test
     fun repeatedEditsDoNotDrift() {
         val freqs = EqSolver.centerFrequencies(10)
@@ -241,18 +164,10 @@ class EqSolverTest {
             bands = EqSolver.withGraphicTarget(bands, index, value)
             assertEquals("直後に読み戻せない", value, EqSolver.graphicTargetsDb10(bands)[index])
         }
-        // 同じ操作を繰り返しても状態が動かないこと (冪等)。
         val settled = EqSolver.withGraphicTarget(bands, 3, 60)
         assertEquals(settled, EqSolver.withGraphicTarget(settled, 3, 60))
     }
 
-    /**
-     * **同じ応答の式が 2 箇所にある。**求解の内側は前計算した係数から組む速い経路を使い、
-     * 画面と摘みの表示は [EqSolver.peakingResponseDb] を使う。**両者がずれると、
-     * 摘みの値と曲線が食い違う** (このプロジェクトで 2 回出ている「点が曲線に乗らない」)。
-     *
-     * git は片方だけの変更を衝突と報告しないので、ここで一致を見張る。
-     */
     @Test
     fun theFastCentreGridAgreesWithTheReferenceFormula() {
         for (n in listOf(5, 10, 15, 31)) {
@@ -274,15 +189,6 @@ class EqSolverTest {
         }
     }
 
-    /**
-     * **「いまの合成応答をバンド中心で読む → それを目標に解き直す」写像が固定点であること。**
-     *
-     * この写像は `reband()` の真の曲線読みの側 (パラメトリック由来・手書きプリセットで通る。
-     * グラフィックのグリッドどうしは摘みの値の折れ線を読むので通らない)。
-     * 求解が実応答ではなく線形モデルを解いていたときは目標より上に外し続けるので、
-     * **繰り返すたびに曲線が育った** (+12 dB を 20 回で +27.9 dB、40 回で上限に張り付き)。
-     * 実応答で解けば固定点になる。
-     */
     @Test
     fun rebandingRepeatedlyDoesNotGrowTheCurve() {
         val freqs = EqSolver.centerFrequencies(10)
@@ -301,7 +207,6 @@ class EqSolverTest {
         }
     }
 
-    /** パラメトリックの 1 本きりの並びでは、目標がそのままゲインになる (干渉する相手が無い)。 */
     @Test
     fun aSingleBandTakesTheTargetDirectly() {
         val one = listOf(EqBand(freqHz = 1_000, q100 = 141, gainDb10 = 0))
@@ -309,8 +214,6 @@ class EqSolverTest {
         assertEquals(one, EqSolver.withGraphicTarget(one, 5, 75))
     }
 
-    // 病的な目標 (交互 ±6 dB) で解が暴れたら、Q を上げるか素朴な値に戻すこと。
-    // tools/eq/06_geq_gain_solve_31band.py では Q=1.9 で 19.73 dB まで暴れた。
     @Test
     fun wildSolutionsAreClamped() {
         val freqs = EqSolver.centerFrequencies(31)
@@ -319,8 +222,6 @@ class EqSolverTest {
         assertTrue("解が暴れている: ${solved.maxOf { abs(it) }}", solved.all { abs(it) <= 20.0 })
     }
 
-    // Q を上げて解き直したときは、組んだバンドの Q も上がった側でなければならない。
-    // 元の Q でバンドを作ると、解いた応答と実際に鳴る応答が食い違う。
     @Test
     fun solvedBandsCarryTheQThatWasActuallyUsed() {
         val freqs = EqSolver.centerFrequencies(31)
@@ -333,14 +234,11 @@ class EqSolverTest {
         assertEquals((solution.q * 100).toInt(), bands.first().q100)
     }
 
-    // プリアンプは合成応答のピークから。個々のゲインの合計ではない。
-    // q100 = 141 は上と同じく 05_*.py の条件の再現 (製品の Q=0.5 ならピークは +17.31 dB)。
     @Test
     fun autoPreampUsesCombinedPeakNotSum() {
         val freqs = EqSolver.centerFrequencies(10)
         val bands = freqs.map { EqBand(freqHz = it, q100 = 141, gainDb10 = 60) }
         val preamp = EqSolver.autoPreampDb10(bands)
-        // 合計なら -600 (= -60.0 dB)。ピークなら -88 前後 (= -8.8 dB)。
         assertTrue("期待は -80 〜 -95、実際は $preamp", preamp in -95..-80)
     }
 
@@ -351,8 +249,6 @@ class EqSolverTest {
         assertEquals(0, EqSolver.autoPreampDb10(bands))
     }
 
-    // 本数・昇順・重複なしを見る。重複があるとバンドが重なって相互作用行列が特異になり、
-    // solveLinear が null を返して求解が黙って打ち切られる。
     @Test
     fun bandCountsProduceDistinctAscendingFrequencies() {
         for (n in listOf(5, 10, 15, 31)) {
@@ -364,7 +260,6 @@ class EqSolverTest {
         }
     }
 
-    // 4 つとも実測済み (tools/eq/15_*.py)。どのバンド数でも解が上限内に収まること。
     @Test
     fun allBandCountsSolveWithinLimits() {
         for (n in listOf(5, 10, 15, 31)) {
@@ -375,8 +270,6 @@ class EqSolverTest {
         }
     }
 
-    // シェルフは Q をスロープとして使うので、Q > 1 とゲインの組み合わせで
-    // 根号の中が負になる。NaN を返すと合成応答とプリアンプが丸ごと壊れる。
     @Test
     fun shelfStaysFiniteOutsideItsDomain() {
         val db = EqSolver.shelfResponseDb(1_000.0, 100.0, 4.0, 40.0, EqSolver.DEFAULT_FS, false)
@@ -385,14 +278,6 @@ class EqSolverTest {
         assertTrue(EqSolver.autoPreampDb10(bands) <= 0)
     }
 
-    // ---- 取り込みの曲線フィット (fitCurve) ----
-
-    // 実現可能で滑らかな曲線 (既知のバンドの応答 + 一定オフセット) はフィットがそのまま
-    // 当てる。上限 0.2 dB は量子化 (0.1 dB 刻み) 込みの実測 0.10 dB の 2 倍。
-    // AutoEQ の実カーブと同じく滑らかな形で見る — バンドごとに符号が暴れる櫛は固定基底の
-    // 不動点から外れて 0.47 dB 残る (取り込みの対象がそういう形なら誤差はそれでよい)。
-    // フィットが壊れて素朴な値 (中心サンプル) に落ちると、中心での実現値 (裾込み) を
-    // バンドゲインに入れてしまい数 dB ずれるので、機構の退行はここで割れる。
     @Test
     fun fitReproducesARealizableCurve() {
         val freqs = EqSolver.centerFrequencies(31)
@@ -410,11 +295,9 @@ class EqSolverTest {
             worst = maxOf(worst, abs(realized - curve(hz)))
         }
         assertTrue("最悪 $worst dB", worst <= 0.2)
-        // オフセットは曲線の広帯域成分の側に残る (バンドに吸われて摘みがずれない)
         assertTrue("offset=${fit.offsetDb}", abs(fit.offsetDb + 7.0) <= 1.5)
     }
 
-    // 上限 (20 dB) を超える解になる目標は、solve() と同じ規則で Q を上げて解き直す。
     @Test
     fun fitEscalatesTheQWhenTheSolutionWouldExceedTheLimit() {
         val freqs = EqSolver.centerFrequencies(31)
@@ -431,9 +314,6 @@ class EqSolverTest {
         assertTrue(fit.bands.all { abs(it.gainDb10) <= 200 })
     }
 
-    // Q を上限まで上げても収まらない目標は、素朴な値 (中心サンプル) に戻す。
-    // 中心の値そのもの (±25 dB) が解の上限 20 dB を超えているのが素朴経路の証拠 —
-    // フィットの解はクランプされるので、200 超のゲインはフィットからは出ない。
     @Test
     fun fitFallsBackToNaiveSamplingWhenEscalationFails() {
         val freqs = EqSolver.centerFrequencies(31)

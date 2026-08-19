@@ -17,7 +17,6 @@ import org.junit.Test
 import java.io.File
 import java.util.Locale
 
-/** `caeqset` に渡す引数の組み立てと、終了コードの読み方。 */
 class EqParamsTest {
 
     private val graphic = EqSettings(
@@ -27,8 +26,6 @@ class EqParamsTest {
             EqBand(freqHz = hz, q100 = 100, gainDb10 = if (i < 5) 65 else -35)
         },
     )
-
-    // --- 単位の変換 ---------------------------------------------------------
 
     @Test
     fun decimalKeepsTheScale() {
@@ -43,10 +40,6 @@ class EqParamsTest {
         assertEquals("-40.0", EqParams.decimal(-400, EqUnits.GAIN_SCALE))
     }
 
-    /**
-     * **小数点がコンマになる地域で "1,41" を渡すと、`atof` がそこで読むのをやめて Q が 1 になる。**
-     * 端末の言語設定でだけ音が変わるので、症状からは絶対に辿り着けない。
-     */
     @Test
     fun decimalDoesNotFollowTheLocale() {
         val original = Locale.getDefault()
@@ -59,8 +52,6 @@ class EqParamsTest {
             Locale.setDefault(original)
         }
     }
-
-    // --- 引数の組み立て -----------------------------------------------------
 
     @Test
     fun disabledSendsOffAndNothingElse() {
@@ -77,10 +68,6 @@ class EqParamsTest {
         assertEquals("32:1.00:6.5:pk", args[args.indexOf("--band") + 1])
     }
 
-    /**
-     * **`bands` は既に解いた後の値。**`reband()` が `EqSolver.solveBands` の結果を保存しているので、
-     * ここで解き直すと曲線が変わる。渡した値がそのまま出ることを固定する。
-     */
     @Test
     fun bandsAreSentVerbatim() {
         val sent = EqParams.arguments(graphic).bandTokens()
@@ -117,20 +104,11 @@ class EqParamsTest {
         assertEquals("-7.5", args.preamp())
     }
 
-    /**
-     * **曲線を変えてもプリアンプは動かない。**ここで `EqSolver.autoPreampDb10` のような
-     * 「バンドから解き直す」を足すと、摘みを 1 本動かすたびに音量が動く
-     * (ユーザの訴え「音量差がかなり出るから耳に悪い」)。
-     *
-     * `graphic` は 5 本を +6.5 dB 上げていて `autoPreampDb10` なら 0 以外を返す形。
-     * 送られるのは保存値 0.0 dB のまま。
-     */
     @Test
     fun theStoredPreampSurvivesALoudCurve() {
         val loud = graphic.copy(preampDb10 = 0)
         assertTrue("題材が弱い", EqSolver.autoPreampDb10(loud.bands) < 0)
         assertEquals("0.0", EqParams.arguments(loud).preamp())
-        // バンドを 1 本だけ動かしても値は同じ
         val moved = loud.copy(bands = loud.bands.mapIndexed { i, b -> if (i == 0) b.copy(gainDb10 = 120) else b })
         assertEquals("0.0", EqParams.arguments(moved).preamp())
     }
@@ -151,7 +129,6 @@ class EqParamsTest {
         assertEquals(EqSettings.MAX_BANDS, EqParams.arguments(settings).count { it == "--band" })
     }
 
-    /** 引数はクォートせずに `su -c` の 1 本の文字列へ入る。区切りになる文字が混じったら前提が崩れる。 */
     @Test
     fun everyArgumentIsShellSafe() {
         val settings = graphic.copy(preampDb10 = -400)
@@ -167,25 +144,13 @@ class EqParamsTest {
         assertTrue(command.contains("--auto-slot"))
     }
 
-    // --- 処理方式と目標曲線 -------------------------------------------------
-
-    /**
-     * **方式は毎回送る。**`caeqset` の既定は標準なので、送らない回があるとそこで
-     * 高精度が黙って外れる。
-     */
     @Test
     fun theProcessingModeIsAlwaysSent() {
         assertTrue(EqParams.arguments(graphic).contains("--std"))
         assertTrue(EqParams.arguments(graphic.copy(precision = EqPrecision.HIGH)).contains("--hp"))
-        // どちらか一方だけ。
         assertEquals(1, EqParams.arguments(graphic).count { it == "--std" || it == "--hp" })
     }
 
-    /**
-     * パラメトリックでは高精度を要求しない。biquad が定義どおりの厳密値なので、
-     * FIR にしても近似が入るだけ。**選択そのものは保存に残る**ので、グラフィックへ
-     * 戻せば `--hp` が復活する。
-     */
     @Test
     fun parametricNeverAsksForHighPrecision() {
         val parametric = graphic.copy(mode = EqMode.PARAMETRIC, precision = EqPrecision.HIGH)
@@ -200,15 +165,12 @@ class EqParamsTest {
         val high = EqParams.command(REAL_DIR, graphic.copy(precision = EqPrecision.HIGH), path)
         assertTrue(high, high.endsWith(" --curve '$path'"))
 
-        // 標準のときは付けない — 読まれない曲線で世代だけが動き、FIR が組み直される。
         assertFalse(EqParams.command(REAL_DIR, graphic, path).contains("--curve"))
-        // 渡さなければ当然付かない。
         assertFalse(
             EqParams.command(REAL_DIR, graphic.copy(precision = EqPrecision.HIGH)).contains("--curve"),
         )
     }
 
-    /** 曲線のパスが変な形なら、**曲線だけ落として bands は送る** (音まで止めない)。 */
     @Test
     fun anOddCurvePathDropsOnlyTheCurve() {
         assertTrue(EqParams.isSafePath("/data/user/0/io.github.mame1839.codecanchor/cache/eq_curve.txt"))
@@ -216,13 +178,6 @@ class EqParamsTest {
         assertFalse(EqParams.isSafePath("/data/user/0/pkg/cache/with space"))
     }
 
-    // --- nativeLibraryDir の検査 -------------------------------------------
-
-    /**
-     * **実機の値をそのまま通すこと。**Android 12 以降は `~~` と `==` が必ず入るので、
-     * 「英数字と `/` と `.` だけ」に絞ると全部の端末で弾かれ、症状は
-     * 「EQ が一切効かない」になる。
-     */
     @Test
     fun realNativeLibraryDirsAreAccepted() {
         assertTrue(REAL_DIR, EqParams.isSafeDirectory(REAL_DIR))
@@ -231,7 +186,6 @@ class EqParamsTest {
 
     @Test
     fun oddNativeLibraryDirsAreRefused() {
-        // クォートの中に入るので、閉じられる文字と展開される文字が入っていたら実行前に落とす。
         assertFalse(EqParams.isSafeDirectory("/data/app/x'; rm -rf /; '"))
         assertFalse(EqParams.isSafeDirectory("/data/app/`id`"))
         assertFalse(EqParams.isSafeDirectory("/data/app/\$HOME"))
@@ -248,8 +202,6 @@ class EqParamsTest {
         assertEquals(EqParams.NO_EXIT_CODE, result.exitCode)
     }
 
-    // --- 終了コード ---------------------------------------------------------
-
     @Test
     fun everyDocumentedExitCodeHasAMeaning() {
         assertEquals(EqParamsOutcome.APPLIED, EqParams.outcomeOf(EqParamsExit.OK))
@@ -262,18 +214,12 @@ class EqParamsTest {
         assertEquals(EqParamsOutcome.SLOTS_FULL, EqParams.outcomeOf(EqParamsExit.SLOTS_FULL))
     }
 
-    /**
-     * **16 (枠が尽きた) を 13 (枠が無い) に丸めない。**以前はどちらも 13 で、繋がっていて
-     * 再生中なのに「繋がっていない」側の扱いを受けていた (画面は黙る)。literal なのは
-     * 対応そのものを見張るため — 定数どうしの比較だと、両方を同じ値に付け替えても通る。
-     */
     @Test
     fun slotsFullIsItsOwnOutcome() {
         assertEquals(EqParamsOutcome.SLOTS_FULL, EqParams.outcomeOf(16))
         assertEquals(EqParamsOutcome.NO_LIVE_SLOT, EqParams.outcomeOf(13))
     }
 
-    /** 表に無い値を黙って「成功」にも「原因不明」にもしない。数値は結果に残る。 */
     @Test
     fun unknownExitCodesStayUnknown() {
         for (code in listOf(1, 2, 9, 17, 99, 127, -1)) {
@@ -296,21 +242,6 @@ class EqParamsTest {
         assertEquals(codes.size, codes.toSet().size)
     }
 
-    // --- ビルド設定 ---------------------------------------------------------
-
-    /**
-     * **`jniLibs.useLegacyPackaging = true` が消えていないこと。**
-     *
-     * ⚠️ **このテストを「gradle を読む変なテスト」と判断して消さないこと。これだけが気づく手段。**
-     *
-     * AGP の既定は `false` で、マニフェストに `android:extractNativeLibs="false"` が入る。
-     * そうなると `.so` は APK の中に置かれたままで **`nativeLibraryDir` にファイルが 1 つも
-     * 現れず、[EqParams.apply] の `su` からの exec が「No such file or directory」で死ぬ。**
-     *
-     * **外してもビルドもテストも通る。**実機に入れて初めて「EQ の値が届かない」として出るうえ、
-     * その症状から `build.gradle.kts` に辿り着くのはほぼ不可能。将来 AGP の既定に合わせようと
-     * した人がここで止まる。
-     */
     @Test
     fun nativeExecutablesAreExtractedOnInstall() {
         val file = appBuildFile()
@@ -325,16 +256,6 @@ class EqParamsTest {
         )
     }
 
-    /**
-     * **バンド数の上限が Kotlin と C++ で一致していること。**
-     *
-     * ⚠️ **同じ値が 2 箇所にある。**`EqSettings.MAX_BANDS` と `ca_eq_shm.h` の `CA_EQ_MAX_BANDS` で、
-     * **git は片方だけの変更を衝突と報告しない。**
-     *
-     * Kotlin 側が大きいと `caeqset` が「バンドが多すぎる」で 10 を返し、画面には
-     * **「アプリ側の不具合です」**が出る (原因は上限の食い違いなので、そこを見ても何も分からない)。
-     * C++ 側が大きいと、ユーザは払った容量を使えないまま気づかない。**どちらも無言で壊れる。**
-     */
     @Test
     fun theBandLimitMatchesTheNativeHeader() {
         val header = repoFile("app/src/main/cpp/ca_eq_shm.h")
@@ -357,13 +278,6 @@ class EqParamsTest {
         )
     }
 
-    /**
-     * リポジトリ内のファイルを探す。単体テストの作業ディレクトリは Gradle の設定で
-     * `app/` にもリポジトリ直下にもなる。
-     *
-     * **見つからなければ失敗させる。**「読めなかったので一致とみなす」にすると、
-     * 配置が変わった日に上の検査が黙って何も見なくなる。
-     */
     private fun repoFile(relative: String): File {
         var dir: File? = File("").absoluteFile
         while (dir != null) {
@@ -385,7 +299,6 @@ class EqParamsTest {
     private fun List<String>.preamp(): String = this[indexOf("--preamp") + 1]
 
     private companion object {
-        /** 実機の nativeLibraryDir の形 (Android 12 以降)。 */
         const val REAL_DIR =
             "/data/app/~~4RtIAxRHBFLQzT9SFhqvIA==/" +
                 "io.github.mame1839.codecanchor-tSHBbwYwHKw6RhPBP0T-Yg==/lib/arm64"

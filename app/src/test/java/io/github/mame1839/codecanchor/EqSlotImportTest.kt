@@ -17,10 +17,6 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 
-/**
- * AutoEQ の取り込みが新しいスロットに着地すること (規則は eq-slot-design.md §1)。
- * 経路そのものを走らせる — `updateEq` に戻されると、AutoEQ を試した瞬間に作りかけの曲線が消える。
- */
 @RunWith(RobolectricTestRunner::class)
 class EqSlotImportTest {
 
@@ -39,10 +35,6 @@ class EqSlotImportTest {
             "テストリソースが無い"
         }.bufferedReader().use { it.readText() }
 
-    /**
-     * 取り込みは `viewModelScope` + `Dispatchers.IO` / `Dispatchers.Default` を渡り歩くので、
-     * main looper を回しながら終わりを待つ。実際の解析は数ミリ秒で、上限は保険。
-     */
     private fun settle(vm: MainViewModel) {
         repeat(500) {
             shadowOf(Looper.getMainLooper()).idle()
@@ -69,14 +61,11 @@ class EqSlotImportTest {
         val landed = vm.slotsOf(mac).active
         assertNotEquals(before, landed)
         assertEquals(2, vm.slotsOf(mac).slots.size)
-        // 作りかけは無傷で、チップ 1 タップで戻れる
         assertEquals(working, vm.slotsOf(mac).slot(before)?.eq)
-        // 取り込んだほうが鳴っている
         val imported = vm.config.profileFor(mac)?.eq
         assertEquals(imported, vm.slotsOf(mac).slot(landed)?.eq)
         assertEquals(EqMode.GRAPHIC, imported?.mode)
         assertTrue(imported!!.bands.any { it.gainDb10 != 0 })
-        // 既定名で出せるよう未命名にしておく (訳文をデータに焼かない)
         assertEquals("", vm.slotsOf(mac).slot(landed)?.name)
     }
 }
