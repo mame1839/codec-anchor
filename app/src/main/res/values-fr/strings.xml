@@ -75,7 +75,6 @@
     <string name="module_inactive_hint">Vous pouvez toujours modifier et enregistrer les réglages. Ils prennent effet dès que le module fonctionne.</string>
     <string name="msg_config_pushed">Réglages renvoyés</string>
 
-    <string name="eq_module_version_mismatch">Le module de traitement audio (%1$s) et l\'application (%2$s) sont dans des versions différentes. Mettez les deux à la même version, puis redémarrez le téléphone.</string>
     <string name="eq_unavailable_not_registered">Le traitement audio n\'est pas disponible : le module de traitement audio n\'est pas installé, ou ce téléphone ne l\'a pas encore chargé. Installez-le, puis redémarrez le téléphone.</string>
     <string name="eq_unavailable_offload">Le traitement audio n\'est pas disponible tant que le déchargement matériel Bluetooth A2DP est activé.</string>
     <string name="eq_unavailable_hook_old">Le traitement audio n\'est pas disponible : le module qui tourne dans le processus Bluetooth est une version plus ancienne qui ne le connaît pas. Désactivez le Bluetooth, puis réactivez-le.</string>

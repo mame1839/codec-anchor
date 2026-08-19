@@ -1,0 +1,95 @@
+name: release-module
+
+on:
+  push:
+    tags: ['m*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-module
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: タグと版を決める
+        id: version
+        run: |
+          . module/version.sh
+          if [[ ! "$GITHUB_REF_NAME" =~ ^${CA_MODULE_TAG_PREFIX}[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "タグ名が ${CA_MODULE_TAG_PREFIX}<major>.<minor>.<patch> ではない: $GITHUB_REF_NAME" >&2
+            exit 1
+          fi
+          git fetch --no-tags --force origin main:refs/remotes/origin/main
+          if ! git merge-base --is-ancestor HEAD refs/remotes/origin/main; then
+            echo "このタグは main に含まれないコミットを指している。" >&2
+            exit 1
+          fi
+          version="${GITHUB_REF_NAME#"$CA_MODULE_TAG_PREFIX"}"
+          echo "name=$version" >> "$GITHUB_OUTPUT"
+          echo "zip=$(ca_zip_name "$version")" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: .so を作る
+        run: ./gradlew :app:assembleDebug --stacktrace
+
+      - name: モジュールを組む
+        run: bash module/build.sh
+
+      - name: 組んだものがタグと合っているか見る
+        run: |
+          . module/version.sh
+          zip="module/build/${{ steps.version.outputs.zip }}"
+          [ -s "$zip" ] || { echo "$zip が無い" >&2; exit 1; }
+          unzip -p "$zip" module.prop | grep -qx "version=${{ steps.version.outputs.name }}" \
+            || { echo "zip の中の module.prop がタグの版になっていない" >&2; exit 1; }
+          want="\"zipUrl\": \"https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/${{ steps.version.outputs.zip }}\","
+          grep -qF "$want" "module/build/$CA_UPDATE_JSON" \
+            || { echo "update.json の zipUrl がこのリリースを指していない" >&2; cat "module/build/$CA_UPDATE_JSON" >&2; exit 1; }
+
+      - name: リリースに zip を添える
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228
+        with:
+          files: module/build/${{ steps.version.outputs.zip }}
+          fail_on_unmatched_files: true
+          make_latest: 'false'
+          generate_release_notes: true
+
+      - name: update.json を配る
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          . module/version.sh
+          out=$(mktemp -d)
+          cp "module/build/$CA_UPDATE_JSON" "$out/$CA_UPDATE_JSON"
+          prev=$(git describe --tags --abbrev=0 --match "$CA_MODULE_TAG_PREFIX[0-9]*" \
+                 "$GITHUB_REF_NAME^" 2>/dev/null || true)
+          if [ -n "$prev" ]; then range="$prev..$GITHUB_REF_NAME"; else range="$GITHUB_REF_NAME"; fi
+          {
+            printf '# %s\n\n' "$GITHUB_REF_NAME"
+            git log --no-merges --pretty=format:'- %s' "$range" -- module/ .github/
+            printf '\n'
+          } > "$out/$CA_UPDATE_CHANGELOG"
+          cd "$out"
+          git init -q -b "$CA_UPDATE_BRANCH"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$CA_UPDATE_JSON" "$CA_UPDATE_CHANGELOG"
+          git commit -q -m "$GITHUB_REF_NAME"
+          git push -q --force \
+            "https://x-access-token:$GH_TOKEN@github.com/$GITHUB_REPOSITORY" "$CA_UPDATE_BRANCH"

@@ -73,7 +73,6 @@
     <string name="module_inactive_hint">Bạn vẫn sửa và lưu được cài đặt. Cài đặt có hiệu lực khi mô-đun bắt đầu chạy.</string>
     <string name="msg_config_pushed">Đã gửi lại cài đặt</string>
 
-    <string name="eq_module_version_mismatch">Mô-đun xử lý âm thanh (%1$s) và ứng dụng (%2$s) khác phiên bản. Hãy cập nhật cả hai lên cùng một phiên bản, rồi khởi động lại điện thoại.</string>
     <string name="eq_unavailable_not_registered">Không dùng được xử lý âm thanh: chưa cài mô-đun xử lý âm thanh, hoặc máy này chưa nạp nó. Hãy cài đặt, rồi khởi động lại điện thoại.</string>
     <string name="eq_unavailable_offload">Không dùng được xử lý âm thanh khi Bluetooth A2DP hardware offload đang bật.</string>
     <string name="eq_unavailable_hook_old">Không dùng được xử lý âm thanh: mô-đun đang chạy trong tiến trình Bluetooth là phiên bản cũ, chưa biết đến nó. Hãy tắt Bluetooth rồi bật lại.</string>

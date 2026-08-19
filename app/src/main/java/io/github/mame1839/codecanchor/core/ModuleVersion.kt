@@ -1,16 +1,6 @@
 package io.github.mame1839.codecanchor.core
 
-enum class ModuleVersionState {
-    UNKNOWN,
-    MATCHED,
-    MISMATCHED,
-}
-
 object ModuleVersion {
-
-    const val PROPERTY_CODE = "ro.codecanchor.module_version"
-
-    const val PROPERTY_SEMVER = "ro.codecanchor.module_semver"
 
     private const val GETPROP = "/system/bin/getprop"
 
@@ -24,9 +14,4 @@ object ModuleVersion {
             process.destroy()
         }
     }.getOrDefault("")
-
-    fun compare(moduleVersionCode: String, appVersionCode: Int): ModuleVersionState {
-        val code = moduleVersionCode.trim().toIntOrNull() ?: return ModuleVersionState.UNKNOWN
-        return if (code == appVersionCode) ModuleVersionState.MATCHED else ModuleVersionState.MISMATCHED
-    }
 }

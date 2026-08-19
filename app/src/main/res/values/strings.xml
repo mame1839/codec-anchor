@@ -79,7 +79,6 @@
     <!-- Audio processing (EQ). "The audio processing module" is the separate root module that
          installs the effect. A bare "the module" is the one inside the Bluetooth process, which is
          what every other module_* string above means. -->
-    <string name="eq_module_version_mismatch">The audio processing module (%1$s) and the app (%2$s) are different versions. Update both to the same version, then restart the phone.</string>
     <string name="eq_unavailable_not_registered">Audio processing is unavailable: the audio processing module is not installed, or this phone has not loaded it. Install it, then restart the phone.</string>
     <string name="eq_unavailable_offload">Audio processing is unavailable while Bluetooth A2DP hardware offload is enabled.</string>
     <string name="eq_unavailable_hook_old">Audio processing is unavailable: the module running in the Bluetooth process is an older version that does not know about it. Turn Bluetooth off, then on again.</string>

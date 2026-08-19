@@ -73,7 +73,6 @@
     <string name="module_inactive_hint">此時仍可編輯並儲存設定，模組開始運作後就會生效。</string>
     <string name="msg_config_pushed">已重新傳送設定</string>
 
-    <string name="eq_module_version_mismatch">音訊處理模組 (%1$s) 與應用程式 (%2$s) 的版本不一致。請將兩者更新到相同版本，然後重新啟動手機。</string>
     <string name="eq_unavailable_not_registered">無法使用音訊處理：尚未安裝音訊處理模組，或本機還沒有載入。請先安裝，然後重新啟動手機。</string>
     <string name="eq_unavailable_offload">藍牙 A2DP 硬體卸載開啟期間無法使用音訊處理。</string>
     <string name="eq_unavailable_hook_old">無法使用音訊處理：藍牙處理程序中執行的模組是不認識音訊處理的舊版本。請關閉藍牙後再重新開啟。</string>

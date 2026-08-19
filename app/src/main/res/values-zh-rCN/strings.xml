@@ -73,7 +73,6 @@
     <string name="module_inactive_hint">此时仍可编辑并保存设置，模块开始运行后会生效。</string>
     <string name="msg_config_pushed">已重新发送设置</string>
 
-    <string name="eq_module_version_mismatch">音频处理模块 (%1$s) 与应用 (%2$s) 的版本不一致。请把两者更新到同一版本，然后重启手机。</string>
     <string name="eq_unavailable_not_registered">无法使用音频处理：尚未安装音频处理模块，或本机还没有加载它。请先安装，然后重启手机。</string>
     <string name="eq_unavailable_offload">蓝牙 A2DP 硬件卸载开启期间无法使用音频处理。</string>
     <string name="eq_unavailable_hook_old">无法使用音频处理：蓝牙进程中运行的模块是不认识音频处理的旧版本。请关闭蓝牙后再重新开启。</string>

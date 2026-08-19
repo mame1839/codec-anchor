@@ -78,7 +78,6 @@
     <string name="module_inactive_hint">لا يزال بإمكانك تعديل الإعدادات وحفظها. تصبح سارية عندما تبدأ الوحدة بالعمل.</string>
     <string name="msg_config_pushed">تم إرسال الإعدادات مرة أخرى</string>
 
-    <string name="eq_module_version_mismatch">وحدة معالجة الصوت (%1$s) والتطبيق (%2$s) بإصدارين مختلفين. حدّث كليهما إلى الإصدار نفسه، ثم أعد تشغيل الهاتف.</string>
     <string name="eq_unavailable_not_registered">معالجة الصوت غير متاحة: وحدة معالجة الصوت غير مثبّتة، أو أن هذا الهاتف لم يحمّلها بعد. ثبّتها، ثم أعد تشغيل الهاتف.</string>
     <string name="eq_unavailable_offload">معالجة الصوت غير متاحة ما دام تفريغ Bluetooth A2DP بالعتاد مفعّلًا.</string>
     <string name="eq_unavailable_hook_old">معالجة الصوت غير متاحة: الوحدة العاملة في عملية Bluetooth إصدار أقدم لا يعرفها. أوقف Bluetooth ثم شغّله مرة أخرى.</string>

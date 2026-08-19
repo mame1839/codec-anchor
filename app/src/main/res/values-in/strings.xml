@@ -73,7 +73,6 @@
     <string name="module_inactive_hint">Setelan tetap dapat diubah dan disimpan. Setelan berlaku begitu modul mulai berjalan.</string>
     <string name="msg_config_pushed">Setelan dikirim lagi</string>
 
-    <string name="eq_module_version_mismatch">Modul pemrosesan audio (%1$s) dan aplikasi (%2$s) berbeda versi. Perbarui keduanya ke versi yang sama, lalu mulai ulang ponsel.</string>
     <string name="eq_unavailable_not_registered">Pemrosesan audio tidak tersedia: modul pemrosesan audio belum terpasang, atau ponsel ini belum memuatnya. Pasang modulnya, lalu mulai ulang ponsel.</string>
     <string name="eq_unavailable_offload">Pemrosesan audio tidak tersedia selama offload perangkat keras Bluetooth A2DP aktif.</string>
     <string name="eq_unavailable_hook_old">Pemrosesan audio tidak tersedia: modul yang berjalan di proses Bluetooth adalah versi lama yang belum mengenalnya. Matikan Bluetooth, lalu nyalakan lagi.</string>

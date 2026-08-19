@@ -76,7 +76,6 @@
     <string name="module_inactive_hint">Ustawienia nadal można edytować i zapisywać. Zaczną działać, gdy moduł się uruchomi.</string>
     <string name="msg_config_pushed">Ustawienia wysłane ponownie</string>
 
-    <string name="eq_module_version_mismatch">Moduł przetwarzania dźwięku (%1$s) i aplikacja (%2$s) mają różne wersje. Zaktualizuj oba do tej samej wersji, a potem uruchom telefon ponownie.</string>
     <string name="eq_unavailable_not_registered">Przetwarzanie dźwięku jest niedostępne: moduł przetwarzania dźwięku nie jest zainstalowany albo telefon jeszcze go nie wczytał. Zainstaluj go i uruchom telefon ponownie.</string>
     <string name="eq_unavailable_offload">Przetwarzanie dźwięku jest niedostępne, dopóki włączone jest sprzętowe odciążanie Bluetooth A2DP.</string>
     <string name="eq_unavailable_hook_old">Przetwarzanie dźwięku jest niedostępne: w procesie Bluetooth działa starsza wersja modułu, która go nie zna. Wyłącz Bluetooth i włącz go ponownie.</string>
