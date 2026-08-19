@@ -81,19 +81,33 @@ class EqPreampGateTest {
             ),
         )
         assertEquals(-479, EqSolver.autoPreampDb10(migrated.bands))
-        assertEquals("移行はクランプする", lo, migrated.preampDb10)
+        assertEquals("producer 1: 旧版からの移行 (pa=true)", lo, migrated.preampDb10)
 
         // producer 2: 保存された手動値 (pdb)。両端の外を撃つ。
-        assertEquals(lo, EqSettings.fromJson(JSONObject("""{"on":true,"pdb":-9999}""")).preampDb10)
-        assertEquals(hi, EqSettings.fromJson(JSONObject("""{"on":true,"pdb":9999}""")).preampDb10)
+        assertEquals(
+            "producer 2: 保存された手動値 (下端)",
+            lo,
+            EqSettings.fromJson(JSONObject("""{"on":true,"pdb":-9999}""")).preampDb10,
+        )
+        assertEquals(
+            "producer 2: 保存された手動値 (上端)",
+            hi,
+            EqSettings.fromJson(JSONObject("""{"on":true,"pdb":9999}""")).preampDb10,
+        )
 
-        // producer 3: AutoEQ の取り込み (ParametricEQ の Preamp 行)。
+        // producer 3: AutoEQ の取り込み — ParametricEQ 形式 (`Preamp:` 行を読む側)。
+        // **`GraphicEQ:` 行が 1 つでもあると parse() は producer 6 の側へ分岐する**ので、
+        // この題材には入れない (入れるとここは一度も走らなくなる)。
         val imported = AutoEqParser.parse(
             "Preamp: -99.9 dB\n" +
                 "Filter 1: ON PK Fc 1000 Hz Gain -3.0 dB Q 1.41\n",
         )
         assertTrue("取り込みが成功していること (実際: $imported)", imported is AutoEqResult.Ok)
-        assertEquals(lo, (imported as AutoEqResult.Ok).settings.preampDb10)
+        assertEquals(
+            "producer 3: ParametricEQ の取り込み (AutoEqParser の Preamp 行側)",
+            lo,
+            (imported as AutoEqResult.Ok).settings.preampDb10,
+        )
 
         // producer 4: 好みの EQ の聴感等価。土台に大きな下駄を履かせて下端を割らせる。
         val weights = EqLoudness.defaultWeights()
@@ -102,15 +116,29 @@ class EqPreampGateTest {
             weights = weights,
             baseLevelDb = -400.0,
         )
-        assertEquals(lo, loud)
+        assertEquals("producer 4: 聴感等価 (下端)", lo, loud)
         assertEquals(
+            "producer 4: 聴感等価 (上端)",
             hi,
             EqLoudness.preampDb10(bands = emptyList(), weights = weights, baseLevelDb = 400.0),
         )
 
+        // producer 6: AutoEQ の取り込み — GraphicEQ 形式 (曲線から分離した広帯域オフセットを
+        // プリアンプへ移す側)。**producer 3 とは別の coerceIn** で、`parse()` は
+        // `GraphicEQ:` 行を見つけた時点でこちらへ分岐するため、producer 3 の題材では届かない。
+        val graphic = AutoEqParser.parse(
+            "GraphicEQ: 20 -60; 200 -60; 2000 -60; 20000 -60\n",
+        )
+        assertTrue("取り込みが成功していること (実際: $graphic)", graphic is AutoEqResult.Ok)
+        assertEquals(
+            "producer 6: GraphicEQ の取り込み (AutoEqParser の広帯域オフセット側)",
+            lo,
+            (graphic as AutoEqResult.Ok).settings.preampDb10,
+        )
+
         // producer 5: 画面の摘み。可動域そのものが PREAMP_RANGE。
-        assertEquals(lo, PREAMP_SCALE.fromPosition(-1f))
-        assertEquals(hi, PREAMP_SCALE.fromPosition(2f))
+        assertEquals("producer 5: 画面の摘み (下端)", lo, PREAMP_SCALE.fromPosition(-1f))
+        assertEquals("producer 5: 画面の摘み (上端)", hi, PREAMP_SCALE.fromPosition(2f))
     }
 
     /**

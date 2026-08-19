@@ -5,12 +5,12 @@
 // アプリは preampDb10 をそのまま送り (core/EqParams.kt の arguments())、
 // caeqset は書き込みの前にこの validate を呼んで範囲外を REJECTED で断る (caeqset.cpp)。
 // アプリ側で範囲外を作らないのは producer 側の coerceIn で、そちらの列挙は
-// EqAutoPreampReachTest.everyPreampProducerClampsToTheSavedRange にある。
+// EqPreampGateTest.everyPreampProducerClampsToTheSavedRange にある。
 // **ここが緩むと、アプリが送れる値を .so が黙って却下する組み合わせができる。**
 //
 // 境界の値は釘として literal で書く (kMinPreampDb / kMaxPreampDb の記号では書かない) —
 // dsp/ca_eq_dsp.h の定数を動かしたら、ここが落ちて知らせるのが仕事。
-// Kotlin 側の同じ数は EqAutoPreampReachTest.theSavedRangeEndsExactlyWhereTheNativeGateOpens。
+// Kotlin 側の同じ数は EqPreampGateTest.theSavedRangeEndsExactlyWhereTheNativeGateOpens。
 
 #include <cmath>
 #include <vector>
