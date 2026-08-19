@@ -36,14 +36,6 @@ import io.github.mame1839.codecanchor.R
 import io.github.mame1839.codecanchor.core.DeviceProfile
 import io.github.mame1839.codecanchor.core.DeviceStatus
 
-/**
- * 機器タブ。**イヤホンの一覧と、一覧が使えない理由だけ**を置く。
- *
- * 権限と Bluetooth の注意をここに残しているのは、どちらも**一覧が空である理由そのもの**だから。
- * 状態タブへ移すと、空の一覧だけを見せて理由は別のタブ、という形になる。
- *
- * アプリ全体の設定は [SettingsTab]、端末側の事情は [StatusTab] が持つ。
- */
 @Composable
 fun DeviceListTab(
     vm: MainViewModel,

@@ -56,11 +56,8 @@ private val DELAY_STEPS = listOf(0, 500, 1000, 1500, 2000, 3000, 5000, 8000)
 private val RETRY_STEPS = listOf(1, 2, 3, 4, 5, 8, 10)
 private val RETRY_DELAY_STEPS = listOf(500, 1000, 1500, 2000, 3000, 5000)
 
-// ネイティブのダンプが書く品質モードの表記。
 private const val ABR_MODE = "ABR"
 
-// 実効ビットレートは ABR のときだけ動く (固定音質では上のコーデック行と同じなので出さない)。
-// オフロード中はフックがダンプを読まないのでモードは常に空になり、そのときは codecSpecific1 で判断する。
 private fun DeviceStatus.isLdacAbr(): Boolean =
     CodecKeys.isLdac(current?.displayName()) &&
         (ldacQualityMode.equals(ABR_MODE, ignoreCase = true) || current?.codecSpecific1 == CodecKeys.LDAC_ABR)
@@ -87,7 +84,6 @@ fun DeviceDetailScreen(
     var confirmDelete by rememberSaveable { mutableStateOf(false) }
     var advancedExpanded by rememberSaveable { mutableStateOf(false) }
 
-    // 取り直しが要るのは動く値があるときだけ (固定音質・オフロード中は取り直しても変わらない)。
     val watchBitrate = status?.connected == true && status.isLdacAbr() && !vm.a2dpOffloadEnabled
     LifecycleResumeEffect(watchBitrate) {
         if (watchBitrate) vm.startWatching()
@@ -279,7 +275,6 @@ private fun DeviceHeader(name: String, mac: String, status: DeviceStatus?, offlo
                 ),
                 style = MaterialTheme.typography.bodyMedium,
             )
-            // オフロード中はホストのエンコーダが動かないので、ダンプは公称値のまま残る (実効値ではない)。
             if (status != null && status.isLdacAbr()) {
                 if (offloadEnabled) {
                     Text(
@@ -329,15 +324,6 @@ private fun DeviceHeader(name: String, mac: String, status: DeviceStatus?, offlo
     }
 }
 
-/**
- * 詳細画面の「音響処理」。押すと `EqScreen` が開く行 1 つだけを置く (中身を広げない理由・
- * 使えない理由をここで出さない理由・スロット名も出す理由は ui-notes.md §2)。
- *
- * ⚠️ 判定に `EqAvailability.allowsEditing` は使わない — あれは「編集させてよいか」で、
- * ここが言うのは「音に効いているか」(機器未登録なら編集はできても音には届かない)。
- *
- * internal なのは要約が出ることを見るテストから直接呼ぶため。
- */
 @Composable
 internal fun EqSummaryCard(
     eq: EqSettings,
@@ -399,13 +385,11 @@ private fun TargetCard(
     }
 
     val capability = if (profile.codecType == CodecKeys.KEEP_INT) null else status?.capabilityOf(profile.codecType)
-    // 行の有無が報告の到着で変わらないよう、判断材料は非同期に変わらない profile だけに限る。
     val ldacEnabled = profile.codecType == CodecKeys.KEEP_INT ||
         CodecKeys.isLdac(codecLabel(profile.codecType, vm.codecNames)) ||
         profile.codecSpecific1 != CodecKeys.KEEP_LONG
 
     SettingsCard(title = stringResource(R.string.section_target)) {
-        // 未接続なら「読めなかった」ではなく「まだ読めない」ので、警告にはしない。
         if (selectable.isEmpty()) {
             NoticeRow(
                 icon = if (connected) R.drawable.ic_warning else R.drawable.ic_bluetooth,
