@@ -102,7 +102,7 @@
     <string name="eq_delivery_failed_root">这些设置没有影响声音：root 权限被拒绝，或者本机没有 root 管理器。请在你的 root 管理器中允许 Codec Anchor。</string>
     <string name="eq_delivery_failed_shm">这些设置没有影响声音：音频处理模块没有在运行。请重启手机。</string>
     <string name="eq_delivery_failed_version">这些设置没有影响声音：应用与音频处理模块的版本不一致。请把两者更新到同一版本，然后重启手机。</string>
-    <string name="eq_delivery_failed_rejected">这些设置因超出范围被拒绝，声音没有变化。请调低各频段的增益。</string>
+    <string name="eq_delivery_failed_rejected">这些设置因超出范围被拒绝，声音没有变化。请调低或删除频率最高的频段。</string>
     <string name="eq_delivery_failed_timeout">发送这些设置未能按时完成，已被中止。</string>
     <string name="eq_delivery_failed_input">这些设置没有影响声音：应用构建请求时出错。这是应用的问题。</string>
     <string name="eq_delivery_failed_unknown">发送这些设置时失败，原因是当前版本应用无法识别的情况（代码 %1$d）。</string>

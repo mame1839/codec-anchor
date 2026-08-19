@@ -102,7 +102,7 @@
     <string name="eq_delivery_failed_root">Setelan ini tidak berpengaruh pada suara: akses root ditolak, atau ponsel ini tidak punya pengelola root. Izinkan Codec Anchor di pengelola root Anda.</string>
     <string name="eq_delivery_failed_shm">Setelan ini tidak berpengaruh pada suara: modul pemrosesan audio tidak berjalan. Mulai ulang ponsel.</string>
     <string name="eq_delivery_failed_version">Setelan ini tidak berpengaruh pada suara: aplikasi dan modul pemrosesan audio berbeda versi. Perbarui keduanya ke versi yang sama, lalu mulai ulang ponsel.</string>
-    <string name="eq_delivery_failed_rejected">Setelan ini ditolak karena di luar rentang, jadi suara tidak berubah. Turunkan penguatan pada pita.</string>
+    <string name="eq_delivery_failed_rejected">Setelan ini ditolak karena di luar rentang, jadi suara tidak berubah. Turunkan atau hapus pita dengan frekuensi tertinggi.</string>
     <string name="eq_delivery_failed_timeout">Pengiriman setelan ini tidak selesai tepat waktu sehingga dihentikan.</string>
     <string name="eq_delivery_failed_input">Setelan ini tidak berpengaruh pada suara: aplikasi salah menyusun permintaan. Ini kesalahan pada aplikasi.</string>
     <string name="eq_delivery_failed_unknown">Pengiriman setelan ini gagal dengan cara yang tidak dikenali oleh versi aplikasi ini (kode %1$d).</string>

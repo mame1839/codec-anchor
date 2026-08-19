@@ -102,7 +102,7 @@
     <string name="eq_delivery_failed_root">Các cài đặt này không ảnh hưởng đến âm thanh: quyền root bị từ chối, hoặc máy này không có ứng dụng quản lý root. Hãy cho phép Codec Anchor trong ứng dụng quản lý root của bạn.</string>
     <string name="eq_delivery_failed_shm">Các cài đặt này không ảnh hưởng đến âm thanh: mô-đun xử lý âm thanh không chạy. Hãy khởi động lại điện thoại.</string>
     <string name="eq_delivery_failed_version">Các cài đặt này không ảnh hưởng đến âm thanh: ứng dụng và mô-đun xử lý âm thanh khác phiên bản. Hãy cập nhật cả hai lên cùng một phiên bản, rồi khởi động lại điện thoại.</string>
-    <string name="eq_delivery_failed_rejected">Các cài đặt này bị từ chối vì vượt quá phạm vi, nên âm thanh không đổi. Hãy giảm độ lợi của các dải.</string>
+    <string name="eq_delivery_failed_rejected">Các cài đặt này bị từ chối vì vượt quá phạm vi, nên âm thanh không đổi. Hãy hạ dải có tần số cao nhất hoặc xóa dải đó.</string>
     <string name="eq_delivery_failed_timeout">Việc gửi các cài đặt này không xong kịp thời gian nên đã bị dừng.</string>
     <string name="eq_delivery_failed_input">Các cài đặt này không ảnh hưởng đến âm thanh: ứng dụng đã tạo yêu cầu sai. Đây là lỗi của ứng dụng.</string>
     <string name="eq_delivery_failed_unknown">Việc gửi các cài đặt này thất bại theo cách mà phiên bản ứng dụng này chưa biết đến (mã %1$d).</string>

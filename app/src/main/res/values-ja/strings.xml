@@ -102,7 +102,7 @@
     <string name="eq_delivery_failed_root">この設定は音に反映されませんでした。root 権限の要求が拒否されたか、この端末に root 管理アプリがありません。root 管理アプリで Codec Anchor を許可してください。</string>
     <string name="eq_delivery_failed_shm">この設定は音に反映されませんでした。音響処理モジュールが動いていません。端末を再起動してください。</string>
     <string name="eq_delivery_failed_version">この設定は音に反映されませんでした。アプリと音響処理モジュールのバージョンが違います。両方を同じバージョンに更新してから、端末を再起動してください。</string>
-    <string name="eq_delivery_failed_rejected">この設定は範囲外として拒否されたため、音は変わっていません。バンドのゲインを下げてください。</string>
+    <string name="eq_delivery_failed_rejected">この設定は範囲外として拒否されたため、音は変わっていません。一番高い周波数のバンドを下げるか、消してください。</string>
     <string name="eq_delivery_failed_timeout">この設定の送信が時間内に終わらなかったため中断しました。</string>
     <string name="eq_delivery_failed_input">この設定は音に反映されませんでした。アプリが要求を正しく組み立てられませんでした。これはアプリ側の不具合です。</string>
     <string name="eq_delivery_failed_unknown">この設定の送信が、このバージョンのアプリが把握していない形で失敗しました (コード %1$d)。</string>

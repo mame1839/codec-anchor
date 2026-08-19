@@ -105,7 +105,7 @@
     <string name="eq_delivery_failed_root">Te ustawienia nie dotarły do dźwięku: dostęp roota został odrzucony albo ten telefon nie ma menedżera roota. Zezwól na Codec Anchor w swoim menedżerze roota.</string>
     <string name="eq_delivery_failed_shm">Te ustawienia nie dotarły do dźwięku: moduł przetwarzania dźwięku nie działa. Uruchom telefon ponownie.</string>
     <string name="eq_delivery_failed_version">Te ustawienia nie dotarły do dźwięku: aplikacja i moduł przetwarzania dźwięku mają różne wersje. Zaktualizuj oba do tej samej wersji, a potem uruchom telefon ponownie.</string>
-    <string name="eq_delivery_failed_rejected">Te ustawienia zostały odrzucone jako spoza zakresu, więc dźwięk się nie zmienił. Zmniejsz wzmocnienie pasm.</string>
+    <string name="eq_delivery_failed_rejected">Te ustawienia zostały odrzucone jako spoza zakresu, więc dźwięk się nie zmienił. Obniż lub usuń pasmo o najwyższej częstotliwości.</string>
     <string name="eq_delivery_failed_timeout">Wysyłanie tych ustawień nie zakończyło się na czas i zostało zatrzymane.</string>
     <string name="eq_delivery_failed_input">Te ustawienia nie dotarły do dźwięku: aplikacja błędnie zbudowała żądanie. To błąd aplikacji.</string>
     <string name="eq_delivery_failed_unknown">Wysyłanie tych ustawień nie powiodło się w sposób, którego ta wersja aplikacji nie rozpoznaje (kod %1$d).</string>
