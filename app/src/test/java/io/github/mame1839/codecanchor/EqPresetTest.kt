@@ -24,7 +24,6 @@ class EqPresetTest {
             EqBand(freqHz = 105, q100 = 70, gainDb10 = 7, type = EqBandType.LOW_SHELF),
             EqBand(freqHz = 6_204, q100 = 242, gainDb10 = 64),
         ),
-        preampAuto = false,
         preampDb10 = -62,
     )
 

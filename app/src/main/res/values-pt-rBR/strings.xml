@@ -106,7 +106,7 @@
     <string name="eq_delivery_failed_root">Estas configurações não chegaram ao som: o acesso root foi recusado, ou este aparelho não tem gerenciador de root. Permita o Codec Anchor no seu gerenciador de root.</string>
     <string name="eq_delivery_failed_shm">Estas configurações não chegaram ao som: o módulo de processamento de áudio não está em execução. Reinicie o aparelho.</string>
     <string name="eq_delivery_failed_version">Estas configurações não chegaram ao som: o app e o módulo de processamento de áudio estão em versões diferentes. Atualize os dois para a mesma versão e reinicie o aparelho.</string>
-    <string name="eq_delivery_failed_rejected">Estas configurações foram recusadas por estarem fora do intervalo, então o som não mudou. Diminua o ganho das bandas.</string>
+    <string name="eq_delivery_failed_rejected">Estas configurações foram recusadas por estarem fora do intervalo, então o som não mudou. Abaixe ou remova a banda de frequência mais alta.</string>
     <string name="eq_delivery_failed_timeout">O envio destas configurações não terminou a tempo e foi interrompido.</string>
     <string name="eq_delivery_failed_input">Estas configurações não chegaram ao som: o app montou a solicitação de forma errada. Essa é uma falha do app.</string>
     <string name="eq_delivery_failed_unknown">O envio destas configurações falhou de um jeito que esta versão do app não reconhece (código %1$d).</string>
@@ -218,8 +218,6 @@
     <string name="eq_type_peaking">Sino</string>
     <string name="eq_type_low_shelf">Shelf de graves</string>
     <string name="eq_type_high_shelf">Shelf de agudos</string>
-    <string name="eq_preamp_auto">Definir o pré-amplificador automaticamente</string>
-    <string name="eq_preamp_auto_desc">Baixa o nível só o suficiente para as partes realçadas não distorcerem (agora %1$s)</string>
     <string name="eq_preamp">Pré-amplificador</string>
     <string name="eq_round_title">Mudar para gráfico?</string>
     <string name="eq_round_body">Cada banda vai para uma das frequências fixas do equalizador gráfico e o Q dela é ajustado. O formato da curva é mantido o quanto for possível, mas as frequências e os valores de Q atuais são perdidos.</string>
@@ -271,7 +269,7 @@
     <string name="eq_finder_include_mid_desc">Adiciona um terceiro eixo em torno das vozes. Algumas perguntas a mais.</string>
     <string name="eq_finder_fine_tune">Ajuste fino das configurações atuais</string>
     <string name="eq_finder_notes">Antes de começar</string>
-    <string name="eq_finder_note_volume">O teste toca um pouco mais baixo que o normal. Ajuste um volume confortável depois do início e não mexa nele até o fim.</string>
+    <string name="eq_finder_note_volume">Ajuste um volume confortável depois do início e não mexa nele até o fim.</string>
     <string name="eq_finder_note_earphones">Ouça com estes fones, em um lugar silencioso.</string>
     <string name="eq_finder_note_length">Cerca de 25 a 40 perguntas, 10 a 15 minutos. Você pode parar a qualquer momento e continuar depois.</string>
     <string name="eq_finder_begin">Começar</string>

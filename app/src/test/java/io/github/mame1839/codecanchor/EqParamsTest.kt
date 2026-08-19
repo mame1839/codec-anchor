@@ -111,20 +111,28 @@ class EqParamsTest {
         )
     }
 
-    /** 自動プリアンプは `EqSolver` で解く。値を保存しないので、出どころはここしかない。 */
-    @Test
-    fun autoPreampIsSolvedFromTheBands() {
-        val args = EqParams.arguments(graphic.copy(preampAuto = true))
-        val solved = EqSolver.autoPreampDb10(graphic.bands)
-        assertEquals(EqParams.decimal(solved, EqUnits.GAIN_SCALE), args.preamp())
-        // 上げているバンドがあるのに 0 のままなら、解いていないか渡し先が違う。
-        assertTrue("プリアンプが $solved", solved < 0)
-    }
-
     @Test
     fun manualPreampIsSentAsStored() {
-        val args = EqParams.arguments(graphic.copy(preampAuto = false, preampDb10 = -75))
+        val args = EqParams.arguments(graphic.copy(preampDb10 = -75))
         assertEquals("-7.5", args.preamp())
+    }
+
+    /**
+     * **曲線を変えてもプリアンプは動かない。**ここで `EqSolver.autoPreampDb10` のような
+     * 「バンドから解き直す」を足すと、摘みを 1 本動かすたびに音量が動く
+     * (ユーザの訴え「音量差がかなり出るから耳に悪い」)。
+     *
+     * `graphic` は 5 本を +6.5 dB 上げていて `autoPreampDb10` なら 0 以外を返す形。
+     * 送られるのは保存値 0.0 dB のまま。
+     */
+    @Test
+    fun theStoredPreampSurvivesALoudCurve() {
+        val loud = graphic.copy(preampDb10 = 0)
+        assertTrue("題材が弱い", EqSolver.autoPreampDb10(loud.bands) < 0)
+        assertEquals("0.0", EqParams.arguments(loud).preamp())
+        // バンドを 1 本だけ動かしても値は同じ
+        val moved = loud.copy(bands = loud.bands.mapIndexed { i, b -> if (i == 0) b.copy(gainDb10 = 120) else b })
+        assertEquals("0.0", EqParams.arguments(moved).preamp())
     }
 
     @Test
@@ -146,7 +154,7 @@ class EqParamsTest {
     /** 引数はクォートせずに `su -c` の 1 本の文字列へ入る。区切りになる文字が混じったら前提が崩れる。 */
     @Test
     fun everyArgumentIsShellSafe() {
-        val settings = graphic.copy(preampAuto = false, preampDb10 = -400)
+        val settings = graphic.copy(preampDb10 = -400)
         for (arg in EqParams.arguments(settings)) {
             assertTrue("引数 \"$arg\"", EqParams.SAFE_ARGUMENT.matches(arg))
         }

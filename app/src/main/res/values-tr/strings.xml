@@ -105,7 +105,7 @@
     <string name="eq_delivery_failed_root">Bu ayarlar sese yansımadı: root erişimi reddedildi ya da bu telefonda root yöneticisi yok. Root yöneticinizde Codec Anchor\'a izin verin.</string>
     <string name="eq_delivery_failed_shm">Bu ayarlar sese yansımadı: ses işleme modülü çalışmıyor. Telefonu yeniden başlatın.</string>
     <string name="eq_delivery_failed_version">Bu ayarlar sese yansımadı: uygulama ile ses işleme modülü farklı sürümlerde. İkisini de aynı sürüme güncelleyin, sonra telefonu yeniden başlatın.</string>
-    <string name="eq_delivery_failed_rejected">Bu ayarlar aralık dışı olduğu için reddedildi, ses değişmedi. Bantların kazancını düşürün.</string>
+    <string name="eq_delivery_failed_rejected">Bu ayarlar aralık dışı olduğu için reddedildi, ses değişmedi. En yüksek frekanslı bandı düşürün veya kaldırın.</string>
     <string name="eq_delivery_failed_timeout">Bu ayarların gönderilmesi zamanında bitmediği için durduruldu.</string>
     <string name="eq_delivery_failed_input">Bu ayarlar sese yansımadı: uygulama isteği yanlış oluşturdu. Bu, uygulamadaki bir hata.</string>
     <string name="eq_delivery_failed_unknown">Bu ayarların gönderilmesi, uygulamanın bu sürümünün bilmediği bir şekilde başarısız oldu (kod %1$d).</string>
@@ -216,8 +216,6 @@
     <string name="eq_type_peaking">Çan</string>
     <string name="eq_type_low_shelf">Alt raf</string>
     <string name="eq_type_high_shelf">Üst raf</string>
-    <string name="eq_preamp_auto">Ön yükseltmeyi otomatik ayarla</string>
-    <string name="eq_preamp_auto_desc">Yükseltilen yerler bozulmasın diye seviyeyi tam gerektiği kadar düşürür (şu an %1$s)</string>
     <string name="eq_preamp">Ön yükseltme</string>
     <string name="eq_round_title">Grafiğe geçilsin mi?</string>
     <string name="eq_round_body">Her bant grafik ekolayzırın sabit frekanslarından birine taşınır ve Q değeri ona göre ayarlanır. Eğrinin biçimi olabildiğince korunur ama şu anki frekanslar ve Q değerleri kaybolur.</string>
@@ -269,7 +267,7 @@
     <string name="eq_finder_include_mid_desc">Vokallerin çevresine üçüncü bir eksen ekler. Birkaç soru daha.</string>
     <string name="eq_finder_fine_tune">Mevcut ayarlara ince ayar yap</string>
     <string name="eq_finder_notes">Başlamadan önce</string>
-    <string name="eq_finder_note_volume">Test normalden biraz daha kısık çalar. Rahat bir ses düzeyini test başladıktan sonra ayarla ve sonuna kadar değiştirme.</string>
+    <string name="eq_finder_note_volume">Rahat bir ses düzeyini test başladıktan sonra ayarla ve sonuna kadar değiştirme.</string>
     <string name="eq_finder_note_earphones">Bu kulaklıkla, sessiz bir yerde dinle.</string>
     <string name="eq_finder_note_length">Yaklaşık 25–40 soru, 10–15 dakika. İstediğin an durdurup sonra devam edebilirsin.</string>
     <string name="eq_finder_begin">Başla</string>

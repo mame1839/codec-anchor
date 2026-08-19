@@ -109,7 +109,10 @@ class EqFinderBakeFlowTest {
         assertEquals(31, eq!!.bandCount)
         assertEquals(EqSolver.centerFrequencies(31), eq.bands.map { it.freqHz })
         assertTrue(eq.enabled)
-        assertTrue(eq.preampAuto)
+        // 音量まで含めて「試聴した音と同じ」。耳で聴いていた候補 (pushed) のプリアンプが
+        // そのまま保存される — 摘み数を 10 から 31 に変えても、解き直した bands から
+        // 取り直さないので値は動かない。
+        assertEquals(pushed!!.settings.preampDb10, eq.preampDb10)
         assertTrue("適用後はプレビューが解除される", vm.eqPreview == null)
 
         // 結果の中身 (選択肢・曲線) は適用で組み直されない。旗を結果に混ぜて写していた頃は、

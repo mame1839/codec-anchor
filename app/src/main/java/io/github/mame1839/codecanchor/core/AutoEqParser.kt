@@ -86,7 +86,6 @@ object AutoEqParser {
                 // hash の往復が壊れる。パラメトリックの本数は bands.size が持つ。
                 bandCount = bandCount,
                 bands = bands.take(EqSettings.MAX_BANDS),
-                preampAuto = false,
                 preampDb10 = (preamp * EqUnits.GAIN_SCALE).toInt()
                     .coerceIn(EqSettings.PREAMP_RANGE),
             ),
@@ -116,15 +115,14 @@ object AutoEqParser {
             freqs,
             EqSolver.defaultQ(bandCount),
         )
-        // GraphicEQ.txt はプリアンプが曲線に焼き込んであるので、自動計算を掛けない。
-        // 分離したオフセットだけをプリアンプに移す。
+        // GraphicEQ.txt はプリアンプが曲線に焼き込んであるので、分離したオフセットだけを
+        // プリアンプに移す。
         return AutoEqResult.Ok(
             EqSettings(
                 enabled = true,
                 mode = EqMode.GRAPHIC,
                 bandCount = bandCount,
                 bands = fit.bands,
-                preampAuto = false,
                 preampDb10 = Math.round(fit.offsetDb * EqUnits.GAIN_SCALE).toInt()
                     .coerceIn(EqSettings.PREAMP_RANGE),
             ),

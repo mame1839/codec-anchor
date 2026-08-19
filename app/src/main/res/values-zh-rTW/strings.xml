@@ -104,7 +104,7 @@
     <string name="eq_delivery_failed_root">這些設定沒有影響聲音：root 權限遭拒，或本機沒有 root 管理程式。請在你的 root 管理程式中允許 Codec Anchor。</string>
     <string name="eq_delivery_failed_shm">這些設定沒有影響聲音：音訊處理模組沒有在執行。請重新啟動手機。</string>
     <string name="eq_delivery_failed_version">這些設定沒有影響聲音：應用程式與音訊處理模組的版本不一致。請將兩者更新到相同版本，然後重新啟動手機。</string>
-    <string name="eq_delivery_failed_rejected">這些設定因超出範圍遭拒，聲音沒有變化。請調低各頻段的增益。</string>
+    <string name="eq_delivery_failed_rejected">這些設定因超出範圍遭拒，聲音沒有變化。請調低或刪除頻率最高的頻段。</string>
     <string name="eq_delivery_failed_timeout">傳送這些設定未能如期完成，已被中止。</string>
     <string name="eq_delivery_failed_input">這些設定沒有影響聲音：應用程式建立請求時出錯。這是應用程式的問題。</string>
     <string name="eq_delivery_failed_unknown">傳送這些設定時失敗，原因是目前版本應用程式無法識別的情況（代碼 %1$d）。</string>
@@ -214,8 +214,6 @@
     <string name="eq_type_peaking">鐘形</string>
     <string name="eq_type_low_shelf">低頻棚化</string>
     <string name="eq_type_high_shelf">高頻棚化</string>
-    <string name="eq_preamp_auto">自動設定前級增益</string>
-    <string name="eq_preamp_auto_desc">把音量降到剛好讓提升的部分不失真（目前 %1$s）</string>
     <string name="eq_preamp">前級增益</string>
     <string name="eq_round_title">要切換到圖示等化器嗎</string>
     <string name="eq_round_body">每個頻段都會移到圖示等化器的固定頻率上，Q 值也會跟著調整。曲線的形狀會盡量保留，但目前的頻率和 Q 值會消失。</string>
@@ -267,7 +265,7 @@
     <string name="eq_finder_include_mid_desc">在人聲附近增加第三個維度。問題會多幾題。</string>
     <string name="eq_finder_fine_tune">微調目前設定</string>
     <string name="eq_finder_notes">開始之前</string>
-    <string name="eq_finder_note_volume">測試的音量會比平常略小。開始後再把音量調到舒適的程度，之後到結束都不要再動。</string>
+    <string name="eq_finder_note_volume">開始後再把音量調到舒適的程度，之後到結束都不要再動。</string>
     <string name="eq_finder_note_earphones">請在安靜的地方，用這副耳機聆聽。</string>
     <string name="eq_finder_note_length">大約 25 到 40 題，10 到 15 分鐘。隨時可以中斷，之後接著做。</string>
     <string name="eq_finder_begin">開始</string>

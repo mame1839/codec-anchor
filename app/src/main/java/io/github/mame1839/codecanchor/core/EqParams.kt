@@ -193,8 +193,9 @@ object EqParams {
      * `reband()` が `EqSolver.solveBands` の結果を保存する形で済んでいるので、
      * **ここで解き直すと曲線が変わる。**そのままの値を渡すこと。
      *
-     * プリアンプは `preampAuto` のとき [EqSolver.autoPreampDb10] で解く。**値を保存しない**のが
-     * 既存の設計 (`preampDb10` は手動で決めた値の置き場) なので、出どころを 2 つにしない。
+     * **プリアンプは [EqSettings.preampDb10] をそのまま渡す。**ここで解き直さない —
+     * 曲線からプリアンプを毎回導くと、バンドを 1 本動かすたびに音量が動く
+     * (ユーザの訴え: 「音量差がかなり出るから耳に悪い」)。
      *
      * **処理方式 (`--std` / `--hp`) は曲線と独立に毎回送る。**`caeqset` の既定は標準なので、
      * 送らない回があるとそこで高精度が黙って外れる。
@@ -204,8 +205,8 @@ object EqParams {
      */
     fun arguments(eq: EqSettings): List<String> {
         if (!eq.enabled) return listOf("--auto-slot", "--off")
-        val preamp = if (eq.preampAuto) EqSolver.autoPreampDb10(eq.bands) else eq.preampDb10
-        val args = mutableListOf("--auto-slot", "--on", "--preamp", decimal(preamp, EqUnits.GAIN_SCALE))
+        val args =
+            mutableListOf("--auto-slot", "--on", "--preamp", decimal(eq.preampDb10, EqUnits.GAIN_SCALE))
         args += if (eq.firRequested) "--hp" else "--std"
         eq.bands.take(EqSettings.MAX_BANDS).forEach { band ->
             args += "--band"

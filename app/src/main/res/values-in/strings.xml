@@ -104,7 +104,7 @@
     <string name="eq_delivery_failed_root">Setelan ini tidak berpengaruh pada suara: akses root ditolak, atau ponsel ini tidak punya pengelola root. Izinkan Codec Anchor di pengelola root Anda.</string>
     <string name="eq_delivery_failed_shm">Setelan ini tidak berpengaruh pada suara: modul pemrosesan audio tidak berjalan. Mulai ulang ponsel.</string>
     <string name="eq_delivery_failed_version">Setelan ini tidak berpengaruh pada suara: aplikasi dan modul pemrosesan audio berbeda versi. Perbarui keduanya ke versi yang sama, lalu mulai ulang ponsel.</string>
-    <string name="eq_delivery_failed_rejected">Setelan ini ditolak karena di luar rentang, jadi suara tidak berubah. Turunkan penguatan pada pita.</string>
+    <string name="eq_delivery_failed_rejected">Setelan ini ditolak karena di luar rentang, jadi suara tidak berubah. Turunkan atau hapus pita dengan frekuensi tertinggi.</string>
     <string name="eq_delivery_failed_timeout">Pengiriman setelan ini tidak selesai tepat waktu sehingga dihentikan.</string>
     <string name="eq_delivery_failed_input">Setelan ini tidak berpengaruh pada suara: aplikasi salah menyusun permintaan. Ini kesalahan pada aplikasi.</string>
     <string name="eq_delivery_failed_unknown">Pengiriman setelan ini gagal dengan cara yang tidak dikenali oleh versi aplikasi ini (kode %1$d).</string>
@@ -214,8 +214,6 @@
     <string name="eq_type_peaking">Puncak</string>
     <string name="eq_type_low_shelf">Shelf rendah</string>
     <string name="eq_type_high_shelf">Shelf tinggi</string>
-    <string name="eq_preamp_auto">Atur preamp secara otomatis</string>
-    <string name="eq_preamp_auto_desc">Menurunkan level secukupnya agar bagian yang dinaikkan tidak pecah (kini %1$s)</string>
     <string name="eq_preamp">Preamp</string>
     <string name="eq_round_title">Beralih ke grafis?</string>
     <string name="eq_round_body">Setiap pita pindah ke salah satu frekuensi tetap milik ekualiser grafis dan nilai Q-nya disesuaikan. Bentuk kurva dipertahankan sebisa mungkin, tetapi frekuensi dan nilai Q yang sekarang akan hilang.</string>
@@ -267,7 +265,7 @@
     <string name="eq_finder_include_mid_desc">Menambah sumbu ketiga di sekitar vokal. Pertanyaan sedikit bertambah.</string>
     <string name="eq_finder_fine_tune">Sempurnakan setelan saat ini</string>
     <string name="eq_finder_notes">Sebelum mulai</string>
-    <string name="eq_finder_note_volume">Tes berbunyi sedikit lebih pelan dari biasanya. Atur volume yang nyaman setelah tes dimulai, lalu jangan ubah sampai selesai.</string>
+    <string name="eq_finder_note_volume">Atur volume yang nyaman setelah tes dimulai, lalu jangan ubah sampai selesai.</string>
     <string name="eq_finder_note_earphones">Dengarkan lewat earphone ini, di tempat yang tenang.</string>
     <string name="eq_finder_note_length">Sekitar 25–40 pertanyaan, 10–15 menit. Bisa berhenti kapan saja dan lanjut nanti.</string>
     <string name="eq_finder_begin">Mulai</string>

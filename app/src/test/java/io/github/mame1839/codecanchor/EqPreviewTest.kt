@@ -31,7 +31,6 @@ class EqPreviewTest {
     private val candidate = EqSettings(
         enabled = true,
         bands = listOf(EqBand(freqHz = 105, q100 = 71, gainDb10 = 40)),
-        preampAuto = false,
         preampDb10 = -12,
     )
 

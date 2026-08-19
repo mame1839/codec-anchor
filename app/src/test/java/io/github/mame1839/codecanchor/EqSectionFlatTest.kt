@@ -70,7 +70,7 @@ class EqSectionFlatTest {
 
         compose.onNodeWithText(string(R.string.eq_mode)).assertExists()
         compose.onNodeWithText(string(R.string.eq_band_count)).assertExists()
-        compose.onNodeWithText(string(R.string.eq_preamp_auto)).assertExists()
+        compose.onNodeWithText(string(R.string.eq_preamp)).assertExists()
         compose.onNodeWithText(string(R.string.eq_reset)).assertExists()
     }
 
@@ -81,7 +81,7 @@ class EqSectionFlatTest {
 
         compose.onNodeWithText(string(R.string.eq_mode)).assertDoesNotExist()
         compose.onNodeWithText(string(R.string.eq_band_count)).assertDoesNotExist()
-        compose.onNodeWithText(string(R.string.eq_preamp_auto)).assertDoesNotExist()
+        compose.onNodeWithText(string(R.string.eq_preamp)).assertDoesNotExist()
         compose.onNodeWithText(string(R.string.eq_reset)).assertDoesNotExist()
         // 曲線は出したまま。オフとの見分けが付かなくなる。
         compose.onNode(hasContentDescription(string(R.string.eq_curve_desc))).assertExists()
