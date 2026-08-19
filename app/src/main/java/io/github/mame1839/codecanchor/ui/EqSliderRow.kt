@@ -23,14 +23,11 @@ import kotlin.math.ln
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
-// 摘みの位置 (0..1) と値の対応。値を整数のまま扱うのは hash() の往復一致のため (core/Eq.kt)。
-// 位置を分けるのは周波数のため — 線形だと下の 2 オクターブが摘みの数ピクセルに潰れる。
 sealed interface EqScale {
     fun toPosition(value: Int): Float
 
     fun fromPosition(position: Float): Int
 
-    /** 等間隔。ゲインとプリアンプ。[step] は値の刻み (ゲインなら 1 = 0.1 dB)。 */
     class Linear(private val range: IntRange, private val step: Int) : EqScale {
         override fun toPosition(value: Int): Float =
             ((value - range.first).toFloat() / (range.last - range.first)).coerceIn(0f, 1f)
@@ -41,7 +38,6 @@ sealed interface EqScale {
         }
     }
 
-    /** 対数。周波数と Q。 */
     class Log(private val range: IntRange) : EqScale {
         private val lo = range.first.toDouble()
         private val span = ln(range.last.toDouble() / lo)
@@ -52,8 +48,6 @@ sealed interface EqScale {
         override fun fromPosition(position: Float): Int =
             significant3(lo * Math.E.pow(span * position)).coerceIn(range)
 
-        // 有効数字 3 桁に丸める。丸めないと 20 kHz 側では摘みの 1 ピクセルが 20 Hz 以上を
-        // またぐので、「12483 Hz」のような読み取れない値がそのまま出る。
         private fun significant3(value: Double): Int {
             val unit = when {
                 value < 1_000 -> 1
@@ -65,13 +59,6 @@ sealed interface EqScale {
     }
 }
 
-/**
- * 値を 1 つ持つスライダーの行。
- *
- * ⚠️ ドラッグ中は [onCommit] を呼ばない — commit() にデバウンスが無く、変更ごとに
- * 保存 + Bluetooth 送信が同期に走る。[previewKey] は絵 ([EqCurve]) だけをドラッグ中の値に
- * 追従させ、設定は書き換えない。
- */
 @Composable
 fun EqSliderRow(
     label: String,
@@ -88,7 +75,6 @@ fun EqSliderRow(
     val shown = if (dragging) local else value
     val preview = LocalEqPreview.current
 
-    // 指を離す前に行ごと消えることがある (バンド削除等)。掛けっぱなしだと絵が固まる。
     if (previewKey != null && preview != null) {
         DisposableEffect(previewKey) { onDispose { preview.clear(previewKey) } }
     }
@@ -106,7 +92,6 @@ fun EqSliderRow(
                 color = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        // 目盛り (steps) は付けない — 0.1 dB 刻みだと 239 本並んで帯にしか見えない。丸めは fromPosition 側。
         Slider(
             value = scale.toPosition(shown),
             onValueChange = { position ->

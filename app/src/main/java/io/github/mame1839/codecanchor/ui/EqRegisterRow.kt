@@ -29,17 +29,13 @@ import io.github.mame1839.codecanchor.core.EqDevicesOutcome
 
 private val NOTICE_PADDING = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
 
-// 「このイヤホンで音響処理を使う」。この画面で唯一の重い操作 — audio_effects.xml を作り直して
-// audioserver を再起動するので再生中の音が一瞬切れる。オン・オフどちらも同じ重さなので確認は両方向。
 @Composable
 fun EqRegisterRow(vm: MainViewModel, mac: String, availability: EqAvailability) {
-    // 進行中と結果は MAC で突き合わせる。表記が揺れる (null) 側はどちらにも一致させない。
     val key = EqDevices.normalizeMac(mac)
     val registered = vm.eqRegistered(mac)
     val running = key != null && vm.eqRegisterRunning == key
     val report = vm.eqRegisterReport?.takeIf { it.mac == key }
 
-    // 確認待ちの向き。null なら聞いていない。
     var pending by rememberSaveable { mutableStateOf<Boolean?>(null) }
 
     SwitchRow(
@@ -47,9 +43,6 @@ fun EqRegisterRow(vm: MainViewModel, mac: String, availability: EqAvailability) 
         description = stringResource(R.string.eq_device_register_desc),
         checked = registered,
         onChange = { pending = it },
-        // 押せなくなるのは、走っている間 (同時に 1 つだけ) と、エフェクト未登録の端末だけ。
-        // オフロード中は音に届かないが登録自体は成立するので止めない (止めると「オフロードを
-        // 切ってから登録」しかできなくなる)。
         enabled = vm.eqRegisterRunning == null && availability != EqAvailability.EFFECT_NOT_REGISTERED,
     )
 
@@ -70,7 +63,6 @@ fun EqRegisterRow(vm: MainViewModel, mac: String, availability: EqAvailability) 
                 text = registerMessage(report),
                 contentPadding = NOTICE_PADDING,
             )
-            // 失敗時だけ、スクリプトと su の最後の数行をそのまま添える (訳せないが唯一の手掛かり)。
             val diagnostics = if (ok) "" else report.result.diagnostics()
             if (diagnostics.isNotEmpty()) {
                 Text(
@@ -113,15 +105,12 @@ fun EqRegisterRow(vm: MainViewModel, mac: String, availability: EqAvailability) 
     }
 }
 
-// 結果の文言。未知の終了コードは数値ごと出す — 後からスクリプト側が増やしたコードを
-// 黙って「成功」にも「原因不明」にもしないため。
 @Composable
 private fun registerMessage(report: EqRegisterReport): String = when (report.result.outcome) {
     EqDevicesOutcome.OK ->
         stringResource(if (report.turnedOn) R.string.eq_device_result_on else R.string.eq_device_result_off)
 
     EqDevicesOutcome.NO_MODULE -> stringResource(R.string.eq_device_failed_no_module)
-    // root マネージャへ行かせるのはこの枝だけ。SCRIPT_MISSING でそこを開かせても原因が無い。
     EqDevicesOutcome.ROOT_DENIED -> stringResource(R.string.eq_device_failed_root)
     EqDevicesOutcome.SCRIPT_MISSING -> stringResource(R.string.eq_device_failed_script)
     EqDevicesOutcome.TIMEOUT -> stringResource(R.string.eq_device_failed_timeout)

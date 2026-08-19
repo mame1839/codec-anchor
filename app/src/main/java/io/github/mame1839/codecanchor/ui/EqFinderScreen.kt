@@ -78,35 +78,21 @@ import kotlin.math.ln
 import kotlin.math.max
 import kotlin.math.roundToInt
 
-/** ループ再生する一節の長さ。固定 (仕様)。 */
 internal const val EQ_FINDER_LOOP_MS = 20_000
 
 enum class EqFinderCandidate { A, B }
 
 enum class EqFinderAnswer { A, SAME, B }
 
-/**
- * [NO_MUSIC] はライブ題材専用。自動で立てて自動で下ろし、再開ボタンは出さない (他人のアプリの
- * 再生はこちらから再開できない)。[FOCUS_LOST] は逆にライブでは到達しない (フォーカスを取らない)。
- */
 enum class EqFinderPause { NONE, DISCONNECTED, FOCUS_LOST, NO_MUSIC }
 
-/** 探索する軸。表示名だけの区別で、周波数や種別はエンジン側が持つ。 */
 enum class EqFinderAxisKind { BASS, TREBLE, MID }
 
-/**
- * 導入画面の状態。曲を選ぶ → 読めたら一節を決める → 始める、の順に進む。
- *
- * [resume] があるときは新規の入力は出さず、「続きから」を主にする
- * (保存された曲が開けないときだけ、選び直しの行が出る)。
- */
 data class EqFinderIntroUi(
-    /** 題材: false = 曲の一節のループ再生 (既定)、true = いま流れている音楽。 */
     val materialLive: Boolean = false,
     val songName: String? = null,
     val loading: Boolean = false,
     val loadFailed: Boolean = false,
-    /** 一節が読めて再生できる状態か。長さ ([trackDurationMs]) とは別 — 長さは取れない形式がある。 */
     val loaded: Boolean = false,
     val trackDurationMs: Int = 0,
     val startMs: Int = 0,
@@ -114,31 +100,18 @@ data class EqFinderIntroUi(
     val includeMid: Boolean = false,
     val fineTuneVisible: Boolean = false,
     val fineTune: Boolean = false,
-    /** null なら始められる。文字列は理由 1 行 (接続が無い・ライブで音楽が無音等)。 */
     val startBlockedReason: String? = null,
     val resume: EqFinderResumeUi? = null,
 )
 
-/**
- * 「続きから」を出せない理由。null なら再開できる。どちらも黙って続けると回答と結果の意味が
- * 壊れる食い違い — 設定変更後は古い土台の確定が現行設定を上書きし、一節変更後はこれまでの
- * 回答が別の音についてのものになる。だから警告ではなく遮断にする。
- */
 enum class EqFinderResumeBlocked { SETTINGS_CHANGED, SONG_CHANGED }
 
 data class EqFinderResumeUi(
     val done: Int,
-    /** 保存された記録の題材。ノートの出し分けに使う (選択ではなく記録が真)。 */
     val live: Boolean = false,
     val blocked: EqFinderResumeBlocked? = null,
 )
 
-/**
- * 試行画面の状態。
- *
- * **候補のゲイン値を意図して持たない。**目隠し A/B は中身が見えないことが成立条件で、
- * ここに値が無ければ画面が誤って出すこともない (型で守る)。
- */
 data class EqFinderTrialUi(
     val done: Int,
     val total: Int,
@@ -149,36 +122,17 @@ data class EqFinderTrialUi(
 
 data class EqFinderAxisDelta(val kind: EqFinderAxisKind, val deltaDb10: Int)
 
-/**
- * 焼き込みのバンド数の選択肢 1 つ。[maxErrorDb10] は試聴した応答 (base + オーバーレイ) と
- * 焼き込み後の応答の max|差| (0.1 dB 単位に丸め済み) — 副題に出す忠実度。
- */
 data class EqFinderBandChoice(val count: Int, val maxErrorDb10: Int)
 
-/**
- * 結果画面のうち、セッションが決めて以後変わらないもの。[beforeDb] / [afterDb] は
- * [eqFinderResponseDb] で標本化した応答 (data class にしないのは、配列の equals が
- * 参照比較で意味を持たないため)。
- *
- * ⚠️ 適用の途中で変わる状態 (焼き込みの失敗・プリセットの提案) をここに入れないこと —
- * 「旗 1 つのために全フィールドを写す」形になり、フィールドが増えたときの写し忘れが
- * 静かな壊れ方になる。変わるものはコントローラの状態として [EqFinderResultContent] へ別引数で渡す。
- */
 class EqFinderResultUi(
     val axes: List<EqFinderAxisDelta>,
     val beforeDb: DoubleArray,
     val afterDb: DoubleArray,
     val consistencyWarning: Boolean,
-    /** 検証段で結果が開始点に勝ったか。null = 検証まで進まずに終えた。 */
     val startBeaten: Boolean?,
-    /** 焼き込みのバンド数の選択肢。null = 出さない (パラメトリック — fc/Q は手作業の成果物)。 */
     val bandChoices: List<EqFinderBandChoice>? = null,
 )
 
-/**
- * 音響処理の画面に置く入口。開けるのは値がいまこの機器の音に届くときだけ —
- * 目隠し比較は候補を実際に鳴らせないと成立しないので、押せない理由を 1 行で出す。
- */
 @Composable
 fun EqFinderEntryCard(vm: MainViewModel, mac: String, onOpen: () -> Unit) {
     val availability = vm.eqAvailability(mac)
@@ -186,7 +140,6 @@ fun EqFinderEntryCard(vm: MainViewModel, mac: String, onOpen: () -> Unit) {
     val connected = key != null && key == vm.eqOwner
     val openable = availability == EqAvailability.OK && connected
 
-    // 中断セッションの有無。この画面は探索から戻ると組み直されるので、そのたびに読み直される。
     val context = LocalContext.current
     val saved = remember(mac) {
         EqFinderStore(context).load()?.takeIf { it.mac == key }
@@ -238,10 +191,6 @@ fun EqFinderEntryCard(vm: MainViewModel, mac: String, onOpen: () -> Unit) {
     }
 }
 
-/**
- * 探索画面の枠。題は 2 行 (機能名 + イヤホン名) で、組み方と高さの理由は
- * [EqScreenTitle] / [eqTitleBarHeight] と同じ。
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun EqFinderScaffold(
@@ -324,7 +273,6 @@ internal fun EqFinderIntroContent(
             ),
             selected = ui.materialLive,
             onSelect = onMaterial,
-            // 精度が下がることは選ぶ瞬間に正直に出す (選んだ後はノートの同じ 1 行が引き継ぐ)。
             optionDescriptions = mapOf(
                 true to stringResource(R.string.eq_finder_material_live_desc),
             ),
@@ -361,7 +309,6 @@ internal fun EqFinderIntroContent(
 
     Button(
         onClick = onBegin,
-        // ライブに一節は要らない。音楽が無ければ startBlockedReason が塞ぐ。
         enabled = (ui.materialLive || ui.loaded) && !ui.loading && ui.startBlockedReason == null,
         modifier = Modifier.fillMaxWidth(),
     ) {
@@ -418,7 +365,6 @@ private fun ResumeCard(
             OutlinedButton(onClick = { confirmStartOver = true }, modifier = Modifier.weight(1f)) {
                 Text(stringResource(R.string.eq_finder_start_over))
             }
-            // 遮断されたら「続ける」は出さない。押せないボタンを残すと、直せば押せるように読める。
             if (resume.blocked == null) {
                 Button(
                     onClick = onResume,
@@ -500,7 +446,6 @@ private fun PassageRows(
                     style = MaterialTheme.typography.bodyLarge,
                 )
                 Text(
-                    // 長さの取れない形式では開始位置だけを出す (0 を「0:00 まで」と読ませない)。
                     text = if (ui.trackDurationMs > 0) {
                         stringResource(
                             R.string.eq_finder_passage_value,
@@ -549,7 +494,6 @@ private fun NotesCard(live: Boolean) {
         NoticeRow(icon = R.drawable.ic_info, text = stringResource(R.string.eq_finder_note_volume))
         NoticeRow(icon = R.drawable.ic_headphones, text = stringResource(R.string.eq_finder_note_earphones))
         if (live) {
-            // 題材選択の説明と同じ 1 行 (ライブは音量合わせの系統誤差 + A/B 間の非定常分だけ精度が下がる)。
             NoticeRow(
                 icon = R.drawable.ic_info,
                 text = stringResource(R.string.eq_finder_material_live_desc),
@@ -574,7 +518,6 @@ internal fun EqFinderTrialContent(
 ) {
     val active = ui.pause == EqFinderPause.NONE
 
-    // 進捗。総数は見込みなので「~」を付けて出す。
     Column(Modifier.padding(horizontal = 4.dp)) {
         Text(
             text = stringResource(
@@ -642,7 +585,6 @@ internal fun EqFinderTrialContent(
                 ),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
             )
-            // 再開ボタンはフォーカス喪失だけ (切断は自動復帰、ライブの無音は他人のアプリで再開できない)。
             if (ui.pause == EqFinderPause.FOCUS_LOST) {
                 OutlinedButton(
                     onClick = onResumePlayback,
@@ -665,10 +607,6 @@ internal fun EqFinderTrialContent(
     }
 }
 
-/**
- * 候補 1 枚。中身 (ゲイン) は出さず、鳴っている側の印だけを出す。
- * タップ = その候補を試聴 (何度でも切り替えられる)。
- */
 @Composable
 private fun RowScope.CandidateCard(
     label: String,
@@ -716,20 +654,11 @@ private fun RowScope.AnswerButton(text: String, enabled: Boolean, onClick: () ->
     }
 }
 
-/**
- * 結果の画面。
- *
- * **適用のあとにプリセット保存を聞かない。**結果は自分のスロットへ着地して残り、
- * 改名も「プリセットとして保存」もスロットのメニューに常設されている
- * (`llmdocs/eq-slot-design.md` §3)。適用の直後にダイアログを重ねると、常設の入り口と
- * 同じことを 2 通りで聞くことになる。
- */
 @Composable
 internal fun EqFinderResultContent(
     ui: EqFinderResultUi,
     selectedBandCount: Int,
     onBandCount: (Int) -> Unit,
-    /** 焼き込みが入らなかった (パラメトリックが満杯)。 */
     bakeFailed: Boolean,
     onApply: () -> Unit,
     onDiscard: () -> Unit,
@@ -801,9 +730,6 @@ internal fun EqFinderResultContent(
         }
     }
 
-    // 焼き込みのバンド数 (グラフィックのみ)。選んだ数は保存物にだけ効き、いま鳴っている音・上の曲線
-    // (afterDb) はオーバーレイの目標のまま変えない (差は副題の数字が言う)。押し直さないのは、
-    // バンド構成が変わる push がクリックレス切替の条件を外れ、耳で選んだ after と別物の聴感になるため。
     val choices = ui.bandChoices
     if (choices != null) {
         SettingsCard {
@@ -873,22 +799,16 @@ private fun LegendSwatch(color: Color, label: String) {
     }
 }
 
-// 前後の曲線。EqCurve.kt には触らない約束なので、ここに専用の絵を持つ (あちらは編集用で
-// ドラッグの受け皿が絡む。こちらは 2 本の応答を見せるだけ)。
-
-/** 曲線の標本数。2 本を 1 回描くだけなので、編集画面 (毎フレーム) より粗くてよい。 */
 internal const val EQ_FINDER_CURVE_SAMPLES = 120
 
 private val CURVE_HEIGHT = 132.dp
 private val CURVE_LABEL_GAP = 6.dp
 
-// 対数軸の両端。可聴帯域 (EqCurve.kt と同じ値だが契約ではない — あちらが変わっても独立に成り立つ)。
 private const val CURVE_LO_HZ = 20.0
 private const val CURVE_HI_HZ = 20_000.0
 
 private val CURVE_TICKS_HZ = listOf(100, 1_000, 10_000)
 
-/** 応答を対数の周波数格子で標本化する。バンドが無ければ 0 dB の平ら。 */
 internal fun eqFinderResponseDb(bands: List<EqBand>, samples: Int = EQ_FINDER_CURVE_SAMPLES): DoubleArray {
     val span = ln(CURVE_HI_HZ / CURVE_LO_HZ)
     return DoubleArray(samples) { i ->
@@ -896,7 +816,6 @@ internal fun eqFinderResponseDb(bands: List<EqBand>, samples: Int = EQ_FINDER_CU
     }
 }
 
-/** 縦軸の段。両方の曲線が収まる最小の段を選ぶ。 */
 internal fun eqFinderPlotRange(before: DoubleArray, after: DoubleArray): Double {
     val peak = max(
         before.maxOfOrNull { abs(it) } ?: 0.0,
@@ -947,10 +866,6 @@ private fun EqFinderCurve(before: DoubleArray, after: DoubleArray) {
     }
 }
 
-/**
- * 前後の 2 本を描く。描くのはここだけで、composable 側は測って渡すだけ —
- * 分けてある理由は [drawGraphicPlot] と同じ (ビットマップへ流して画素で確かめるため)。
- */
 @Suppress("LongParameterList")
 internal fun DrawScope.drawEqFinderCurves(
     before: DoubleArray,
@@ -987,7 +902,6 @@ internal fun DrawScope.drawEqFinderCurves(
             }
         }
     }
-    // 前を下に細く、後を上に太く。どちらが結果かは太さと色の両方で分かるようにする。
     drawPath(polyline(before), muted, style = Stroke(width = 1.5.dp.toPx()))
     drawPath(polyline(after), accent, style = Stroke(width = 2.5.dp.toPx()))
 
