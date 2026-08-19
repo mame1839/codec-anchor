@@ -71,8 +71,15 @@ else
     ng "MAGISK_VER を判定に使っていない"
 fi
 
-grep -q 'pidof android\.hardware' module/service.sh \
-  && ng "HAL をプロセス名で引かない" || ok "HAL をプロセス名で引かない"
+e=0
+# shellcheck disable=SC2086
+h=$(grep -l 'pidof android\.hardware' $SHIP 2>/dev/null | tr '\n' ' ')
+[ -n "$h" ] && { e=1; echo "    HAL を pidof で引いている: $h"; }
+# shellcheck disable=SC2086
+h=$(grep -rl 'android\.hardware\.audio\.service\.[a-z]' $SHIP app/src/main/cpp 2>/dev/null | tr '\n' ' ')
+[ -n "$h" ] && { e=1; echo "    メーカー固有の HAL プロセス名がある: $h"; }
+[ $e -eq 0 ] && ok "HAL をプロセス名で引かない (配るシェルと cpp)" \
+             || ng "HAL をプロセス名で引かない (配るシェルと cpp)"
 
 grep -q '/dev/caeq/paths' module/service.sh \
   && grep -q '"\$WORK/paths"' module/common/setup.sh \

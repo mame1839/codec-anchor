@@ -86,9 +86,9 @@ int main(int argc, char** argv) {
         printf("magic=0x%08x — まだエフェクトのインスタンスが 1 つも作られていない\n", m->magic);
         printf("\n");
         printf("  これは「.so が読み込まれていない」という意味ではない。\n");
-        printf("  この領域を初期化するのは ca_stats_open() で、create_effect() からしか呼ばれない。\n");
-        printf("  .so が読み込まれたかどうかは、HAL が map しているかで別に確かめる:\n");
-        printf("    grep libcaeq /proc/$(pidof android.hardware.audio.service.mediatek)/maps\n");
+        printf("  この領域を初期化するのは ca_stats_open()。呼び口は 2 つあるが、どちらも create の後ろにしかない。\n");
+        printf("  .so が読み込まれたかどうかは、map しているプロセスがあるかで別に確かめる:\n");
+        printf("    grep -l libcaeq.so /proc/[0-9]*/maps\n");
         return 1;
     }
     printf("version=%u (期待 %u) slots=%u slot_size=%u (期待 %zu) param_slot_size=%u "
