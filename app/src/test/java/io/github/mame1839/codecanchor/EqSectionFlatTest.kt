@@ -21,12 +21,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 
-/**
- * **フラットを選んでいる間は編集 UI を出さない** (`llmdocs/eq-slot-design.md` §1)。
- * 0 dB のスライダーを disabled で並べるのではなく、行ごと消す。
- *
- * **曲線 (平ら) は出す** — 消すと「オフにした」と見分けが付かなくなる。
- */
 @RunWith(RobolectricTestRunner::class)
 class EqSectionFlatTest {
 
@@ -83,18 +77,14 @@ class EqSectionFlatTest {
         compose.onNodeWithText(string(R.string.eq_band_count)).assertDoesNotExist()
         compose.onNodeWithText(string(R.string.eq_preamp)).assertDoesNotExist()
         compose.onNodeWithText(string(R.string.eq_reset)).assertDoesNotExist()
-        // 曲線は出したまま。オフとの見分けが付かなくなる。
         compose.onNode(hasContentDescription(string(R.string.eq_curve_desc))).assertExists()
-        // チップ行そのものは残る (フラットから戻れないと行き止まりになる)
         compose.onNodeWithText(string(R.string.eq_slot_flat)).assertExists()
         compose.onNodeWithText(string(R.string.eq_slot_default, 1)).assertExists()
 
-        // 戻せば編集 UI も戻る
         tap(string(R.string.eq_slot_default, 1))
         compose.onNodeWithText(string(R.string.eq_mode)).assertExists()
     }
 
-    /** 主電源を切ったらスロットの行ごと消える (スロットはオンの中の層)。 */
     @Test
     fun turningTheEqualiserOffHidesTheSlotRow() {
         val vm = viewModel()
