@@ -83,26 +83,9 @@ private fun secondsLabel(seconds: Double, digits: Int): String =
 fun retryLabel(res: Resources, count: Int): String =
     res.getQuantityString(R.plurals.retry_count, count, count)
 
-/**
- * 数字と単位・区切りの並びを、周りの文章から切り離して 1 つの塊にする。
- *
- * **アラビア語のような RTL のロケールで要る。** Compose の `Text` は `textDirection` を指定しないと
- * 段落方向を `LocalLayoutDirection` に**強制**する (内容から決める `Content` にはならない)。
- * RTL の段落に置かれた "32 Hz" は、数字と単位が別々の並びになって左右が入れ替わり `Hz 32` になる。
- * `-0.2 dB` では**符号だけが末尾へ回り、正負が読めなくなる。**
- *
- * U+2068 FIRST STRONG ISOLATE 〜 U+2069 POP DIRECTIONAL ISOLATE で囲むと、中の向きは
- * 中身の最初の強方向文字だけで決まり、外の段落方向から切り離される。段落方向そのものは変えないので、
- * 右揃えなどの RTL の見た目はそのまま。**幅を持たない制御文字なので LTR のロケールでは表示が変わらない。**
- *
- * `TextStyle(textDirection = Ltr)` では代わりにならない — 段落方向ごと変えてしまうので、
- * 訳文の中に埋め込んだ値 (「バージョン %1$s」) では文全体が LTR になり、
- * `TextAlign.Start` も左寄せに解決されて RTL の画面で 1 行だけ左に寄る。
- *
- * ⚠️ **値そのものを書き換えないこと。**見えない文字が保存・ログ・ファイル名・比較へ紛れ込む。
- * 囲むのは画面へ出す直前だけ。エスケープで書くのは、生の制御文字をソースに置くと
- * lint の BidiSpoofing (ソースの見た目を偽装する攻撃の検査) に引っ掛かるため。
- */
+// \u6570\u5b57\u3068\u5358\u4f4d\u30fb\u533a\u5207\u308a\u306e\u4e26\u3073\u3092\u3001\u5468\u308a\u306e\u6587\u7ae0\u304b\u3089\u5207\u308a\u96e2\u3057\u30661\u3064\u306e\u584a\u306b\u3059\u308b (RTL \u30ed\u30b1\u30fc\u30eb\u3067\u8981\u308b\u3002
+// \u8a73\u7d30\u306a\u6a5f\u5e8f\u306f bidi.md)\u3002\u26a0\ufe0f \u5024\u305d\u306e\u3082\u306e\u3092\u66f8\u304d\u63db\u3048\u306a\u3044\u3053\u3068 (\u898b\u3048\u306a\u3044\u6587\u5b57\u304c\u4fdd\u5b58\u30fb\u30ed\u30b0\u30fb\u30d5\u30a1\u30a4\u30eb\u540d\u30fb
+// \u6bd4\u8f03\u3078\u7d1b\u308c\u8fbc\u3080)\u3002\u56f2\u3080\u306e\u306f\u753b\u9762\u3078\u51fa\u3059\u76f4\u524d\u3060\u3051\u3002
 fun bidiIsolate(text: String): String = if (text.isEmpty()) text else "\u2068$text\u2069"
 
 // EQ の値の書式。単位 (dB / Hz / kHz) は訳語の要らない純粋な書式文字列なので translatable="false"

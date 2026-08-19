@@ -6,16 +6,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/**
- * 状態タブに出す印の条件。
- *
- * **この印だけが「機器タブしか見ない人」への唯一の入口。**モジュールが無効だと適用が 1 件も
- * 起きないが、機器タブには**空の一覧が出るだけ**で理由がどこにも出ない。
- * 印を出す条件を緩めても厳しくしても、そこが壊れる:
- *
- * - 緩めて常時点くようにすると、点いていることに意味が無くなる
- * - 厳しくして無効のときに点かないと、**初めて入れた人が理由に辿り着けない**
- */
+/** 状態タブに出す印の条件 (根拠は HomeScreen.kt の needsAttention)。 */
 class HomeTabAttentionTest {
 
     @Test

@@ -5,7 +5,6 @@
 namespace caeq {
 
 bool fftSizeValid(int n) {
-    // 32 の倍数かつ 2^a·3^b·5^c。PFFFT の SIMD_SZ から導出しない (ヘッダの説明)。
     if (n <= 0 || n > (1 << 26)) return false;
     if (n % 32 != 0) return false;
     while (n % 2 == 0) n /= 2;
@@ -22,7 +21,6 @@ size_t fftSetupBytes(int n) {
 bool FftPlan::init(int n) {
     if (!fftSizeValid(n)) return false;
     release();
-    // 合法サイズしか渡さないので、ここが NULL を返すのは 2/3/5 分解の不一致 = 述語のバグ。
     PFFFT_Setup* s = pffft_new_setup(n, PFFFT_REAL);
     if (s == nullptr) return false;
     setup_ = s;
@@ -51,9 +49,6 @@ void FftPlan::release() {
     n_     = 0;
     owned_ = false;
 }
-
-// work の NULL は素通しで返す。PFFFT に渡すと alloca 相当に落ちるので、
-// 「遅くなるが動く」ではなく「何もしない」に倒して配線の誤りをテストで露顕させる。
 
 void FftPlan::forwardOrdered(const float* in, float* out, float* work) const {
     if (setup_ == nullptr || work == nullptr) return;

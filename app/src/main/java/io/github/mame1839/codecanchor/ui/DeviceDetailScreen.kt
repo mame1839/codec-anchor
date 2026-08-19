@@ -59,9 +59,8 @@ private val RETRY_DELAY_STEPS = listOf(500, 1000, 1500, 2000, 3000, 5000)
 // ネイティブのダンプが書く品質モードの表記。
 private const val ABR_MODE = "ABR"
 
-// 実効ビットレートは ABR のときだけ動く。固定の音質では上のコーデック行と同じ値になるので出さないし、
-// 取り直す意味もない。オフロード中はフックがダンプを読まないのでモードは常に空になる。そのときは
-// 今のコーデック設定が持つ音質 (codecSpecific1) だけで判断する。
+// 実効ビットレートは ABR のときだけ動く (固定音質では上のコーデック行と同じなので出さない)。
+// オフロード中はフックがダンプを読まないのでモードは常に空になり、そのときは codecSpecific1 で判断する。
 private fun DeviceStatus.isLdacAbr(): Boolean =
     CodecKeys.isLdac(current?.displayName()) &&
         (ldacQualityMode.equals(ABR_MODE, ignoreCase = true) || current?.codecSpecific1 == CodecKeys.LDAC_ABR)
@@ -88,8 +87,7 @@ fun DeviceDetailScreen(
     var confirmDelete by rememberSaveable { mutableStateOf(false) }
     var advancedExpanded by rememberSaveable { mutableStateOf(false) }
 
-    // 取り直しが要るのは動く値があるときだけ。固定の音質では開いていても問い合わせないし、
-    // オフロード中は誰も値を更新しないので取り直しても変わらない。
+    // 取り直しが要るのは動く値があるときだけ (固定音質・オフロード中は取り直しても変わらない)。
     val watchBitrate = status?.connected == true && status.isLdacAbr() && !vm.a2dpOffloadEnabled
     LifecycleResumeEffect(watchBitrate) {
         if (watchBitrate) vm.startWatching()
@@ -281,8 +279,7 @@ private fun DeviceHeader(name: String, mac: String, status: DeviceStatus?, offlo
                 ),
                 style = MaterialTheme.typography.bodyMedium,
             )
-            // オフロード中はホスト側のエンコーダが動かないので、ダンプの数値は誰にも更新されず
-            // ネゴシエートした公称値のまま残る。読めても実効値ではないので、値の有無より先に判断する。
+            // オフロード中はホストのエンコーダが動かないので、ダンプは公称値のまま残る (実効値ではない)。
             if (status != null && status.isLdacAbr()) {
                 if (offloadEnabled) {
                     Text(
@@ -292,8 +289,6 @@ private fun DeviceHeader(name: String, mac: String, status: DeviceStatus?, offlo
                     )
                 } else if (status.ldacBitrateKbps > 0) {
                     Text(
-                        // 書式 ("%1$d kbps (%2$s)") ごと囲む。数字と単位が離れているので、
-                        // 数字だけ囲んでも "kbps" が反対側へ回る。
                         text = bidiIsolate(
                             stringResource(
                                 R.string.ldac_bitrate,
@@ -335,26 +330,13 @@ private fun DeviceHeader(name: String, mac: String, status: DeviceStatus?, offlo
 }
 
 /**
- * 詳細画面の「音響処理」。**押すと `EqScreen` が開く行 1 つだけ**を置く。
+ * 詳細画面の「音響処理」。押すと `EqScreen` が開く行 1 つだけを置く (中身を広げない理由・
+ * 使えない理由をここで出さない理由・スロット名も出す理由は ui-notes.md §2)。
  *
- * 中身をここに広げると、トグル・編集の方法・バンド数・曲線・バンドのスライダー・プリアンプ・
- * プリセットで画面が縦に伸びすぎる。
+ * ⚠️ 判定に `EqAvailability.allowsEditing` は使わない — あれは「編集させてよいか」で、
+ * ここが言うのは「音に効いているか」(機器未登録なら編集はできても音には届かない)。
  *
- * **要約は必ず出す。**開かないと状態が分からない行にすると、見に行く必要があるかを押す前に
- * 判断できない。使えない理由 (エフェクトが未登録 / この機器が未登録 / オフロード /
- * フックが古い) のほうは開いた先の `EqUnavailableNotice` が出す —
- * **ここは「使えない」ことだけを 1 行で言う。**4 種類の説明をここに並べると、
- * この行を作った目的と逆になる。
- *
- * 判定に `EqAvailability.allowsEditing` は使わない。あれは**編集させてよいか**で、
- * ここが言うのは**音に効いているか。**この機器が未登録のときは編集はできるが音には届かないので、
- * 行は「使えない」と言い、開いた先の登録のトグルへ送る。
- *
- * **選択中スロットの名前も出す。**イヤホンごとに複数の曲線を持てるので、行が方式とバンド数
- * だけだと「いまどれを聴いているか」が開かないと分からない。オフのときは出さない —
- * スロットの行はオフでは隠れる (オフは主電源、スロットはオンの中の層)。
- *
- * private ではなく internal なのは、要約が出ることを見るテストから直接呼ぶため。
+ * internal なのは要約が出ることを見るテストから直接呼ぶため。
  */
 @Composable
 internal fun EqSummaryCard(
@@ -368,13 +350,10 @@ internal fun EqSummaryCard(
     } else {
         listOf(
             stringResource(R.string.eq_summary_on),
-            // 名前はユーザが打った任意の文字列 (既定名は数字入り)。数字と同じ理由で囲む。
             bidiIsolate(eqActiveSlotLabel(slots)),
             stringResource(
                 if (eq.mode == EqMode.GRAPHIC) R.string.eq_mode_graphic else R.string.eq_mode_parametric,
             ),
-            // 数字と訳語の組。"·" を挟んで訳語が並ぶ行なので、囲まないと RTL で数字だけが
-            // 隣の項目の側へ回る。
             bidiIsolate(pluralStringResource(R.plurals.eq_summary_bands, eq.bands.size, eq.bands.size)),
         ).joinToString(" · ")
     }
@@ -420,8 +399,7 @@ private fun TargetCard(
     }
 
     val capability = if (profile.codecType == CodecKeys.KEEP_INT) null else status?.capabilityOf(profile.codecType)
-    // 行の有無が報告の到着で変わると、開いているダイアログが閉じたり下のボタンが動いたりする。
-    // 判断材料は非同期に変わらない profile だけに限る。
+    // 行の有無が報告の到着で変わらないよう、判断材料は非同期に変わらない profile だけに限る。
     val ldacEnabled = profile.codecType == CodecKeys.KEEP_INT ||
         CodecKeys.isLdac(codecLabel(profile.codecType, vm.codecNames)) ||
         profile.codecSpecific1 != CodecKeys.KEEP_LONG
@@ -481,7 +459,6 @@ private fun maskOptions(
 ): List<Pair<Int, String>> {
     val allowed = CodecKeys.options(table, capability).map { it.first }.toMutableSet()
     if (selected != CodecKeys.KEEP_MASK) allowed += selected
-    // "48 kHz" / "32 bit" は数字と単位の組。選択肢の一覧と選択中の表示の両方をここが作る。
     return listOf(CodecKeys.KEEP_MASK to keepLabel) +
         table.filter { it.first in allowed }.map { it.first to bidiIsolate(it.second) }
 }

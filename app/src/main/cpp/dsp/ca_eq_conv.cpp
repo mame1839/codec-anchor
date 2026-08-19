@@ -46,10 +46,7 @@ void FirKernel::reset() {
                                 static_cast<size_t>(block_));
 }
 
-// 入力 1 ブロックを FDL へ。チャンネル c の集約 → ゼロ詰め → 実 FFT →
-// リングの head 位置。**NaN / Inf はここで 0 に潰す** — FFT は 1 本の NaN で
-// スペクトル全体を汚し、FDL に入ると K ブロックのあいだ出力に残り続けるので、
-// 入り口で止めるのが唯一の安い場所 (biquad 側の scrub と同じ理屈)。
+// ⚠️ NaN / Inf はここで 0 に潰す (eq-dsp-internals.md §2)。
 void FirKernel::pushInput(const float* in) {
     head_ = (head_ + 1) % k_total_;
     for (int c = 0; c < ch_; c++) {
@@ -77,8 +74,7 @@ void FirKernel::pushBlock(const float* in) {
     pushInput(in);
 }
 
-// 面 face の全分割を MAC する。分割 k は k ブロック前の入力に当たる。
-// 正規化 (1/(2P)) はフィルタスペクトルに焼いてあるので scaling は 1。
+// 分割 k は k ブロック前の入力に当たる。正規化はフィルタスペクトルに焼いてあるので scaling は 1。
 void FirKernel::macFace(int ch_index, int face, float* acc) const {
     const int valid = fill_ < k_total_ ? fill_ : k_total_;
     const float* fdl_ch = b_.fdl + static_cast<size_t>(ch_index) *
@@ -109,8 +105,6 @@ void FirKernel::processBlock(const float* in, float* out, int face, int fade_fac
             std::memset(b_.acc2, 0, nbytes);
             macFace(c, fade_face, b_.acc2);
             plan_->inverse(b_.acc2, b_.acc2, b_.work);
-            // 時間領域のクロスフェード。尻尾 (i ≥ P) は次のブロックで鳴る時刻の
-            // 外挿重みで混ぜる (ヘッダの説明)。
             for (int i = 0; i < n_; i++) {
                 float w = fade_w0 + static_cast<float>(i) * fade_dw;
                 if (w < 0.0f) w = 0.0f;

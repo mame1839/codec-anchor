@@ -1,5 +1,4 @@
-// オフラインのハーネスが使う道具。ホストでしか動かないので、標準ライブラリを普通に使う
-// (`.so` 側には一切入らない)。
+// オフラインのハーネスが使う道具。ホストでしか動かない (`.so` 側には入らない)。
 #ifndef CA_TEST_SUPPORT_H_
 #define CA_TEST_SUPPORT_H_
 
@@ -52,7 +51,6 @@ inline std::vector<float> makeImpulse(size_t n, float amp = 1.0f) {
     return x;
 }
 
-// 対数スイープ。位相を積分で作るので、周波数が指数的に上がる。
 inline std::vector<float> makeLogSweep(size_t n, double fs, double f0, double f1, double amp) {
     std::vector<float> x(n);
     const double t_end = static_cast<double>(n) / fs;
@@ -75,8 +73,6 @@ inline std::vector<float> makeNoise(size_t n, double amp, uint64_t seed) {
 inline std::vector<float> makeSilence(size_t n) { return std::vector<float>(n, 0.0f); }
 
 inline std::vector<float> makeTones(size_t n, double fs) {
-    // 04_click_measurement.py と同じ信号。純音だけなので、変化のときに出る高域の残差が
-    // そのままクリックの大きさになる。
     std::vector<float> x(n);
     for (size_t i = 0; i < n; i++) {
         const double t = static_cast<double>(i) / fs;
@@ -273,7 +269,6 @@ private:
 class TempFile {
 public:
     explicit TempFile(const std::string& text) {
-        // std::tmpnam は MSVC で /WX の警告になるので使わない。連番で作る。
         static int counter = 0;
         char name[64];
         std::snprintf(name, sizeof(name), "ca_eq_test_tmp_%d.txt", counter++);

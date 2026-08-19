@@ -11,47 +11,25 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.math.min
 
-/**
- * デコード済みの題材。[pcm] はチャネルインターリーブの float (フルスケール ±1.0)。
- *
- * data class にしない — 配列の equals/hashCode は参照比較で、lint (ArrayInDataClass) にも落ちる。
- */
+// data class にしない — 配列の equals/hashCode は参照比較で、lint (ArrayInDataClass) にも落ちる。
 class Loaded(
     val pcm: FloatArray,
     val channels: Int,
     val sampleRate: Int,
     val trackDurationMs: Long,
 ) {
-    /** スペクトル計測用のモノラル。再生には使わない。 */
     fun monoMix(): FloatArray = Spectrum.monoMix(pcm, channels)
 }
 
-/**
- * SAF の URI から曲の一節をデコードする (MediaExtractor + MediaCodec、同期)。
- *
- * **同期で走るので、呼び出し側がワーカースレッドに置くこと。**数十秒の AAC で数百 ms 〜数秒
- * かかる。失敗は Result で返し、例外を漏らさない。
- */
+// ⚠️ 同期で走るので、呼び出し側がワーカースレッドに置くこと。
 object LoopSource {
 
-    // dequeue 1 回の待ち。長くしてもデコードは速くならず、停止 (stall 判定) が鈍るだけ。
     private const val TIMEOUT_US = 10_000L
-
-    // 進捗の無い dequeue の連続がこれを超えたら諦める (10 ms × 1000 = 約 10 秒)。
-    // 壊れたファイルで無限に回らないための安全弁で、正常なファイルでは届かない。
     private const val STALL_LIMIT = 1_000
 
-    // 題材はループする一節なので長くて数十秒。上限はメモリ保護
-    // (120 s ステレオ 48 kHz float ≈ 46 MB。これ以上は端末によって OOM が現実になる)。
+    // 題材は長くて数十秒。上限はメモリ保護 (120s ステレオ 48kHz float ≈ 46 MB)。
     const val MAX_CLIP_MS = 120_000L
 
-    /**
-     * [uri] の音声トラックから [startMs] 以降 [lengthMs] 分を float PCM へ。
-     *
-     * 切り出しはフレーム単位 (1/fs 秒)。デコーダが返す各バッファの presentationTime を
-     * 信頼して端だけを刻む — 内側のバッファは丸めずに全量を継ぐ (µs への往復で毎バッファ
-     * 1 フレーム落とすと、その分だけ周期的なクリックが入る)。
-     */
     fun load(context: Context, uri: Uri, startMs: Long, lengthMs: Long): Result<Loaded> = runCatching {
         val extractor = MediaExtractor()
         try {
@@ -167,7 +145,6 @@ object LoopSource {
                 }
 
                 else -> {
-                    // INFO_TRY_AGAIN_LATER。進んでいない
                 }
             }
             if (progressed) stalls = 0 else if (++stalls > STALL_LIMIT) error("デコードが進まない")
@@ -184,12 +161,8 @@ object LoopSource {
         return Loaded(pcm, channels, sampleRate, durationMs)
     }
 
-    /**
-     * デコード済みバッファのうち [startUs, endUs) に掛かる部分だけを継ぐ。
-     *
-     * **内側のバッファは丸めに触らせず全量を取る** (先頭・終端に掛かるバッファだけ刻む)。
-     * take を µs 経由で計算すると整数除算で毎バッファ 1 フレーム欠け、周期的なクリックになる。
-     */
+    // ⚠️ 内側のバッファは丸めに触らせず全量を取る (先頭・終端に掛かるバッファだけ刻む)。
+    // take を µs 経由で計算すると整数除算で毎バッファ 1 フレーム欠け、周期的なクリックになる。
     private fun appendClipped(
         into: MutableList<FloatArray>,
         floats: FloatArray,

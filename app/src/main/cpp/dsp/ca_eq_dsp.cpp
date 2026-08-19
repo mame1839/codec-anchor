@@ -16,8 +16,6 @@ inline double clampd(double v, double lo, double hi) {
 
 inline bool finite(double v) { return std::isfinite(v); }
 
-// fc/fs は 0.5 に触れさせない。RBJ は cos/sin なので 0.5 でも有限だが、SVF の
-// tan(pi*fc/fs) が発散して係数が Inf になる。両構造で同じ curve を出すために同じ場所で切る。
 inline double warpRatio(double fc, double fs) {
     return clampd(fc / fs, kMinFcHz / 192000.0, kMaxFcRatio);
 }
@@ -155,7 +153,6 @@ Eq::Eq() {
 
 void Eq::setRampMillis(double ms) {
     if (!finite(ms) || ms < 0.0) return;
-    // 0 なら補間せずその場で入れ替える (比較用。実測でクリックが -64.6 dBFS まで上がる)。
     int64_t n = static_cast<int64_t>(ms * sr_ / 1000.0 + 0.5);
     if (n < 0) n = 0;
     const bool was_ramping = ramping();
@@ -202,9 +199,6 @@ void Eq::configure(double sample_rate, int channels, Structure structure) {
 }
 
 void Eq::rebuildFromParams() {
-    // fc の上限は fs に依る。サンプルレートが下がって前の設定が収まらなくなったら、
-    // クランプして鳴らし続けるのではなく平坦に戻す。**部分適用はしない** — 勝手に
-    // 動かした fc で鳴り続けるより、掛かっていないほうが原因を追える。
     if (!validate(params_, sr_)) {
         params_ = Params{};
         rejected_++;
@@ -230,7 +224,6 @@ bool Eq::setParams(const Params& p) {
         rejected_++;
         return false;
     }
-    // 取り込みは次の process() の先頭で 1 回だけ。ここで上書きされた分は鳴らない。
     pending_ = p;
     has_pending_ = true;
     return true;
@@ -241,7 +234,6 @@ bool Eq::snapParams(const Params& p) {
         rejected_++;
         return false;
     }
-    // 段が増えるなら、その枠の状態は前の設定の残りなので捨てる。
     for (int b = nb_run_; b < p.band_count; b++) clearBandState(b);
     params_ = p;
     rebuildFromParams();
@@ -253,7 +245,6 @@ void Eq::applyPending() {
     has_pending_ = false;
     const Params p = pending_;
 
-    // 起点は「いま働いている係数」。ランプの途中で差し替えが来ても段差にならない。
     for (int b = 0; b < kMaxBands; b++) {
         from_[b] = cur_[b];
         band_from_[b] = band_cur_[b];
@@ -265,13 +256,11 @@ void Eq::applyPending() {
         band_to_[b] = p.bands[b];
         to_[b] = design(p.bands[b], sr_, structure_);
     }
-    // 減った段は 0 dB へ向かわせ、ランプが終わってから外す。
     for (int b = p.band_count; b < old_nb; b++) {
         band_to_[b] = band_cur_[b];
         band_to_[b].gain_db = 0.0;
         to_[b] = unityFor(band_cur_[b], sr_, structure_);
     }
-    // 増えた段は 0 dB から始める。状態は前の設定の残りなのでここで捨てる。
     for (int b = old_nb; b < p.band_count; b++) {
         clearBandState(b);
         band_from_[b] = p.bands[b];
@@ -301,10 +290,8 @@ void Eq::updateRampCoef() {
     for (int b = 0; b < nb_run_; b++) {
         const Band& f = band_from_[b];
         const Band& t = band_to_[b];
-        // 種別が変わる段はパラメータの軌跡が定義できないので、係数補間へ落とす。
         if (interp_ == Interp::kParam && f.type == t.type) {
-            // fc と Q は対数、ゲインは dB で補間する。1 オクターブのスイープが
-            // そのまま等速になる並べ方。
+            // fc と Q は対数、ゲインは dB で補間する (1 オクターブのスイープが等速になる並べ方)。
             Band& c = band_cur_[b];
             c.type    = t.type;
             c.fc      = f.fc * std::pow(t.fc / f.fc, u);
@@ -312,8 +299,6 @@ void Eq::updateRampCoef() {
             c.gain_db = f.gain_db + (t.gain_db - f.gain_db) * u;
             cur_[b] = design(c, sr_, structure_);
         } else {
-            // 係数補間のときはパラメータの軌跡を追わない (pow を 2 回払う意味が無い)。
-            // 追跡値は目標に寄せておく — 次の差し替えの起点として使うだけ。
             band_cur_[b] = t;
             for (int i = 0; i < 6; i++) {
                 cur_[b].c[i] = from_[b].c[i] + (to_[b].c[i] - from_[b].c[i]) * u;
@@ -359,7 +344,6 @@ double Eq::stateMagnitude() const {
 }
 
 void Eq::warmUp() {
-    // 係数・状態・ページを一通り触っておく。初回のページフォルトを process() の外へ出すのが目的。
     float buf[kChunkFrames * kMaxChannels] = {};
     const double keep_wet = wet_cur_;
     const double keep_target = wet_target_;
@@ -387,11 +371,8 @@ void Eq::injectState(double v) {
 void Eq::process(const float* in, float* out, int frames, bool accumulate) {
     if (in == nullptr || out == nullptr || frames <= 0) return;
 
-    // 差し替えの取り込みはここ 1 回だけ。process() あたり 1 回に縛ることが、
-    // 係数の変調速度の構造的な上限になる (時変不安定は数百 Hz の変調でしか起きない)。
     applyPending();
 
-    // 完全な素通し。フェードも終わっているので状態を回す意味が無い。
     if (wet_cur_ == 0.0 && wet_target_ == 0.0) {
         // 音に出ない区間でランプを引きずらない。次に有効化されたときは目標の係数から始まる。
         if (ramping()) finishRamp();
@@ -411,8 +392,6 @@ void Eq::process(const float* in, float* out, int frames, bool accumulate) {
         int n = frames - done;
         if (n > kChunkFrames) n = kChunkFrames;
         if (ramping()) {
-            // 刻み目はランプの経過サンプル数だけで決める。ここをブロック境界に合わせると
-            // 512 と 960 で出力が変わってしまう。
             const int64_t to_edge = coef_stride_ - (ramp_pos_ % coef_stride_);
             if (n > to_edge) n = static_cast<int>(to_edge);
             if (ramp_pos_ % coef_stride_ == 0) updateRampCoef();
@@ -426,8 +405,6 @@ void Eq::process(const float* in, float* out, int frames, bool accumulate) {
         done += n;
     }
 
-    // ブロックごとに状態の有限性を検査する。IIR は NaN が 1 つ入るだけで以後の出力が
-    // 永久に NaN になるので、ここが唯一の逃げ道になる。
     double st = 0.0;
     const int nstate = nb_run_ * ch_;
     for (int i = 0; i < nstate; i++) st += std::fabs(s1_[i]) + std::fabs(s2_[i]);
@@ -439,10 +416,7 @@ void Eq::process(const float* in, float* out, int frames, bool accumulate) {
             if (!std::isfinite(out[i])) out[i] = 0.0f;
         }
     } else if (acc == 0.0 && st > 0.0 && st < kDenormalFloor) {
-        // 無音が続くと状態は指数的に小さくなり、いずれ非正規化数の領域に入る。
-        // double なら 60 秒以上かかるが、そこで 1 サンプルあたりの実行時間が跳ねる
-        // 実装がある。FPCR (FTZ) には触らない — スレッドごとの状態なのでプロセス起動時に
-        // 立てても届かず、立てたままだと math ライブラリの正しさが保証されなくなる。
+        // 無音が続くと状態は指数的に小さくなり、非正規化数の領域では実行時間が跳ねる実装がある。
         clearState();
         denormal_flushes_++;
     }
@@ -454,7 +428,6 @@ double Eq::processChunk(const float* in, float* out, int n, bool accumulate) {
     double* buf = scratch_;
 
     // 1 パス目: float -> double。プリアンプを掛けながら、合計で入力の健全性を見る。
-    // 全部の絶対値を足すので、桁落ちで NaN が消えることも、double が溢れることも無い。
     const double pre = pre_cur_;
     double acc = 0.0;
     for (int i = 0; i < ns; i++) {
@@ -466,8 +439,6 @@ double Eq::processChunk(const float* in, float* out, int n, bool accumulate) {
     }
 
     if (!std::isfinite(acc)) {
-        // NaN / Inf は IIR を恒久的に殺す (1 サンプル入るだけで以後の出力が永久に NaN)。
-        // フィルタへ入れる前に潰す。
         for (int i = 0; i < ns; i++) {
             if (!std::isfinite(buf[i])) buf[i] = 0.0;
             if (!std::isfinite(dry_[i])) dry_[i] = 0.0;
@@ -475,7 +446,7 @@ double Eq::processChunk(const float* in, float* out, int n, bool accumulate) {
         scrubbed_++;
     }
 
-    // 2 パス目: バンドの直列。段の間は double のまま (float に丸めると double 化の意味が消える)。
+    // 2 パス目: バンドの直列。段の間は double のまま。
     if (structure_ == Structure::kSvf) {
         for (int b = 0; b < nb_run_; b++) {
             const double a1 = cur_[b].c[0], a2 = cur_[b].c[1], a3 = cur_[b].c[2];

@@ -20,7 +20,6 @@ data class EqPreset(val name: String, val settings: EqSettings) {
             return EqPreset(name = name, settings = EqSettings.fromJson(o.optJSONObject("eq")))
         }
 
-        /** 1 つ分の書き出し。読み込み側が「Codec Anchor のプリセットか」を判定できる形にする。 */
         fun encodeSingle(preset: EqPreset): String = JSONObject().apply {
             put("format", FORMAT)
             put("v", FORMAT_VERSION)
