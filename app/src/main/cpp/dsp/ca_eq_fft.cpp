@@ -76,4 +76,4 @@ void FftPlan::convolveAccumulate(const float* a, const float* b, float* acc,
     pffft_zconvolve_accumulate(static_cast<PFFFT_Setup*>(setup_), a, b, acc, scaling);
 }
 
-}  // namespace caeq
+}
