@@ -230,18 +230,21 @@ bool ca_stats_take_slot(CaCtx* c, bool reclaim) {
     s->seq = 0; s->frames = 0; s->sample_rate = 0; s->channels = 0;
     s->block_frames = 0; s->state = 0; s->gain_mb = 0;
     s->io_id = c->io_id;
-    // **pid より先に書くこと。**書き手 (caeqset) は pid が入っている枠だけを見るので、
-    // この順序なら「pid は入ったが session_id はまだ 0」を掴む隙が無い。
+    // 読みに行くパラメータ枠。初回は「取った枠と同じ添字」が既定で、SET_PARAM (id=2) で
+    // 既に宛てられていればそれを保つ。**決定は caeq::paramSlotAfterAttach** — 保たずに
+    // 取った添字で上書きすると、再取得のとき読み手だけが空の枠へ移って素通しに戻る
+    // (理由の全文はあちらのコメント)。
+    c->param_slot = caeq::paramSlotAfterAttach(c->param_slot, i);
+    // **書き手が読むフィールドは pid より先に書くこと。**書き手 (caeqset) は pid が
+    // 入っている枠だけを見るので、この順序なら「pid は入ったが session_id / param_slot は
+    // まだ」を掴む隙が無い。param_slot は 0 も有効な添字で、ゼロのままでも「未割り当て」
+    // には見えないから、順序で守るしかない。
     s->session_id = c->session_id;
+    s->param_slot = c->param_slot;
     s->pid = self;
     s->ctx = reinterpret_cast<uint64_t>(c);
     s->last_ns = 0;
     c->slot = s;
-    // 既定では自分が取った枠と同じ添字のパラメータを読む。書き手は統計側の
-    // session_id を見てイヤホン側の枠を選ぶので、これで足りる。
-    // SET_PARAM (id=2) が来たらそちらで上書きする。
-    c->param_slot = i;
-    s->param_slot = c->param_slot;
     return true;
 }
 
@@ -252,8 +255,10 @@ void ca_stats_attach(CaCtx* c) {
         CA_LOGE("stats: no free slot (session=%d io=%d)", c->session_id, c->io_id);
         return;
     }
-    CA_LOGI("stats slot %u taken session=%d io=%d ctx=%p", c->param_slot, c->session_id, c->io_id,
-            static_cast<void*>(c));
+    // 統計の添字と宛先は別々に出す。再取得で宛先を保ったとき、この 2 つは食い違う。
+    CA_LOGI("stats slot %u taken session=%d io=%d param_slot=%u ctx=%p",
+            static_cast<uint32_t>(c->slot - g_shm->slots), c->session_id, c->io_id,
+            c->param_slot, static_cast<void*>(c));
 }
 
 // 不変条件「in_use == 0 のスロットは中身も必ずゼロ」は caeq::releaseSlot が守る

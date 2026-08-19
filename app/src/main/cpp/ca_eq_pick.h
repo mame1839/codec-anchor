@@ -407,6 +407,25 @@ inline uint32_t reclaimDeadSlots(ca_shm_t* m, PidAliveFn alive, void* user, uint
 }
 
 /**
+ * 統計の枠 `taken` を取ったインスタンスが、読みに行くパラメータ枠をどう決めるか。
+ *
+ * **初回 (宛先が未割り当て) だけ「取った枠と同じ添字」を既定にし、
+ * 既に有効な宛先を持っているなら保つ。**
+ *
+ * 保つ理由: 生成時に枠が尽きていたインスタンスは、`SET_PARAM` (id=2) で `params[v]` を
+ * 宛てられて鳴っていることがある。あとから統計の枠が空いて取れたとき、宛先まで
+ * 取った添字へ付け替えると、**ユーザの曲線は `params[v]` に残ったまま読み手だけが
+ * 空の枠へ移り、EQ が黙って素通しに戻る** — 「生きている側が空の枠を読む」症状を
+ * 修正自身が作る形。書き手は `pickDeviceSlot` が返す `s->param_slot` (= ここで決めた値)
+ * へ書くので、保てば書き手と読み手は同じ枠で合流する。
+ *
+ * `CA_PARAM_SLOT_NONE` は範囲外なので「未割り当て」に落ちる (静的表明が縛っている)。
+ */
+inline uint32_t paramSlotAfterAttach(uint32_t current, uint32_t taken) {
+    return current < static_cast<uint32_t>(CA_SHM_SLOTS) ? current : taken;
+}
+
+/**
  * 枠を 1 つ取る。返すのは添字か [kNoSlot]。**中身は呼び手が埋める。**
  *
  * 空きが無かったときだけ死んだ枠の回収を試し、もう一度だけ探す。
