@@ -1688,6 +1688,8 @@ void runFirAlignmentSection(catest::Report& r);
 void runFirGateSections(catest::Report& r);
 // 共有メモリ v4 の境界 (30)。ca_eq_shm_test.cpp。
 void runShmSections(catest::Report& r);
+// validate のプリアンプ境界 (32)。ca_eq_preamp_boundary_test.cpp。
+void runPreampBoundarySection(catest::Report& r);
 
 int main(int argc, char** argv) {
     (void)argc;
@@ -1718,6 +1720,7 @@ int main(int argc, char** argv) {
     runFirGateSections(r);      // 28 (検分が足した節)
     runFirAlignmentSection(r);  // 29
     runShmSections(r);          // 30
+    runPreampBoundarySection(r);  // 32
 
     std::printf("\n%d / %d 件が通った。\n", r.total() - r.failures(), r.total());
     return r.failures() == 0 ? 0 : 1;

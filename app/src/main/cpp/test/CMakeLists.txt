@@ -39,6 +39,7 @@ add_executable(ca_eq_test
     ca_eq_fir_test.cpp
     ca_eq_fir_gate_test.cpp
     ca_eq_shm_test.cpp
+    ca_eq_preamp_boundary_test.cpp
     ../dsp/ca_eq_dsp.cpp
     ../dsp/ca_eq_fft.cpp
     ../dsp/ca_eq_fir.cpp
