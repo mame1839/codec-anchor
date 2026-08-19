@@ -82,8 +82,6 @@ data class EqParamsReport(
     val result: EqParamsResult,
 )
 
-data class EqSessionPreview(val mac: String, val settings: EqSettings)
-
 private data class SentCurve(val mac: String, val text: String)
 
 private data class PreparedCurve(val file: File, val text: String)
@@ -214,17 +212,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         a2dpOutputs = AudioOutputs.a2dp(audioManager)
     }
 
-    private var eqPreviewState by mutableStateOf<EqSessionPreview?>(null)
-    val eqPreview: EqSessionPreview? get() = eqPreviewState
-
-    fun setEqPreview(p: EqSessionPreview?) {
-        eqPreviewState = p
-        pushEqParams()
-    }
-
     internal fun eqSettingsToPush(target: String): EqSettings =
-        eqPreview?.takeIf { it.mac == target }?.settings
-            ?: (config.profileFor(target)?.eq ?: EqSettings())
+        config.profileFor(target)?.eq ?: EqSettings()
 
     fun pushEqParams(settingsChangedOnly: Boolean = false) {
         if (eqRegisterRunning != null) return
