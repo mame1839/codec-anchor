@@ -8,19 +8,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 
-/**
- * `CA_EQ_FIR` の行の読み方。
- *
- * **壊れた行・未知の綴り・欠けたキーで落ちないことが主対象** — この行の書き手 (`caeqset`) は
- * 綴りを増やす前提で作られている (`ca_eq_pick.h` の `firWhyToken` が `default:` を持たない)
- * ので、読み手が「知らない = 異常」に倒れると、ネイティブ側の追加のたびにアプリが壊れる。
- */
 class EqFirTest {
 
-    /** caeqset が実際に出す形 (caeqset.cpp の printf と同じ並び)。 */
     private val real = "CA_EQ_FIR why=block_unfit rate=44100 block=896 frames=1834496 age_ms=18"
-
-    // --- 正常系 -------------------------------------------------------------
 
     @Test
     fun theRealLineIsParsed() {
@@ -28,7 +18,6 @@ class EqFirTest {
         assertTrue(EqFir.fellBackToStandard(real))
     }
 
-    /** キー名で引く。caeqset が並びを変えても読める。 */
     @Test
     fun keyOrderDoesNotMatter() {
         val shuffled = "CA_EQ_FIR age_ms=-1 rate=48000 why=no_arena block=960 frames=0"
@@ -36,7 +25,6 @@ class EqFirTest {
         assertTrue(EqFir.fellBackToStandard(shuffled))
     }
 
-    /** 実際の stdout は印・枠の選択・書いた内容の行に埋まっている。 */
     @Test
     fun theLineIsFoundAmongOtherOutput() {
         val stdout = listOf(
@@ -55,7 +43,6 @@ class EqFirTest {
         assertEquals("block_unfit", EqFir.whyOf("CA_EQ_SET_BEGIN\r\n  $real\r\n"))
     }
 
-    /** 1 回の実行に高々 1 行だが、複数あれば後の行 (新しい状態) を採る。 */
     @Test
     fun theLastLineWins() {
         val old = "CA_EQ_FIR why=block_unfit rate=44100 block=896 frames=1 age_ms=1"
@@ -65,18 +52,11 @@ class EqFirTest {
         assertEquals("block_unfit", EqFir.whyOf("$new\n$old"))
     }
 
-    /** 同じキーが 1 行に 2 度あれば後が勝つ (どちらでも壊れないことが本題)。 */
     @Test
     fun aDuplicateKeyTakesTheLaterValue() {
         assertEquals("running", EqFir.whyOf("CA_EQ_FIR why=block_unfit why=running"))
     }
 
-    // --- 画面に出す 3 つだけが出る -------------------------------------------
-
-    /**
-     * **literal の釘。**[EqFir.REPORTABLE] を定数参照で書くと、定数の綴りを変えたとき
-     * 釘も一緒に動いて永久に落ちない。3 つの選定理由は EqFir の KDoc。
-     */
     @Test
     fun exactlyTheseThreeAreReportable() {
         assertEquals(setOf("not_addressable", "no_arena", "block_unfit"), EqFir.REPORTABLE)
@@ -89,15 +69,12 @@ class EqFirTest {
         }
     }
 
-    /** ネイティブ側が綴りを足しても、こちらは黙って無視する (嘘の警告を出さない)。 */
     @Test
     fun unknownSpellingsAreIgnoredNotReported() {
         val line = "CA_EQ_FIR why=some_future_reason rate=48000 block=960 frames=1 age_ms=0"
         assertEquals("some_future_reason", EqFir.whyOf(line))
         assertFalse(EqFir.fellBackToStandard(line))
     }
-
-    // --- 壊れた入力 ---------------------------------------------------------
 
     @Test
     fun brokenLinesNeverReportAndNeverThrow() {
@@ -129,19 +106,11 @@ class EqFirTest {
         assertNull(EqFir.whyOf(""))
     }
 
-    /** `why=` (値が空) は「未知の綴り」と同じ扱い — 出さない側に倒れる。 */
     @Test
     fun anEmptyWhyDoesNotReport() {
         assertFalse(EqFir.fellBackToStandard("CA_EQ_FIR why= rate=44100"))
     }
 
-    // --- ネイティブ側との突き合わせ ------------------------------------------
-
-    /**
-     * **同じ綴りが 2 箇所にある** (`ca_eq_pick.h` の `firWhyToken` と [EqFir] の定数)。
-     * git は片方だけの変更を衝突と報告しない。食い違うと、`.so` は正しく報告しているのに
-     * アプリが二度と警告を出さなくなる — 例外もログも出ない、いちばん追えない形。
-     */
     @Test
     fun reportableSpellingsExistInTheNativeHeader() {
         val header = repoFile("app/src/main/cpp/ca_eq_pick.h").readText()
@@ -158,7 +127,6 @@ class EqFirTest {
         }
     }
 
-    /** 行の接頭辞とキー名も caeqset.cpp の printf と対で持っている。 */
     @Test
     fun theLineTagMatchesTheNativeWriter() {
         val cpp = repoFile("app/src/main/cpp/caeqset.cpp").readText()
@@ -166,12 +134,10 @@ class EqFirTest {
             "caeqset.cpp に \"${EqFir.LINE_TAG} ${EqFir.WHY_KEY}=%s\" の printf が無い",
             cpp.contains("${EqFir.LINE_TAG} ${EqFir.WHY_KEY}=%s"),
         )
-        // 定数側の綴りは literal で釘を打つ (定数と printf を同時に変えても、ここが残る)。
         assertEquals("CA_EQ_FIR", EqFir.LINE_TAG)
         assertEquals("why", EqFir.WHY_KEY)
     }
 
-    // EqParamsTest と同じ探し方。単体テストの作業ディレクトリは app/ にもリポジトリ直下にもなる
     private fun repoFile(relative: String): File {
         var dir: File? = File("").absoluteFile
         while (dir != null) {
