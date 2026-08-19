@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.SystemClock
-import androidx.core.content.ContextCompat
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XSharedPreferences
 import de.robv.android.xposed.XposedBridge
@@ -38,7 +37,7 @@ internal object SettingsHook {
     // 既定は解放する。読めなかったときもここに倒す — 元の挙動を保つほうが、ユーザの指定を
     // 取り違えて黙って介入をやめるより安全 (取り違えても、下の要求への返事ですぐ直る)。
     @Volatile
-    private var freeOffloadSwitch = true
+    private var freeOffloadSwitch = Bridge.FREE_OFFLOAD_SWITCH_DEFAULT
 
     // Context そのものは持たない (静的な参照になって漏れる)。開いたかどうかだけ覚える —
     // 解除はしないので、Context を取っておく用事も無い。
@@ -92,21 +91,22 @@ internal object SettingsHook {
      */
     private fun openBridge(context: Context?) {
         if (bridgeOpen) return
+        // **受け口が開くまでに届いた分は取りこぼしている。**設定アプリのプロセスは何かのついでに
+        // 立ち上がって生き続けるので、install() の種は古くなりうる — ここで読み直さないと、
+        // 温まったままのプロセスで「切った直後の 1 回」が効かない。
+        // 登録に失敗したときは bridgeOpen が立たないので、次の呼び出しでまた読み直す
+        // (受け口が持てない端末では、これが唯一の追従手段になる)。
+        loadFromPrefs()
         val ctx = context?.applicationContext ?: return
         val filter = IntentFilter(Bridge.ACTION_PUSH_SETTINGS_HOOK)
+        // レシーバは設定アプリのメインスレッドで走らせる (handler = null)。判定を差し替える
+        // ゲートも同じスレッドなので、1 回の判定の途中で値が入れ替わることが無い。
         val opened = runCatching {
-            ContextCompat.registerReceiver(
-                ctx,
-                receiver,
-                filter,
-                Bridge.PERMISSION,
-                null,
-                ContextCompat.RECEIVER_EXPORTED,
-            )
+            registerExported(ctx, receiver, filter, Bridge.PERMISSION, null)
         }.onFailure { XLog.e("設定アプリ側の受け口を作れない", it) }.isSuccess
         if (!opened) return
         bridgeOpen = true
-        requestConfig(ctx)
+        requestSettingsHook(ctx)
     }
 
     // レシーバで投げた例外は設定アプリのプロセスを落とす。
@@ -114,7 +114,10 @@ internal object SettingsHook {
         override fun onReceive(ctx: Context?, intent: Intent?) {
             runCatching {
                 if (intent?.action != Bridge.ACTION_PUSH_SETTINGS_HOOK) return
-                val value = intent.getBooleanExtra(Bridge.EXTRA_FREE_OFFLOAD_SWITCH, true)
+                val value = intent.getBooleanExtra(
+                    Bridge.EXTRA_FREE_OFFLOAD_SWITCH,
+                    Bridge.FREE_OFFLOAD_SWITCH_DEFAULT,
+                )
                 if (value == freeOffloadSwitch) return
                 freeOffloadSwitch = value
                 XLog.i("オフロードのトグルの解放: $value")
@@ -122,8 +125,8 @@ internal object SettingsHook {
         }
     }
 
-    private fun requestConfig(ctx: Context) {
-        val intent = Intent(Bridge.ACTION_REQUEST_CONFIG).apply {
+    private fun requestSettingsHook(ctx: Context) {
+        val intent = Intent(Bridge.ACTION_REQUEST_SETTINGS_HOOK).apply {
             setClassName(Bridge.PKG, Bridge.HOOK_REQUEST_RECEIVER)
             addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES or Intent.FLAG_RECEIVER_FOREGROUND)
         }
@@ -138,7 +141,10 @@ internal object SettingsHook {
                 XLog.d("設定ファイルを読めない: ${prefs.file.path}")
                 return
             }
-            freeOffloadSwitch = prefs.getBoolean(Bridge.PREFS_KEY_FREE_OFFLOAD_SWITCH, true)
+            freeOffloadSwitch = prefs.getBoolean(
+                Bridge.PREFS_KEY_FREE_OFFLOAD_SWITCH,
+                Bridge.FREE_OFFLOAD_SWITCH_DEFAULT,
+            )
         }.onFailure { XLog.d("設定ファイルを読めない: ${it.message}") }
     }
 
