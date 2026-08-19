@@ -1595,4 +1595,40 @@ void runSlotLifecycleSection(Report& r) {
         r.check(caeq::firWhyToken(static_cast<caeq::FirWhy>(kCount))[0] == '\0',
                 "%d 個で全部 (足したら綴りの表も一緒に直すこと)", kCount);
     }
+
+    // --- h. 枠を取ったあとの宛先 (param_slot) — 再取得が宛先を潰さない --------
+    //
+    // 症状の形: 生成時に枠が尽きていたインスタンスが SET_PARAM (id=2) で params[5] を
+    // 宛てられて鳴っている。あとで統計の枠が空いて取れたとき、宛先まで取った添字へ
+    // 付け替えると、**ユーザの曲線は params[5] に残ったまま読み手だけが空の枠へ移り、
+    // EQ が黙って素通しに戻る** — 「生きている側が空の枠を読む」症状を回収の修正自身が
+    // 作り直す。決定は caeq::paramSlotAfterAttach に 1 本化してあり、ここで表ごと固定する。
+    {
+        r.check(caeq::paramSlotAfterAttach(CA_PARAM_SLOT_NONE, 3) == 3u,
+                "宛先が未割り当てなら、取った枠と同じ添字が既定 (初回の attach)");
+        r.check(caeq::paramSlotAfterAttach(5, 2) == 5u,
+                "既に宛てられていれば保つ (再取得で潰さない)");
+        r.check(caeq::paramSlotAfterAttach(0, 2) == 0u,
+                "添字 0 も有効な宛先 (0 を「未割り当て」と混同しない)");
+        r.check(caeq::paramSlotAfterAttach(CA_SHM_SLOTS, 2) == 2u,
+                "範囲外 (%d 以上) はすべて未割り当て扱い", CA_SHM_SLOTS);
+
+        // 書き手との突き合わせ。読み手が保った宛先を統計の枠に公開すれば、
+        // 書き手 (pickDeviceSlot) も同じ params[5] を write 先に返す —
+        // **書き手と読み手が同じ枠で合流する**ことを両側から見る。
+        ShmWithCanary* w = newCanaryShm();
+        PidTable t{{0}, 0};
+        const uint32_t taken = caeq::acquireSlot(&w->m, PidTable::fn, &t, 999);
+        const uint32_t reader = caeq::paramSlotAfterAttach(5u, taken);
+        putStatSlot(&w->m, taken, 4242, CA_AUDIO_SESSION_DEVICE);
+        w->m.slots[taken].param_slot = reader;   // ca_stats_take_slot が公開するのと同じ
+        FakeAlive alive;
+        const caeq::SlotPickResult p = caeq::pickDeviceSlot(&w->m, FakeAlive::fn, &alive);
+        r.check(taken == 0u && reader == 5u,
+                "統計は枠 %u、宛先は 5 のまま (取った添字に付け替えていない)", taken);
+        r.check(p.status == caeq::SlotPick::kOk && p.param_slot == 5u && p.stats_slot == 0u,
+                "書き手も params[%u] へ書く (読み手と同じ宛先。fs は統計の枠 %u から)",
+                p.param_slot, p.stats_slot);
+        delete w;
+    }
 }
