@@ -30,12 +30,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-/**
- * 設定タブ。**機器を選ばずに決めるものだけ**を置く。
- *
- * 機器ごとの設定は詳細画面が持つ。端末側の事情 (モジュール・オフロード・版) は
- * 選ぶものではないので [StatusTab] へ。
- */
 @Composable
 fun SettingsTab(vm: MainViewModel, contentPadding: PaddingValues) {
     Column(
@@ -67,8 +61,6 @@ fun SettingsTab(vm: MainViewModel, contentPadding: PaddingValues) {
                 checked = vm.config.verbose,
                 onChange = { value -> vm.update { it.copy(verbose = value) } },
             )
-            // ここだけ AppConfig ではない (行き先が Bluetooth プロセスではなく設定アプリなので、
-            // 経路も保存先も別。理由は Bridge.PREFS_KEY_FREE_OFFLOAD_SWITCH)。
             SwitchRow(
                 title = stringResource(R.string.toggle_free_offload_switch),
                 checked = vm.freeOffloadSwitch,
