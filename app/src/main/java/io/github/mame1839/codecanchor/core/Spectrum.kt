@@ -2,71 +2,11 @@ package io.github.mame1839.codecanchor.core
 
 import kotlin.math.PI
 import kotlin.math.cos
-import kotlin.math.ln
-import kotlin.math.log10
 import kotlin.math.min
 import kotlin.math.sin
 import kotlin.random.Random
 
 object Spectrum {
-
-    private const val WINDOW = 4096
-    private const val MIN_WINDOW = 256
-
-    fun averageSpectrumDb(pcm: FloatArray, fs: Int): Pair<DoubleArray, DoubleArray> {
-        var n = WINDOW
-        while (n > 0 && n > pcm.size) n = n shr 1
-        if (n < MIN_WINDOW) return Pair(DoubleArray(0), DoubleArray(0))
-        val hop = n / 2
-        val window = DoubleArray(n) { 0.5 * (1.0 - cos(2.0 * PI * it / n)) }
-        val windowSquaredSum = window.sumOf { it * it }
-        val re = DoubleArray(n)
-        val im = DoubleArray(n)
-        val acc = DoubleArray(n / 2 + 1)
-        var segments = 0
-        var start = 0
-        while (start + n <= pcm.size) {
-            for (i in 0 until n) {
-                re[i] = pcm[start + i] * window[i]
-                im[i] = 0.0
-            }
-            fft(re, im)
-            for (k in 0..n / 2) acc[k] += re[k] * re[k] + im[k] * im[k]
-            segments++
-            start += hop
-        }
-        val binHz = DoubleArray(n / 2 + 1) { it.toDouble() * fs / n }
-        val norm = 1.0 / (segments.toDouble() * fs * windowSquaredSum)
-        val powerDb = DoubleArray(n / 2 + 1) { k ->
-            val sided = if (k == 0 || k == n / 2) 1.0 else 2.0
-            10.0 * log10(acc[k] * sided * norm + 1e-20)
-        }
-        return Pair(binHz, powerDb)
-    }
-
-    fun resampleDb(srcHz: DoubleArray, srcDb: DoubleArray, dstHz: DoubleArray): DoubleArray {
-        require(srcHz.size == srcDb.size) { "srcHz と srcDb の長さが違う" }
-        val first = srcHz.indexOfFirst { it > 0.0 }
-        if (first < 0) return DoubleArray(dstHz.size)
-        if (srcHz.size - first == 1) return DoubleArray(dstHz.size) { srcDb[first] }
-        return DoubleArray(dstHz.size) { d ->
-            val f = dstHz[d]
-            when {
-                f <= srcHz[first] -> srcDb[first]
-                f >= srcHz[srcHz.size - 1] -> srcDb[srcDb.size - 1]
-                else -> {
-                    var lo = first
-                    var hi = srcHz.size - 1
-                    while (hi - lo > 1) {
-                        val mid = (lo + hi) ushr 1
-                        if (srcHz[mid] <= f) lo = mid else hi = mid
-                    }
-                    val t = (ln(f) - ln(srcHz[lo])) / (ln(srcHz[hi]) - ln(srcHz[lo]))
-                    srcDb[lo] + (srcDb[hi] - srcDb[lo]) * t
-                }
-            }
-        }
-    }
 
     fun crossfadeLoop(pcm: FloatArray, channels: Int, fadeFrames: Int): FloatArray {
         require(channels >= 1) { "channels は 1 以上" }
@@ -92,18 +32,6 @@ object Spectrum {
         return out
     }
 
-    fun monoMix(pcm: FloatArray, channels: Int): FloatArray {
-        if (channels <= 1) return pcm.copyOf()
-        val frames = pcm.size / channels
-        val out = FloatArray(frames)
-        for (i in 0 until frames) {
-            var sum = 0f
-            for (c in 0 until channels) sum += pcm[i * channels + c]
-            out[i] = sum / channels
-        }
-        return out
-    }
-
     fun pinkNoise(samples: Int, random: Random): FloatArray {
         val rows = 16
         val values = DoubleArray(rows) { random.nextDouble(-1.0, 1.0) }
@@ -121,49 +49,5 @@ object Spectrum {
             out[n] = ((sum + random.nextDouble(-1.0, 1.0)) / (rows + 1)).toFloat()
         }
         return out
-    }
-
-    private fun fft(re: DoubleArray, im: DoubleArray) {
-        val n = re.size
-        var j = 0
-        for (i in 0 until n - 1) {
-            if (i < j) {
-                val tr = re[i]; re[i] = re[j]; re[j] = tr
-                val ti = im[i]; im[i] = im[j]; im[j] = ti
-            }
-            var m = n shr 1
-            while (m in 1..j) {
-                j -= m
-                m = m shr 1
-            }
-            j += m
-        }
-        var len = 2
-        while (len <= n) {
-            val ang = -2.0 * PI / len
-            val stepRe = cos(ang)
-            val stepIm = sin(ang)
-            var base = 0
-            while (base < n) {
-                var curRe = 1.0
-                var curIm = 0.0
-                val half = len / 2
-                for (k in 0 until half) {
-                    val aRe = re[base + k]
-                    val aIm = im[base + k]
-                    val bRe = re[base + k + half] * curRe - im[base + k + half] * curIm
-                    val bIm = re[base + k + half] * curIm + im[base + k + half] * curRe
-                    re[base + k] = aRe + bRe
-                    im[base + k] = aIm + bIm
-                    re[base + k + half] = aRe - bRe
-                    im[base + k + half] = aIm - bIm
-                    val nextRe = curRe * stepRe - curIm * stepIm
-                    curIm = curRe * stepIm + curIm * stepRe
-                    curRe = nextRe
-                }
-                base += len
-            }
-            len = len shl 1
-        }
     }
 }

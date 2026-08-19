@@ -134,7 +134,6 @@ internal fun AppNavigation(
     var tab by rememberSaveable { mutableStateOf(HomeTab.DEVICES) }
     var selectedMac by rememberSaveable { mutableStateOf<String?>(null) }
     var eqOpen by rememberSaveable { mutableStateOf(false) }
-    var eqFinderOpen by rememberSaveable { mutableStateOf(false) }
 
     val mac = selectedMac
     when {
@@ -154,16 +153,6 @@ internal fun AppNavigation(
             )
         }
 
-        eqFinderOpen -> {
-            BackHandler { eqFinderOpen = false }
-            EqFinderScreen(
-                vm = vm,
-                mac = mac,
-                snackbarHostState = snackbarHostState,
-                onBack = { eqFinderOpen = false },
-            )
-        }
-
         eqOpen -> {
             BackHandler { eqOpen = false }
             EqScreen(
@@ -171,7 +160,6 @@ internal fun AppNavigation(
                 mac = mac,
                 snackbarHostState = snackbarHostState,
                 onBack = { eqOpen = false },
-                onOpenFinder = { eqFinderOpen = true },
             )
         }
 

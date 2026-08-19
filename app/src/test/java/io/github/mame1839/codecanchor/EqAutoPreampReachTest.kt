@@ -186,110 +186,13 @@ class EqAutoPreampReachTest {
     }
 
     @Test
-    fun finderBakeReach() {
-        println("=== 5. 好みの EQ の焼き込み ===")
-        val axes = listOf(
-            io.github.mame1839.codecanchor.core.EqFinderAxes.BASS,
-            io.github.mame1839.codecanchor.core.EqFinderAxes.TREBLE,
-            io.github.mame1839.codecanchor.core.EqFinderAxes.MID,
-        )
-        val overlay = listOf(120, 120, 120)
-
-        EqSettings.BAND_COUNTS.forEach { n ->
-            val base = EqSettings(
-                enabled = true,
-                bandCount = n,
-                bands = solveKnobs(n, IntArray(n) { 120 }),
-            )
-            val baked = io.github.mame1839.codecanchor.core.EqFinderMaterialize
-                .bake(base, axes, overlay, 0)
-            requireNotNull(baked)
-            val knobs = EqSolver.graphicTargetsDb10(baked.bands)
-            report("graphic n=%2d  土台 摘み全 +12 + 3 軸 +12".format(n), baked.bands)
-            println("      焼き込み後の摘み (dB*10) = ${knobs.joinToString(",")}")
-        }
-
-        val paramBase = EqSettings(
-            enabled = true,
-            mode = io.github.mame1839.codecanchor.core.EqMode.PARAMETRIC,
-            bands = List(10) { EqBand(1_000, 141, 120) },
-        )
-        val paramBaked = io.github.mame1839.codecanchor.core.EqFinderMaterialize
-            .bake(paramBase, axes, overlay, 0)
-        requireNotNull(paramBaked)
-        report("parametric  土台 1 kHz +12 x10 + 3 軸 +12", paramBaked.bands)
-
-        println("--- 5b. 焼き込みを繰り返す (3 軸とも上端 +12。素の音から開始) ---")
-        listOf(5, 10, 15, 31).forEach { n ->
-            var s = EqSettings(
-                enabled = true,
-                bandCount = n,
-                bands = solveKnobs(n, IntArray(n) { 0 }),
-            )
-            for (round in 1..6) {
-                s = io.github.mame1839.codecanchor.core.EqFinderMaterialize
-                    .bake(s, axes, overlay, 0) ?: break
-                val knobs = EqSolver.graphicTargetsDb10(s.bands)
-                val preamp = report(
-                    "graphic n=%2d  焼き込み %d 回目 (摘みの最大 %.1f dB)"
-                        .format(n, round, knobs.max() / 10.0),
-                    s.bands,
-                )
-                if (preamp < EqSettings.PREAMP_RANGE.first) {
-                    println("      ↑ n=$n はここでクランプに入った (焼き込み $round 回目)")
-                    break
-                }
-            }
-        }
-
-        println("--- 5b'. 控えめなオーバーレイで繰り返す (グラフィック 10 バンド) ---")
-        listOf(
-            listOf(60, 60, 60) to "3 軸とも +6",
-            listOf(120, 0, 0) to "低域だけ +12",
-            listOf(60, 0, 0) to "低域だけ +6",
-        ).forEach { (ov, label) ->
-            var s = EqSettings(
-                enabled = true,
-                bandCount = 10,
-                bands = solveKnobs(10, IntArray(10) { 0 }),
-            )
-            var clampedAt = -1
-            for (round in 1..12) {
-                s = io.github.mame1839.codecanchor.core.EqFinderMaterialize.bake(s, axes, ov, 0) ?: break
-                val preamp = EqSolver.autoPreampDb10(s.bands)
-                if (preamp < EqSettings.PREAMP_RANGE.first) {
-                    clampedAt = round
-                    break
-                }
-            }
-            println("      $label: クランプに入る焼き込みの回数 = ${if (clampedAt < 0) "12 回でも入らない" else "$clampedAt 回目"}")
-        }
-
-        println("--- 5c. パラメトリックで焼き込みを繰り返す (3 本ずつ増える。上限 31 本) ---")
-        var p = EqSettings(
-            enabled = true,
-            mode = io.github.mame1839.codecanchor.core.EqMode.PARAMETRIC,
-            bands = listOf(EqBand(100, 141, 0), EqBand(1_000, 141, 0), EqBand(10_000, 141, 0)),
-        )
-        for (round in 1..9) {
-            p = io.github.mame1839.codecanchor.core.EqFinderMaterialize
-                .bake(p, axes, overlay, 0) ?: break
-            val preamp = report("parametric 焼き込み %d 回目 (%2d 本)".format(round, p.bands.size), p.bands)
-            if (preamp < EqSettings.PREAMP_RANGE.first) {
-                println("      ↑ ここでクランプに入った (焼き込み $round 回目)")
-                break
-            }
-        }
-    }
-
-    @Test
     fun parametricSeparation() {
-        println("=== 7. パラメトリック: +12 dB の 2 本を離していく (Q=1.41) ===")
+        println("=== 6. パラメトリック: +12 dB の 2 本を離していく (Q=1.41) ===")
         listOf(1_000, 1_100, 1_250, 1_400, 1_600, 2_000, 2_800, 4_000, 8_000).forEach { hz ->
             val bands = listOf(EqBand(1_000, 141, 120), EqBand(hz, 141, 120))
             report("1 kHz + %5d Hz  (%.2f oct 離れ)".format(hz, kotlin.math.ln(hz / 1000.0) / kotlin.math.ln(2.0)), bands)
         }
-        println("=== 7b. 1/3 oct ごとに +12 dB を並べる (何本でクランプするか) ===")
+        println("=== 6b. 1/3 oct ごとに +12 dB を並べる (何本でクランプするか) ===")
         val thirds = listOf(1_000, 1_250, 1_600, 2_000, 2_500, 3_150, 4_000, 5_000)
         for (k in 1..thirds.size) {
             val bands = thirds.take(k).map { EqBand(it, 141, 120) }
@@ -299,7 +202,7 @@ class EqAutoPreampReachTest {
 
     @Test
     fun shelvesAtFullScale() {
-        println("=== 6. シェルフ ===")
+        println("=== 5. シェルフ ===")
         report(
             "LOW_SHELF 105 Hz Q=0.71 +12 / HIGH_SHELF 2.5k Q=0.71 +12",
             listOf(
@@ -308,7 +211,7 @@ class EqAutoPreampReachTest {
             ),
         )
         report(
-            "同じ 2 本 + 3 kHz PEAKING Q=1.0 +12 (ファインダの 3 軸を上端で)",
+            "同じ 2 本 + 3 kHz PEAKING Q=1.0 +12",
             listOf(
                 EqBand(105, 71, 120, EqBandType.LOW_SHELF),
                 EqBand(2_500, 71, 120, EqBandType.HIGH_SHELF),

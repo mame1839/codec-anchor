@@ -6,6 +6,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlin.math.PI
 import kotlin.math.abs
+import kotlin.math.cos
 import kotlin.math.log10
 import kotlin.math.sin
 import kotlin.random.Random
@@ -14,117 +15,58 @@ class SpectrumTest {
 
     private val fs = 48_000
 
-    private fun sine(freqHz: Double, samples: Int, amplitude: Double = 1.0): FloatArray =
-        FloatArray(samples) { (amplitude * sin(2.0 * PI * freqHz * it / fs)).toFloat() }
+    private val probeHz = doubleArrayOf(125.0, 250.0, 500.0, 1_000.0, 2_000.0, 4_000.0, 8_000.0)
 
-    private fun argMax(values: DoubleArray, from: Int = 0): Int {
-        var best = from
-        for (i in from until values.size) if (values[i] > values[best]) best = i
-        return best
-    }
-
-    @Test
-    fun exactBinSineReadsItsAnalyticLevel() {
-        val k0 = 96
-        val f = k0.toDouble() * fs / 4096
-        val (binHz, db) = Spectrum.averageSpectrumDb(sine(f, fs * 2), fs)
-        assertEquals(2049, db.size)
-        assertEquals(f, binHz[k0], 1e-9)
-        assertEquals(k0, argMax(db))
-        val peak = 10.0 * log10(0.5) - 10.0 * log10(1.5 * fs / 4096.0)
-        assertEquals("ピーク bin", peak, db[k0], 0.05)
-        assertEquals("隣接 bin (窓の裾)", peak - 6.0206, db[k0 - 1], 0.05)
-        assertEquals("隣接 bin (窓の裾)", peak - 6.0206, db[k0 + 1], 0.05)
-    }
-
-    @Test
-    fun offBinSinePeaksAtNearestBin() {
-        val (_, db) = Spectrum.averageSpectrumDb(sine(1_000.0, fs * 2), fs)
-        assertEquals(85, argMax(db))
-    }
-
-    @Test
-    fun whiteNoiseReadsItsPsdFlat() {
-        val r = Random(7)
-        val noise = FloatArray(fs * 10) { (r.nextDouble(-1.0, 1.0)).toFloat() }
-        val (_, db) = Spectrum.averageSpectrumDb(noise, fs)
-        val body = db.copyOfRange(3, db.size - 1)
-        val mean = body.average()
-        assertEquals("PSD の絶対値 (10·log10(2σ²/fs))", 10.0 * log10(2.0 / 3.0 / fs), mean, 0.2)
-        val worst = body.maxOf { abs(it - mean) }
-        assertTrue("平均からの最大ずれ $worst dB (許容 1.5 dB)", worst < 1.5)
-    }
-
-    @Test
-    fun pinkNoiseSlopeIsMinusTenDbPerDecade() {
-        val noise = Spectrum.pinkNoise(fs * 10, Random(11))
-        val (binHz, db) = Spectrum.averageSpectrumDb(noise, fs)
-        val xs = ArrayList<Double>()
-        val ys = ArrayList<Double>()
-        for (k in binHz.indices) {
-            if (binHz[k] in 100.0..8_000.0) {
-                xs += log10(binHz[k])
-                ys += db[k]
+    private fun powerDbAt(pcm: FloatArray, freqHz: Double): Double {
+        val n = 4_096
+        val hann = DoubleArray(n) { 0.5 * (1.0 - cos(2.0 * PI * it / n)) }
+        val omega = 2.0 * PI * freqHz / fs
+        val kernelRe = DoubleArray(n) { cos(omega * it) * hann[it] }
+        val kernelIm = DoubleArray(n) { -sin(omega * it) * hann[it] }
+        var acc = 0.0
+        var segments = 0
+        var start = 0
+        while (start + n <= pcm.size) {
+            var re = 0.0
+            var im = 0.0
+            for (i in 0 until n) {
+                val v = pcm[start + i].toDouble()
+                re += v * kernelRe[i]
+                im += v * kernelIm[i]
             }
+            acc += re * re + im * im
+            segments++
+            start += n / 2
         }
-        val n = xs.size
+        return 10.0 * log10(acc / segments)
+    }
+
+    private fun slopeDbPerDecade(pcm: FloatArray): Double {
+        val xs = DoubleArray(probeHz.size) { log10(probeHz[it]) }
+        val ys = DoubleArray(probeHz.size) { powerDbAt(pcm, probeHz[it]) }
         val mx = xs.average()
         val my = ys.average()
         var sxy = 0.0
         var sxx = 0.0
-        for (i in 0 until n) {
+        for (i in xs.indices) {
             sxy += (xs[i] - mx) * (ys[i] - my)
             sxx += (xs[i] - mx) * (xs[i] - mx)
         }
-        val slope = sxy / sxx
+        return sxy / sxx
+    }
+
+    @Test
+    fun theProbeReadsAFlatSlopeForWhiteNoise() {
+        val r = Random(7)
+        val white = FloatArray(fs * 10) { r.nextDouble(-1.0, 1.0).toFloat() }
+        val slope = slopeDbPerDecade(white)
+        assertTrue("白色雑音の傾き $slope dB/decade (期待 0 ± 0.5)", abs(slope) < 0.5)
+    }
+
+    @Test
+    fun pinkNoiseSlopeIsMinusTenDbPerDecade() {
+        val slope = slopeDbPerDecade(Spectrum.pinkNoise(fs * 10, Random(11)))
         assertTrue("傾き $slope dB/decade (期待 -10 ± 1.5)", slope in -11.5..-8.5)
-    }
-
-    @Test
-    fun tooShortInputReturnsEmpty() {
-        val (hz, db) = Spectrum.averageSpectrumDb(FloatArray(100), fs)
-        assertEquals(0, hz.size)
-        assertEquals(0, db.size)
-    }
-
-    @Test
-    fun windowShrinksToPowerOfTwoForShortInput() {
-        val (hz, db) = Spectrum.averageSpectrumDb(sine(1_000.0, 3_000), fs)
-        assertEquals(1_025, db.size)
-        assertEquals(fs / 2048.0, hz[1], 1e-9)
-    }
-
-    @Test
-    fun resampleInterpolatesInLogFrequency() {
-        val srcHz = doubleArrayOf(100.0, 1_000.0, 10_000.0)
-        val srcDb = doubleArrayOf(0.0, 10.0, 30.0)
-        val out = Spectrum.resampleDb(srcHz, srcDb, doubleArrayOf(316.22776601683796, 3_162.2776601683795))
-        assertEquals(5.0, out[0], 1e-9)
-        assertEquals(20.0, out[1], 1e-9)
-    }
-
-    @Test
-    fun resampleClampsOutsideTheSourceRange() {
-        val srcHz = doubleArrayOf(0.0, 100.0, 10_000.0)
-        val srcDb = doubleArrayOf(99.0, -3.0, 12.0)
-        val out = Spectrum.resampleDb(srcHz, srcDb, doubleArrayOf(1.0, 100.0, 10_000.0, 40_000.0))
-        assertEquals(-3.0, out[0], 1e-9)
-        assertEquals(-3.0, out[1], 1e-9)
-        assertEquals(12.0, out[2], 1e-9)
-        assertEquals(12.0, out[3], 1e-9)
-    }
-
-    @Test
-    fun resamplePreservesMonotonicity() {
-        val r = Random(3)
-        val srcHz = DoubleArray(64) { 20.0 * Math.pow(1_000.0, it / 63.0) }
-        val srcDb = DoubleArray(64)
-        for (i in 1 until 64) srcDb[i] = srcDb[i - 1] + r.nextDouble(0.0, 2.0)
-        val dstHz = DoubleArray(401) { 10.0 * Math.pow(4_000.0, it / 400.0) }
-        val out = Spectrum.resampleDb(srcHz, srcDb, dstHz)
-        for (i in 1 until out.size) {
-            assertTrue("i=$i で単調性が崩れた (${out[i - 1]} → ${out[i]})", out[i] >= out[i - 1] - 1e-12)
-        }
     }
 
     @Test
@@ -168,16 +110,6 @@ class SpectrumTest {
         assertEquals(10, Spectrum.crossfadeLoop(clip, 1, 0).size)
         assertEquals(10, Spectrum.crossfadeLoop(clip, 1, 1).size)
         assertEquals(5, Spectrum.crossfadeLoop(clip, 1, 100).size)
-    }
-
-    @Test
-    fun monoMixAveragesChannels() {
-        val stereo = floatArrayOf(1f, 3f, -2f, 2f, 0.5f, 0.5f)
-        val mono = Spectrum.monoMix(stereo, 2)
-        assertEquals(3, mono.size)
-        assertEquals(2f, mono[0], 0f)
-        assertEquals(0f, mono[1], 0f)
-        assertEquals(0.5f, mono[2], 0f)
     }
 
     @Test

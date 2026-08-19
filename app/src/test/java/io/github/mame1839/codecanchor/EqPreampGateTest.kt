@@ -3,7 +3,6 @@ package io.github.mame1839.codecanchor
 import io.github.mame1839.codecanchor.core.AutoEqParser
 import io.github.mame1839.codecanchor.core.AutoEqResult
 import io.github.mame1839.codecanchor.core.EqBand
-import io.github.mame1839.codecanchor.core.EqLoudness
 import io.github.mame1839.codecanchor.core.EqParams
 import io.github.mame1839.codecanchor.core.EqSettings
 import io.github.mame1839.codecanchor.core.EqSolver
@@ -70,25 +69,12 @@ class EqPreampGateTest {
             (imported as AutoEqResult.Ok).settings.preampDb10,
         )
 
-        val weights = EqLoudness.defaultWeights()
-        val loud = EqLoudness.preampDb10(
-            bands = List(4) { EqBand(1_000, 141, 120) },
-            weights = weights,
-            baseLevelDb = -400.0,
-        )
-        assertEquals("producer 4: 聴感等価 (下端)", lo, loud)
-        assertEquals(
-            "producer 4: 聴感等価 (上端)",
-            hi,
-            EqLoudness.preampDb10(bands = emptyList(), weights = weights, baseLevelDb = 400.0),
-        )
-
         val graphic = AutoEqParser.parse(
             "GraphicEQ: 20 -60; 200 -60; 2000 -60; 20000 -60\n",
         )
         assertTrue("取り込みが成功していること (実際: $graphic)", graphic is AutoEqResult.Ok)
         assertEquals(
-            "producer 6: GraphicEQ の取り込み (AutoEqParser の広帯域オフセット側)",
+            "producer 4: GraphicEQ の取り込み (AutoEqParser の広帯域オフセット側)",
             lo,
             (graphic as AutoEqResult.Ok).settings.preampDb10,
         )

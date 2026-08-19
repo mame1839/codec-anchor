@@ -60,7 +60,6 @@ fun EqScreen(
     mac: String,
     snackbarHostState: SnackbarHostState,
     onBack: () -> Unit,
-    onOpenFinder: () -> Unit,
 ) {
     val profile = vm.config.profileFor(mac)
     if (profile == null) {
@@ -93,7 +92,6 @@ fun EqScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             EqSection(vm = vm, mac = mac, profile = profile)
-            EqFinderEntryCard(vm = vm, mac = mac, onOpen = onOpenFinder)
         }
     }
 }

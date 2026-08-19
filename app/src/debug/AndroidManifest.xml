@@ -3,7 +3,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application>
-        <!-- 開発用 (eq-finder の実機前提の確認)。起動は su の am start だけ -->
         <activity
             android:name="io.github.mame1839.codecanchor.audio.DebugToneActivity"
             android:exported="false" />
