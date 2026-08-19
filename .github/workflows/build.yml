@@ -31,6 +31,11 @@ jobs:
       - name: ビルドと lint
         run: ./gradlew assembleDebug assembleRelease :app:lintRelease --stacktrace
 
+      - name: モジュールが組めるか見る
+        env:
+          CA_VERSION_NAME: 0.0.0
+        run: bash module/build.sh
+
       - name: APK を保存
         uses: actions/upload-artifact@v7
         with:

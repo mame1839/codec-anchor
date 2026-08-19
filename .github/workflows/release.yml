@@ -27,8 +27,9 @@ jobs:
       - name: タグと版を決める
         id: version
         run: |
-          if [[ ! "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "タグ名が v<major>.<minor>.<patch> ではない: $GITHUB_REF_NAME" >&2
+          . module/version.sh
+          if [[ ! "$GITHUB_REF_NAME" =~ ^${CA_APP_TAG_PREFIX}[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "タグ名が ${CA_APP_TAG_PREFIX}<major>.<minor>.<patch> ではない: $GITHUB_REF_NAME" >&2
             exit 1
           fi
           git fetch --no-tags --force origin main:refs/remotes/origin/main
@@ -36,10 +37,9 @@ jobs:
             echo "このタグは main に含まれないコミットを指している。" >&2
             exit 1
           fi
-          version="${GITHUB_REF_NAME#v}"
-          IFS=. read -r major minor patch <<< "$version"
+          version="${GITHUB_REF_NAME#"$CA_APP_TAG_PREFIX"}"
           echo "name=$version" >> "$GITHUB_OUTPUT"
-          echo "code=$((10#$major * 10000 + 10#$minor * 100 + 10#$patch))" >> "$GITHUB_OUTPUT"
+          echo "code=$(ca_version_code "$version")" >> "$GITHUB_OUTPUT"
 
       - name: 署名鍵を復元
         env:

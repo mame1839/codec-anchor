@@ -23,11 +23,14 @@ if (versionCodeProp != null && versionCodeProp.toIntOrNull() == null) {
     error("versionCode プロパティが整数でない: \"$versionCodeProp\"")
 }
 
-val latestTag: String = providers.exec {
-    commandLine("git", "describe", "--tags", "--abbrev=0")
+val latestTag: String? = providers.exec {
+    commandLine("git", "describe", "--tags", "--abbrev=0", "--match", "v[0-9]*")
     isIgnoreExitValue = true
 }.standardOutput.asText.map { it.trim().removePrefix("v") }.orNull
-    ?.takeIf { Regex("^\\d+\\.\\d+\\.\\d+$").matches(it) } ?: "0.0.0"
+    ?.takeIf { Regex("^\\d+\\.\\d+\\.\\d+$").matches(it) }
+
+val resolvedVersionName: String = versionNameProp ?: latestTag
+    ?: error("版が決まらない: v<major>.<minor>.<patch> のタグが読めず -PversionName も無い")
 
 fun versionCodeOf(name: String): Int {
     val parts = name.split(".").map { it.toInt() }
@@ -42,8 +45,8 @@ android {
         applicationId = "io.github.mame1839.codecanchor"
         minSdk = 31
         targetSdk = 36
-        versionCode = versionCodeProp?.toInt() ?: versionCodeOf(latestTag).coerceAtLeast(1)
-        versionName = versionNameProp ?: latestTag
+        versionCode = versionCodeProp?.toInt() ?: versionCodeOf(resolvedVersionName).coerceAtLeast(1)
+        versionName = resolvedVersionName
 
         externalNativeBuild {
             cmake {

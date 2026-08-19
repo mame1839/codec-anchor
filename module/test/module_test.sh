@@ -163,12 +163,124 @@ fi
 [ "$(ca_version_code 1.2.3)" = 10203 ] && ok "versionCode 1.2.3 -> 10203" || ng "versionCode 1.2.3 -> 10203"
 [ "$(ca_version_code 0.0.0)" = 1 ]     && ok "versionCode の下限は 1"     || ng "versionCode の下限は 1"
 
-[ "$(CA_VERSION_NAME=1.2.3 ca_version_name)" = 1.2.3 ] \
-  && ok "CA_VERSION_NAME を優先する" || ng "CA_VERSION_NAME を優先する"
-[ "$(CA_VERSION_NAME=v1.2.3 ca_version_name)" = 1.2.3 ] \
-  && ok "先頭の v を落とす" || ng "先頭の v を落とす"
-[ "$(CA_VERSION_NAME=0.2.1-rc1 ca_version_name)" = 0.0.0 ] \
-  && ok "semver でない値は 0.0.0" || ng "semver でない値は 0.0.0"
+[ "$(ca_version_code 1.0.0)" = 10000 ] && ok "versionCode 1.0.0 -> 10000" || ng "versionCode 1.0.0 -> 10000"
+
+[ "$(ca_version_name "$CA_MODULE_TAG_PREFIX" 1.2.3)" = 1.2.3 ] \
+  && ok "渡された版を優先する" || ng "渡された版を優先する"
+[ "$(ca_version_name "$CA_MODULE_TAG_PREFIX" m1.2.3)" = 1.2.3 ] \
+  && ok "モジュールの接頭辞を落とす" || ng "モジュールの接頭辞を落とす"
+[ "$(ca_version_name "$CA_APP_TAG_PREFIX" v1.2.3)" = 1.2.3 ] \
+  && ok "アプリの接頭辞を落とす" || ng "アプリの接頭辞を落とす"
+
+if out=$(ca_version_name "$CA_MODULE_TAG_PREFIX" 0.2.1-rc1 2>/dev/null); then
+    ng "版が読めなければ 0.0.0 を返さず落ちる (成功で返った: $out)"
+elif [ -n "$out" ]; then
+    ng "版が読めなければ 0.0.0 を返さず落ちる (標準出力に $out が出た)"
+else
+    ok "版が読めなければ 0.0.0 を返さず落ちる"
+fi
+
+grep -q '0\.0\.0' module/build.sh \
+  && ng "build.sh に 0.0.0 の逃げ道が無い" || ok "build.sh に 0.0.0 の逃げ道が無い"
+
+GT="$TMP/tags"
+mkdir -p "$GT"
+(
+    cd "$GT" || exit 1
+    git init -q -b main
+    git -c user.email=t@example.invalid -c user.name=t commit -q --allow-empty -m a
+    git tag v1.2.3
+    git -c user.email=t@example.invalid -c user.name=t commit -q --allow-empty -m b
+    git tag m9.9.9
+) > /dev/null 2>&1
+
+gm=$(cd "$GT" && ca_version_name "$CA_MODULE_TAG_PREFIX" 2>&1)
+gv=$(cd "$GT" && ca_version_name "$CA_APP_TAG_PREFIX" 2>&1)
+if [ "$gm" = 9.9.9 ] && [ "$gv" = 1.2.3 ]; then
+    ok "2 系統のタグが並んでも取り違えない"
+else
+    ng "2 系統のタグが並んでも取り違えない (m -> $gm / v -> $gv)"
+fi
+
+GRADLE=app/build.gradle.kts
+gcmd=$(sed -n 's/^[[:space:]]*commandLine(\(.*\))[[:space:]]*$/\1/p' "$GRADLE")
+if [ "$(printf '%s\n' "$gcmd" | grep -c .)" != 1 ]; then
+    ng "Gradle も 2 系統のタグを取り違えない ($GRADLE の commandLine( を 1 つだけ読めない)"
+else
+    set -f
+    # shellcheck disable=SC2086
+    set -- $(printf '%s\n' "$gcmd" | tr -d '"' | tr ',' ' ')
+    set +f
+    gtag=$(cd "$GT" && "$@" 2>/dev/null)
+    [ "$gtag" = v1.2.3 ] && ok "Gradle も 2 系統のタグを取り違えない" \
+      || ng "Gradle も 2 系統のタグを取り違えない ($* -> $gtag、期待 v1.2.3)"
+fi
+
+n_ret=$(grep -c '^[[:space:]]*return ' "$GRADLE")
+gexpr=$(sed -n 's/^[[:space:]]*return \(.*\)$/\1/p' "$GRADLE" | tr -d ' _')
+if [ "$n_ret" != 1 ]; then
+    ng "versionCode の式が version.sh と Gradle で一致する ($GRADLE の return が $n_ret 箇所)"
+elif [ "$gexpr" != 'parts[0]*10000+parts[1]*100+parts[2]' ]; then
+    ng "versionCode の式が version.sh と Gradle で一致する (Gradle 側が $gexpr)"
+elif ! grep -q 'coerceAtLeast(1)' "$GRADLE"; then
+    ng "versionCode の式が version.sh と Gradle で一致する (Gradle 側に下限 1 が無い)"
+else
+    ok "versionCode の式が version.sh と Gradle で一致する"
+fi
+
+e=0
+for w in .github/workflows/release.yml .github/workflows/release-module.yml; do
+    grep -q '\. module/version\.sh' "$w" || { e=1; echo "    $w が version.sh を読んでいない"; }
+    grep -q '10000' "$w" && { e=1; echo "    $w が versionCode の式を自分で持っている"; }
+done
+grep -q 'ca_version_code' .github/workflows/release.yml \
+  || { e=1; echo "    release.yml が ca_version_code を使っていない"; }
+[ $e -eq 0 ] && ok "ワークフローは版の計算を version.sh に任せる" \
+             || ng "ワークフローは版の計算を version.sh に任せる"
+
+e=0
+[ "$CA_MODULE_TAG_PREFIX" = m ] || { e=1; echo "    CA_MODULE_TAG_PREFIX が m でない"; }
+[ "$CA_APP_TAG_PREFIX" = v ] || { e=1; echo "    CA_APP_TAG_PREFIX が v でない"; }
+grep -qF "tags: ['m*']" .github/workflows/release-module.yml \
+  || { e=1; echo "    release-module.yml が m* で走らない"; }
+grep -qF "tags: ['v*']" .github/workflows/release.yml \
+  || { e=1; echo "    release.yml が v* で走らない"; }
+[ $e -eq 0 ] && ok "タグの接頭辞が version.sh とワークフローで一致する" \
+             || ng "タグの接頭辞が version.sh とワークフローで一致する"
+
+[ "$(ca_zip_name 1.2.3)" = codecanchor_eq-m1.2.3.zip ] \
+  && ok "zip の名前に版が入る" || ng "zip の名前に版が入る ($(ca_zip_name 1.2.3))"
+
+if REPO=$(ca_update_repo); then
+    ok "updateJson= が version.sh の置き場と噛み合う ($REPO)"
+else
+    ng "updateJson= が version.sh の置き場と噛み合う"
+    REPO=
+fi
+
+ORIGIN=$(git remote get-url origin 2>/dev/null || true)
+ORIGIN=${ORIGIN#https://github.com/}
+ORIGIN=${ORIGIN%.git}
+if [ -z "$ORIGIN" ]; then
+    ng "updateJson= の指す先が origin と一致する (origin が読めないので照合できない)"
+elif [ "$ORIGIN" != "$REPO" ]; then
+    ng "updateJson= の指す先が origin と一致する (module.prop $REPO / origin $ORIGIN)"
+else
+    ok "updateJson= の指す先が origin と一致する"
+fi
+
+if [ -n "$REPO" ]; then
+    ca_update_json 1.2.3 10203 > "$TMP/update.json"
+    diff -u - "$TMP/update.json" <<EOF > "$TMP/update.diff"
+{
+  "version": "1.2.3",
+  "versionCode": 10203,
+  "zipUrl": "https://github.com/$REPO/releases/download/m1.2.3/codecanchor_eq-m1.2.3.zip",
+  "changelog": "https://raw.githubusercontent.com/$REPO/module-update/changelog.md"
+}
+EOF
+    [ $? -eq 0 ] && ok "update.json の書式" || { ng "update.json の書式"; cat "$TMP/update.diff"; }
+fi
 
 ca_system_prop 0.2.1 201 > "$TMP/system.prop"
 diff -u - "$TMP/system.prop" <<'EOF' > "$TMP/prop.diff"

@@ -3,4 +3,5 @@ name=Codec Anchor EQ
 version=0.0.0
 versionCode=1
 author=mame1839
-description=Codec Anchor のイヤホンごとの音響処理を動かすためのモジュール。エフェクトの .so と audio_effects.xml を bind mount で差し替えるだけで、/vendor の実ファイルは変更しない。
+description=Codec Anchor のイヤホンごとの音響処理を動かすためのモジュール。
+updateJson=https://raw.githubusercontent.com/mame1839/codec-anchor/module-update/update.json
