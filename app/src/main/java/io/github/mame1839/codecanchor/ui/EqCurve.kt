@@ -48,46 +48,16 @@ import kotlin.math.ln
 import kotlin.math.max
 import kotlin.math.min
 
-// ±12.0 dB を 0.1 dB 刻み。eq-spec.md の確定値。
-// 絵の縦軸と EqSection のスライダーが同じ値を見る。2 箇所に書くと、片方だけ動かしたときに
-// 摘みの可動域と絵の目盛りが黙ってずれる。
 val EQ_GAIN_RANGE = -120..120
 const val EQ_GAIN_STEP = 1
 
-// 縦軸の候補。**連続に伸ばさない** — ドラッグのあいだ軸が毎フレーム動くと、
-// 触っていないバンドの点まで揺れて、何が変わったのか読めなくなる。
-// 12 超の段はパラメトリックのバンドの重ね上げと、強い取り込みプリセットで実際に要る。
 internal val PLOT_RANGES_DB = listOf(12.0, 18.0, 24.0, 40.0)
 
-/**
- * 曲線が段の目盛り (±段) を越えて食み出せる量。[plotFraction] が ±(段 + これ) を枠の
- * 物理端に写すので、**段の選択 ([plotRange]) と描画余白が同じ 1 つの値で決まり、
- * 「選ばれた段では描く物すべてが物理枠の中」が構成から成り立つ** — 軸が育つのは、
- * 曲線がそのままでは枠の外へ出るとき、そのときだけ。
- *
- * 値の根拠 (2026-08-12 実測。摘みが可動域いっぱい ±12 のときの合成応答の |最大|):
- * ```
- *   全バンド +12                12.36〜12.57 dB (5/10/15/31 バンド。中心間の膨らみ + 量子化)
- *   交互 ±12                    12.02〜12.04 dB
- *   隣接 2 本だけ +12           13.61〜13.87 dB (最悪は 10 バンドの 13.8744)
- *   +12/+12/x/+12/+12 (x 掃引)  12.51〜13.85 dB (実機で軸が跳ねた形。x=-8.3/-8.4 の
- *                               Q エスカレーション境界で応答自体が 13.77 → 12.51 と崖になる)
- *   ±12 で挟んだ +12 ペア       15.01 dB (5 バンド)
- * ```
- * 2.5 は「13.88 までの形 (全部 +12・ペア・実機の再現形) を段 12 に収めて崖ごと吸収し
- * (余裕 0.6 dB)、15.01 の形は段 18 へ上げる」の境界。これより小さいとペアの形が
- * 12/18 を行き来し、大きいと ±12 の目盛りが枠の中央へ寄って絵が痩せる
- * (段 12 で ±12 の目盛りは枠の 12/14.5 = 82.8% に広がる。旧実装は全 +12 が段 18 に
- * 跳ねて 66.7% しか使えなかった)。
- */
 internal const val PLOT_OVERSHOOT_DB = 2.5
 
-// 対数軸の両端 (パラメトリック)。可聴帯域。
 internal const val AXIS_LO_HZ = 20.0
 internal const val AXIS_HI_HZ = 20_000.0
 
-// 曲線の標本数。RBJ の応答は滑らかなので、これだけあれば折れ線に見えない。
-// 31 バンドだと 1 フレームあたり 31 * 160 回の応答計算になるので、無闇に増やさない。
 internal const val SAMPLES = 160
 
 private val PLOT_HEIGHT = 132.dp
@@ -97,40 +67,19 @@ private val DOT_RADIUS_ACTIVE = 5.dp
 private val CURVE_WIDTH = 2.5.dp
 private val BAND_WIDTH = 1.dp
 private val COLUMN_WIDTH = 1.5.dp
-// ラベル同士の最小の隙間。**広げすぎると 10 バンドで間引きが始まる** —
-// 340 dp 幅なら 1 列 35 dp しかなく、"+10.5" が 27 dp を占める。
-// 既定の 10 バンドは全部出るのが正しい状態なので、ここは詰める。
 private val LABEL_MIN_GAP = 4.dp
 private val PLOT_INSET = 10.dp
 
-// 0 dB の基準線の濃さ。グラフィックとパラメトリックで同じ値を使う。
 private const val ZERO_LINE_ALPHA = 0.28f
 
-// 0 dB 以外の目盛り線。基準線より必ず薄くする (どれが 0 かが読めなくなる)。
 private const val GRID_LINE_ALPHA = 0.14f
 
-// バンドの縦線のうち、点より外側 (値を持たない側) の濃さ。
 private const val COLUMN_GUIDE_ALPHA = 0.10f
 
-/** どの欄を動かしているか。ドラッグ中の値を絵へ運ぶために使う。 */
-/**
- * [GAIN] はパラメトリック用で、値がそのバンドのフィルタのゲイン。
- * [GRAPHIC_GAIN] はグラフィック用で、値は**そのバンド中心で鳴る音量 (目標値)**。
- * 分けているのは、ドラッグ中の絵を指を離した後と同じ形にするため — グラフィックで
- * 目標値をそのままゲインとして描くと、離した瞬間に曲線が干渉補正の分だけ跳ぶ。
- */
 enum class EqField { FREQUENCY, Q, GAIN, GRAPHIC_GAIN }
 
-/** ドラッグ中の値の宛先。 */
 data class EqPreviewTarget(val bandIndex: Int, val field: EqField)
 
-/**
- * ドラッグ中の値の受け皿。[EqSliderRow] が書き、[EqCurve] が読む。
- *
- * **設定そのものは書き換えない。** `MainViewModel.commit()` にデバウンスが無く、
- * 1 回の変更ごとに「設定全体を encode → 保存 → Bluetooth へ送信」が同期で走るので、
- * 指を動かしている間ずっとそれを叩くことになる。絵だけが先に追いつく形にしてある。
- */
 class EqPreview {
     var target by mutableStateOf<EqPreviewTarget?>(null)
         private set
@@ -142,7 +91,6 @@ class EqPreview {
         this.value = value
     }
 
-    /** 指を離したときと、ドラッグ中に行ごと消えたとき (バンドの削除) の両方から呼ぶ。 */
     fun clear(target: EqPreviewTarget) {
         if (this.target == target) this.target = null
     }
@@ -150,10 +98,6 @@ class EqPreview {
 
 val LocalEqPreview = staticCompositionLocalOf<EqPreview?> { null }
 
-/**
- * 絵とスライダーを同じ [EqPreview] の下に置く。レイアウトは足さないので、
- * 中身は呼び出し元の `Column` へそのまま並ぶ。
- */
 @Composable
 fun ColumnScope.EqPreviewHost(content: @Composable ColumnScope.() -> Unit) {
     val scope = this
@@ -161,20 +105,6 @@ fun ColumnScope.EqPreviewHost(content: @Composable ColumnScope.() -> Unit) {
     CompositionLocalProvider(LocalEqPreview provides preview) { scope.content() }
 }
 
-/**
- * いまの設定がどういう周波数特性になるかの絵。**表示専用で、タッチには反応しない。**
- *
- * 操作は既存のスライダーのまま。掴めそうに見える形を置くと「掴めるのに動かない」になるので、
- * 点は小さく、影も立体感も付けない。
- *
- * **描くのは目標値ではなく実際に鳴る特性。** `EqSettings.bands` の `gainDb10` は
- * フィルタに渡すゲインで (`EqSolver.solveBands()` が解をここへ書く)、目標値はモデルの
- * どこにも保存されていない。曲線は `EqSolver.combinedResponseDb()` をそのまま引く —
- * 応答の式をここで書き直すと、片方だけ直したときに絵と音が黙ってずれる。
- *
- * **プリアンプは含めない。** 音色ではなく音量で、曲線を平行移動するだけなので形の情報が
- * 増えない。含めると、プリアンプを下げただけで曲線全体が沈む絵になる。
- */
 @Composable
 fun EqCurve(eq: EqSettings, modifier: Modifier = Modifier) {
     val preview = LocalEqPreview.current
@@ -183,16 +113,10 @@ fun EqCurve(eq: EqSettings, modifier: Modifier = Modifier) {
     val active = preview?.target?.bandIndex ?: -1
 
     val description = stringResource(R.string.eq_curve_desc)
-    // **既定のキャッシュは 8 件しかない。**31 バンドはラベルが 62 枚あるので、
-    // 既定のままだと毎フレーム全部が測り直しになる (ドラッグ中に変わる文字列は 1 枚だけなのに)。
     val measurer = rememberTextMeasurer(cacheSize = 80)
     val colors = MaterialTheme.colorScheme
     val labelStyle = MaterialTheme.typography.labelSmall.copy(
-        // 数値と単位が入れ替わるのは、段落の向きが RTL のときに数字が中立文字として
-        // 流されるため。軸のラベルは常に左→右で読むものなので、向きを固定して切り離す。
         textDirection = TextDirection.Ltr,
-        // labelSmall の字間は本文向け。数字の並びでは幅を食うだけで、
-        // 1 列ぶんの幅が惜しい 31 バンドではそのまま間引きの本数に効く。
         letterSpacing = 0.sp,
         color = colors.onSurfaceVariant,
     )
@@ -206,10 +130,6 @@ fun EqCurve(eq: EqSettings, modifier: Modifier = Modifier) {
         ParametricPlot(bands, active, measurer, labelStyle, colors.primary, colors.onSurfaceVariant, description, modifier)
     }
 }
-
-// ---------------------------------------------------------------------------
-// グラフィック — バンドが等間隔に並ぶ。縦線 + 先端の点 + 曲線 + グラデーション。
-// ---------------------------------------------------------------------------
 
 @Composable
 private fun GraphicPlot(
@@ -225,13 +145,8 @@ private fun GraphicPlot(
 ) {
     val kiloShort = stringResource(R.string.eq_unit_khz_short)
 
-    // 実際に鳴る特性を、バンド中心が等間隔に並ぶ軸の上で測る。
-    // 中心と中心のあいだは対数周波数で補間するので、目盛りは歪むが曲線は本物のまま。
     val response = remember(bands, precision) { graphicResponse(bands, precision) }
 
-    // 数値ラベルは摘みと同じ「その中心で実際に鳴る音量」([centreGainsDb10])。
-    // `gainDb10` (フィルタのゲイン) を出すと、全バンド +12.0 の摘みの上に解いたゲイン
-    // (+6.3〜+10.7) が並び、直したはずの「摘みと絵の不一致」がグラフの中に残る。
     val gainLabels = remember(bands, precision, labelStyle) {
         centreGainsDb10(response, bands.size).map { measurer.measure(eqGainNumber(it), labelStyle) }
     }
@@ -260,14 +175,6 @@ private fun GraphicPlot(
     }
 }
 
-/**
- * グラフィックの絵。**描くのはここだけで、composable 側は測って渡すだけ。**
- *
- * 分けてあるのは試験のため。ビットマップへ同じ関数を流せば、目盛りが出ているか・
- * 塗りがどこに閉じているかを画素で確かめられる (`EqCurveTest`)。
- * **Canvas のラムダの中に書くと、この 2 つはどんな試験からも見えない** —
- * 実際、目盛りが 1 本も無い状態と塗りが下端に閉じた状態が、緑のまま実機まで出ている。
- */
 @Suppress("LongParameterList")
 internal fun DrawScope.drawGraphicPlot(
     bands: List<EqBand>,
@@ -289,7 +196,6 @@ internal fun DrawScope.drawGraphicPlot(
     val yOf = { db: Double -> plot.top + plotFraction(db, range) * plot.height }
     val zero = yOf(0.0)
 
-    // ドラッグ中のバンドは、間引きの対象でも必ず出す。「いま何を触っているか」が主目的。
     val shown = pickLabels(
         xs,
         FloatArray(bands.size) { max(gainLabels[it].size.width, freqLabels[it].size.width).toFloat() },
@@ -304,10 +210,6 @@ internal fun DrawScope.drawGraphicPlot(
         if (i == 0) curve.moveTo(x, y) else curve.lineTo(x, y)
     }
 
-    // 曲線と 0 dB のあいだを塗る。**下端ではなく 0 dB に閉じる** — パラメトリックと同じ。
-    // 下端に閉じていたときは、塗りの面積が「値」ではなく「値 + 軸の幅」になっていて、
-    // -12 dB のバンドの下にも枠の 1/4 の塗りが残っていた。摘みを上下対称に振っても
-    // 絵は上に偏ったままになり、線の形そのものが歪んで見える原因になっていた。
     val fill = Path().apply {
         addPath(curve)
         lineTo(plot.right - inset, zero)
@@ -316,27 +218,17 @@ internal fun DrawScope.drawGraphicPlot(
     }
     drawPath(fill, accent.copy(alpha = 0.16f))
 
-    // 目盛り。0 dB は基準線として濃く引く (どれが 0 かが読めないと上げ下げが分からない)。
     drawDbTicks(ticks, plot, muted, yOf)
 
-    // 点の大きさは列の間隔で頭を押さえる。31 バンドだと間隔が 11 dp しかなく、
-    // 既定の半径のままでは 0 dB に並んだ点がつながって 1 本の帯に見える。
     val pitch = if (xs.size > 1) xs[1] - xs[0] else plot.width
     val dotR = min(DOT_RADIUS.toPx(), pitch * 0.22f)
     val dotRActive = min(DOT_RADIUS_ACTIVE.toPx(), pitch * 0.32f)
 
-    // 点は「その中心で実際に鳴る音量」= 摘みの値の高さに置く。曲線は中心を必ず通るので
-    // (`samplesLandExactlyOnBandCentres`)、点は曲線の上に乗る。`gainDb10` (フィルタのゲイン)
-    // に置くと、全バンド +12 の平らな曲線の下に解いたゲインの点が散らばって、摘みと絵が
-    // 食い違う。丸める前の値なのは点を曲線から 1 px も浮かさないため (ラベルは丸めた値)。
     val step = if (bands.size > 1) (response.size - 1) / (bands.size - 1) else 0
     bands.indices.forEach { i ->
         val x = xs[i]
         val y = yOf(response[i * step])
         val hot = i == active
-        // 枠いっぱいの案内線を薄く引いてから、**0 dB と点のあいだ**だけを濃くする。
-        // 濃い側を下端まで伸ばすと長さが値を表さない — -12 dB のバンドが枠の 2/3 の
-        // 長さの棒になり、+12 dB との差が 3 倍ではなく 1.5 倍にしか見えなかった。
         drawLine(muted.copy(alpha = COLUMN_GUIDE_ALPHA), Offset(x, plot.top), Offset(x, plot.bottom), COLUMN_WIDTH.toPx())
         drawLine(accent.copy(alpha = if (hot) 0.85f else 0.45f), Offset(x, y), Offset(x, zero), COLUMN_WIDTH.toPx())
         drawCircle(accent, if (hot) dotRActive else dotR, Offset(x, y))
@@ -350,10 +242,6 @@ internal fun DrawScope.drawGraphicPlot(
         drawCentered(freqLabels[i], xs[i], size.height - rowHeight)
     }
 }
-
-// ---------------------------------------------------------------------------
-// パラメトリック — 対数の周波数軸。合成の曲線が主役、バンドごとの寄与は細い線。
-// ---------------------------------------------------------------------------
 
 @Composable
 private fun ParametricPlot(
@@ -379,8 +267,6 @@ private fun ParametricPlot(
     val rowHeight = tickLabels.maxOf { it.size.height }
 
     val density = LocalDensity.current
-    // 上下の目盛りのラベルは枠線の高さに中央合わせで置くので、半分ずつはみ出す。
-    // その分を確保しないと "+12 dB" の上半分が切れる。
     val totalHeight = PLOT_HEIGHT + LABEL_GAP + with(density) { (rowHeight * 2).toDp() }
 
     Canvas(
@@ -397,7 +283,6 @@ private fun ParametricPlot(
     }
 }
 
-/** パラメトリックの絵。分けてある理由は [drawGraphicPlot] と同じ。 */
 @Suppress("LongParameterList")
 internal fun DrawScope.drawParametricPlot(
     bands: List<EqBand>,
@@ -425,8 +310,6 @@ internal fun DrawScope.drawParametricPlot(
         val y = yOf(composite[i])
         if (i == 0) curve.moveTo(x, y) else curve.lineTo(x, y)
     }
-    // 曲線と 0 dB のあいだを塗る。上に出れば持ち上げ、下に落ちれば削り。
-    // 0 dB をまたぐと自己交差するが、NonZero なのでどちらの側も塗られる。
     val fill = Path().apply {
         addPath(curve)
         lineTo(plot.right, zero)
@@ -435,7 +318,6 @@ internal fun DrawScope.drawParametricPlot(
     }
     drawPath(fill, accent.copy(alpha = 0.16f))
 
-    // バンドごとの寄与。主役を埋めないよう細く薄く。触っているものだけ濃くする。
     perBand.forEachIndexed { b, series ->
         val hot = b == active
         val path = Path()
@@ -453,8 +335,6 @@ internal fun DrawScope.drawParametricPlot(
 
     drawPath(curve, accent, style = Stroke(width = CURVE_WIDTH.toPx()))
 
-    // 点はそのバンド自身の応答の上に置く。シェルフは fc でゲインの約半分なので、
-    // (fc, gain) に置くと自分の曲線から浮く。
     bands.forEachIndexed { b, band ->
         val hz = band.freqHz.toDouble()
         if (hz < AXIS_LO_HZ || hz > AXIS_HI_HZ) return@forEachIndexed
@@ -470,25 +350,14 @@ internal fun DrawScope.drawParametricPlot(
     xs.indices.forEach { if (shown[it]) drawCentered(tickLabels[it], xs[it], size.height - rowHeight) }
 }
 
-// ---------------------------------------------------------------------------
-
 private val AXIS_TICKS_HZ = listOf(20, 50, 100, 200, 500, 1_000, 2_000, 5_000, 10_000, 20_000)
 
-/**
- * 縦軸の目盛り。**グラフィックとパラメトリックで同じものを出す。**
- *
- * 段 ([plotRange]) は設定によって 12 / 18 / 24 / 40 dB と変わる。**数字が無いと、
- * 段が変わったことと線の形が変わったことが画面上で区別できない** — 摘みを ±12 dB まで
- * 振り切っても、軸が ±24 dB なら点は上半分の真ん中までしか来ない。
- * 以前はグラフィックだけ 0 dB の線 1 本で、絵が縦に潰れて見える原因になっていた。
- */
 @Composable
 private fun rememberDbTicks(
     range: Double,
     measurer: TextMeasurer,
     style: TextStyle,
 ): List<Pair<Double, TextLayoutResult>> {
-    // 単位は一番上の 1 本だけ。5 本すべてに付けると左の余白が広がって絵が痩せる。
     val dbUnit = stringResource(R.string.eq_unit_db)
     return remember(range, style, dbUnit) {
         gridValues(range).map { db ->
@@ -497,7 +366,6 @@ private fun rememberDbTicks(
     }
 }
 
-/** 目盛り線と、左の余白に置く数字。線は枠の全幅に引く。 */
 private fun DrawScope.drawDbTicks(
     ticks: List<Pair<Double, TextLayoutResult>>,
     plot: Rect,
@@ -517,140 +385,33 @@ private fun DrawScope.drawDbTicks(
     }
 }
 
-/**
- * dB を枠の中の縦位置に直す。0 が上端、1 が下端。
- *
- * 枠の物理端に写るのは ±段ではなく **±(段 + [PLOT_OVERSHOOT_DB])**。±段の目盛りは
- * その分だけ内側に来るので、摘みを可動域いっぱい (±12) に振っても点と線が縁に
- * 張り付かず、段選びが許した食み出し (中心間の膨らみ) もそのまま枠の中に描ける。
- * 段 12 なら ±12 の目盛りが枠の 82.8% に広がり、上下に 8.6% ずつの余白が残る。
- *
- * **2 つの絵と試験がこれ 1 つを見る。**式を写して置くと、片方だけ直したときに
- * 目盛りと曲線が別の軸で描かれる (見た目はもっともらしいままなので気づけない)。
- */
 internal fun plotFraction(db: Double, range: Double): Float =
     ((1.0 - db / (range + PLOT_OVERSHOOT_DB)) / 2.0).toFloat()
 
-/**
- * ドラッグ中は段を下げない。
- *
- * 段は摘みと曲線のピークで決まるので、**摘みを下げると段も下がることがある。**段が下がると
- * 絵全体が拡大するので、**指を下げているのに線と点が上へ動く。**
- *
- * ホストで確かめた再現 (`EqCurveTest.theAxisIsHeldWhileAKnobIsMoving`):
- *
- * ```
- * パラメトリックで 1 kHz に 2 本重ねる (Q=1.41)。+12 dB と +9.0 dB → 合成 21.0 dB で段 24
- *   +9.0 dB の摘みを +8.5 dB へ下げる → 合成 20.5 dB で段 18
- *   下げた摘みの点   0.330 → 0.293 = 枠の 3.7% ぶん上へ
- *   触っていない +12 の点 0.274 → 0.207 = 枠の 6.6% ぶん上へ (132 dp の絵で 9 dp)
- * ```
- *
- * グラフィックでも起こる (±12 で挟んだ +12 ペアなど、曲線が段 12 + 許容を超える形から
- * 膨らみを下げていくとき)。上げるほうは止めない — 止めると曲線が枠から出る。
- * 指を離した時点で本来の段へ戻す。
- */
 internal fun holdRange(computed: Double, held: Double, dragging: Boolean): Double =
     if (dragging) max(computed, held) else computed
 
-/**
- * ⚠️ `internal` なのは試験のため。**固定が効くかどうかは再構成をまたいで初めて決まる**ので、
- * [holdRange] 単体では見張れない ([remember] に鍵を付けると毎フレーム忘れて素通しになるが、
- * 絵はもっともらしいまま)。`EqAxisHoldTest` が本物の composition で回している。
- */
 @Composable
 internal fun rememberPlotRange(computed: Double, dragging: Boolean): Double {
-    // **観測される状態にしない。**構成の中で書き戻すので、mutableStateOf だと書いた時点で
-    // 再構成が予約されて回り続ける。段を変える再構成はドラッグの値そのものが起こすので、
-    // ここは前回の値を覚えておくだけでよい。
     val held = remember { DoubleArray(1) { computed } }
     return holdRange(computed, held[0], dragging).also { held[0] = it }
 }
 
 private fun DrawScope.drawCentered(layout: TextLayoutResult, centerX: Float, top: Float) {
-    // 端のラベルは中央合わせのままだと画面の外へ出る。幅より狭い canvas でも
-    // coerceIn が落ちないよう、上限を 0 で止めてから寄せる。
     val x = (centerX - layout.size.width / 2f).coerceIn(0f, max(0f, size.width - layout.size.width))
     drawText(layout, topLeft = Offset(x, top))
 }
 
-/** バンドを等間隔に並べたときの x。1 本しか無いときは真ん中。 */
 internal fun evenColumns(count: Int, left: Float, right: Float): FloatArray =
     FloatArray(count) { if (count == 1) (left + right) / 2f else left + (right - left) * it / (count - 1f) }
 
-/*
- * 応答は毎フレーム全部を計算し直している。**これは意図した形。**
- * 走るのは呼び出し側が remember を外すドラッグ中だけで、ホストの JVM で
- * 5 バンド 126 us / 31 バンド 810 us (バンド数 x 標本数に線形)。
- *
- * バンドごとの応答を持っておけば、ドラッグ中に動くのは 1 本なので 31 バンドで 1/31 になる。
- * **実機で要ると分かるまで入れない** — 速くできることと速くする必要があることは別で、
- * 確かめずに持つと要らない状態を抱えるだけになる。
- *
- * **⚠️ もし持たせるなら、無効化の鍵に fc / Q / 種別 / ゲイン / バンド数 / 標本の格子と
- * モードが全部要る。**1 つ落とすと古い曲線が残り、**もっともらしい絵なので誰も気づかない。**
- * 「ドラッグ中に変わるのは 1 本だけ」という前提自体も鍵の一部で、
- * モードの切り替えとバンドの追加・削除で崩れる。
- */
-
-/**
- * **高精度のときに何を描くかを決める唯一の場所。**
- *
- * いまは `.so` へ送る折れ線そのもの。FIR の目標がこの折れ線なので、実用曲線ではこれが
- * 鳴るものと一致する。
- *
- * ⚠️ **ただし折れ線は「FIR が実際に作る応答」ではない。**IR 170 ms の周波数分解能は
- * 5.9 Hz で、31 バンドの最低域の摘み間隔 (5〜6 Hz) と同じ桁なので、**20〜32 Hz では
- * 隣り合う摘みが逆へ振れるほど折れ線から離れる。**
- *
- * **⚠️ 「病的な形だけ」ではない。**31 バンドの最低域 4 本 (20/25/32/40 Hz) だけを交互に
- * 振った形で、深さに対してこう伸びる (48 kHz・製品の既定の M と窓で実測):
- *
- * | 段差 | 折れ線と FIR の実応答の差 |
- * |---|---|
- * | **±3 dB** | **0.823 dB** |
- * | ±6 dB | 1.669 dB |
- * | ±9 dB | 3.385 dB |
- * | ±12 dB | 6.157 dB |
- *
- * **±3 dB は穏当な操作なのに、そこで既に 1 dB 近く絵が嘘をつく。**しかも
- * **31 バンドの描画範囲はちょうど 20 Hz〜20 kHz なので、この食い違いはそのまま画面に出る。**
- *
- * バンド数を下げると急に小さくなる (同じ ±12 dB で 15 バンド 1.025 / 10 バンド 0.448 /
- * 5 バンド 0.113 dB)。**さらに 5〜15 バンドは最低域 (25/32/63 Hz より下) が描画範囲の
- * 外なので、画面に出る分はこれより小さい。**効くのは実質 31 バンドだけ。
- *
- * **出どころを「FIR の実応答」へ移すなら、差し替えるのはこの関数 1 つ。**
- * ここで作った標本が点 ([centreGainsDb10]) と縦軸の段 ([graphicPlotRange]) の材料も兼ねる。
- */
 private fun highPrecisionSampler(vertices: List<Pair<Double, Double>>): (Double) -> Double =
     { hz -> AutoEqParser.interpolate(vertices, hz) }
 
-/**
- * バンド中心が等間隔に並ぶ軸の上での、実際に鳴る特性。
- *
- * 中心と中心のあいだは対数周波数で補間する。ISO の中心周波数はほぼ対数等間隔なので、
- * 見た目は対数軸とほとんど変わらないまま、点の x が必ず自分のバンドの真上に来る。
- *
- * ### 何を「実際に鳴る特性」とするかは [precision] で変わる
- *
- * - **標準** … biquad カスケードの合成応答。中心では摘みの値に厳密に一致し、
- *   中心と中心のあいだは裾の重なりで折れ線から少し離れる
- * - **高精度** … `.so` へ送る折れ線そのもの ([EqCurveGrid.knobPolyline])。
- *   FIR が目標にするのはこの折れ線なので、**絵と音がここで一致する**
- *
- * **分けないと、高精度を選んだ画面が「高精度が消したはずの誤差」を描き続ける**
- * (実測で全 +12 の 0.36〜0.94 dB、31 バンドは 16k–20k の潰れで 2.86 dB)。
- * 点 ([centreGainsDb10]) も縦軸の段 ([graphicPlotRange]) もこの配列から出るので、
- * 材料が 2 つに割れることはない。
- */
 internal fun graphicResponse(
     bands: List<EqBand>,
     precision: Int = EqPrecision.STANDARD,
 ): DoubleArray {
-    // 高精度では軸の節も吸着後の周波数で取る。**そうしないと点が摘みの値から外れる** —
-    // 折れ線は吸着後の頂点で摘みの値を厳密に取るので、吸着前の中心で読むと
-    // 「半ステップ × 傾き」だけずれた値が点に出る。ずれる向きは x で、340 dp 幅の 0.4 dp。
     val vertices = if (precision == EqPrecision.HIGH) EqCurveGrid.knobPolyline(bands) else emptyList()
     val at: (Double) -> Double =
         if (precision == EqPrecision.HIGH) highPrecisionSampler(vertices)
@@ -659,10 +420,7 @@ internal fun graphicResponse(
         if (precision == EqPrecision.HIGH) vertices.map { ln(it.first) }
         else bands.map { ln(it.freqHz.toDouble()) }
     val last = bands.size - 1
-    // 1 本しかなくても 2 点返す。1 点だと描画側の (size - 1) が 0 になって x が NaN になる。
     if (last == 0) return DoubleArray(2) { at(exp(freqs[0])) }
-    // バンド 1 つぶんを割り切れる数で刻む。**端数にすると標本がバンド中心を外す** —
-    // 曲線が点のすぐ横を通るだけになり、「この列の実際の値」が絵から読めなくなる。
     val perBand = (SAMPLES + last - 1) / last
     return DoubleArray(last * perBand + 1) { s ->
         val i = (s / perBand).coerceAtMost(last - 1)
@@ -671,20 +429,11 @@ internal fun graphicResponse(
     }
 }
 
-/**
- * バンド中心での実際の応答 (dB10、表示の刻みに丸め)。**グラフィックの点と数値ラベルの
- * 共通の出どころ。**摘みの値もこれ (eq-spec.md §7 の「その中心で実際に鳴る音量」)。
- *
- * 丸めは求解側 (`EqSolver.withGraphicTarget`) と同じ `Math.round`。求解が
- * 「丸めた応答 = 目標」まで詰めるので、目標どおりに解けた並びではラベルが
- * スライダーの表示と桁まで一致する。
- */
 internal fun centreGainsDb10(response: DoubleArray, bandCount: Int): IntArray {
     val step = if (bandCount > 1) (response.size - 1) / (bandCount - 1) else 0
     return IntArray(bandCount) { Math.round(response[it * step] * EqUnits.GAIN_SCALE).toInt() }
 }
 
-/** バンドごとの応答を対数の周波数軸で標本化する。合成はこれを足して作る。 */
 internal fun parametricResponse(bands: List<EqBand>): List<DoubleArray> {
     val span = ln(AXIS_HI_HZ / AXIS_LO_HZ)
     val hz = DoubleArray(SAMPLES) { exp(ln(AXIS_LO_HZ) + span * it / (SAMPLES - 1)) }
@@ -694,55 +443,23 @@ internal fun parametricResponse(bands: List<EqBand>): List<DoubleArray> {
 internal fun sumColumns(series: List<DoubleArray>): DoubleArray =
     DoubleArray(SAMPLES) { i -> series.sumOf { it[i] } }
 
-/**
- * 縦軸の段。**材料は画面に描かれるものだけ** — 摘み (点とラベル) と曲線。
- *
- * 摘みは段に厳密に収める (点は目盛りの内側にあるべきもの)。曲線は段 + [PLOT_OVERSHOOT_DB]
- * まで食み出してよい ([plotFraction] がそこまでを枠の中に写す)。つまり段が上がるのは、
- * 摘みが段を超えたときか、曲線がそのままでは物理枠の外に出るときだけ。
- *
- * 段にしてあるのは、連続に伸ばすとドラッグのあいだ軸が毎フレーム動いて、
- * 触っていないバンドの点まで揺れるため。
- */
 internal fun plotRange(knobPeakDb: Double, curvePeakDb: Double): Double =
     PLOT_RANGES_DB.firstOrNull { knobPeakDb <= it && curvePeakDb <= it + PLOT_OVERSHOOT_DB }
         ?: PLOT_RANGES_DB.last()
 
-/**
- * グラフィックの段。摘み = その中心で実際に鳴る音量 ([centreGainsDb10]。丸めた表示値) で、
- * 曲線は [graphicResponse]。
- *
- * **解いた後のフィルタの生ゲイン (`bands[].gainDb10`) を材料にしてはいけない。**
- * 摘みの意味変更 (2026-08-12) 以降、生ゲインは画面のどこにも描かれない内部値になった。
- * 実機で出た不具合: 摘み +12/+12/x/+12/+12 (5 バンド) の x を -8.3 → -8.4 と 0.1 dB
- * 動かすと、Q エスカレーションで生ゲインの最大が 19.9 → 13.7 に崖落ちして、
- * **見えない値のせいで軸が 24 ⇄ 18 で跳ねた** (`EqCurveTest.theAxisIgnoresInvisibleSolverGains`)。
- */
 internal fun graphicPlotRange(response: DoubleArray, bandCount: Int): Double = plotRange(
     knobPeakDb = (centreGainsDb10(response, bandCount).maxOfOrNull { abs(it) } ?: 0) /
         EqUnits.GAIN_SCALE.toDouble(),
     curvePeakDb = response.maxOfOrNull { abs(it) } ?: 0.0,
 )
 
-/**
- * パラメトリックの段。摘み = バンドの生ゲイン (こちらではそれが摘みの値で、バンドごとの
- * 細い線のピークと点の上限でもある。peaking は fc で |ゲイン|、シェルフは漸近で |ゲイン|)。
- * 曲線は合成応答。
- */
 internal fun parametricPlotRange(composite: DoubleArray, bands: List<EqBand>): Double = plotRange(
     knobPeakDb = bands.maxOfOrNull { abs(it.gainDb10.toDouble()) / EqUnits.GAIN_SCALE } ?: 0.0,
     curvePeakDb = composite.maxOfOrNull { abs(it) } ?: 0.0,
 )
 
-/** 横線を引く dB。0 を必ず含めた 5 本。 */
 internal fun gridValues(range: Double): List<Double> = listOf(range, range / 2, 0.0, -range / 2, -range)
 
-/**
- * 重なるラベルを落として、出せるものだけを返す。
- *
- * 端と [forced] (ドラッグ中のバンド) を先に置き、残りを左から詰める。
- * 幅は実測なので、バンド数だけでなく文字寸法の設定や訳文の長さにも追従する。
- */
 internal fun pickLabels(centers: FloatArray, widths: FloatArray, gap: Float, forced: Int): BooleanArray {
     val n = centers.size
     val shown = BooleanArray(n)
@@ -763,7 +480,6 @@ internal fun pickLabels(centers: FloatArray, widths: FloatArray, gap: Float, for
     return shown
 }
 
-/** ドラッグ中の値を重ねた並び。設定そのものは変えない。 */
 internal fun List<EqBand>.withPreview(target: EqPreviewTarget?, value: Int?): List<EqBand> {
     if (target == null || value == null || target.bandIndex !in indices) return this
     if (target.field == EqField.GRAPHIC_GAIN) {
@@ -777,7 +493,7 @@ internal fun List<EqBand>.withPreview(target: EqPreviewTarget?, value: Int?): Li
                 EqField.FREQUENCY -> band.copy(freqHz = value)
                 EqField.Q -> band.copy(q100 = value)
                 EqField.GAIN -> band.copy(gainDb10 = value)
-                EqField.GRAPHIC_GAIN -> band // 上で返している
+                EqField.GRAPHIC_GAIN -> band
             }
         }
     }
