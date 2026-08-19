@@ -9,7 +9,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-/** RTL で数字と単位の並びが崩れないこと。観点は bidi.md §6。 */
 @RunWith(RobolectricTestRunner::class)
 class BidiIsolateTest {
 

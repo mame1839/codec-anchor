@@ -29,11 +29,6 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows
 import org.robolectric.util.ReflectionHelpers
 
-/**
- * 結果画面のバンド数選択の配線 (コントローラ経由)。数字の正しさは EqFinderBakePlanTest が
- * 純関数で見るので、ここで見るのは**選択が保存物にだけ効く**こと — プレビューは押し直されず、
- * apply が選んだ数の実体を永続化する。セッションはライブ題材で回す (音のデコードが要らない)。
- */
 @RunWith(RobolectricTestRunner::class)
 class EqFinderBakeFlowTest {
 
@@ -41,8 +36,6 @@ class EqFinderBakeFlowTest {
 
     private fun app() = RuntimeEnvironment.getApplication()
 
-    // EqFinderLiveTest と同じ組み立て: 登録は永続ストア、出口は ShadowAudioManager +
-    // AudioDevicePort.mAddress の反射 (AudioDeviceInfoBuilder に setAddress が無い)。
     private fun vm(): MainViewModel {
         EqDeviceStore(app()).save(listOf(mac))
         val audioManager = app().getSystemService(android.media.AudioManager::class.java)
@@ -58,7 +51,6 @@ class EqFinderBakeFlowTest {
         }
     }
 
-    /** ライブ題材で始めた試行中のセッション (音のデコードが要らない)。 */
     private fun session(vm: MainViewModel): EqFinderController {
         val m = MusicPlaybackMonitor(null, Handler(Looper.getMainLooper()))
         val c = EqFinderController(
@@ -90,12 +82,9 @@ class EqFinderBakeFlowTest {
         val c = sessionAtResult(vm)
         val ui = c.result
         assertNotNull(ui)
-        // グラフィックの結果には 4 択が付き、既定はいまの bandCount。
         assertEquals(EqSettings.BAND_COUNTS, ui!!.bandChoices?.map { it.count })
         assertEquals(10, c.bakeBandCount)
 
-        // 数の選択はプレビューを押し直さない — バンド構成が変わる push はクリックレス切替の
-        // 条件を外れ、耳で選んだ after と別物の聴感になる。結果の画面状態もそのまま。
         val pushed = vm.eqPreview
         assertNotNull("結果の音が押し込まれていない", pushed)
         c.chooseBakeBandCount(31)
@@ -109,25 +98,13 @@ class EqFinderBakeFlowTest {
         assertEquals(31, eq!!.bandCount)
         assertEquals(EqSolver.centerFrequencies(31), eq.bands.map { it.freqHz })
         assertTrue(eq.enabled)
-        // 音量まで含めて「試聴した音と同じ」。耳で聴いていた候補 (pushed) のプリアンプが
-        // そのまま保存される — 摘み数を 10 から 31 に変えても、解き直した bands から
-        // 取り直さないので値は動かない。
         assertEquals(pushed!!.settings.preampDb10, eq.preampDb10)
         assertTrue("適用後はプレビューが解除される", vm.eqPreview == null)
 
-        // 結果の中身 (選択肢・曲線) は適用で組み直されない。旗を結果に混ぜて写していた頃は、
-        // 写し忘れがここを静かに壊した。
         assertSame("適用で結果が組み直された", ui, c.result)
         assertEquals(EqSettings.BAND_COUNTS, c.result!!.bandChoices?.map { it.count })
     }
 
-    /**
-     * **探索の結果は新しいスロットに着地する** (`llmdocs/eq-slot-design.md` §1
-     * 「外から来る曲線は必ず新しいスロットに着地する」)。開始点のスロットが残ることが要点 —
-     * 15 分かけて探した結果と、それまで使っていた曲線を 1 タップで聴き比べられる。
-     *
-     * `vm.updateEq` を直に呼ぶ実装に戻すと、着地先が選択中スロットになって開始点が消える。
-     */
     @Test
     fun applyingLandsInANewSlotAndKeepsTheOneYouStartedFrom() {
         val vm = vm()
@@ -146,15 +123,12 @@ class EqFinderBakeFlowTest {
         assertNotEquals("選択中スロットを上書きしている", from, landed)
         assertEquals(vm.config.profileFor(mac)?.eq, vm.slotsOf(mac).slot(landed)?.eq)
         assertEquals("開始点の曲線が消えた", start, vm.slotsOf(mac).slot(from)?.eq)
-        // 既定名は表示層の文言。訳文をデータに焼くと端末の言語を替えたときに嘘になる。
         assertEquals("", vm.slotsOf(mac).slot(landed)?.name)
     }
 
-    /** 焼けなかったときは何も保存しない (スロットも増えない)。画面はこの false で開いたまま留まる。 */
     @Test
     fun aFailedBakeLandsNothing() {
         val vm = vm()
-        // パラメトリックが満杯なら、ゲインの付いた軸のバンドを足す余地が無く bake は null。
         val full = List(EqSettings.MAX_BANDS) { EqBand(freqHz = 100 + it, q100 = 141, gainDb10 = 10) }
         vm.updateEq(mac) { EqSettings(enabled = true, mode = EqMode.PARAMETRIC, bands = full) }
         val before = vm.slotsOf(mac)
@@ -169,18 +143,9 @@ class EqFinderBakeFlowTest {
         assertTrue(c.bakeFailed)
         assertEquals(before, vm.slotsOf(mac))
         assertEquals("焼けなかったのに永続化が走った", full, vm.config.profileFor(mac)?.eq?.bands)
-        // 画面は開いたまま留まるので、結果の音も鳴らしたまま (プレビューは解除しない)。
         assertNotNull(vm.eqPreview)
     }
 
-    /**
-     * 「低音は多いほうが良い」と一貫して答える聴き手。**固定で A と答えてはいけない** —
-     * A/B の割当は試行ごとにランダムなので、推定が動くかどうかがシードに依存する
-     * (動かなければオーバーレイが 0 のままで、満杯のパラメトリックでも bake が通ってしまう)。
-     *
-     * 候補の中身は押し込まれたプレビューから読む。土台は PEAKING だけなので、
-     * LOW_SHELF は軸が足したバンドしかない。
-     */
     private fun answerPreferringMoreBass(c: EqFinderController, vm: MainViewModel) {
         c.listen(EqFinderCandidate.A)
         val a = bassDb10(vm)
@@ -212,7 +177,6 @@ class EqFinderBakeFlowTest {
         val eq = vm.config.profileFor(mac)?.eq
         assertNotNull(eq)
         assertEquals(EqMode.PARAMETRIC, eq!!.mode)
-        // 既存バンドは値ごと残る。オーバーレイの推定が 0 でない軸だけが増える。
         assertEquals(before, eq.bands.take(before.size))
         assertTrue(eq.bands.size >= before.size)
     }

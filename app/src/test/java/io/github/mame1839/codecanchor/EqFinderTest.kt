@@ -23,15 +23,12 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import kotlin.math.abs
 
-// org.json は android.jar ではスタブなので Robolectric で実機の実装を載せる
-// (ConfigRoundTripTest と同じ理由)。
 @RunWith(RobolectricTestRunner::class)
 class EqFinderTest {
 
     private fun l1(v: List<Int>, pref: IntArray): Int =
         v.indices.sumOf { abs(v[it] - pref[it]) }
 
-    /** 模擬ユーザ: 固定の好みへの L1 距離で選ぶ。|差| が閾値未満なら SAME。 */
     private fun l1Answer(t: EqFinderSession.Trial, pref: IntArray, thresholdDb10: Int): Answer {
         val da = l1(t.aOverlayDb10, pref)
         val db = l1(t.bOverlayDb10, pref)
@@ -42,7 +39,6 @@ class EqFinderTest {
         }
     }
 
-    /** 回答方針でセッションを最後まで回す。無限ループはガードで落とす。 */
     private fun runToEnd(
         start: EqFinderSession,
         guard: Int = 200,
@@ -60,10 +56,6 @@ class EqFinderTest {
         return s to trials
     }
 
-    // ------------------------------------------------------------------ 収束
-
-    // 指示のテスト 1: 模擬ユーザで 2 軸が 40 試行以内に収束し、各軸 |推定−好み| ≤ 10 db10。
-    // 好みは 5 の目盛りに乗る組と乗らない組の両方で見る。
     @Test
     fun simulatedUserConvergesWithinBudget() {
         for ((pref, seed) in listOf(intArrayOf(60, -40) to 3L, intArrayOf(47, -12) to 11L)) {
@@ -85,7 +77,6 @@ class EqFinderTest {
         }
     }
 
-    // 一貫したユーザなら中域込みの 3 軸でも硬い上限より手前で終わる (仕様の 25〜40 の範囲感)。
     @Test
     fun threeAxesFinishWellBelowTheHardCap() {
         val pref = intArrayOf(40, -30, 20)
@@ -96,10 +87,6 @@ class EqFinderTest {
         assertTrue(s.result().validated)
     }
 
-    // ------------------------------------------------------ 決定性と JSON 往復
-
-    // 指示のテスト 2: 同じ (axes, seed, startStep, 回答列) は同じ試行列。
-    // 途中で直列化→復元しても続きが完全に一致する。
     @Test
     fun sessionIsDeterministicAndSurvivesJsonRoundTrip() {
         val pref = intArrayOf(47, -12)
@@ -117,7 +104,6 @@ class EqFinderTest {
             val a = l1Answer(t, pref, 5)
             answers += a
             straight = straight.answered(a)
-            // 復元側は毎回直列化→復元してから答える (中断/再開の最悪形)
             roundTripped = EqFinderSession.fromJson(roundTripped.toJson())!!.answered(a)
             check(++guard <= 200)
         }
@@ -125,7 +111,6 @@ class EqFinderTest {
         assertEquals(straight.result(), roundTripped.result())
         assertEquals(straight.toJson().toString(), roundTripped.toJson().toString())
 
-        // 3 本目: 記録した回答列を素の start に流し直しても同じ試行列になる
         var replayed = EqFinderSession.start(axes, seed = 9)
         trials.forEachIndexed { i, expected ->
             assertEquals("試行 $i", expected, replayed.currentTrial())
@@ -134,13 +119,11 @@ class EqFinderTest {
         assertEquals(straight.result(), replayed.result())
     }
 
-    // 指示のテスト 3: A/B の割当が seed で変わり、同一 seed で再現する。
     @Test
     fun abAssignmentDependsOnSeedAndIsReproducible() {
         val axes = EqFinderAxes.default(false)
         val challengerSides = (0L until 20L).map { seed ->
             val t = EqFinderSession.start(axes, seed).currentTrial()!!
-            // 最初の試行は必ず {全 0, 先頭軸 +40} の比較。挑戦側が A かどうかを見る
             assertEquals(
                 setOf(listOf(0, 0), listOf(40, 0)),
                 setOf(t.aOverlayDb10, t.bOverlayDb10),
@@ -155,33 +138,24 @@ class EqFinderTest {
         assertEquals(first, second)
     }
 
-    // ------------------------------------------------------------ 探索規則の固定
-
-    // 「同じ」= 挑戦側の非勝利。連続 2 回でステップ半減 (最小ステップなら収束)。
-    // 勝ち負けが挟まれば数え直し。ここが変わると試行の並びが変わるので値で固定する。
     @Test
     fun sameAnswersHalveTheStepAndLossesResetTheStreak() {
         fun pairOf(t: EqFinderSession.Trial) = setOf(t.aOverlayDb10, t.bOverlayDb10)
         var s = EqFinderSession.start(listOf(EqFinderAxes.BASS), seed = 1)
 
         assertEquals(setOf(listOf(0), listOf(40)), pairOf(s.currentTrial()!!))
-        s = s.answered(Answer.SAME) // 同じ 1 回目
+        s = s.answered(Answer.SAME)
         assertEquals(setOf(listOf(0), listOf(-40)), pairOf(s.currentTrial()!!))
-        s = s.answered(Answer.SAME) // 連続 2 回 → 40 から 20 へ半減
+        s = s.answered(Answer.SAME)
         assertEquals(setOf(listOf(0), listOf(20)), pairOf(s.currentTrial()!!))
 
-        // 現職 (全 0) 側を勝たせる → 連続が切れる
         val incumbent = if (s.currentTrial()!!.aOverlayDb10 == listOf(0)) Answer.A else Answer.B
         s = s.answered(incumbent)
         assertEquals(setOf(listOf(0), listOf(-20)), pairOf(s.currentTrial()!!))
-        s = s.answered(Answer.SAME) // 同じ 1 回 (数え直し) + 両側とも非勝利 → 20 から 10 へ
+        s = s.answered(Answer.SAME)
         assertEquals(setOf(listOf(0), listOf(10)), pairOf(s.currentTrial()!!))
     }
 
-    // ------------------------------------------------------------ 停止性と上限
-
-    // 指示のテスト 7: どちらも選ばせ続ける (常に挑戦側を採る) ユーザでも硬い上限 60 で必ず止まる。
-    // ついでに進捗の見込みが単調非減少で 60 を超えないことも 1 試行ごとに見る。
     @Test
     fun adversarialUserStopsAtTheHardCap() {
         var s = EqFinderSession.start(EqFinderAxes.default(false), seed = 13)
@@ -195,7 +169,6 @@ class EqFinderTest {
             lastExpected = expected
             val t = s.currentTrial()!!
             val current = s.result().overlayDb10
-            // 常に「今の推定でない側」= 挑戦側を勝たせる
             s = s.answered(if (t.aOverlayDb10 == current) Answer.B else Answer.A)
             check(++guard <= 200)
         }
@@ -206,10 +179,6 @@ class EqFinderTest {
         assertSame("finished 後の answered は何もしない", s, s.answered(Answer.A))
     }
 
-    // 検証段で摂動が勝ち続けても、再開は全体で 2 回まで → 必ず完走する。
-    // 摂動の見分け方: 検証 (a) が済んだ後 (startBeatenInValidation ≠ null) に出る
-    // 「今の結果 vs 1 軸だけ 10 差」は検証 (b) の摂動だけ (±10 を使う再確認は (a) より前、
-    // 再開後の再探索は刻み 5)。そこだけ挑戦側を勝たせ、他は一貫した好みで答える。
     @Test
     fun perturbationWinsAreBoundedByTheReopenBudget() {
         val pref = intArrayOf(15, 15)
@@ -234,11 +203,9 @@ class EqFinderTest {
         val r = s.result()
         assertTrue("再開込みでも検証段を完走する", r.validated)
         assertFalse(r.consistencyWarning)
-        // 再開後の再探索で好みへ戻ってくる
         assertEquals(listOf(15, 15), r.overlayDb10)
     }
 
-    // 全部の軸が範囲 0..0 の退化ケース: 試行 0 で完走し、答えを要求しない。
     @Test
     fun degenerateAxesFinishWithoutAnyTrial() {
         val axes = listOf(
@@ -256,13 +223,9 @@ class EqFinderTest {
         assertSame(s, s.answered(Answer.A))
     }
 
-    // ------------------------------------------------------------ 一貫性と範囲
-
-    // 再提示 (同じ比較の左右入れ替え) に毎回逆で答えるユーザ → 矛盾を検出して警告。
-    // それでも止まる (完走するか、上限で打ち切る)。
     @Test
     fun contradictionsRaiseTheConsistencyWarning() {
-        val pref = intArrayOf(37, -43) // 5 の目盛りから等距離にならない値 (引き分けを作らない)
+        val pref = intArrayOf(37, -43)
         val seen = HashSet<Set<List<Int>>>()
         val (s, _) = runToEnd(
             EqFinderSession.start(EqFinderAxes.default(false), seed = 17),
@@ -286,7 +249,6 @@ class EqFinderTest {
         assertTrue("矛盾が警告になっていない", s.result().consistencyWarning)
     }
 
-    // 推定も提示候補も軸の [minDb10, maxDb10] を出ない。
     @Test
     fun estimatesAndCandidatesStayInsideTheAxisRange() {
         val axes = listOf(
@@ -294,7 +256,6 @@ class EqFinderTest {
             EqFinderAxes.TREBLE.copy(minDb10 = -60, maxDb10 = 60),
         )
         val (s, trials) = runToEnd(EqFinderSession.start(axes, seed = 2)) { t, _ ->
-            // 常に「合計が大きい側」を好む欲張り: 端まで押し付ける
             val sa = t.aOverlayDb10.sum()
             val sb = t.bOverlayDb10.sum()
             if (sa >= sb) Answer.A else Answer.B
@@ -308,8 +269,6 @@ class EqFinderTest {
         assertTrue(s.result().validated)
     }
 
-    // ------------------------------------------------------------ 途中の状態
-
     @Test
     fun resultIsAvailableMidSession() {
         val s0 = EqFinderSession.start(EqFinderAxes.default(false), seed = 5)
@@ -321,13 +280,10 @@ class EqFinderTest {
         assertEquals(0, s0.progress().first)
         assertTrue(s0.progress().second > 0)
 
-        // 挑戦側 (+40 の候補) を勝たせると推定が動く
         val t = s0.currentTrial()!!
         val s1 = s0.answered(if (t.aOverlayDb10 == listOf(40, 0)) Answer.A else Answer.B)
         assertEquals(listOf(40, 0), s1.result().overlayDb10)
     }
-
-    // ------------------------------------------------------------ JSON の破損
 
     @Test
     fun fromJsonRejectsBrokenInput() {
@@ -356,10 +312,6 @@ class EqFinderTest {
         )
     }
 
-    // ------------------------------------------------------------ 候補の実体化
-
-    // 指示のテスト 4: オーバーレイ値だけ違う 2 候補で freq/q/type の並びが完全に一致する
-    // (ゲイン 0 の軸も含めて構成が固定 = クリックレス切替の成立条件)。
     @Test
     fun candidateBandsKeepTheStructureAcrossCandidates() {
         val baseBands = listOf(
@@ -376,7 +328,6 @@ class EqFinderTest {
             assertEquals("q $i", x.q100, y.q100)
             assertEquals("type $i", x.type, y.type)
         }
-        // base 部は値ごと不変、軸部はゲインだけ違う
         assertEquals(baseBands, a.take(baseBands.size))
         assertEquals(baseBands, b.take(baseBands.size))
         assertEquals(listOf(0, 0, 0), a.drop(baseBands.size).map { it.gainDb10 })
@@ -387,17 +338,8 @@ class EqFinderTest {
         )
     }
 
-    // ------------------------------------------------------------ 焼き込み
-
-    /**
-     * 焼き込みに渡すプリアンプ。**bake はこれをそのまま置くだけ**で、解き直した bands から
-     * 計算し直さない。どの入力からも導けない値にしてあるので、bake が「計算し直す」形に
-     * 戻ったらここが落ちる。値は聴感等価が実際に返す帯 (`EqLoudnessTest`) の中から選んだ。
-     */
     private val carriedPreampDb10 = -77
 
-    // 指示のテスト 5: グラフィックへの焼き込み後、合成応答 ≒ 元の応答 + オーバーレイ応答
-    // (バンド中心で 0.2 dB 以内)。土台に入るのは enabled のバンドだけ (下のテストと対)。
     @Test
     fun bakedGraphicMatchesTheBaseResponsePlusTheOverlay() {
         val freqs = EqSolver.centerFrequencies(10)
@@ -426,13 +368,6 @@ class EqFinderTest {
         }
     }
 
-    /**
-     * **仕様変更 (2026-08): 適用した設定は試聴した音と同じ応答を持つ。**
-     *
-     * base.enabled=false かつ bands 非空のとき、試聴の土台は素の音 (baseBands = 空) なのに
-     * 旧実装の bake は base.bands を応答に含めていた — 切ってあった旧カーブが適用の瞬間に
-     * 復活し、耳で選んだ after と別の音が保存されていた。土台は試聴と同じ規則で選ぶ。
-     */
     @Test
     fun bakedGraphicIgnoresDisabledBandsLikeTheAuditionDid() {
         val freqs = EqSolver.centerFrequencies(10)
@@ -454,7 +389,6 @@ class EqFinderTest {
             val got = EqSolver.combinedResponseDb(baked!!.bands, hz.toDouble())
             assertEquals("バンド $hz Hz (試聴した音と違う音が保存される)", heard, got, 0.2)
         }
-        // 旧挙動 (base+overlay) とは有意に違うこと — 期待値が偶然一致して何も見ていない、を防ぐ。
         val atLow = EqSolver.combinedResponseDb(base.bands, 63.0) +
             EqSolver.combinedResponseDb(overlayBands, 63.0)
         assertTrue(
@@ -463,14 +397,11 @@ class EqFinderTest {
         )
     }
 
-    // バンド未設定 (空) のグラフィックでも、オーバーレイ応答を目標に解ける。
     @Test
     fun bakedGraphicFromEmptyBandsRealizesTheOverlay() {
         val axes = EqFinderAxes.default(false)
         val overlay = listOf(60, -40)
         val overlayBands = EqFinderMaterialize.candidateBands(emptyList(), axes, overlay)
-        // 期待値そのものが 0 に潰れていたら比較が空回りする (bake と candidateBands は
-        // 同じ写像を共有しているので、両方同時に壊れると相殺する)。実体を先に確かめる。
         assertTrue(EqSolver.combinedResponseDb(overlayBands, 50.0) > 4.0)
         assertTrue(EqSolver.combinedResponseDb(overlayBands, 10_000.0) < -3.0)
         val baked = EqFinderMaterialize.bake(
@@ -487,7 +418,6 @@ class EqFinderTest {
         }
     }
 
-    // 指示のテスト 6: パラメトリック 31 バンド満杯なら null。0 dB の軸は数に入らない。
     @Test
     fun bakeRefusesWhenTheParametricBandsAreFull() {
         fun parametric(count: Int) = EqSettings(
@@ -509,15 +439,12 @@ class EqFinderTest {
         assertEquals(EqFinderAxes.BASS.q100, added.q100)
         assertEquals(EqBandType.LOW_SHELF, added.type)
         assertEquals(40, added.gainDb10)
-        // base は切ってあった = 試聴の土台は素の音。fc/Q (手作業の成果物) は残るがゲインは 0 —
-        // 応答は試聴と厳密に同じ (ゲイン 0 のバンドは音を変えない)。
         fit.bands.dropLast(1).forEachIndexed { i, band ->
             assertEquals("fc $i が変わった", 50 + i * 100, band.freqHz)
             assertEquals("q $i が変わった", 141, band.q100)
             assertEquals("切ってあった旧ゲインが復活した", 0, band.gainDb10)
         }
 
-        // 全軸 0 dB なら何も足さないので、満杯でも通る
         val unchanged = EqFinderMaterialize.bake(parametric(31), axes, listOf(0, 0), carriedPreampDb10)
         assertNotNull(unchanged)
         assertEquals(31, unchanged!!.bands.size)
@@ -525,7 +452,6 @@ class EqFinderTest {
         assertTrue(unchanged.bands.all { it.gainDb10 == 0 })
     }
 
-    /** enabled のパラメトリックは従来どおり: 既存バンドは値ごと保たれ、軸のバンドが足される。 */
     @Test
     fun bakedParametricKeepsEnabledBandsIntact() {
         val bands = listOf(

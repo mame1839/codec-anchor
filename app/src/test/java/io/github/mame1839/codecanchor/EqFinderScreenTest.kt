@@ -58,16 +58,6 @@ import org.robolectric.annotation.GraphicsMode
 import kotlin.math.exp
 import kotlin.math.ln
 
-/**
- * 探索画面の見張り。
- *
- * 中心は **「両方を聴くまで答えられない」と「破棄・やり直しは確認を挟む」** — どちらも
- * 目隠し比較の信頼性とデータ保護の要で、壊れても画面はもっともらしく動き続ける。
- *
- * 候補のゲイン値そのものは `EqFinderTrialUi` が**持っていない** (型で守る)。
- * 「画面が値を出さないこと」のテストはここには無い — 持っていない値は出しようがなく、
- * 出せないものを見張るテストは何も検査しない。
- */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class EqFinderScreenTest {
@@ -77,10 +67,6 @@ class EqFinderScreenTest {
 
     private fun string(id: Int, vararg args: Any): String =
         RuntimeEnvironment.getApplication().getString(id, *args)
-
-    // ------------------------------------------------------------------
-    // 試行
-    // ------------------------------------------------------------------
 
     private fun showTrial(
         ui: EqFinderTrialUi,
@@ -130,13 +116,11 @@ class EqFinderScreenTest {
             }
         }
 
-        // 片方しか聴いていないうちは 3 つとも押せず、理由が出ている。
         onText(R.string.eq_finder_answer_a).assertIsNotEnabled()
         onText(R.string.eq_finder_answer_same).assertIsNotEnabled()
         onText(R.string.eq_finder_answer_b).assertIsNotEnabled()
         onText(R.string.eq_finder_answer_locked).assertExists()
 
-        // 両方聴いた瞬間に、同じ composition のまま解錠される。
         compose.runOnIdle { ui.value = trial.copy(bothHeard = true) }
         onText(R.string.eq_finder_answer_b).assertIsEnabled().performSemanticsAction(SemanticsActions.OnClick)
         assertEquals(EqFinderAnswer.B, answered)
@@ -146,7 +130,6 @@ class EqFinderScreenTest {
     fun listeningTapsSwitchTheCandidate() {
         var listened: EqFinderCandidate? = null
         showTrial(trial, onListen = { listened = it })
-        // カードの文字は "B" だけの独立したノード ("B is better" とは一致しない)。
         compose.onNodeWithText(string(R.string.eq_finder_b)).performSemanticsAction(SemanticsActions.OnClick)
         assertEquals(EqFinderCandidate.B, listened)
     }
@@ -158,7 +141,6 @@ class EqFinderScreenTest {
             trial.copy(bothHeard = true, pause = EqFinderPause.FOCUS_LOST),
             onResumePlayback = { resumed = true },
         )
-        // 両方聴いた後でも、一時停止中は答えられない (鳴っていない音への回答になる)。
         onText(R.string.eq_finder_answer_same).assertIsNotEnabled()
         onText(R.string.eq_finder_paused_focus).assertExists()
         onText(R.string.eq_finder_resume_playback).performSemanticsAction(SemanticsActions.OnClick)
@@ -169,16 +151,10 @@ class EqFinderScreenTest {
     fun disconnectionShowsItsOwnNoticeWithoutAResumeButton() {
         showTrial(trial.copy(bothHeard = true, pause = EqFinderPause.DISCONNECTED))
         onText(R.string.eq_finder_paused_disconnected).assertExists()
-        // 再開の押しどころは無い — 接続が戻れば勝手に続く。
         compose.onNodeWithText(string(R.string.eq_finder_resume_playback)).assertDoesNotExist()
         onText(R.string.eq_finder_answer_a).assertIsNotEnabled()
     }
 
-    /**
-     * ライブ題材の無音は自動で下りる一時停止で、**再開ボタンを出さない** — 他人のアプリの
-     * 再生はこちらから再開できない (「再生を再開」はフォーカス喪失専用で、ライブでは
-     * フォーカスを取らないので到達もしない)。
-     */
     @Test
     fun theNoMusicPauseHasNoResumeButton() {
         showTrial(trial.copy(bothHeard = true, pause = EqFinderPause.NO_MUSIC))
@@ -186,10 +162,6 @@ class EqFinderScreenTest {
         compose.onNodeWithText(string(R.string.eq_finder_resume_playback)).assertDoesNotExist()
         onText(R.string.eq_finder_answer_a).assertIsNotEnabled()
     }
-
-    // ------------------------------------------------------------------
-    // 導入
-    // ------------------------------------------------------------------
 
     private fun showIntro(
         ui: EqFinderIntroUi,
@@ -253,19 +225,16 @@ class EqFinderScreenTest {
         onText(R.string.eq_finder_begin).assertIsNotEnabled()
     }
 
-    /** ライブ題材に曲は要らない。曲の行ごと消え、音楽さえ流れていれば始められる。 */
     @Test
     fun theLiveMaterialNeedsNoSong() {
         var begun = false
         showIntro(EqFinderIntroUi(materialLive = true), onBegin = { begun = true })
         compose.onNodeWithText(string(R.string.eq_finder_song)).assertDoesNotExist()
-        // 精度が下がることの 1 行は「始める前に」のノートに出続ける。
         onText(R.string.eq_finder_material_live_desc).assertExists()
         onText(R.string.eq_finder_begin).assertIsEnabled().performSemanticsAction(SemanticsActions.OnClick)
         assertTrue(begun)
     }
 
-    /** 音楽が流れていないライブは、既存の門 (startBlockedReason) の形で塞がる。 */
     @Test
     fun theLiveMaterialIsGatedOnPlayingMusic() {
         showIntro(
@@ -278,7 +247,6 @@ class EqFinderScreenTest {
         compose.onNodeWithText("play music first").assertExists()
     }
 
-    /** 題材の選択肢に、精度が下がることの説明が付いている (選ぶ瞬間に読める)。 */
     @Test
     fun choosingTheLiveMaterialShowsItsPrecisionNote() {
         var chosen: Boolean? = null
@@ -308,7 +276,6 @@ class EqFinderScreenTest {
             onResume = { resumed = true },
             onStartOver = { startedOver = true },
         )
-        // 新規開始の入力 (曲選び) は出ない。出すと「続き」と「新規」が同じ画面で混ざる。
         compose.onNodeWithText(string(R.string.eq_finder_song)).assertDoesNotExist()
 
         onText(R.string.action_continue).performSemanticsAction(SemanticsActions.OnClick)
@@ -316,7 +283,6 @@ class EqFinderScreenTest {
 
         onText(R.string.eq_finder_start_over).performSemanticsAction(SemanticsActions.OnClick)
         onText(R.string.eq_finder_start_over_title).assertExists()
-        // 17 回の回答はミスタップで消してよいものではない。確認してからしか消えない。
         assertTrue(!startedOver)
         compose.onNode(
             hasText(string(R.string.action_delete)) and hasAnyAncestor(isDialog()),
@@ -324,8 +290,6 @@ class EqFinderScreenTest {
         assertTrue(startedOver)
     }
 
-    // 遮断された再開に「続ける」を出すと、黙って壊れた前提の上で回答が続く
-    // (設定ずれ = 中間の編集が確定で消える / 一節ずれ = 回答が別の音のもの)。
     @Test
     fun aResumeBlockedByChangedSettingsOnlyOffersStartingOver() {
         showIntro(
@@ -348,10 +312,6 @@ class EqFinderScreenTest {
         onText(R.string.eq_finder_resume_blocked_song).assertExists()
         compose.onNodeWithText(string(R.string.action_continue)).assertDoesNotExist()
     }
-
-    // ------------------------------------------------------------------
-    // 結果
-    // ------------------------------------------------------------------
 
     private fun result(bandChoices: List<EqFinderBandChoice>? = null) = EqFinderResultUi(
         axes = listOf(
@@ -402,7 +362,6 @@ class EqFinderScreenTest {
         assertTrue(discarded)
     }
 
-    /** 適用したら何も聞かずに終わる (理由・スロットとの関係は eq-slot-design.md §3)。 */
     @Test
     fun applyingAsksNothingFurther() {
         var applied = false
@@ -420,7 +379,6 @@ class EqFinderScreenTest {
         onText(R.string.eq_finder_bake_failed).assertExists()
     }
 
-    /** バンド数の行はグラフィックのときだけ。選択肢は忠実度の 1 行を連れて出る。 */
     @Test
     fun theBandCountRowShowsFidelityPerChoice() {
         var chosen: Int? = null
@@ -436,8 +394,6 @@ class EqFinderScreenTest {
             onBandCount = { chosen = it },
         )
         onText(R.string.eq_band_count).performSemanticsAction(SemanticsActions.OnClick)
-        // 副題 = 「聴いた曲線との差 最大 X.X dB」。数字は 0.1 dB 丸めの db10 から組む。
-        // eq_unit_db は書式そのもの (%1$s を含む) なので、引数付きの getString には通さない。
         val unit = RuntimeEnvironment.getApplication().getString(R.string.eq_unit_db)
         compose.onNode(
             hasText(string(R.string.eq_finder_band_error, eqGainText(21, unit, signed = false))) and
@@ -449,7 +405,6 @@ class EqFinderScreenTest {
         assertEquals(31, chosen)
     }
 
-    /** パラメトリックの結果 (bandChoices = null) にバンド数の行は出ない。 */
     @Test
     fun parametricResultsHaveNoBandCountRow() {
         showResult(result())
@@ -457,10 +412,6 @@ class EqFinderScreenTest {
     }
 
     private fun onText(id: Int) = compose.onNodeWithText(string(id))
-
-    // ------------------------------------------------------------------
-    // 曲線 (計算)
-    // ------------------------------------------------------------------
 
     @Test
     fun responseSamplingMatchesTheSolver() {
@@ -485,27 +436,19 @@ class EqFinderScreenTest {
 
     @Test
     fun timeTextUsesMinutesAndTwoDigitSeconds() {
-        // 囲まれていること自体が仕様、なので literal で釘にしている (bidi.md §6)。
         assertEquals("\u20680:00\u2069", eqFinderTimeText(0))
         assertEquals("\u20680:20\u2069", eqFinderTimeText(20_000))
         assertEquals("\u20681:01\u2069", eqFinderTimeText(61_000))
         assertEquals("\u206812:05\u2069", eqFinderTimeText(725_400))
     }
 
-    // ------------------------------------------------------------------
-    // 曲線 (絵)。EqCurveTest と同じく、アプリの Canvas が呼ぶ描画関数を
-    // ImageBitmap へ流して画素で見る。色は役割ごとに分ける。
-    // ------------------------------------------------------------------
-
     private val density = Density(3f)
     private val measurer by lazy {
         TextMeasurer(createFontFamilyResolver(RuntimeEnvironment.getApplication()), density, LayoutDirection.Ltr)
     }
 
-    /** 適用後の曲線。 */
     private val accent = Color.Red
 
-    /** 適用前の曲線と目盛り線 — 区別は不透明度 (曲線 1.0 / 目盛り 0.28 以下)。 */
     private val muted = Color.Blue
 
     private val labelStyle = TextStyle(fontSize = 10.sp, color = Color.Green)
@@ -559,7 +502,6 @@ class EqFinderScreenTest {
         assertTrue("適用後の曲線が描かれていない", accentCount > 0)
         assertTrue("適用前の曲線が描かれていない", beforeCount > 0)
         assertTrue("目盛り線が 1 本も無い", gridRows >= 3)
-        // +6 dB の「後」は 0 dB の「前」より必ず上 (y が小さい)。逆なら軸の向きが壊れている。
         assertTrue(
             "持ち上げた後の曲線が前より下に描かれている",
             accentYSum / accentCount < beforeYSum / beforeCount,

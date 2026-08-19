@@ -14,22 +14,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlin.math.abs
 
-/**
- * 結果画面の焼き込み計画 (バンド数の選択肢) の見張り。
- *
- * 中心は 2 つ。**摘みの折れ線がどのバンド数へも劣化なしに渡る** (真の応答を新中心で
- * サンプルすると、reband が直した「残差の焼き込み」がここに再発する) と、
- * **適用した設定の応答が試聴した応答からどれだけ離れるかに、実測に基づく上限がある**。
- * どちらも壊れても画面はもっともらしく動き続ける。
- *
- * ⚠️ **応答の評価は [EqReferenceResponse] (製品のコードを呼ばない独立経路) で行う。**
- * 製品の `eqFinderResponseDb` で測ると、実装が計算した値を実装と同じ関数で測り直すことに
- * なり、`x <= x` のトートロジーになる (2026-08-13 の検分で指摘。TERM.md の失敗 3)。
- *
- * ⚠️ **土台のバンドは `EqSolver.solveBands` を通さず直接組む。**入力まで実装が作ると、
- * 求解が壊れたときにテストの期待値も一緒に動いて誤差が相殺する。ここでは「グラフィックの
- * グリッドに乗った非平坦なバンド列」でありさえすればよい。
- */
 class EqFinderBakePlanTest {
 
     private val axes = EqFinderAxes.default(false)
@@ -39,7 +23,6 @@ class EqFinderBakePlanTest {
     private fun planOf(base: EqSettings, overlay: List<Int>) =
         eqFinderBakePlan(base, axes, overlay, weights, EqLoudness.baseLevelDb(base, weights))
 
-    /** 10 バンドのグリッドに乗った非平坦なバンド列 (ゲインは素の値。摘みの値ではない)。 */
     private val tenBandFreqs = listOf(32, 63, 125, 250, 500, 1_000, 2_000, 4_000, 8_000, 16_000)
     private val bumpyGains = listOf(30, -20, 40, 0, -50, 20, 0, 10, -10, 20)
 
@@ -50,22 +33,16 @@ class EqFinderBakePlanTest {
         bands = tenBandFreqs.mapIndexed { i, hz -> EqBand(hz, 50, bumpyGains[i]) },
     )
 
-    /**
-     * オーバーレイのバンドを軸の定義から直接組む (製品の `candidateBands` を通さない)。
-     * 軸の定義が動いたら [axisDefinitionsAreWhatTheReferenceAssumes] が落ちる。
-     */
     private fun refOverlayBands(overlay: List<Int>) = listOf(
         EqBand(105, 71, overlay[0], EqBandType.LOW_SHELF),
         EqBand(2_500, 71, overlay[1], EqBandType.HIGH_SHELF),
     )
 
-    /** 試聴した応答。土台の規則はセッションと同じ (enabled なら bands、切ってあれば素の音)。 */
     private fun refHeardDb(base: EqSettings, overlay: List<Int>): DoubleArray =
         EqReferenceResponse.curveDb(
             (if (base.enabled) base.bands else emptyList()) + refOverlayBands(overlay),
         )
 
-    /** 参照が前提にしている軸の形。ここが動いたら上限の実測値ごと引き直すこと。 */
     @Test
     fun axisDefinitionsAreWhatTheReferenceAssumes() {
         assertEquals(2, axes.size)
@@ -77,12 +54,6 @@ class EqFinderBakePlanTest {
         assertEquals(EqBandType.HIGH_SHELF, axes[1].type)
     }
 
-    /**
-     * 全摘み +12・オーバーレイ 0 は、どのバンド数へ焼いても全摘み +12 のまま。
-     *
-     * 旧バンドの真の応答を新しい中心でサンプルする実装だと、中心間の起伏 (解の残差) が
-     * 目標に紛れ込み、+12 が 12.4 のような摘みになる (reband が折れ線方式で直した壊れ方)。
-     */
     @Test
     fun flatKnobsSurviveBakingAtEveryBandCount() {
         val base = EqSettings(
@@ -107,17 +78,6 @@ class EqFinderBakePlanTest {
         }
     }
 
-    /**
-     * **非平坦なカーブでも摘みの折れ線が運ばれる** ([flatKnobsSurviveBakingAtEveryBandCount] の
-     * 平坦カーブでは、折れ線と真の応答サンプルの区別が付きにくい区間が残る)。
-     *
-     * オーバーレイ 0 なら、焼き込み後のバンド中心での応答は「元の摘みの対数線形補間」に
-     * 一致するのが reband の規約。**参照側の補間も応答評価も製品を通さない。**
-     *
-     * 上限 0.15 dB は 0.1 dB 量子化 + 詰めの残差から。実測 (2026-08-13、下の bumpy カーブ) は
-     * 5→0.079 / 10→0.066 / 15→0.079 / 31→0.095 dB。reband を外して真の応答を新中心で
-     * サンプルする実装にすると 15→0.506 / 31→0.599 dB へ跳ね、この上限で落ちる (確認済み)。
-     */
     @Test
     fun theKnobPolylineIsCarriedToEveryBandCount() {
         val base = graphicBase(enabled = true)
@@ -139,7 +99,6 @@ class EqFinderBakePlanTest {
         }
     }
 
-    /** baked.bands はちょうど選んだ数のグリッドに乗り、bandCount も一緒に更新される。 */
     @Test
     fun bakedBandsSitOnTheChosenGridWithMatchingCount() {
         val plan = planOf(graphicBase(enabled = true), listOf(35, -20))
@@ -151,22 +110,6 @@ class EqFinderBakePlanTest {
         }
     }
 
-    /**
-     * 適用 = 試聴。**参照経路で測った真の乖離**に上限を置く。3 段で見る:
-     *
-     * - 副題に出す忠実度が、参照で測った乖離と一致する (数字が嘘でない)
-     * - その乖離が、バンド数ごとの絶対上限に収まる
-     * - 同じバンド数への焼き込みは、そのバンド中心で試聴した応答に厳密に合う
-     *
-     * 上限は実測 (2026-08-13、下の bumpy カーブ・オーバーレイ +3.5/−2.0 dB、enabled 両方)
-     * から 2〜3 割の余裕で置いた: 5→3.21 / 10→1.00 / 15→1.23 / 31→0.65 dB。
-     * バンド数が少ないほど大きいのは中心間を埋めきれないため (5 バンド = 2 oct 間隔)。
-     *
-     * ⚠️ **この上限は reband → bake の順を壊しても落ちない。**その形にすると乖離はむしろ
-     * 小さくなる (31 バンドで 0.65 → 0.18 dB) — 折れ線を運ぶ目的は応答の忠実度ではなく
-     * **摘みの値の保存**だから。順序の見張りは [theKnobPolylineIsCarriedToEveryBandCount] と
-     * [flatKnobsSurviveBakingAtEveryBandCount] が持つ。ここを「順序も見ている」と読まないこと。
-     */
     @Test
     fun theAppliedResponseStaysWithinTheMeasuredErrorOfTheAudition() {
         val limitDb = mapOf(5 to 4.0, 10 to 1.2, 15 to 1.5, 31 to 0.8)
@@ -179,7 +122,6 @@ class EqFinderBakePlanTest {
                 val baked = plan[count]!!
                 val got = EqReferenceResponse.curveDb(baked.settings.bands)
                 val worst = heard.indices.maxOf { abs(heard[it] - got[it]) }
-                // 副題の数字が独立の物差しと一致する (製品の応答評価そのものの検算にもなる)。
                 assertEquals(
                     "enabled=$enabled count=$count: 副題の忠実度が実際の乖離と違う",
                     worst,
@@ -191,7 +133,6 @@ class EqFinderBakePlanTest {
                     worst <= limitDb.getValue(count),
                 )
             }
-            // 同じバンド数なら、バンド中心では試聴した応答に厳密に合う。
             val same = plan[base.bandCount]!!.settings
             for (hz in tenBandFreqs) {
                 assertEquals(
@@ -207,10 +148,6 @@ class EqFinderBakePlanTest {
         }
     }
 
-    /**
-     * パラメトリックは 1 通りだけで、応答は試聴と**厳密に**一致する (ゲイン 0 のバンドは
-     * 応答が定義から 0 dB なので、fc/Q を残しても音は変わらない)。忠実度も厳密に 0。
-     */
     @Test
     fun parametricPlansMatchTheAuditionExactly() {
         val bands = listOf(
@@ -232,19 +169,6 @@ class EqFinderBakePlanTest {
         }
     }
 
-    /**
-     * **焼き込みのプリアンプは、耳で聴いた候補の値**。どのバンド数を選んでも同じ 1 つの値で、
-     * 解き直した `bands` からは取り直さない (取り直すと解の残差の分だけ音量が動き、
-     * 不変条件「試聴した音と同じ応答」が音量の側で崩れる)。
-     *
-     * literal の期待値: 土台は素の音 (`enabled = false`) で、オーバーレイは低域シェルフ
-     * +4.0 dB (105 Hz / Q 0.71) のみ。その聴感ゲインは既定重みで +0.44 dB なので
-     * preamp_c = 0 − 0.44 → **−4 db10**。
-     *
-     * ⚠️ **同値だけの釘にしないこと。**「押し込んだ設定と焼き込んだ設定の preamp が等しい」は
-     * 片方が他方から導出されているので、両方同時に壊れる変更を素通りさせる。
-     * ここは値そのものを見る。
-     */
     @Test
     fun everyBandCountBakesTheHeardPreamp() {
         val bare = EqSettings(enabled = false, mode = EqMode.GRAPHIC, bandCount = 10)
@@ -253,16 +177,11 @@ class EqFinderBakePlanTest {
             assertEquals("$count バンド", -4, plan[count]!!.settings.preampDb10)
         }
 
-        // 非平坦な土台 (摘みが凸凹) では、解き直した bands の聴感ゲインが摘み数ごとに散る。
-        // ここから preamp を計算し直す実装だと 5 バンド=+0.6 / 10 バンド=+0.4 dB と割れる
-        // (変異で実測)。耳で聴いた候補から取る限り、全バンド数が同じ +0.5 dB になる。
         val bumpyPlan = planOf(graphicBase(enabled = true), listOf(35, -20))
         for (count in EqSettings.BAND_COUNTS) {
             assertEquals("$count バンド (非平坦な土台)", 5, bumpyPlan[count]!!.settings.preampDb10)
         }
 
-        // 土台のプリアンプが乗る形も 1 つ。−6.0 dB の土台 (低域 +4.5 / 高域 −2.5 dB) に
-        // 同じオーバーレイ → −6.9 db10 分だけ深い。
         val on = EqSettings(
             enabled = true,
             mode = EqMode.PARAMETRIC,
@@ -275,7 +194,6 @@ class EqFinderBakePlanTest {
         assertEquals(-69, planOf(on, listOf(40, 0))[on.bandCount]!!.settings.preampDb10)
     }
 
-    /** 満杯のパラメトリックは焼けない (値が null)。選択肢の構造はそれでも壊れない。 */
     @Test
     fun anOverfullParametricPlanCarriesNullInsteadOfLying() {
         val base = EqSettings(

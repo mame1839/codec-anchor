@@ -10,14 +10,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 
-/**
- * 探索セッションのプレビューが**押す値の決定にだけ**割り込むこと。
- *
- * 見張っている境界は 2 つ。**プレビューは対象の機器にしか勝たない** (押す直前に枠の持ち主が
- * 別のイヤホンへ替わっていたら、そちらには永続設定が行く) と、**プレビューは永続化しない**
- * (解除すれば保存済みの設定がそのまま戻る)。どちらも破れると「別の機器に試聴中の曲線が掛かる」
- * 「聴き比べの候補が本物の設定として残る」という、画面からは気づけない壊れ方をする。
- */
 @RunWith(RobolectricTestRunner::class)
 class EqPreviewTest {
 
@@ -44,7 +36,6 @@ class EqPreviewTest {
         val vm = vm()
         vm.setEqPreview(EqSessionPreview(macA, candidate))
         assertEquals(candidate, vm.eqSettingsToPush(macA))
-        // 持ち主が別の機器に替わっていたら、その機器には永続設定 (無ければ既定のオフ) を書く。
         assertEquals(EqSettings(), vm.eqSettingsToPush(macB))
     }
 
@@ -56,7 +47,6 @@ class EqPreviewTest {
         assertEquals(persisted, vm.eqSettingsToPush(macA))
     }
 
-    // プレビューを載せて外すだけでは何も保存されない。updateEq (確定) だけが設定を変える。
     @Test
     fun previewDoesNotTouchThePersistedConfig() {
         val vm = vm()
