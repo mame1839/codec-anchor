@@ -19,7 +19,6 @@ import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import io.github.mame1839.codecanchor.BuildConfig
 import io.github.mame1839.codecanchor.R
 import io.github.mame1839.codecanchor.bridge.BridgeClient
 import io.github.mame1839.codecanchor.bridge.EqDeviceStore
@@ -48,8 +47,6 @@ import io.github.mame1839.codecanchor.core.EqRoute
 import io.github.mame1839.codecanchor.core.EqSettings
 import io.github.mame1839.codecanchor.core.EqSlotBook
 import io.github.mame1839.codecanchor.core.EqSupport
-import io.github.mame1839.codecanchor.core.ModuleVersion
-import io.github.mame1839.codecanchor.core.ModuleVersionState
 import io.github.mame1839.codecanchor.core.QuietSwitch
 import io.github.mame1839.codecanchor.core.StatusReport
 import io.github.mame1839.codecanchor.core.SystemQuietBackend
@@ -156,10 +153,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private var effectRegistered by mutableStateOf(EqSupport.effectRegistered())
 
-    private val moduleVersionCode = ModuleVersion.read(ModuleVersion.PROPERTY_CODE)
-
-    val moduleSemver: String by lazy { ModuleVersion.read(ModuleVersion.PROPERTY_SEMVER) }
-
     var pendingMessage by mutableStateOf<Int?>(null)
         private set
 
@@ -191,9 +184,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     val a2dpOffloadEnabled: Boolean
         get() = report?.a2dpOffloadEnabled == true
-
-    val moduleVersionState: ModuleVersionState
-        get() = ModuleVersion.compare(moduleVersionCode, BuildConfig.VERSION_CODE)
 
     fun eqAvailability(mac: String): EqAvailability = when {
         !effectRegistered -> EqAvailability.EFFECT_NOT_REGISTERED

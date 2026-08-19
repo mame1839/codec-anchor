@@ -22,14 +22,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import io.github.mame1839.codecanchor.BuildConfig
 import io.github.mame1839.codecanchor.R
-import io.github.mame1839.codecanchor.core.ModuleVersionState
 
 @Composable
 fun StatusTab(vm: MainViewModel, contentPadding: PaddingValues, onNotify: (String) -> Unit) {
     val pushedMessage = stringResource(R.string.msg_config_pushed)
-    val unknownVersion = stringResource(R.string.value_unknown)
 
     Column(
         modifier = Modifier
@@ -64,20 +61,6 @@ fun StatusTab(vm: MainViewModel, contentPadding: PaddingValues, onNotify: (Strin
                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 2.dp),
                 )
                 OffloadTurnOffLines(vm = vm, modifier = Modifier.padding(bottom = 10.dp))
-            }
-        }
-
-        if (vm.moduleVersionState == ModuleVersionState.MISMATCHED) {
-            SettingsCard(container = MaterialTheme.colorScheme.surfaceContainerHighest) {
-                NoticeRow(
-                    icon = R.drawable.ic_info,
-                    text = stringResource(
-                        R.string.eq_module_version_mismatch,
-                        bidiIsolate(vm.moduleSemver.ifBlank { unknownVersion }),
-                        bidiIsolate(BuildConfig.VERSION_NAME),
-                    ),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
-                )
             }
         }
     }
