@@ -41,7 +41,6 @@ object CodecKeys {
         BITS_PER_SAMPLE_32 to "32 bit",
     )
 
-    // ラベルは言語に依存しない表記に留める。説明文の翻訳は UI 側のリソースで行う。
     val CHANNEL_MODES: List<Pair<Int, String>> = listOf(
         CHANNEL_MODE_MONO to "Mono",
         CHANNEL_MODE_STEREO to "Stereo",
@@ -86,7 +85,6 @@ object CodecKeys {
         }
     }
 
-    // 端末から名前が取れなかったときの表示名。言語に依存しない表記に留める。
     fun fallbackName(codecType: Int): String = FALLBACK_CODEC_NAMES[codecType] ?: "Codec $codecType"
 
     fun label(table: List<Pair<Int, String>>, mask: Int): String =
