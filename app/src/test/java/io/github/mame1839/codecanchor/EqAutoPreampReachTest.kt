@@ -10,25 +10,11 @@ import org.junit.Test
 import kotlin.math.abs
 import kotlin.random.Random
 
-/**
- * 自動プリアンプ ([EqSolver.autoPreampDb10]) が取りうる値の測定。
- *
- * [EqSolver.autoPreampDb10] が今も残っているのは**旧版からの移行のため**だけ
- * (`EqSettings.preampFrom`。`pa` が真だった保存値の「実際に鳴っていたプリアンプ」を
- * 同じ関数で再現する)。移行の値は [EqSettings.PREAMP_RANGE] にクランプされるので、
- * **この関数が -400 を下回る構成では、移行の前後で音が変わる。**
- * ここはその「クランプが働く面」がどこから始まるかの測定。
- *
- * ここは**見張りではなく測定の記録**。数値は測った当日の実測で、
- * 動いたら「変わった」と分かるように literal で釘を打ってある。
- * 落ちたときに直す先はこのファイルではなく、変えた側の妥当性の確認。
- */
 class EqAutoPreampReachTest {
 
     private fun q100Of(bandCount: Int): Int =
         (EqSolver.defaultQ(bandCount) * EqUnits.Q_SCALE).toInt()
 
-    /** 401 点の格子 ([EqCurveGrid.HZ] = autoPreampDb10 が見る点) 上のピーク (dB)。 */
     private fun gridPeakDb(bands: List<EqBand>): Double {
         var peak = Double.NEGATIVE_INFINITY
         for (hz in EqCurveGrid.HZ) {
@@ -38,17 +24,12 @@ class EqAutoPreampReachTest {
         return peak
     }
 
-    /** バンド中心での実現応答 (= グラフィックの摘みが表す値)。単位は dB。 */
     private fun centreDb(bands: List<EqBand>): DoubleArray =
         DoubleArray(bands.size) { EqSolver.combinedResponseDb(bands, bands[it].freqHz.toDouble()) }
 
     private fun maxAbsGainDb(bands: List<EqBand>): Double =
         bands.maxOf { abs(it.gainDb10.toDouble() / EqUnits.GAIN_SCALE) }
 
-    /**
-     * 目標 (摘み) を解いてバンドにする。UI の経路 (`EqSection.reband` /
-     * [EqSolver.withGraphicTarget]) はどちらも最後にこの呼び出しへ落ちる。
-     */
     private fun solveKnobs(bandCount: Int, knobsDb10: IntArray): List<EqBand> {
         val freqs = EqSolver.centerFrequencies(bandCount)
         val target = DoubleArray(freqs.size) { knobsDb10[it].toDouble() / EqUnits.GAIN_SCALE }
@@ -65,10 +46,6 @@ class EqAutoPreampReachTest {
         return preamp
     }
 
-    // ── 1. KDoc の数字 ────────────────────────────────────────────────
-    // EqSolver.autoPreampDb10 の KDoc は「10 バンド全部 +6 dB のとき実際のピークは +17.31 dB
-    // (Q = defaultQ(10) = 0.5)」と書いている。ここで言う「+6 dB」が
-    // **バンドのゲインそのもの** (摘み = 目標ではない) であることも一緒に確かめる。
     @Test
     fun theKdocFigureForTenBandsAtSixDb() {
         println("=== 1. KDoc: バンドのゲインを全部 +6 dB (摘みではない) ===")
@@ -77,7 +54,6 @@ class EqAutoPreampReachTest {
                 .map { EqBand(freqHz = it, q100 = q100Of(n), gainDb10 = 60) }
             report("n=$n  raw band gain +6.0 dB  Q=${EqSolver.defaultQ(n)}", bands)
         }
-        // 10 バンドの実測。KDoc の +17.31 dB がいまも正しいかの答え。
         require(values.getValue(10) in -174..-172) { "KDoc の -173 から動いた: ${values.getValue(10)}" }
 
         println("=== 1b. 同じ +6 dB を『摘み (目標)』として解いた場合 ===")
@@ -87,10 +63,6 @@ class EqAutoPreampReachTest {
         }
     }
 
-    // ── 2. グラフィックの摘みを振り切った形 ──────────────────────────
-    // 摘みの可動域は ui/EqCurve.kt の EQ_GAIN_RANGE = -120..120 (= ±12.0 dB)。
-    // ui/EqSection.kt の GAIN_SCALE がそれをそのまま使い、グラフィックの摘みも
-    // パラメトリックのゲインも同じスケールを引く。
     @Test
     fun graphicKnobsAtFullScale() {
         println("=== 2. グラフィック: 摘みを振り切った形 (摘みの可動域は ±12.0 dB) ===")
@@ -128,15 +100,9 @@ class EqAutoPreampReachTest {
             }
         }
         println("--- 型どおりの形での最悪: $worst  ($worstLabel) ---")
-        // 実測 2026-08-19。最悪は n=5 の「+12 の 2 本を -12 で挟む」で -145 (14.53 dB)。
-        // PREAMP_RANGE の下端 -400 まで 25 dB 以上の余裕がある。
         require(worst in -150..-140) { "型どおりの形での最悪が -145 から動いた: $worst ($worstLabel)" }
     }
 
-    // ── 3. 摘みの空間をしらみつぶし / 無作為に撃つ ────────────────────
-    // 型どおりの形しか撃たないと「撃っていない形は届かない」を言えないので、
-    // バンド数ごとに**同じ本数**の無作為な摘みベクトルを撃つ。
-    // 5 バンドだけは 3 値 (-12/0/+12) の全 243 通りを追加で総当たりする。
     @Test
     fun graphicKnobsRandomSearch() {
         println("=== 3. グラフィック: 摘みの空間の探索 (各バンド数とも同じ回数) ===")
@@ -148,7 +114,6 @@ class EqAutoPreampReachTest {
             var worstIsFallback = false
             var fallbacks = 0
             repeat(draws) { k ->
-                // 前半は 3 値 (端と 0)、後半は 0.1 dB 刻みの一様。
                 val knobs = if (k < draws / 2) {
                     IntArray(n) { intArrayOf(-120, 0, 120)[rng.nextInt(3)] }
                 } else {
@@ -156,8 +121,6 @@ class EqAutoPreampReachTest {
                 }
                 val bands = solveKnobs(n, knobs)
                 val centres = centreDb(bands)
-                // solve() が Q を上げても収まらないと素朴な値へ落ちる。そのとき中心が目標に
-                // 合わなくなるので、ここで検出する (落ちた形はピークが跳ねうる)。
                 val fell = knobs.indices.any {
                     abs(centres[it] - knobs[it].toDouble() / EqUnits.GAIN_SCALE) > 0.15
                 }
@@ -177,7 +140,6 @@ class EqAutoPreampReachTest {
             require(worst > -400) { "n=$n の無作為探索でクランプに届いた: $worst" }
         }
 
-        // 5 バンドだけ 3 値の総当たり。3^5 = 243 通り。
         var worst5 = 0
         var worst5Knobs = IntArray(5)
         val levels = intArrayOf(-120, 0, 120)
@@ -193,12 +155,6 @@ class EqAutoPreampReachTest {
         require(worst5 > -400) { "5 バンドの総当たりでクランプに届いた: $worst5" }
     }
 
-    // ── 4. パラメトリック ────────────────────────────────────────────
-    // UI で作れる形: バンドは最大 31 本 (EqSettings.MAX_BANDS)、ゲインはグラフィックと
-    // 同じ ±12.0 dB (ui/EqSection.kt の GAIN_SCALE)、Q は 0.10〜10.00
-    // (ui/EqSection.kt の Q_SCALE = Log(10..1_000))、周波数は 20〜20 kHz。
-    // バンドを足したときの初期値は 1 kHz / Q 1.41 / 0 dB なので、
-    // **足しただけのバンドは全部 1 kHz に重なる。**
     @Test
     fun parametricStacking() {
         println("=== 4. パラメトリック: 同じ周波数へ重ねる ===")
@@ -214,14 +170,10 @@ class EqAutoPreampReachTest {
                     }
                 }
                 println("--- $label: クランプ (-400 未満) に入る最小の本数 = $firstClamped ---")
-                // 実測 2026-08-19。Q を UI の端から端まで振っても 4 本。
-                // バンドを足したときの既定が 1 kHz なので、**足して +12 にするだけで重なる。**
                 require(firstClamped == 4) { "$label で 4 本から動いた: $firstClamped" }
             }
 
         println("=== 4b. JSON に書けば入る形 (EqBand.GAIN_RANGE = ±40.0 / Q_RANGE = 0.10〜40.00) ===")
-        // 旧版のプリセット JSON が "pa": true を持っていれば、読み込みで preampFrom が
-        // この値を通す (applyPreset は settings をそのまま着地させる)。
         val jsonWorst = List(EqSettings.MAX_BANDS) { EqBand(freqHz = 1_000, q100 = 141, gainDb10 = 400) }
         report("1 kHz Q=1.41  +40.0 dB x 31 (手書きプリセット)", jsonWorst)
 
@@ -233,10 +185,6 @@ class EqAutoPreampReachTest {
         )
     }
 
-    // ── 5. 好みの EQ の焼き込み ──────────────────────────────────────
-    // グラフィックの側は「土台の応答 + オーバーレイの応答」を目標に解き直すので、
-    // **目標が摘みの可動域 ±12 dB を越えうる。**バンドがどこまで育つかは
-    // プリアンプの決め方と独立なので、この測定は移行の後もそのまま有効。
     @Test
     fun finderBakeReach() {
         println("=== 5. 好みの EQ の焼き込み ===")
@@ -245,7 +193,7 @@ class EqAutoPreampReachTest {
             io.github.mame1839.codecanchor.core.EqFinderAxes.TREBLE,
             io.github.mame1839.codecanchor.core.EqFinderAxes.MID,
         )
-        val overlay = listOf(120, 120, 120) // 3 軸とも上端
+        val overlay = listOf(120, 120, 120)
 
         EqSettings.BAND_COUNTS.forEach { n ->
             val base = EqSettings(
@@ -271,8 +219,6 @@ class EqAutoPreampReachTest {
         requireNotNull(paramBaked)
         report("parametric  土台 1 kHz +12 x10 + 3 軸 +12", paramBaked.bands)
 
-        // 焼き込みは何度でも重ねられる。グラフィックは応答を目標に読み直すので、
-        // 摘みが可動域 ±12 を越えて育つ。
         println("--- 5b. 焼き込みを繰り返す (3 軸とも上端 +12。素の音から開始) ---")
         listOf(5, 10, 15, 31).forEach { n ->
             var s = EqSettings(
@@ -296,8 +242,6 @@ class EqAutoPreampReachTest {
             }
         }
 
-        // 上端に張り付いた結果ばかり撃つと「実際に出る結果」から離れるので、
-        // 控えめなオーバーレイでも同じ測り方をする。
         println("--- 5b'. 控えめなオーバーレイで繰り返す (グラフィック 10 バンド) ---")
         listOf(
             listOf(60, 60, 60) to "3 軸とも +6",
@@ -338,8 +282,6 @@ class EqAutoPreampReachTest {
         }
     }
 
-    // ── 7. パラメトリックのバンドをどれだけ離せば足し合わないか ────────
-    // 「重ねると 4 本でクランプ」がどれくらいの近さで起きるかの目安。
     @Test
     fun parametricSeparation() {
         println("=== 7. パラメトリック: +12 dB の 2 本を離していく (Q=1.41) ===")
@@ -355,7 +297,6 @@ class EqAutoPreampReachTest {
         }
     }
 
-    // ── 6. シェルフ (手書きプリセットとファインダの軸だけが使う) ────────
     @Test
     fun shelvesAtFullScale() {
         println("=== 6. シェルフ ===")
