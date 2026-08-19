@@ -33,8 +33,6 @@ class EqPresetTest {
         assertEquals(preset, EqPreset.decodeSingle(EqPreset.encodeSingle(preset)))
     }
 
-    // 設定のバックアップを読ませても取り込まないこと。format を見ずに読むと、
-    // 無関係な JSON から空のプリセットができる。
     @Test
     fun otherJsonIsRejected() {
         assertNull(EqPreset.decodeSingle(AppConfig().encode()))
@@ -42,7 +40,6 @@ class EqPresetTest {
         assertNull(EqPreset.decodeSingle("""{"format":"codec-anchor-eq-preset"}"""))
     }
 
-    // 名前が空のものは保存しない (一覧で選べなくなる)。
     @Test
     fun blankNameIsRejected() {
         assertNull(EqPreset.decodeSingle(EqPreset.encodeSingle(EqPreset("   ", settings))))
