@@ -23,7 +23,6 @@ class EqFinderStoreTest {
         uri = "content://com.android.providers.media.documents/document/audio%3A12345",
         startMs = 43_000,
         lengthMs = 20_000,
-        // 既定値 (false) のままだと、decode がキーを取りこぼしても等値で素通りする。
         includeMid = true,
         fineTune = true,
         done = 17,
@@ -42,9 +41,6 @@ class EqFinderStoreTest {
         savedAt = 1_723_400_000_000L,
     )
 
-    // session (エンジンの JSON) は中身を解釈しない約束なので、文字列で突き合わせる。
-    // data class の equals は JSONObject では参照比較になり、同値でも一致しない。
-    // 残りのフィールドは session を同じ参照に差し替えたうえで equals で見る。
     private fun assertSame(expected: EqFinderSaved, actual: EqFinderSaved?) {
         requireNotNull(actual)
         assertEquals(expected.session.toString(), actual.session.toString())
@@ -69,10 +65,6 @@ class EqFinderStoreTest {
         assertSame(liveRecord, EqFinderSaved.decode(liveRecord.encode()))
     }
 
-    /**
-     * **材料キーの無い v1 の記録はループとして読める** (後方互換)。ループの記録の encode は
-     * 従来と同じキー並びのままなので、旧ビルドとの行き来で中断データが消えない。
-     */
     @Test
     fun aV1RecordWithoutTheMaterialKeyReadsAsLoop() {
         val legacy = JSONObject(record.encode())
@@ -83,18 +75,12 @@ class EqFinderStoreTest {
         assertSame(record, decoded)
     }
 
-    /**
-     * ライブの記録は uri キーを持たない。**これが旧ビルドの安全な劣化の仕組み** —
-     * このキーを知らない版の decode は uri 欠けで null (「保存なし」) に倒れ、
-     * 壊れた「続きから」を出さない。ここが変わると劣化の経路が消える。
-     */
     @Test
     fun aLiveRecordCarriesNoSongKeysForOldBuildsToTripOn() {
         val o = JSONObject(liveRecord.encode())
         assertTrue(!o.has("uri"))
         assertTrue(!o.has("start"))
         assertTrue(!o.has("len"))
-        // 紛れ込んだ uri は捨てる — 動きは材料キーだけで決まる。
         val stray = JSONObject(liveRecord.encode()).put("uri", "content://x").toString()
         assertNull(EqFinderSaved.decode(stray)!!.uri)
     }
@@ -107,16 +93,12 @@ class EqFinderStoreTest {
         assertNull(EqFinderSaved.decode("""{"other":1}"""))
     }
 
-    // 将来の版が形を変えたら、古いアプリは読まずに「保存なし」へ倒す。
     @Test
     fun unknownVersionIsRejected() {
         val next = JSONObject(record.encode()).put("v", 2).toString()
         assertNull(EqFinderSaved.decode(next))
     }
 
-    // セッション本体・機器・曲・base のどれが欠けても再開はできない。部分的に読んで
-    // 別の機器や別の曲で「続きから」を出すほうが害が大きい。base は特に、欠けが既定の
-    // EqSettings() に化けると「設定ずれ」の照合が偶然すり抜けて、空の土台で再開してしまう。
     @Test
     fun recordsMissingTheEssentialsAreRejected() {
         for (key in listOf("mac", "uri", "session", "len", "base")) {

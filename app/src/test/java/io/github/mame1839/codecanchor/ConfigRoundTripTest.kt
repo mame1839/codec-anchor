@@ -18,8 +18,6 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class ConfigRoundTripTest {
 
-    // Android の JSONObject は LinkedHashMap なので put の順序がそのまま出る。
-    // ここが崩れると hash() の往復一致が成り立たない。
     @Test
     fun jsonKeepsInsertionOrder() {
         val o = JSONObject()
@@ -28,7 +26,6 @@ class ConfigRoundTripTest {
         assertEquals("""{"b":1,"a":2}""", o.toString())
     }
 
-    // フックがやることと同じ: 受け取った JSON を decode して再 encode する。
     private fun reencode(config: AppConfig): String =
         AppConfig.decode(config.encode())!!.encode()
 
@@ -72,8 +69,6 @@ class ConfigRoundTripTest {
         assertEquals(config.encode(), reencode(config))
     }
 
-    // 2 往復させても変わらないこと。1 往復目で正規化が起きても、そこから先が安定していれば
-    // 「一度だけ食い違ってあとは一致」になり、恒久的な不整合にはならない。
     @Test
     fun secondRoundTripIsStable() {
         val config = AppConfig().withProfile(
@@ -87,13 +82,9 @@ class ConfigRoundTripTest {
         assertEquals(once, twice)
     }
 
-    // アプリが自分で作る EQ の入口は取り込みと求解の 2 つ。どちらの出力も往復すること。
-    // fromJson が値を正規化して書き戻すと、アプリの encode とフックの再 encode が食い違い、
-    // 同期の表示が恒久的に壊れる。特に bandCount は 5 / 10 / 15 / 31 以外を 10 に書き換える。
     @Test
     fun importedAutoEqRoundTrips() {
         val sources = listOf(
-            // フィルタ 3 本 = バンド数の選択肢に無い数
             """
             Preamp: -6.2 dB
             Filter 1: ON LSC Fc 105 Hz Gain 0.7 dB Q 0.70
@@ -113,7 +104,6 @@ class ConfigRoundTripTest {
         }
     }
 
-    // 求解の出力も同じ。Q を上げて解き直したときの Q が Q_RANGE を外れると往復が崩れる。
     @Test
     fun solvedBandsRoundTrip() {
         for (count in EqSettings.BAND_COUNTS) {
@@ -130,8 +120,6 @@ class ConfigRoundTripTest {
         }
     }
 
-    // VERSION を上げてはいけないことの見張り。上げると古いフックとの hash が永久に食い違う
-    // (fromJson が "v" を読まないので、フックは自分の VERSION を書き戻す)。
     @Test
     fun versionIsPinned() {
         assertEquals(1, AppConfig.VERSION)
