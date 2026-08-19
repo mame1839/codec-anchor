@@ -4,8 +4,6 @@ import android.content.Context
 import android.content.res.Resources
 import io.github.mame1839.codecanchor.core.Bridge
 
-// フックは Bluetooth プロセスで動くので、自分の APK のリソースを名前で引いて訳文を得る。
-// 引けなかったときは英語のフォールバックを使う。
 internal object HookStrings {
 
     @Volatile
