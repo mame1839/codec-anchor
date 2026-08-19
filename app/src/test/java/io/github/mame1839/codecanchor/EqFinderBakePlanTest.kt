@@ -253,6 +253,14 @@ class EqFinderBakePlanTest {
             assertEquals("$count バンド", -4, plan[count]!!.settings.preampDb10)
         }
 
+        // 非平坦な土台 (摘みが凸凹) では、解き直した bands の聴感ゲインが摘み数ごとに散る。
+        // ここから preamp を計算し直す実装だと 5 バンド=+0.6 / 10 バンド=+0.4 dB と割れる
+        // (変異で実測)。耳で聴いた候補から取る限り、全バンド数が同じ +0.5 dB になる。
+        val bumpyPlan = planOf(graphicBase(enabled = true), listOf(35, -20))
+        for (count in EqSettings.BAND_COUNTS) {
+            assertEquals("$count バンド (非平坦な土台)", 5, bumpyPlan[count]!!.settings.preampDb10)
+        }
+
         // 土台のプリアンプが乗る形も 1 つ。−6.0 dB の土台 (低域 +4.5 / 高域 −2.5 dB) に
         // 同じオーバーレイ → −6.9 db10 分だけ深い。
         val on = EqSettings(
