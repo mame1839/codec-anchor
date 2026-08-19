@@ -26,7 +26,7 @@ class SpectrumTest {
     @Test
     fun exactBinSineReadsItsAnalyticLevel() {
         val k0 = 96
-        val f = k0.toDouble() * fs / 4096 // 1125 Hz
+        val f = k0.toDouble() * fs / 4096
         val (binHz, db) = Spectrum.averageSpectrumDb(sine(f, fs * 2), fs)
         assertEquals(2049, db.size)
         assertEquals(f, binHz[k0], 1e-9)
