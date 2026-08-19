@@ -18,11 +18,8 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 
 /**
- * AutoEQ の取り込みも**新しいスロットに着地する** (`llmdocs/eq-slot-design.md` §1)。
- *
- * プリセットの適用と同じ規則だが、**同じ 1 本を通っていることは値では見えない**ので、
- * 取り込みの経路そのものを走らせる。ここが `updateEq` に戻されると、AutoEQ を試した瞬間に
- * 作りかけの曲線が消える。
+ * AutoEQ の取り込みが新しいスロットに着地すること (規則は eq-slot-design.md §1)。
+ * 経路そのものを走らせる — `updateEq` に戻されると、AutoEQ を試した瞬間に作りかけの曲線が消える。
  */
 @RunWith(RobolectricTestRunner::class)
 class EqSlotImportTest {

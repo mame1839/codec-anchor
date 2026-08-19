@@ -19,20 +19,10 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * 音響処理の画面の題が 2 行 (音響処理 + イヤホン名) でも収まること。
+ * 音響処理の画面の題が 2 行でも収まること。バーが中身で伸びない理由・dp/sp の罠は ui-notes.md §1。
  *
- * **バーの高さは中身では伸びない。**`TopAppBar` は `expandedHeight` の高さで組むので、
- * 2 行を積むと**下の行が黙って切れる。**画面には 1 行目だけがきれいに出るので、
- * **目視でも「題が出ている」ようにしか見えない。**
- *
- * **⚠️ 端末の文字サイズを変えて測る。**バーの高さは dp、行の高さは sp なので、
- * **既定の文字サイズだけで測ると、大きくした端末で破れるものを「収まっている」と書いてしまう。**
- * 実際、高さを 76.dp の固定にしていたときは 200% で 2dp はみ出していた。
- * いまは行の高さから組み立てているので、どの文字サイズでも成り立つ。
- *
- * ⚠️ Material3 1.4.0 には `subtitle` を受け取る `TopAppBar` があるが **internal で呼べない。**
- * (JVM の署名は public に見えるので、バイトコードだけ見ると使えると誤読する。)
- * だから自前で積み、高さをこちらで決めている。
+ * ⚠️ 端末の文字サイズを変えて測る — 既定サイズだけで測ると、大きくした端末で破れるものを
+ * 「収まっている」と書いてしまう。
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @RunWith(RobolectricTestRunner::class)
@@ -55,12 +45,7 @@ class EqScreenTitleTest {
     @Test
     fun bothLinesFitAtTheLargestText() = assertBothLinesFit()
 
-    /**
-     * 既定の高さのままだと 2 行目がバーの外へ出る = 切れる。
-     *
-     * **高さを足す理由が実在することの確認。**入らないことを確かめずに高さを足すと、
-     * 「元から入っていた」のか「足したから入った」のかが分からないまま数字だけが残る。
-     */
+    /** 既定の高さのままだと 2 行目が切れることの確認 (高さを足す理由が実在する証明)。 */
     @Test
     fun theDefaultBarHeightIsNotEnoughForTwoLines() {
         val bottom = showTitleAndMeasure { TopAppBarDefaults.TopAppBarExpandedHeight }

@@ -20,13 +20,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 
-/**
- * 詳細画面の行が、開かなくても状態を伝えること。
- *
- * **これは見た目ではなく要求。**中身を別の画面へ移した以上、行が「音響処理 >」だけになると、
- * 押す前に見に行く必要があるかを判断できない。移したことで失われやすいのはここなので、
- * 文言ではなく**要約が出ていること**を見る。
- */
+/** 詳細画面の行が、開かなくても状態を伝えること (要約を出す理由は ui-notes.md §2)。 */
 @RunWith(RobolectricTestRunner::class)
 class EqSummaryCardTest {
 
@@ -72,10 +66,7 @@ class EqSummaryCardTest {
         compose.onNodeWithText(string(R.string.eq_summary_unavailable), substring = true).assertDoesNotExist()
     }
 
-    /**
-     * イヤホンごとに曲線を何本も持てるので、**いまどれを聴いているか**も要約に要る。
-     * 名前を出さないと、開くまで分からないのは方式やバンド数ではなくこちらになる。
-     */
+    /** いまどれを聴いているかも要約に要る (理由は ui-notes.md §2)。 */
     @Test
     fun theRowNamesTheSlotYouAreListeningTo() {
         show(on, slots = DeviceSlots(active = "2", slots = listOf(slot("1", "昼用"), slot("2", "夜用"))))

@@ -402,10 +402,7 @@ class EqFinderScreenTest {
         assertTrue(discarded)
     }
 
-    /**
-     * 適用したら**何も聞かずに終わる。**結果は自分のスロットへ残り、名前付けも書き出しも
-     * スロットのメニューに常設されている — ここで重ねて聞くと同じことを 2 通りで聞く。
-     */
+    /** 適用したら何も聞かずに終わる (理由・スロットとの関係は eq-slot-design.md §3)。 */
     @Test
     fun applyingAsksNothingFurther() {
         var applied = false
@@ -488,8 +485,7 @@ class EqFinderScreenTest {
 
     @Test
     fun timeTextUsesMinutesAndTwoDigitSeconds() {
-        // FSI/PDI で囲まれていること自体が仕様 (RTL で数字と区切りが入れ替わらないための isolate)。
-        // 生の制御文字をソースに置くと lint (BidiSpoofing) に落ちるのでエスケープで書く。
+        // 囲まれていること自体が仕様、なので literal で釘にしている (bidi.md §6)。
         assertEquals("\u20680:00\u2069", eqFinderTimeText(0))
         assertEquals("\u20680:20\u2069", eqFinderTimeText(20_000))
         assertEquals("\u20681:01\u2069", eqFinderTimeText(61_000))
