@@ -1,14 +1,3 @@
-// 共有メモリ v4 の境界と、枠を読む側 (`.so` の poll) の見張り。
-//
-// ⚠️ **ここが一次防御線。**段 2 で増えるのは「1 個の大きな構造体の中で隣の欄へはみ出す」
-// 形の間違い (曲線が次の枠へ食い込む / 401 点の添字の off-by-one) で、これは
-// **ASan もガードページも捕まえない** — 赤帯は確保の外側にしか無く、欄と欄の間には
-// 無いため (MSVC の ASan で実測確認済み。clang の -fsanitize-address-field-padding が
-// 要るが MSVC には無い)。捕まえられるのは次の 3 つだけ:
-//
-//   1. グリッド定数 (点数・両端) の一本化をコンパイル時に縛る
-//   2. 境界の明示的なテスト (先頭/末尾の点、先頭/末尾の枠、枠と枠の継ぎ目)
-//   3. ca_shm_t の外に置いた自前の番兵 (確保の外側 = ASan と同じ形を mingw でも見る)
 #include <cstring>
 #include <limits>
 #include <memory>
@@ -25,15 +14,6 @@ namespace {
 
 using catest::Report;
 
-// ⚠️ **EqPipeline をこの節のスタックに置かないこと。**1 つ 50 KB 近くあり、
-// **ASan は同じ関数の兄弟スコープでスタックの枠を再利用しない** (各変数に赤帯付きの
-// 独立した枠を割り当てる) ので、20 個ほど並べるとフレームが 1 MB を超えて
-// **スタックオーバーフローで落ちる。**mingw の構成では枠が再利用されるので通ってしまい、
-// **ASan の構成でだけ落ちる** (実際にそうなった)。
-// 製品側は `CaCtx` を `new` で確保しているので、これはハーネスだけの制約。
-// 宣言は `std::unique_ptr` + 参照にしてある (呼び出し側の書き方は変えずに済む)。
-
-// ca_shm_t の前後を自前の番兵で挟む。**ASan が居ない mingw でも効く** 2 本目の計器。
 constexpr uint32_t kCanary = 0xA5C3F00Du;
 constexpr int kCanaryWords = 32;
 
@@ -62,24 +42,14 @@ bool canaryIntact(const ShmWithCanary& w) {
     return true;
 }
 
-// 枠ごとに違う模様。**隣へ食い込んだら必ず値が変わる**ように、枠の添字と点の添字の
-// 両方を混ぜる。全点同値だと 1 枠ぶんずれても一致してしまう。
 float curveSample(uint32_t slot, int i) {
     return static_cast<float>(slot) * 0.5f + static_cast<float>(i % 61) * 0.125f - 3.0f;
 }
 
-// 枠の末尾の pad にも番兵を置く。
-//
-// ⚠️ **これが無いと「曲線を 1 点はみ出して書く」を誰も捕まえない** (変異試験で確認した)。
-// pad は 48 B = float 12 個ぶんあるので、12 点までのはみ出しは pad に落ちて隣の枠へ
-// 届かず、枠ごとの模様の照合を素通りする。**pad は製品側の誰も読み書きしない**ので、
-// テストが番兵として使ってよい。
 uint8_t padSample(uint32_t slot, size_t i) {
     return static_cast<uint8_t>(0xC0u + ((slot * 7u + static_cast<uint32_t>(i)) & 0x3Fu));
 }
 
-// ⚠️ **書く順序が検査の効き目を決める。**pad を先に、曲線を最後に置くこと —
-// 逆にすると、曲線がはみ出して汚した pad を、その後の pad の書き込みが直してしまう。
 void fillSlotPattern(ca_eq_slot_t* q, uint32_t slot) {
     q->generation = slot + 1u;
     q->curve_gen  = slot + 101u;
@@ -94,8 +64,6 @@ void fillSlotPattern(ca_eq_slot_t* q, uint32_t slot) {
     for (int i = 0; i < caeq::kCurvePoints; i++) q->curve_db[i] = curveSample(slot, i);
 }
 
-// ⚠️ **枠は添字の大きいほうから埋めること。**前から埋めると、枠 i のはみ出しで壊れた
-// 枠 i+1 を、その後の枠 i+1 の書き込みが直してしまう (pad を曲線より先に書くのと同じ理由)。
 void fillAllSlots(ca_shm_t* m) {
     for (int i = CA_SHM_SLOTS - 1; i >= 0; i--) {
         fillSlotPattern(&m->params[i], static_cast<uint32_t>(i));
@@ -103,8 +71,6 @@ void fillAllSlots(ca_shm_t* m) {
 }
 
 bool slotPatternIntact(const ca_eq_slot_t& q, uint32_t slot) {
-    // seq は誰も書いていない。**隣からはみ出してきた書き込みが最初に当たる欄**なので、
-    // 模様の一部として見る。
     if (q.seq != 0u) return false;
     if (q.generation != slot + 1u || q.curve_gen != slot + 101u) return false;
     if (q.flags != CA_EQ_FLAG_ENABLED || q.band_count != 1u) return false;
@@ -118,7 +84,6 @@ bool slotPatternIntact(const ca_eq_slot_t& q, uint32_t slot) {
     return true;
 }
 
-// 平坦でない、検査を通る曲線。
 std::vector<float> tiltCurve(float lo, float hi) {
     std::vector<float> c(static_cast<size_t>(caeq::kCurvePoints));
     for (int i = 0; i < caeq::kCurvePoints; i++) {
@@ -128,7 +93,6 @@ std::vector<float> tiltCurve(float lo, float hi) {
     return c;
 }
 
-// poll を通した枠の更新を 1 回。書き手と同じ作法 (seqlock) で書く。
 void writeSlot(ca_eq_slot_t* dst, uint32_t gen, uint32_t curve_gen, const float* curve,
                uint32_t flags, double preamp_db) {
     caeq::paramsBeginWrite(dst);
@@ -143,7 +107,6 @@ void writeSlot(ca_eq_slot_t* dst, uint32_t gen, uint32_t curve_gen, const float*
     caeq::paramsEndWrite(dst);
 }
 
-// EqPipeline を回す最小の駆動。
 struct Driver {
     caeq::EqPipeline& pl;
     int block;
@@ -167,7 +130,6 @@ uint64_t fakeClock() {
     return t;
 }
 
-// 統計の枠を 1 つ埋める (`.so` の ca_stats_attach と同じ顔ぶれ)。
 void putStatSlot(ca_shm_t* m, uint32_t i, uint64_t pid, int32_t session) {
     ca_slot_t& s = m->slots[i];
     s.in_use = CA_SHM_MAGIC;
@@ -177,20 +139,15 @@ void putStatSlot(ca_shm_t* m, uint32_t i, uint64_t pid, int32_t session) {
     s.sample_rate = 48000;
 }
 
-// 「そのプロセスは生きている」と答えるだけの差し込み。
 struct FakeAlive {
     static bool fn(uint64_t pid, void*) { return pid != 0; }
 };
 
-}  // namespace
+}
 
 void runShmSections(Report& r) {
     r.section("30. 共有メモリ v4 — 並びと枠の境界");
 
-    // --- 1. グリッドの定義が 1 箇所であること -------------------------------
-    //
-    // 点数を動かしたときに何が連鎖して止まるか。**ここが黙って通ると、書き手と読み手が
-    // 別の格子で話し始める。**
     r.check(offsetof(ca_eq_slot_t, curve_db) +
                     sizeof(float) * static_cast<size_t>(caeq::kCurvePoints) <=
                 sizeof(ca_eq_slot_t),
@@ -204,12 +161,9 @@ void runShmSections(Report& r) {
             "かつ setup.sh が作る CA_SHM_BYTES (%d) と一致",
             sizeof(ca_shm_t), sizeof(ca_slot_t), CA_SHM_SLOTS, sizeof(ca_eq_slot_t),
             CA_SHM_SLOTS, CA_SHM_BYTES);
-    // 版 3 のファイル (5760 B) は版 4 の構造体より小さい。**読む側の大きさ検査が
-    // 必ず弾く**ので SIGBUS には行かない。ここが逆転したら検査が意味を失う。
     r.check(5760u < sizeof(ca_shm_t),
             "版 3 の大きさ (5760 B) では版 4 の構造体が入らない — 大きさ検査が必ず弾く");
 
-    // --- 2. 枠の並びが等間隔で、重なりも隙間も無いこと -----------------------
     {
         ShmWithCanary* w = newCanaryShm();
         const char* base = reinterpret_cast<const char*>(&w->m);
@@ -230,10 +184,6 @@ void runShmSections(Report& r) {
         delete w;
     }
 
-    // --- 3. 枠と枠の継ぎ目 — 書いた枠だけが変わること ------------------------
-    //
-    // **曲線が隣の枠へ食い込む形は ASan も番兵も捕まえない** (どちらも確保の外しか
-    // 見ない)。枠ごとに違う模様を書いて全部読み戻すのが唯一の手。
     {
         ShmWithCanary* w = newCanaryShm();
         fillAllSlots(&w->m);
@@ -245,14 +195,11 @@ void runShmSections(Report& r) {
                      "どれも隣にも pad にも食い込んでいない",
                 CA_SHM_SLOTS);
 
-        // 末尾の枠の末尾の点を書いても、確保の外へ出ない。
         w->m.params[CA_SHM_SLOTS - 1].curve_db[caeq::kCurvePoints - 1] = 12.5f;
         r.check(canaryIntact(*w),
                 "最後の枠の最後の点 (params[%d].curve_db[%d]) を書いても番兵が無傷",
                 CA_SHM_SLOTS - 1, caeq::kCurvePoints - 1);
 
-        // 統計の最後の枠を丸ごと埋めても、パラメータの先頭に触れない。
-        // (`.so` の detach が offsetof から長さを計算して memset する形と同じ。)
         const uint32_t keep = w->m.params[0].generation;
         ca_slot_t* last = &w->m.slots[CA_SHM_SLOTS - 1];
         std::memset(&last->seq, 0xEE, sizeof(ca_slot_t) - offsetof(ca_slot_t, seq));
@@ -261,7 +208,6 @@ void runShmSections(Report& r) {
         delete w;
     }
 
-    // --- 4. 曲線の端 — 先頭と末尾の点が化けずに往復すること ------------------
     {
         ShmWithCanary* w = newCanaryShm();
         std::vector<float> c = tiltCurve(-9.75f, 7.25f);
@@ -284,10 +230,6 @@ void runShmSections(Report& r) {
         delete w;
     }
 
-    // --- 5. 版と並びの食い違い ----------------------------------------------
-    //
-    // **版が違えば並びも違って当たり前**なので、版を先に見ること。順序を逆にすると
-    // 「版ずれ」という本当の理由が「並びが違う」に化ける。
     {
         ca_shm_t* m = new ca_shm_t{};
         m->magic = CA_SHM_MAGIC;
@@ -311,7 +253,6 @@ void runShmSections(Report& r) {
         r.check(caeq::shmState(m) == caeq::ShmState::kLayoutMismatch,
                 "統計の枠の大きさが違えば断る");
 
-        // 版が違うほうを先に言う。並びは版が違えばどうせ違う。
         m->version = CA_SHM_VERSION - 1u;
         r.check(caeq::shmState(m) == caeq::ShmState::kVersionMismatch,
                 "版と並びが両方違うときは「版ずれ」と言う (本当の理由が先)");
@@ -322,11 +263,9 @@ void runShmSections(Report& r) {
 
     const std::vector<float> good = tiltCurve(-6.0f, 6.0f);
 
-    // --- 6. 自分の枠だけを読む ----------------------------------------------
     {
         ShmWithCanary* w = newCanaryShm();
         fillAllSlots(&w->m);
-        // 枠 5 にだけ本物の曲線を置く。
         writeSlot(&w->m.params[5], 77u, 88u, good.data(), CA_EQ_FLAG_ENABLED, -2.0);
 
         std::unique_ptr<caeq::EqPipeline> pl_h(new caeq::EqPipeline());
@@ -346,10 +285,6 @@ void runShmSections(Report& r) {
         delete w;
     }
 
-    // --- 7. 曲線が 1 点でも外れたら、bands ごと捨てる ------------------------
-    //
-    // 仕様 §1「1 つでも外れたら更新を丸ごと捨てて前の設定を保ち、rejected を進める」。
-    // **bands だけ通すと「新しい bands と古い曲線」が同時に鳴る**ので、片方だけは通さない。
     {
         ShmWithCanary* w = newCanaryShm();
         std::unique_ptr<caeq::EqPipeline> pl_h(new caeq::EqPipeline());
@@ -391,8 +326,6 @@ void runShmSections(Report& r) {
                               "(却下 %u 回)",
                 sizeof(bad) / sizeof(bad[0]), st.rejected);
 
-        // ちょうど境界 (±40.0) は通ること。**上限を跨いだ側だけを弾いている**ことの確認で、
-        // これが無いと「全部弾く」実装でもテストが緑になる。
         {
             std::vector<float> c = good;
             c[0] = -caeq::kCurveMaxAbsDb;
@@ -406,13 +339,12 @@ void runShmSections(Report& r) {
             gen++;
         }
 
-        // bands が範囲外でも同じ扱い。曲線が正常でも枠ごと捨てる。
         {
             const uint32_t before = st.rejected;
             caeq::paramsBeginWrite(&w->m.params[0]);
             w->m.params[0].generation = gen;
             w->m.params[0].band_count = 1;
-            w->m.params[0].band[0].fc_hz = 30000.0f;  // 48 kHz では Nyquist 超え
+            w->m.params[0].band[0].fc_hz = 30000.0f;
             w->m.params[0].band[0].q = 1.0f;
             w->m.params[0].band[0].gain_db = 3.0f;
             w->m.params[0].band[0].type = CA_EQ_BAND_PEAKING;
@@ -423,7 +355,6 @@ void runShmSections(Report& r) {
             gen++;
         }
 
-        // 捨てた世代を覚えているので、同じ並びを毎回検査し直さない。
         {
             const uint32_t before = st.rejected;
             caeq::pollSlot(&w->m.params[0], &st, &pl, true);
@@ -435,10 +366,6 @@ void runShmSections(Report& r) {
         delete w;
     }
 
-    // --- 8. 曲線の版と枠の版を分ける効き目 -----------------------------------
-    //
-    // プリアンプやバンドのドラッグ (60 Hz) で FIR の再構築が走らないこと。
-    // **走ると 0.3〜0.6 s の再構築が毎フレーム始まり直して永久に完成しない。**
     {
         ShmWithCanary* w = newCanaryShm();
         std::unique_ptr<caeq::EqPipeline> pl_h(new caeq::EqPipeline());
@@ -461,7 +388,6 @@ void runShmSections(Report& r) {
                 "共有メモリ経由の曲線だけで FIR まで到達 (再構築 %u 回)", pl.rebuilds());
         const uint32_t builds = pl.rebuilds();
 
-        // プリアンプだけ 20 回動かす。曲線の版は据え置き。
         for (uint32_t k = 0; k < 20; k++) {
             writeSlot(&w->m.params[0], 100u + k, 1u, nullptr,
                       CA_EQ_FLAG_ENABLED | CA_EQ_FLAG_HIGH_PRECISION, -3.0 - 0.1 * k);
@@ -472,7 +398,6 @@ void runShmSections(Report& r) {
                 "プリアンプを 20 回動かしても再構築が走らない (rebuilds %u のまま)",
                 pl.rebuilds());
 
-        // 曲線の版を動かせば、今度は組み直す。
         const std::vector<float> other = tiltCurve(4.0f, -4.0f);
         writeSlot(&w->m.params[0], 200u, 2u, other.data(),
                   CA_EQ_FLAG_ENABLED | CA_EQ_FLAG_HIGH_PRECISION, -3.0);
@@ -483,7 +408,6 @@ void runShmSections(Report& r) {
         delete w;
     }
 
-    // --- 9. 曲線が載っていない枠 -------------------------------------------
     {
         ShmWithCanary* w = newCanaryShm();
         std::unique_ptr<caeq::EqPipeline> pl_h(new caeq::EqPipeline());
@@ -494,7 +418,6 @@ void runShmSections(Report& r) {
         caeq::PollState st;
         Driver drv(pl, 960, 2);
 
-        // curve_gen == 0 = 曲線が載っていない。高精度を頼まれても biquad のまま。
         writeSlot(&w->m.params[0], 1u, 0u, nullptr,
                   CA_EQ_FLAG_ENABLED | CA_EQ_FLAG_HIGH_PRECISION, 0.0);
         for (int b = 0; b < 30; b++) {
@@ -505,7 +428,6 @@ void runShmSections(Report& r) {
                     pl.rebuilds() == 0 && pl.curveGeneration() == 0,
                 "curve_gen=0 の枠では、高精度を頼まれても biquad のまま (再構築 0 回)");
 
-        // 診断がその理由を持っていること。
         ca_slot_t s{};
         caeq::firStatsOf(st, pl, &s);
         r.check((s.fir_flags & CA_FIR_F_REQUESTED) && (s.fir_flags & CA_FIR_F_ARENA) &&
@@ -517,10 +439,6 @@ void runShmSections(Report& r) {
         delete w;
     }
 
-    // --- 9b. 理由の判定 — **上のものほど根本的** ----------------------------
-    //
-    // ⚠️ この製品で繰り返し出ている失敗が「嘘の理由が出る」形なので、順序を表で固定する。
-    // 例: 作業領域が無いのに「曲線が届いていない」と出ると、モジュールの入れ直しから始まる。
     {
         ca_slot_t s{};
         ca_eq_slot_t q{};
@@ -531,9 +449,6 @@ void runShmSections(Report& r) {
         r.check(caeq::firWhy(s, &q) == caeq::FirWhy::kNotRequested,
                 "要求されていなければ「標準モード」(異常ではない)");
 
-        // 以降は「1 つ手前まで満たしたうえで次だけ欠けている」形にして、順序を固定する。
-        // **`fir_design_failures` に値を入れておく** — 述語がこの累積カウンタを見ていたら、
-        // どの行でも「設計器が止まった」に化けるので、表全体が同時に落ちる。
         s.fir_flags = CA_FIR_F_REQUESTED;
         s.fir_design_failures = 3;
         s.fir_fill = 0;
@@ -558,8 +473,6 @@ void runShmSections(Report& r) {
         r.check(caeq::firWhy(s, &q) == caeq::FirWhy::kDesignFailed,
                 "曲線があって**いま**設計器が止まっていれば「設計器が止まった」");
 
-        // **累積カウンタは据え置いたまま、現在値の旗だけ落とす。**述語が
-        // `fir_design_failures > 0` を見ていたら、ここが永久ラッチして落ちる。
         s.fir_flags &= ~CA_FIR_F_CURVE_FAILED;
         r.check(caeq::firWhy(s, &q) == caeq::FirWhy::kWarming &&
                     s.fir_design_failures == 3,
@@ -569,17 +482,14 @@ void runShmSections(Report& r) {
         s.fir_fill = s.fir_partitions;
         r.check(caeq::firWhy(s, &q) == caeq::FirWhy::kAlmost, "全部揃っていれば「まだ乗り移る前」");
 
-        // 枠が未割り当て (params が無い) のインスタンスでも落ちない。
         s.fir_fill = 0;
         r.check(caeq::firWhy(s, nullptr) == caeq::FirWhy::kWarming,
                 "パラメータ枠が無くても判定できる (曲線の有無だけ飛ばす)");
     }
 
-    // --- 9c. 曲線のテキストの解析 (caeqset が使う) ---------------------------
     {
         std::vector<float> got(static_cast<size_t>(caeq::kCurvePoints) + 8, -999.0f);
 
-        // ちょうどの点数 + 空行 + コメント + 前置きの空白。
         {
             std::string text;
             text += "# comment\n\n";
@@ -600,7 +510,6 @@ void runShmSections(Report& r) {
                     "配列の外へ 1 つも書いていない");
         }
 
-        // 1 点足りない / 1 点多い。**どちらも失敗**で、足りない分を 0 dB で埋めない。
         {
             std::string few, many;
             for (int i = 0; i < caeq::kCurvePoints - 1; i++) few += "1.0\n";
@@ -622,7 +531,6 @@ void runShmSections(Report& r) {
                 "開けないファイルは「点数が違う」ではなく「開けない」と言う");
     }
 
-    // --- 10. 診断の写し取りが pipeline の値そのものであること -----------------
     {
         ShmWithCanary* w = newCanaryShm();
         std::unique_ptr<caeq::EqPipeline> pl_h(new caeq::EqPipeline());
@@ -657,7 +565,6 @@ void runShmSections(Report& r) {
                 "スライスの実測が入っている (%.1f µs)",
                 static_cast<double>(s.fir_max_slice_ns) / 1000.0);
 
-        // 状態の番号がヘッダの表と一致していること (caeqstat がこの番号で文言を選ぶ)。
         r.check(static_cast<uint32_t>(caeq::EqPipeline::FirState::kBiquad) ==
                         CA_FIR_STATE_BIQUAD &&
                     static_cast<uint32_t>(caeq::EqPipeline::FirState::kPrepare) ==
@@ -672,14 +579,6 @@ void runShmSections(Report& r) {
         delete w;
     }
 
-    // --- 10b. サンプルレートが変わっても FIR が戻ってくること -----------------
-    //
-    // ⚠️ **ここが繋がっていないと、EQ が黙って平坦に戻ったまま二度と戻らない。**
-    // fs が変わると Eq はパラメータを丸ごと捨て (新しい Nyquist で fc が範囲外に
-    // なりうるため)、arena も組み直しになって曲線が失われる。共有メモリの枠は
-    // 何も変わっていないので、読み手が「適用済み」を覚えたままだと再送の機会が無い。
-    // `.so` は SET_CONFIG で PollState::param_gen を 0 に戻してこれを塞いでいる。
-    // **往復のどちらの側を外しても、この 1 件が落ちる** (変異試験で両方確認した)。
     {
         ShmWithCanary* w = newCanaryShm();
         std::unique_ptr<caeq::EqPipeline> pl_h(new caeq::EqPipeline());
@@ -697,7 +596,6 @@ void runShmSections(Report& r) {
         }
         r.check(pl.firState() == caeq::EqPipeline::FirState::kFir, "まず 48 kHz で FIR が鳴る");
 
-        // SET_CONFIG が 44.1 kHz で来たときと同じ手順。**枠は 1 バイトも変わらない。**
         pl.configure(44100.0, 2, caeq::Structure::kTdf2);
         pl.warmUp();
         st.param_gen = 0;
@@ -713,13 +611,6 @@ void runShmSections(Report& r) {
         delete w;
     }
 
-    // --- 10c. 「設計器が止まった」が永久にラッチしないこと --------------------
-    //
-    // ⚠️ **累積カウンタ (designFailures) を現在状態の述語に使うと、一度失敗した後は
-    // 新しい曲線を温めている最中もずっと「設計器が止まった」と嘘を言う。**
-    // 検分が製品経路で実測した形をそのまま再現する。**表への代入で作った状態遷移では
-    // これを見られない** — 累積カウンタが 0 に戻る遷移は製品では起こせないので、
-    // ここは必ず pipeline を実際に回して見ること。
     {
         ShmWithCanary* w = newCanaryShm();
         std::unique_ptr<caeq::EqPipeline> pl_h(new caeq::EqPipeline());
@@ -730,12 +621,10 @@ void runShmSections(Report& r) {
         caeq::PollState st;
         Driver drv(pl, 960, 2);
 
-        // 設計器を失敗させる。**検査を通る曲線で失敗させる**必要があるので、
-        // ハーネス専用の入口から直接壊す (poll の検査は迂回できない)。
         writeSlot(&w->m.params[0], 1u, 1u, good.data(),
                   CA_EQ_FLAG_ENABLED | CA_EQ_FLAG_HIGH_PRECISION, -2.0);
         caeq::pollSlot(&w->m.params[0], &st, &pl, true);
-        drv.step();   // setup 構築 → designer 起動
+        drv.step();
         pl.designerForTest().injectNonFinite();
         for (int b = 0; b < 30 && pl.designFailures() == 0; b++) drv.step();
         r.check(pl.designFailures() > 0 && pl.curveFailed(),
@@ -748,7 +637,6 @@ void runShmSections(Report& r) {
                     "失敗している最中は「設計器が止まった」");
         }
 
-        // **新しい曲線を送る。**ここから先は温めているだけで、失敗はしていない。
         const std::vector<float> other = tiltCurve(3.0f, -3.0f);
         writeSlot(&w->m.params[0], 2u, 2u, other.data(),
                   CA_EQ_FLAG_ENABLED | CA_EQ_FLAG_HIGH_PRECISION, -2.0);
@@ -771,14 +659,7 @@ void runShmSections(Report& r) {
         delete w;
     }
 
-    // --- 10d. setFirCapable — 宿主になれないインスタンスは作業領域を持たない ----
-    //
-    // FIR が乗るのは書き手が設定を宛てられる枠だけ。そうでないインスタンスが 791 KB を
-    // 一度も使わずに抱えるのは、コードの意味としても矛盾している。
-    // ⚠️ **釘の先頭は順序非依存。**段 1 の setFadeMillis は「configure の後に呼ぶ」ことが
-    // 釘の強さを決めていて、検分が気づくまで誰にも見えなかった。同じ型を作らない。
     {
-        // (1) 順序非依存: capable→configure と configure→capable で arena の状態が同じ。
         size_t before_bytes = 0, after_bytes = 0;
         bool before_avail = false, after_avail = false;
         {
@@ -802,7 +683,7 @@ void runShmSections(Report& r) {
                 "true の順序に依存しない (先に呼んでも後で呼んでも %zu KB)",
                 before_bytes / 1024);
 
-        {   // false 側も同じ。
+        {
             std::unique_ptr<caeq::EqPipeline> a_h(new caeq::EqPipeline());
             auto& a = *a_h;
             std::unique_ptr<caeq::EqPipeline> b_h(new caeq::EqPipeline());
@@ -816,7 +697,6 @@ void runShmSections(Report& r) {
                     "false の順序にも依存しない (どちらも作業領域なし)");
         }
 
-        // (2) 既定は true — setter を一度も呼ばなければ今までどおり。
         {
             std::unique_ptr<caeq::EqPipeline> d_h(new caeq::EqPipeline());
             auto& d = *d_h;
@@ -825,7 +705,6 @@ void runShmSections(Report& r) {
                     "既定は true — 呼び忘れても高精度は死なない (無駄なだけ)");
         }
 
-        // (3) capable=false のとき、出力が素の Eq とビット同一。
         {
             std::unique_ptr<caeq::EqPipeline> pl_h(new caeq::EqPipeline());
             auto& pl = *pl_h;
@@ -866,7 +745,6 @@ void runShmSections(Report& r) {
                     "capable=false では設計も落下も起きない (カウンタが全部 0)");
         }
 
-        // (4) true→true が鳴っている FIR を畳まない。**SET_PARAM で毎回撃つ形になる。**
         {
             ShmWithCanary* w = newCanaryShm();
             std::unique_ptr<caeq::EqPipeline> pl_h(new caeq::EqPipeline());
@@ -889,7 +767,7 @@ void runShmSections(Report& r) {
             std::vector<float> in(1920), out_a(1920), out_b(1920);
             catest::Rng rng(5);
             for (size_t i = 0; i < in.size(); i++) in[i] = static_cast<float>(0.2 * rng.uniform());
-            for (int k = 0; k < 5; k++) pl.setFirCapable(true);   // 何度撃っても no-op
+            for (int k = 0; k < 5; k++) pl.setFirCapable(true);
             pl.process(in.data(), out_a.data(), 960, false);
             r.check(pl.firState() == caeq::EqPipeline::FirState::kFir &&
                         pl.curveGeneration() == gen && pl.fdlFill() == fill &&
@@ -898,15 +776,6 @@ void runShmSections(Report& r) {
             delete w;
         }
 
-        // (5) false→true が configure を待たずに確保する (同じ fs/ch のまま)。
-        //     configure は同じ fs/ch なら冪等に return するので、setter 側で確保しないと
-        //     **次の configure が来るまで永久に確保されない。**
-        //
-        // ⚠️ **順序を入れ替える釘は「どの状態で入れ替えるか」で強さが変わる。**
-        // ここは最初、まっさらな pipeline でしか入れ替えていなかった。それだと
-        // `p_cur_` の戻し忘れ (= 確保はされるのに FIR が永久に始まらない) を捕まえられない —
-        // `p_cur_` は process() を 1 度でも回して初めて 0 でなくなるため。
-        // **入れ替えの前に process() を回す**のが、この釘の本来の形。
         {
             std::unique_ptr<caeq::EqPipeline> pl_h(new caeq::EqPipeline());
             auto& pl = *pl_h;
@@ -914,7 +783,6 @@ void runShmSections(Report& r) {
             pl.configure(48000.0, 2, caeq::Structure::kTdf2);
             r.check(!pl.firAvailable(), "false のあいだは作業領域なし");
 
-            // **入れ替えの前に回す。**これで p_cur_ が 960 に据わる。
             caeq::Params p;
             p.band_count = 0;
             p.preamp_db  = 0.0;
@@ -932,8 +800,6 @@ void runShmSections(Report& r) {
                     "false→true で、configure を挟まずにその場で確保する (%zu KB)",
                     pl.arenaBytes() / 1024);
 
-            // **同じブロック長のまま回して FIR に到達すること。**`p_cur_` を戻していないと
-            // evaluateBlock が呼ばれず、arena があるのに永久に kBiquad のまま。
             int reached = -1;
             for (int b = 0; b < 80; b++) {
                 drv.step();
@@ -944,7 +810,6 @@ void runShmSections(Report& r) {
                     "確保の後にブロック長の再評価が走っている", reached);
         }
 
-        // (6) true→false が鳴っている最中でも落ちない。**落下には数えない。**
         {
             ShmWithCanary* w = newCanaryShm();
             std::unique_ptr<caeq::EqPipeline> pl_h(new caeq::EqPipeline());
@@ -968,9 +833,6 @@ void runShmSections(Report& r) {
                     "鳴っている最中に false にしても作業領域が解放されて biquad へ戻る");
             r.check(pl.fallbacks() == fb && pl.modeOffs() == mo,
                     "落下にもモード切にも数えない (枠の宛先が動いただけ)");
-            // ⚠️ **Eq を起こしていること。**kFir のあいだ Eq は wet 0 で駐機しているので、
-            // 起こさずに渡すと**素通しの段差**になる (Drop::kQuiet を流用すると起きる)。
-            // 「数えない」と「起こさない」は別の問いで、ここは数えないが起こす側。
             r.check(pl.biquad().active(),
                     "受け渡しで Eq を起こしている (駐機したままだと素通しの段差になる)");
             bool finite = true;
@@ -991,13 +853,6 @@ void runShmSections(Report& r) {
             delete w;
         }
 
-        // (7) 冗長な false→false が、まだ採用していない曲線を捨てないこと。
-        //
-        // ⚠️ **ここが冪等の門が本当に効いている唯一の場所。**`releaseArena()` は arena
-        // だけでなく `curve_dirty_` / `have_curve_` も落とすので、門が無いと 2 回目の
-        // false で届いていた曲線が消える。**poll は再送しない** (世代が同じなら早期
-        // return) ので、ユーザが曲線を触るまで高精度が黙って戻らない。
-        // **契約が「いつでも何度でも呼んでよい」なので、呼び手が増えたときに踏む。**
         {
             ShmWithCanary* w = newCanaryShm();
             std::unique_ptr<caeq::EqPipeline> pl_h(new caeq::EqPipeline());
@@ -1008,17 +863,15 @@ void runShmSections(Report& r) {
             caeq::PollState st;
             Driver drv(pl, 960, 2);
 
-            // capable=false のまま曲線が届く (poll は capability を見ない)。
             writeSlot(&w->m.params[0], 1u, 1u, good.data(),
                       CA_EQ_FLAG_ENABLED | CA_EQ_FLAG_HIGH_PRECISION, -2.0);
             caeq::pollSlot(&w->m.params[0], &st, &pl, true);
             drv.step();
 
-            pl.setFirCapable(false);   // **冗長な 2 回目。**契約上これは許される
+            pl.setFirCapable(false);
             pl.setFirCapable(true);
             pl.warmUp();
 
-            // **曲線を送り直さずに**回す。poll も世代が同じなので送らない。
             for (int b = 0; b < 60 && pl.firState() != caeq::EqPipeline::FirState::kFir; b++) {
                 caeq::pollSlot(&w->m.params[0], &st, &pl, true);
                 drv.step();
@@ -1031,15 +884,6 @@ void runShmSections(Report& r) {
             delete w;
         }
 
-        // (8) **どの経路で作業領域を得たかが、音に一切出ないこと。**
-        //
-        // ⚠️ **reserveForCurrent の抜けを一般に捕まえる唯一の釘。**
-        // 個々のフィールド (`taps_` / `pre_len_` / `p_cur_`) を別々に見張ると、
-        // **次に足したフィールドが漏れる。**実際 `pre_len_` は釘が無く、
-        // 丸ごと消す変異が 347/347 のまま通っていた (この節を足す前の自己監査で発見)。
-        // 消えると preamp のランプが 10 ms から即時になり、クリックが約 50 dB 悪化する
-        // (eq-spec.md の「クリック対策」: 瞬時 -64.6 / ランプ -114.3 dBFS) —
-        // **どのカウンタにも状態にも出ないので、出力を突き合わせる以外に見る手が無い。**
         {
             const std::vector<float> curve = tiltCurve(-6.0f, 6.0f);
             caeq::Params p0, p1;
@@ -1047,10 +891,8 @@ void runShmSections(Report& r) {
             p0.preamp_db  = -2.0;
             p0.bands[0] = caeq::Band{caeq::BandType::kPeaking, 1000.0, 1.0, 6.0};
             p1 = p0;
-            p1.preamp_db = -9.0;   // 途中で動かす。ランプ長が違えば軌跡が変わる
+            p1.preamp_db = -9.0;
 
-            // A: 最初から capable (configure が確保する)。
-            // B: capable=false で configure したあと true (setFirCapable が確保する)。
             std::unique_ptr<caeq::EqPipeline> a_h(new caeq::EqPipeline());
             auto& a = *a_h;
             std::unique_ptr<caeq::EqPipeline> b_h(new caeq::EqPipeline());
@@ -1082,7 +924,6 @@ void runShmSections(Report& r) {
                 for (size_t i = 0; i < in.size(); i++) {
                     in[i] = static_cast<float>(0.2 * rng.uniform());
                 }
-                // FIR が鳴り始めたあとで preamp を動かす (ランプの軌跡を見るため)。
                 if (blk == 40) { a.setParams(p1); b.setParams(p1); }
                 a.process(in.data(), out_a.data(), 960, false);
                 b.process(in.data(), out_b.data(), 960, false);
@@ -1101,18 +942,6 @@ void runShmSections(Report& r) {
                     a.fallbacks(), a.curveGeneration());
         }
 
-        // (9) FIR 経路の preamp が**両経路とも**ランプすること。
-        //
-        // ⚠️ (8) は 2 つの経路の**差**しか見ないので、`pre_len_` のように
-        // **両方で同時に壊れる**ものは素通りする (実測: `pre_len_` を丸ごと消す変異が
-        // (8) を入れた後でも 350/350 のまま通った)。**「同値である」と「正しい」は別の主張。**
-        // ここは値そのものを見る。
-        //
-        // 直流を入れて kFir で定常にすると、FIR の出力は一定なので
-        // **出力の並びが preamp の軌跡をそのままなぞる。**ランプが消えていれば
-        // ブロックの先頭サンプルで既に新しいゲインになっている。
-        // (段 1 から `pre_len_` には釘が無かった。私が reserveForCurrent へ移して
-        //  初めて気づいた形なので、経緯を残す。)
         {
             std::unique_ptr<caeq::EqPipeline> pl_h(new caeq::EqPipeline());
             auto& pl = *pl_h;
@@ -1131,21 +960,18 @@ void runShmSections(Report& r) {
             for (int b = 0; b < 80 && pl.firState() != caeq::EqPipeline::FirState::kFir; b++) {
                 pl.process(in.data(), out.data(), 960, false);
             }
-            // 定常になるまで流す (FDL に直流が満ちる)。
             for (int b = 0; b < 12; b++) pl.process(in.data(), out.data(), 960, false);
             const double steady = static_cast<double>(out[0]);
 
-            p.preamp_db = -20.0;   // 大きく動かして軌跡を見やすくする
+            p.preamp_db = -20.0;
             pl.setParams(p);
             pl.process(in.data(), out.data(), 960, false);
 
             const double first = static_cast<double>(out[0]);
-            const double last  = static_cast<double>(out[2 * 900]);   // 900 サンプル目 (> 480)
-            const double want_ratio = std::pow(10.0, -18.0 / 20.0);   // -2 → -20 dB
+            const double last  = static_cast<double>(out[2 * 900]);
+            const double want_ratio = std::pow(10.0, -18.0 / 20.0);
             const double settled = steady * want_ratio;
 
-            // 先頭は**まだ古いゲインのまま**であること。ランプが消えていると
-            // ここが既に settled になる。
             const double head_err = std::fabs(first - steady) / std::fabs(steady);
             const double tail_err = std::fabs(last - settled) / std::fabs(settled);
             r.check(head_err < 0.02 && tail_err < 0.02,
@@ -1153,7 +979,6 @@ void runShmSections(Report& r) {
                     "900 サンプル後に新ゲインへ着地 (%.3f%%)",
                     head_err * 100.0, tail_err * 100.0);
 
-            // 途中が単調に降りていること (階段でも即時でもない)。
             int moving = 0;
             for (int i = 1; i < 480; i++) {
                 if (static_cast<double>(out[2 * i]) != static_cast<double>(out[2 * (i - 1)])) {
@@ -1166,11 +991,9 @@ void runShmSections(Report& r) {
         }
     }
 
-    // --- 10e. 書き手の枠選びと読み手の確保が同じ述語を見ていること -------------
     {
         ShmWithCanary* w = newCanaryShm();
         FakeAlive alive;
-        // DEVICE の枠と、そうでない枠を 1 つずつ。
         putStatSlot(&w->m, 0, 4242, CA_AUDIO_SESSION_DEVICE);
         putStatSlot(&w->m, 1, 4242, 77);
         const caeq::SlotPickResult pick = caeq::pickDeviceSlot(&w->m, FakeAlive::fn, &alive);
@@ -1183,7 +1006,6 @@ void runShmSections(Report& r) {
         delete w;
     }
 
-    // --- 11. 申告するメモリ量が実測を上回っていること -------------------------
     {
         const double rates[] = {44100.0, 48000.0, 88200.0, 96000.0};
         size_t worst = 0;
@@ -1194,17 +1016,11 @@ void runShmSections(Report& r) {
             pl.configure(fs, 2, caeq::Structure::kTdf2);
             if (pl.arenaBytes() > worst) { worst = pl.arenaBytes(); worst_fs = fs; }
         }
-        // Eq 自身の状態と作業領域 (kMaxBands × kMaxChannels の double 2 面ほか)。
         const size_t eq_bytes = sizeof(caeq::Eq);
         const unsigned need = static_cast<unsigned>((worst + eq_bytes + 1023u) / 1024u);
-        // ⚠️ **`kDeclaredMemoryKb` と突き合わせない。**あちらは実機のフレームワークに
-        // 拒否されない大きさ (64 KB) に切り下げてあり、実測の使用量とは別の意味を持つ
-        // (理由は dsp/ca_eq_pipeline.h)。**上限は literal で持つ** — 記号で書くと
-        // 定数を動かしたときに釘も一緒に動いて、永久に落ちなくなる。
         r.check(need <= 1536,
                 "実測の最悪 %u KB が上限 1536 KB に収まる (arena %zu KB @%.0f Hz + Eq %zu KB)",
                 need, worst / 1024, worst_fs, eq_bytes / 1024);
-        // 12ch のインスタンスには作業領域を作らない (spatializer に 1 MB を持たせない)。
         std::unique_ptr<caeq::EqPipeline> wide_h(new caeq::EqPipeline());
         auto& wide = *wide_h;
         wide.configure(48000.0, 12, caeq::Structure::kTdf2);
@@ -1213,24 +1029,8 @@ void runShmSections(Report& r) {
     }
 }
 
-// --------------------------------------------------------------------------
-// 32. 枠の取得と回収 — **出荷を止めていた不具合の本体**
-//
-// apply が audioserver を作り直すと audio HAL も道連れで死に、`release_effect` が
-// 呼ばれないので枠が `in_use` のまま残る。`acquireSlot` が死んだ枠を拾い直せないと、
-// 枠が尽きて **EQ が黙って完全な素通しになる (再起動でしか戻らない)。**
-//
-// ⚠️ **ここは値そのものを見る。**「`caeqset` と `.so` が同じ答えを出す」形の釘は、
-// 両者が同じ関数を呼ぶ以上 差が原理的に出ない = 何も見ていない。
-//
-// ⚠️ `ca_eq.cpp` の `ca_stats_attach` / `ca_stats_detach` 自体はここから撃てない
-// (あちらは test/CMakeLists.txt のソース一覧に無い)。だから**判断と手順を
-// ca_eq_pick.h の純関数に置いてある** — 撃っているのは `.so` が実際に通る実体。
-// --------------------------------------------------------------------------
-
 namespace {
 
-// 生きている pid の表。**表に無ければ死んでいると答える。**
 struct PidTable {
     uint64_t alive[16];
     int count;
@@ -1243,12 +1043,10 @@ struct PidTable {
     }
 };
 
-// 枠を全部埋める。pid は 1000+i。
 void fillAllSlots(ca_shm_t* m, int32_t session) {
     for (uint32_t i = 0; i < CA_SHM_SLOTS; i++) putStatSlot(m, i, 1000ull + i, session);
 }
 
-// パラメータ枠に見分けの付く中身を置く。**回収がここを消していないこと**を見る。
 void putParams(ca_shm_t* m, uint32_t i, uint32_t gen) {
     ca_eq_slot_t& q = m->params[i];
     q.generation = gen;
@@ -1269,7 +1067,6 @@ bool paramsIntact(const ca_shm_t* m, uint32_t i, uint32_t gen) {
     return true;
 }
 
-// 統計の枠の本体 (in_use の後ろ) が全部ゼロか。
 bool statBodyZero(const ca_slot_t& s) {
     const uint8_t* p = reinterpret_cast<const uint8_t*>(&s) + offsetof(ca_slot_t, seq);
     for (size_t i = 0; i < sizeof(ca_slot_t) - offsetof(ca_slot_t, seq); i++) {
@@ -1278,12 +1075,11 @@ bool statBodyZero(const ca_slot_t& s) {
     return true;
 }
 
-}  // namespace
+}
 
 void runSlotLifecycleSection(Report& r) {
     r.section("32. 枠の取得と回収 (枠の枯渇で EQ が素通しになる不具合)");
 
-    // --- a. 手放す手順 -------------------------------------------------------
     {
         ShmWithCanary* w = newCanaryShm();
         putStatSlot(&w->m, 3, 4242, CA_AUDIO_SESSION_DEVICE);
@@ -1292,11 +1088,8 @@ void runSlotLifecycleSection(Report& r) {
 
         r.check(caeq::releaseSlot(&w->m.slots[3]), "使用中の枠は手放せる");
         r.check(w->m.slots[3].in_use == 0u, "in_use が空きに戻る (0x%x)", w->m.slots[3].in_use);
-        // **不変条件そのもの。**中身が残ったまま空きに戻ると、次に取った側の初期化前に
-        // リーダが前のインスタンスの frames を読んで「進んでいる」と誤読する。
         r.check(statBodyZero(w->m.slots[3]),
                 "in_use == 0 の枠は中身も必ずゼロ (frames が残っていない)");
-        // **params[] は消さない。**ここが「アプリが走っていなくても EQ が生き延びる」本体。
         r.check(paramsIntact(&w->m, 3, 7),
                 "パラメータ枠は無傷 (曲線 %d 点・バンド 10・gen 7 が残っている)",
                 caeq::kCurvePoints);
@@ -1308,31 +1101,20 @@ void runSlotLifecycleSection(Report& r) {
         delete w;
     }
 
-    // --- a2. 生存確認の規則 — **誤りの向きが被害の向き** ---------------------
-    //
-    // `/proc/<pid>` を見に行った結果の翻訳。**`ca_eq_proc.h` は POSIX なのでホストでは
-    // 1 行も回らない**ので、規則だけを `ca_eq_pick.h` に置いてここで撃つ。
-    //
-    // ⚠️ `access(path, F_OK) == 0` と書くと、`ENOENT` 以外の errno が全部「死んでいる」に
-    // 潰れる。回収は「死んだ枠を空きに戻す」操作なので、**そのまま「生きている枠を奪う」
-    // 向きに反転する。**短く見えるが等価ではない。
     {
         r.check(caeq::aliveFromAccess(0, 0), "見に行けた = 生きている");
         r.check(!caeq::aliveFromAccess(-1, ENOENT), "ENOENT だけが「死んでいる」");
-        // **拒否系。ここが false になったら、生きているプロセスの枠を奪いに行く。**
         r.check(caeq::aliveFromAccess(-1, EACCES), "EACCES は「分からない」= 生きている扱い");
         r.check(caeq::aliveFromAccess(-1, EPERM), "EPERM は「分からない」= 生きている扱い");
         r.check(caeq::aliveFromAccess(-1, ENAMETOOLONG),
                 "そのほかの errno も「分からない」= 生きている扱い");
-        // errno が 0 のまま非 0 が返る実装もありうる。**ENOENT でなければ死とは言わない。**
         r.check(caeq::aliveFromAccess(-1, 0), "errno が立っていなければ死とは言わない");
     }
 
-    // --- b. 死んだ枠だけを回収する -------------------------------------------
     {
         ShmWithCanary* w = newCanaryShm();
         fillAllSlots(&w->m, CA_AUDIO_SESSION_DEVICE);
-        PidTable t{{1002, 1005}, 2};       // 枠 2 と 5 の持ち主だけ生きている
+        PidTable t{{1002, 1005}, 2};
 
         const uint32_t freed = caeq::reclaimDeadSlots(&w->m, PidTable::fn, &t, 0);
         r.check(freed == 6u, "死んでいる 6 枠だけを回収した (%u)", freed);
@@ -1349,7 +1131,7 @@ void runSlotLifecycleSection(Report& r) {
         delete w;
     }
 
-    {   // pid が全部生きていれば 1 つも回収しない。**回収の向きが逆に倒れたら落ちる。**
+    {
         ShmWithCanary* w = newCanaryShm();
         fillAllSlots(&w->m, CA_AUDIO_SESSION_DEVICE);
         PidTable t{{1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007}, 8};
@@ -1358,18 +1140,17 @@ void runSlotLifecycleSection(Report& r) {
         delete w;
     }
 
-    {   // **自分の枠は回収しない。**生存確認が「死んでいる」と答えても外す —
-        // 生存確認は差し替え可能な部品なので、ここの安全性をあちらの正しさに預けない。
+    {
         ShmWithCanary* w = newCanaryShm();
         fillAllSlots(&w->m, CA_AUDIO_SESSION_DEVICE);
-        PidTable t{{0}, 0};                // 誰も生きていないと答える表
+        PidTable t{{0}, 0};
         const uint32_t freed = caeq::reclaimDeadSlots(&w->m, PidTable::fn, &t, 1004);
         r.check(freed == 7u && w->m.slots[4].in_use == CA_SHM_MAGIC,
                 "pid == 自分 (1004) の枠は回収されない (回収 %u / 枠 4 は使用中のまま)", freed);
         delete w;
     }
 
-    {   // attach の途中 (pid == 0) の枠に触らない。触ると相手の初期化を壊す。
+    {
         ShmWithCanary* w = newCanaryShm();
         putStatSlot(&w->m, 0, 0, CA_AUDIO_SESSION_DEVICE);
         PidTable t{{0}, 0};
@@ -1379,7 +1160,7 @@ void runSlotLifecycleSection(Report& r) {
         delete w;
     }
 
-    {   // 生存確認を渡さなければ回収そのものを行わない (syscall を撃たない経路)。
+    {
         ShmWithCanary* w = newCanaryShm();
         fillAllSlots(&w->m, CA_AUDIO_SESSION_DEVICE);
         r.check(caeq::reclaimDeadSlots(&w->m, nullptr, nullptr, 0) == 0u,
@@ -1387,7 +1168,6 @@ void runSlotLifecycleSection(Report& r) {
         delete w;
     }
 
-    // --- c. 枠を取る — **不具合の本体** --------------------------------------
     {
         ShmWithCanary* w = newCanaryShm();
         PidTable t{{0}, 0};
@@ -1398,30 +1178,27 @@ void runSlotLifecycleSection(Report& r) {
         delete w;
     }
 
-    {   // **これが直した不具合。**8 枠全部が使用中で持ち主が全員死んでいる状態は、
-        // 修正前は「枠が取れない = EQ が黙って完全な素通し」だった。
+    {
         ShmWithCanary* w = newCanaryShm();
         fillAllSlots(&w->m, CA_AUDIO_SESSION_DEVICE);
         for (uint32_t i = 0; i < CA_SHM_SLOTS; i++) {
-            w->m.slots[i].frames = 12345u + i;     // 残骸に見せかける
+            w->m.slots[i].frames = 12345u + i;
             putParams(&w->m, i, 20u + i);
         }
-        PidTable t{{0}, 0};                        // 全員死んでいる
+        PidTable t{{0}, 0};
 
         const uint32_t got = caeq::acquireSlot(&w->m, PidTable::fn, &t, 999);
         r.check(got == 0u, "8 枠全部が残骸なら、回収して枠 0 が取れる (返り値 %u)", got);
         r.check(w->m.slots[0].in_use == CA_SHM_MAGIC,
                 "取った枠は使用中 (中身は呼び手がこれから埋める)");
         r.check(w->m.slots[0].frames == 0u, "取った枠の frames は 0 に戻っている (残骸の値ではない)");
-        // **同じ添字を取り直せば、そこにユーザの曲線が残っている。**
-        // これが params[] を消さない理由 (2026-08-19 に実機で確認した並び)。
         r.check(paramsIntact(&w->m, 0, 20),
                 "回収した枠のパラメータは無傷 — 取り直せば EQ がそのまま復帰する");
         r.check(canaryIntact(*w), "番兵が無傷");
         delete w;
     }
 
-    {   // 全部生きていれば取れない。**回収が「生きている枠を奪う」向きに倒れたら落ちる。**
+    {
         ShmWithCanary* w = newCanaryShm();
         fillAllSlots(&w->m, CA_AUDIO_SESSION_DEVICE);
         PidTable t{{1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007}, 8};
@@ -1437,7 +1214,7 @@ void runSlotLifecycleSection(Report& r) {
         delete w;
     }
 
-    {   // 全部が自分の枠なら取れない (自分の観測点を自分で消さない)。
+    {
         ShmWithCanary* w = newCanaryShm();
         for (uint32_t i = 0; i < CA_SHM_SLOTS; i++) putStatSlot(&w->m, i, 555, 0);
         PidTable t{{0}, 0};
@@ -1446,7 +1223,7 @@ void runSlotLifecycleSection(Report& r) {
         delete w;
     }
 
-    {   // 生存確認を渡さない経路 — 空きは取れるが、残骸は回収しない。
+    {
         ShmWithCanary* w = newCanaryShm();
         fillAllSlots(&w->m, CA_AUDIO_SESSION_DEVICE);
         r.check(caeq::acquireSlot(&w->m, nullptr, nullptr, 999) == caeq::kNoSlot,
@@ -1457,7 +1234,7 @@ void runSlotLifecycleSection(Report& r) {
         delete w;
     }
 
-    {   // 生きた枠と残骸が混在。**残骸だけが空き、生きた枠は動かない。**
+    {
         ShmWithCanary* w = newCanaryShm();
         fillAllSlots(&w->m, CA_AUDIO_SESSION_DEVICE);
         PidTable t{{1003}, 1};
@@ -1468,14 +1245,11 @@ void runSlotLifecycleSection(Report& r) {
         delete w;
     }
 
-    // --- d. 同時に取りに来ても重ならない -------------------------------------
     {
         ShmWithCanary* w = newCanaryShm();
         fillAllSlots(&w->m, CA_AUDIO_SESSION_DEVICE);
-        PidTable t{{0}, 0};                        // 8 枠全部が残骸
+        PidTable t{{0}, 0};
 
-        // **8 スレッドが同時に「回収して取る」。**回収と CAS が噛み合っていなければ、
-        // 同じ枠を 2 人が持つか、回収した枠を誰も取れない形で落ちる。
         constexpr int kThreads = CA_SHM_SLOTS;
         uint32_t got[kThreads] = {};
         std::vector<std::thread> th;
@@ -1501,9 +1275,6 @@ void runSlotLifecycleSection(Report& r) {
         delete w;
     }
 
-    // --- e. 「枠が尽きた」と「繋がっていない」を分ける材料 --------------------
-    //
-    // どちらも live_count == 0 になる。**分けるのは used_count / slot_count だけ。**
     {
         ShmWithCanary* w = newCanaryShm();
         FakeAlive alive;
@@ -1513,7 +1284,6 @@ void runSlotLifecycleSection(Report& r) {
                 "1 枠も使われていない = イヤホンが繋がっていない (使用中 %u/%u)",
                 p.used_count, p.slot_count);
 
-        // 8 枠が全部「生きているがイヤホン側でない」= 枠が尽きた状態。
         fillAllSlots(&w->m, 77);
         p = caeq::pickDeviceSlot(&w->m, FakeAlive::fn, &alive);
         r.check(p.status == caeq::SlotPick::kNone && p.live_count == 0u &&
@@ -1522,8 +1292,6 @@ void runSlotLifecycleSection(Report& r) {
                 p.used_count, p.slot_count, p.other_count);
         delete w;
 
-        // pid == 0 の枠は stale にも other にも数えないが、**used には数える** —
-        // ここを落とすと「まだ空きがある」に見えて、枯渇を「繋がっていない」と報告する。
         ShmWithCanary* w2 = newCanaryShm();
         for (uint32_t i = 0; i < CA_SHM_SLOTS; i++) putStatSlot(&w2->m, i, 0, 0);
         p = caeq::pickDeviceSlot(&w2->m, FakeAlive::fn, &alive);
@@ -1533,11 +1301,6 @@ void runSlotLifecycleSection(Report& r) {
         delete w2;
     }
 
-    // --- f. 鮮度 — 音が来ていない枠で「標準モード」と言わない -----------------
-    //
-    // ⚠️ `fir_flags` を書くのは `process()` だけ。1 ブロックも回っていない枠では
-    // 全欄が 0 で、**素で表を引くと kNotRequested (= 標準モード) に化ける。**
-    // ユーザが高精度を選んだ直後にいちばん出やすい嘘。
     {
         ca_slot_t s{};
         ca_eq_slot_t q{};
@@ -1548,12 +1311,10 @@ void runSlotLifecycleSection(Report& r) {
         r.check(caeq::firWhyReported(s, &q) == caeq::FirWhy::kNoAudio,
                 "入口は「まだ音が来ていない」と答える");
 
-        // 高精度を頼んであっても、まだ 1 ブロックも回っていなければ理由は言えない。
         s.fir_flags = CA_FIR_F_REQUESTED | CA_FIR_F_ADDRESSABLE | CA_FIR_F_ARENA;
         r.check(caeq::firWhyReported(s, &q) == caeq::FirWhy::kNoAudio,
                 "旗が立っていても frames == 0 なら「まだ音が来ていない」");
 
-        // **44.1 kHz の実物。**block 896 → 2P 1792 = 2^8·7 は 5-smooth でないので biquad。
         s.frames = 896;
         s.sample_rate = 44100;
         s.block_frames = 896;
@@ -1570,12 +1331,6 @@ void runSlotLifecycleSection(Report& r) {
                 "鳴っていれば理由は要らない");
     }
 
-    // --- g. アプリへ渡す綴り -------------------------------------------------
-    //
-    // **`caeqset` が吐く 1 行の中身そのもの。**綴りが変わるとアプリが理由を読めなくなる
-    // (アプリは未知の綴りを「原因不明」に落とす)。**添字ごと固定する** — 値を足したときに
-    // 順序がずれたら落ちる。`firWhyToken` に `default:` を置いていないので、
-    // 値を足すこと自体はコンパイラ (-Werror=switch) が止める。
     {
         static const char* const kExpect[] = {
             "running", "no_audio", "not_requested", "not_addressable", "no_arena",
@@ -1591,18 +1346,10 @@ void runSlotLifecycleSection(Report& r) {
             }
         }
         r.check(ok, "理由の綴り %d 個が添字ごと一致する (アプリとの契約)", kCount);
-        // **値を足したのに綴りの表を直し忘れたら、ここが非空になって落ちる。**
         r.check(caeq::firWhyToken(static_cast<caeq::FirWhy>(kCount))[0] == '\0',
                 "%d 個で全部 (足したら綴りの表も一緒に直すこと)", kCount);
     }
 
-    // --- h. 枠を取ったあとの宛先 (param_slot) — 再取得が宛先を潰さない --------
-    //
-    // 症状の形: 生成時に枠が尽きていたインスタンスが SET_PARAM (id=2) で params[5] を
-    // 宛てられて鳴っている。あとで統計の枠が空いて取れたとき、宛先まで取った添字へ
-    // 付け替えると、**ユーザの曲線は params[5] に残ったまま読み手だけが空の枠へ移り、
-    // EQ が黙って素通しに戻る** — 「生きている側が空の枠を読む」症状を回収の修正自身が
-    // 作り直す。決定は caeq::paramSlotAfterAttach に 1 本化してあり、ここで表ごと固定する。
     {
         r.check(caeq::paramSlotAfterAttach(CA_PARAM_SLOT_NONE, 3) == 3u,
                 "宛先が未割り当てなら、取った枠と同じ添字が既定 (初回の attach)");
@@ -1613,15 +1360,12 @@ void runSlotLifecycleSection(Report& r) {
         r.check(caeq::paramSlotAfterAttach(CA_SHM_SLOTS, 2) == 2u,
                 "範囲外 (%d 以上) はすべて未割り当て扱い", CA_SHM_SLOTS);
 
-        // 書き手との突き合わせ。読み手が保った宛先を統計の枠に公開すれば、
-        // 書き手 (pickDeviceSlot) も同じ params[5] を write 先に返す —
-        // **書き手と読み手が同じ枠で合流する**ことを両側から見る。
         ShmWithCanary* w = newCanaryShm();
         PidTable t{{0}, 0};
         const uint32_t taken = caeq::acquireSlot(&w->m, PidTable::fn, &t, 999);
         const uint32_t reader = caeq::paramSlotAfterAttach(5u, taken);
         putStatSlot(&w->m, taken, 4242, CA_AUDIO_SESSION_DEVICE);
-        w->m.slots[taken].param_slot = reader;   // ca_stats_take_slot が公開するのと同じ
+        w->m.slots[taken].param_slot = reader;
         FakeAlive alive;
         const caeq::SlotPickResult p = caeq::pickDeviceSlot(&w->m, FakeAlive::fn, &alive);
         r.check(taken == 0u && reader == 5u,

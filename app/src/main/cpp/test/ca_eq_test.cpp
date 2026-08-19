@@ -1,9 +1,3 @@
-// EQ のオフラインハーネス。ホスト (Windows / Linux) でビルドして走らせる。
-//
-// これがある理由: `.so` からは logcat が出ない。実機だけで DSP を書くと、係数の 1 文字の
-// 間違いを共有メモリのピーク値だけで追うことになる。ここで落ちるものは端末に載せない。
-//
-// 参照実装は llmdocs/tools/eq/ の Python スクリプト。突き合わせる数値はそこから取ってある。
 
 #include <atomic>
 #include <chrono>
@@ -31,17 +25,13 @@ namespace {
 
 constexpr double kFs = 48000.0;
 
-// --------------------------------------------------------------------------
-// 1. RBJ の係数。llmdocs/tools/eq/13_cpp_golden.py が出した値。
-// --------------------------------------------------------------------------
-
 struct Golden {
     BandType type;
     double fs;
     double fc;
     double q;
     double gain_db;
-    double coef[5];  // b0 b1 b2 a1 a2 (a0 で正規化済み)
+    double coef[5];
 };
 
 const Golden kGolden[] = {
@@ -96,7 +86,6 @@ void checkCoefficients(Report& r) {
                 typeName(g.type), g.fs, g.fc, g.q, g.gain_db, worst);
     }
 
-    // RBJ の性質: peaking は fc でちょうど設計値、シェルフは fc で半分。
     for (const Golden& g : kGolden) {
         const Band b{g.type, g.fc, g.q, g.gain_db};
         const caeq::Coef k = caeq::designTdf2(b, g.fs);
@@ -106,10 +95,6 @@ void checkCoefficients(Report& r) {
                 typeName(g.type), g.fc, at_fc, want);
     }
 }
-
-// --------------------------------------------------------------------------
-// テスト用の設定
-// --------------------------------------------------------------------------
 
 Params makeParams(std::initializer_list<Band> bands, double preamp_db = 0.0) {
     Params p;
@@ -122,7 +107,6 @@ Params makeParams(std::initializer_list<Band> bands, double preamp_db = 0.0) {
     return p;
 }
 
-// ISO 1/3 oct の 31 バンド。実際のグラフィック EQ の最大構成。
 Params make31Band(double gain_scale) {
     static const double kIso[31] = {20,   25,   31.5, 40,   50,   63,   80,    100,  125,  160,
                                     200,  250,  315,  400,  500,  630,  800,   1000, 1250, 1600,
@@ -138,7 +122,6 @@ Params make31Band(double gain_scale) {
     return p;
 }
 
-// 1 チャンネルの信号を Eq に通す。block ごとに区切って呼ぶ。
 std::vector<float> runMono(Eq& eq, const std::vector<float>& x, int block) {
     std::vector<float> y(x.size());
     size_t i = 0;
@@ -156,7 +139,6 @@ Eq makeReady(Structure s, const Params& p, int channels = 1, double fs = kFs) {
     eq.configure(fs, channels, s);
     eq.snapParams(p);
     eq.setActive(true);
-    // フェードを飛ばして wet = 1 から始める (係数の検証にフェードを混ぜない)。
     eq.setFadeMillis(0.0);
     std::vector<float> zero(static_cast<size_t>(channels), 0.0f);
     eq.process(zero.data(), zero.data(), 1);
@@ -164,14 +146,10 @@ Eq makeReady(Structure s, const Params& p, int channels = 1, double fs = kFs) {
     return eq;
 }
 
-// --------------------------------------------------------------------------
-// 2. インパルス応答の FFT が設計した振幅特性と一致するか
-// --------------------------------------------------------------------------
-
 void checkResponse(Report& r) {
     r.section("2. インパルス応答の FFT と設計した振幅特性");
 
-    const size_t kN = 1u << 18;  // 5.46 s @ 48 kHz。20 Hz Q=4 の減衰でも十分長い
+    const size_t kN = 1u << 18;
     catest::Fft fft(kN);
 
     struct Case {
@@ -218,10 +196,6 @@ void checkResponse(Report& r) {
     }
 }
 
-// --------------------------------------------------------------------------
-// 3. 転置形 II と SVF の出力差
-// --------------------------------------------------------------------------
-
 void checkStructures(Report& r) {
     r.section("3. 転置形 II と SVF の出力差 (同じ伝達関数を別の状態変数で実現している)");
 
@@ -259,13 +233,10 @@ void checkStructures(Report& r) {
                 den += static_cast<double>(ya[i]) * static_cast<double>(ya[i]);
             }
             const double rel = catest::dbOf(std::sqrt(num / den));
-            // 出力は float なので、差は float の丸め (-145 dB 付近) で床につく。
             r.check(rel < -130.0, "%-18s %-24s 相対差 RMS %.1f dB", c.name, sig.name, rel);
         }
     }
 
-    // double のまま比べたときの差 (Python の -232 dB に対応する物差し)。
-    // Eq の出力は float なのでここでは素の biquad ループで測る。
     {
         const Band band{BandType::kPeaking, 20.0, 4.0, 6.0};
         const caeq::Coef kt = caeq::designTdf2(band, kFs);
@@ -295,15 +266,11 @@ void checkStructures(Report& r) {
     }
 }
 
-// --------------------------------------------------------------------------
-// 4. ブロック長・チャンネル数への非依存
-// --------------------------------------------------------------------------
-
 void checkBlockLength(Report& r) {
     r.section("4. ブロック長を変えても出力が同一か (IIR なら依存しないはず)");
 
     const Params p = make31Band(6.0);
-    const size_t kN = 49152;  // 512 / 1024 / 2048 / 960 のいずれでも割り切れる長さではない
+    const size_t kN = 49152;
     const std::vector<float> x = catest::makeLogSweep(kN, kFs, 20.0, 20000.0, 0.5);
 
     for (Structure s : {Structure::kTdf2, Structure::kSvf}) {
@@ -321,8 +288,6 @@ void checkBlockLength(Report& r) {
         }
     }
 
-    // ランプ中も同じか。刻み目をブロック境界ではなくランプの経過サンプル数で決めている
-    // ことの検証。ここが崩れると「960 のスレッドと 2048 のスレッドで音が違う」になる。
     for (Structure s : {Structure::kTdf2, Structure::kSvf}) {
         const char* sname = (s == Structure::kTdf2) ? "TDF2" : "SVF ";
         const Params p0 = makeParams({Band{BandType::kPeaking, 120.0, 1.0, -6.0}});
@@ -348,7 +313,6 @@ void checkBlockLength(Report& r) {
                 y_ref = y;
                 continue;
             }
-            // 差し替えの位置はブロック境界に丸められるので、そこを跨ぐ範囲は比べない。
             size_t diff = 0;
             for (size_t k = 0; k < kN; k++) {
                 if (k >= kN / 2 - 4096 && k <= kN / 2 + 8192) continue;
@@ -369,7 +333,6 @@ void checkChannels(Report& r) {
     for (Structure s : {Structure::kTdf2, Structure::kSvf}) {
         const char* sname = (s == Structure::kTdf2) ? "TDF2" : "SVF ";
         for (int ch : {2, 12}) {
-            // チャンネルごとに別の信号を入れて、混ざっていないことを見る。
             std::vector<std::vector<float>> mono;
             for (int c = 0; c < ch; c++) {
                 mono.push_back(catest::makeNoise(kN, 0.2 + 0.05 * c, 1000 + c));
@@ -410,10 +373,6 @@ void checkChannels(Report& r) {
     }
 }
 
-// --------------------------------------------------------------------------
-// 6. NaN / Inf
-// --------------------------------------------------------------------------
-
 void checkNonFinite(Report& r) {
     r.section("6. NaN / Inf (IIR は 1 サンプルで恒久的に死ぬ)");
 
@@ -424,7 +383,6 @@ void checkNonFinite(Report& r) {
         const char* sname = (s == Structure::kTdf2) ? "TDF2" : "SVF ";
         std::vector<float> clean = catest::makeNoise(kN, 0.3, 4242);
 
-        // 汚した入力。NaN・+Inf・-Inf を 1 ブロック目に混ぜる。
         std::vector<float> dirty = clean;
         dirty[100] = std::nanf("");
         dirty[101] = std::numeric_limits<float>::infinity();
@@ -439,8 +397,6 @@ void checkNonFinite(Report& r) {
         r.check(b.scrubbedBlocks() > 0, "%s 入力の非有限値を検出した (%u ブロック)", sname,
                 b.scrubbedBlocks());
 
-        // 汚れが通り過ぎた後、きれいな入力と同じ挙動に戻るか。
-        // (IIR なので状態は違うが、有限で発散していないことが本題)
         double worst = 0.0;
         for (size_t i = kN - 2400; i < kN; i++) {
             const double d = std::fabs(static_cast<double>(y_dirty[i]));
@@ -453,8 +409,6 @@ void checkNonFinite(Report& r) {
     }
 
 #ifdef CA_EQ_DSP_TEST_HOOKS
-    // 状態そのものが壊れた場合の復帰。入力側で潰しているので通常は起こり得ないが、
-    // 逃げ道が生きていることを直接確かめる。
     for (Structure s : {Structure::kTdf2, Structure::kSvf}) {
         const char* sname = (s == Structure::kTdf2) ? "TDF2" : "SVF ";
         Eq eq = makeReady(s, p);
@@ -476,11 +430,6 @@ void checkNonFinite(Report& r) {
 #endif
 }
 
-// --------------------------------------------------------------------------
-// 7. クリック (時変)
-// --------------------------------------------------------------------------
-
-// 04_click_measurement.py と同じ物差し。6 kHz 以上の残差の、変化点まわりのピーク。
 double clickDb(const std::vector<float>& y, size_t t) {
     static const std::vector<catest::Sos> hp = catest::butterworthHighpass(8, 6000.0, kFs);
     const std::vector<double> res = catest::sosFilt(hp, catest::toDouble(y));
@@ -495,7 +444,6 @@ struct ClickSetup {
     int block = 960;
 };
 
-// 前半を p0、後半を p1 で通したときのクリック。
 double measureClick(const ClickSetup& s, const Params& p0, const Params& p1,
                     bool zero_state_on_change = false) {
     const size_t kN = 48000;
@@ -530,7 +478,6 @@ void checkClick(Report& r) {
     const Params p0 = makeParams({Band{BandType::kPeaking, 120.0, 1.0, -6.0}});
     const Params p1 = makeParams({Band{BandType::kPeaking, 120.0, 1.0, 12.0}});
 
-    // ブロックを T = 24000 にすると差し替えがちょうど半分で入る。
     ClickSetup base;
     base.block = 24000;
 
@@ -558,7 +505,6 @@ void checkClick(Report& r) {
         r.note("  %5.0f ms %13.1f %14.1f %14.1f %13.1f", ms, v[0], v[1], v[2], v[3]);
     }
 
-    // 参照値との突き合わせ。Python の coef/32smp 列と coef/sample 列。
     {
         ClickSetup s = base;
         s.ramp_ms = 0.0;
@@ -578,7 +524,6 @@ void checkClick(Report& r) {
                 "10 ms / 32 サンプルの階段 %.1f dBFS (Python の参照値 -84.7)", per_32);
     }
 
-    // 状態をゼロにする「よくある間違い」。
     {
         ClickSetup s = base;
         s.ramp_ms = 0.0;
@@ -593,8 +538,6 @@ void checkClick(Report& r) {
 void checkFcSweep(Report& r) {
     r.section("8. fc を動かしたとき — 係数補間とパラメータ補間の差");
 
-    // ゲインは固定して fc だけ 2 オクターブ動かす。既存の実測 (-114.3 / -113.9) は
-    // ゲイン変更を測ったものなので、そこからは補間方式の差が読めない。
     const Params p0 = makeParams({Band{BandType::kPeaking, 120.0, 4.0, 12.0}});
     const Params p1 = makeParams({Band{BandType::kPeaking, 480.0, 4.0, 12.0}});
 
@@ -619,7 +562,6 @@ void checkFcSweep(Report& r) {
         r.note("  %5.0f ms %10.1f %14.1f %13.1f %13.1f", ms, v[0], v[1], v[2], v[3]);
     }
 
-    // ゲインだけを動かしたときは差が出ないことも確かめる (切り分けの片側)。
     const Params g0 = makeParams({Band{BandType::kPeaking, 120.0, 1.0, -6.0}});
     const Params g1 = makeParams({Band{BandType::kPeaking, 120.0, 1.0, 12.0}});
     ClickSetup s = base;
@@ -631,7 +573,6 @@ void checkFcSweep(Report& r) {
     r.check(std::fabs(gc - gp) < 3.0,
             "ゲインだけなら補間方式の差は小さい: 係数 %.1f / パラメータ %.1f dBFS", gc, gp);
 
-    // 過渡のオーバーシュート。ランプ中の出力ピークが定常のピークをどれだけ超えるか。
     for (Structure st : {Structure::kTdf2, Structure::kSvf}) {
         for (Interp ip : {Interp::kCoef, Interp::kParam}) {
             const size_t kN = 48000, kT = kN / 2;
@@ -645,7 +586,7 @@ void checkFcSweep(Report& r) {
             eq.process(x.data() + kT, y.data() + kT, static_cast<int>(kN - kT));
 
             const std::vector<double> yd = catest::toDouble(y);
-            const double during = catest::peakAbs(yd, kT, kT + 1440);      // ランプ + 20 ms
+            const double during = catest::peakAbs(yd, kT, kT + 1440);
             const double steady = catest::peakAbs(yd, kN - 9600, kN);
             r.note("  オーバーシュート %s/%s: ランプ中 %.4f / 定常 %.4f = %+.2f dB",
                    st == Structure::kTdf2 ? "TDF2" : "SVF ",
@@ -679,7 +620,6 @@ void checkFade(Report& r) {
                                                "(Python の参照値 %.1f)", ms, click, want);
     }
 
-    // idle になったら ABI 側が -ENODATA を返してよい。
     {
         Eq eq;
         eq.configure(kFs, 1, Structure::kTdf2);
@@ -695,12 +635,6 @@ void checkFade(Report& r) {
     }
 }
 
-// --------------------------------------------------------------------------
-// 10. 時変安定性
-// --------------------------------------------------------------------------
-
-// 素の TDF2 / SVF ループで、係数を全振幅で振り続けたときの成長率 (dB/s)。
-// 09_time_varying_stability.py の再現。API を通さない「理論側」の物差し。
 double rawGrowthDbPerS(Structure s, const Band& ba, const Band& bb, double fmod, double secs) {
     const caeq::Coef ka = caeq::design(ba, kFs, s);
     const caeq::Coef kb = caeq::design(bb, kFs, s);
@@ -779,8 +713,6 @@ void checkStability(Report& r) {
         }
     }
 
-    // API を通した場合。取り込みが process() 1 回につき 1 回なので、変調の上限は
-    // ブロック長で決まる。ここが「構造的に発散へ行けない」ことの検証。
     for (int block : {512, 960, 2048}) {
         const double max_hz = kFs / (2.0 * block);
         for (Structure s : {Structure::kTdf2, Structure::kSvf}) {
@@ -791,7 +723,7 @@ void checkStability(Report& r) {
             Params pb = makeParams({b});
             eq.snapParams(pa);
             eq.setActive(true);
-            eq.setRampMillis(1000.0 * block / kFs);  // 次のブロックまでで到達する長さ
+            eq.setRampMillis(1000.0 * block / kFs);
             std::vector<float> zero(static_cast<size_t>(block), 0.0f);
             std::vector<float> out(static_cast<size_t>(block));
             eq.process(zero.data(), out.data(), block);
@@ -815,9 +747,8 @@ void checkStability(Report& r) {
         }
     }
 
-    // 現実的な繰り返し: ±12 dB を 5 ms のランプで往復させ続けて発散しないか。
     for (Structure s : {Structure::kTdf2, Structure::kSvf}) {
-        const size_t kN = 480000;  // 10 秒
+        const size_t kN = 480000;
         const std::vector<float> x = catest::makeNoise(kN, 0.3, 31337);
         Eq eq = makeReady(s, makeParams({a}));
         eq.setRampMillis(5.0);
@@ -841,16 +772,11 @@ void checkStability(Report& r) {
     }
 }
 
-// --------------------------------------------------------------------------
-// 11. 処理時間 / 非正規化数
-// --------------------------------------------------------------------------
-
 double nsPerFrame(Eq& eq, int ch, int block, int iters) {
     std::vector<float> buf(static_cast<size_t>(block) * static_cast<size_t>(ch));
     Rng rng(7);
     for (float& v : buf) v = static_cast<float>(0.2 * rng.uniform());
     std::vector<float> out(buf.size());
-    // 一度回してキャッシュを温める。
     eq.process(buf.data(), out.data(), block);
     const auto t0 = std::chrono::steady_clock::now();
     for (int i = 0; i < iters; i++) eq.process(buf.data(), out.data(), block);
@@ -872,7 +798,6 @@ void checkPerf(Report& r) {
         }
     }
 
-    // ランプ中の追加費用。刻みと補間方式で変わる。
     const Params p0 = make31Band(4.0);
     const Params p1 = make31Band(-4.0);
     for (Interp ip : {Interp::kCoef, Interp::kParam}) {
@@ -901,11 +826,6 @@ void checkPerf(Report& r) {
 void checkDenormal(Report& r) {
     r.section("12. 非正規化数 (ホストの x86-64 での実測。AArch64 の数字ではない)");
 
-    // 素の TDF2 ループを、値が通常の領域にあるときと非正規化数の領域にあるときで比べる。
-    // Eq 本体は無音が続くと状態をゼロに落とすので、ここでは意図的に素のループで測る。
-    //
-    // **入力も同じ領域に置くこと。**入力を 0 にすると通常の側も減衰して途中から
-    // 非正規化数に入り、両方が同じ数字になる (最初にこれで測って「比 1.02x」を見た)。
     const Band band{BandType::kPeaking, 1000.0, 1.0, 6.0};
     const caeq::Coef k = caeq::designTdf2(band, kFs);
     const int kIters = 2000000;
@@ -923,19 +843,16 @@ void checkDenormal(Report& r) {
         }
         const auto t1 = std::chrono::steady_clock::now();
         const double ns = std::chrono::duration<double, std::nano>(t1 - t0).count() / kIters;
-        // sink を捨てないことで最適化での消滅を防ぐ。空の書式文字列は -Wformat-zero-length に
-        // 掛かるので、到達しない側にも中身を持たせる。
         if (!std::isfinite(sink)) std::printf("(非有限)\n");
         return ns;
     };
 
     const double normal = run(1e-3);
-    const double denorm = run(1e-315);  // double の非正規化数は 2.2e-308 より下
+    const double denorm = run(1e-315);
     r.note("  通常の値 (1e-3):        %.3f ns/sample", normal);
     r.note("  非正規化数 (1e-315):    %.3f ns/sample  (比 %.1fx)", denorm, denorm / normal);
     r.note("  ※ 無音が続くと状態はここまで落ちる。入力が 0 のままなので自力では出られない");
 
-    // 無音が続いたときのゼロクリアが働くか。
     Eq eq = makeReady(Structure::kTdf2, makeParams({band}));
 #ifdef CA_EQ_DSP_TEST_HOOKS
     eq.injectState(1e-250);
@@ -951,10 +868,6 @@ void checkDenormal(Report& r) {
     r.check(eq2.denormalFlushes() == 0, "通常の減衰中はゼロクリアしない");
 #endif
 }
-
-// --------------------------------------------------------------------------
-// 13. パラメータの検査と取り込み
-// --------------------------------------------------------------------------
 
 void checkParamGuards(Report& r) {
     r.section("13. パラメータの検査と取り込み");
@@ -996,7 +909,6 @@ void checkParamGuards(Report& r) {
     }
     r.check(eq.activeBands() == 1, "却下しても前の設定が残っている (%d バンド)", eq.activeBands());
 
-    // 取り込みは process() 1 回につき 1 回。ここが変調速度の構造的な上限になる。
     {
         Eq e2;
         e2.configure(kFs, 1, Structure::kTdf2);
@@ -1015,7 +927,6 @@ void checkParamGuards(Report& r) {
                 e2.activeBands());
     }
 
-    // 段の増減で発散しないか。
     for (Structure s : {Structure::kTdf2, Structure::kSvf}) {
         const size_t kN = 96000;
         const std::vector<float> x = catest::makeTones(kN, kFs);
@@ -1041,16 +952,6 @@ void checkParamGuards(Report& r) {
     }
 }
 
-// --------------------------------------------------------------------------
-// 15. 共有メモリの seqlock — 書き手のスレッドを本当に立てて確かめる
-// --------------------------------------------------------------------------
-
-// generation から全フィールドを決めて、読み手が「この世代ならこの値」を照合できるようにする。
-// 1 つでもずれていれば、それは千切れた読みを採用したということ。
-//
-// **曲線 (401 点) も世代から決める。**版 4 で枠が 576 → 2176 B に増えたぶん、
-// 書き込みの途中を掴む窓が広がっている。曲線を照合に入れないと、この節は
-// 「増えた 4 分の 3 を見ていない」検査になる。
 void fillGeneration(ca_eq_slot_t* s, uint32_t gen) {
     s->generation = gen;
     s->flags = CA_EQ_FLAG_ENABLED;
@@ -1064,7 +965,6 @@ void fillGeneration(ca_eq_slot_t* s, uint32_t gen) {
         s->band[i].type = CA_EQ_BAND_PEAKING;
     }
     s->curve_gen = gen;
-    // 点ごとに違う値にする。全点同値だと、隣の世代の曲線を掴んでも一致してしまう。
     for (int i = 0; i < caeq::kCurvePoints; i++) {
         s->curve_db[i] = static_cast<float>((gen + static_cast<uint32_t>(i)) % 23) - 11.0f;
     }
@@ -1090,9 +990,6 @@ bool matchesGeneration(const ca_eq_slot_t& s) {
     return true;
 }
 
-// 統計の枠も同じやり方で。**向きが逆** (書き手が `.so`、読み手が外の caeqstat) で、
-// 2026-08-13 まではこちら側の seqlock が ca_eq.cpp の中にあってホストで一度も
-// 回っていなかった。枠の全域を世代から決めて、千切れを照合できるようにする。
 void fillStatSlot(ca_slot_t* s, uint32_t gen) {
     s->frames = static_cast<uint64_t>(gen) * 1000ull;
     s->sample_rate = 48000u + gen;
@@ -1112,8 +1009,6 @@ void fillStatSlot(ca_slot_t* s, uint32_t gen) {
     s->param_gen = gen;
     s->param_rejected = gen / 2u;
     s->session_id = CA_AUDIO_SESSION_DEVICE;
-    // **版 4 で足した末尾 (FIR の診断) まで照合に入れる。**枠が 128 → 256 B に
-    // 増えたぶん、書き込みの途中を掴む窓も広がっている。
     s->fir_state = gen % 5u;
     s->fir_flags = gen % 32u;
     s->fir_fill = gen;
@@ -1137,8 +1032,6 @@ void fillStatSlot(ca_slot_t* s, uint32_t gen) {
 bool matchesStatSlot(const ca_slot_t& s) {
     ca_slot_t want{};
     fillStatSlot(&want, static_cast<uint32_t>(s.frames / 1000ull));
-    // seq と in_use は照合の対象外 — seq は seqlock そのもの、in_use は
-    // seqlock の外で CAS される (ca_stats_attach / detach)。
     want.seq = s.seq;
     want.in_use = s.in_use;
     return std::memcmp(&s, &want, sizeof(ca_slot_t)) == 0;
@@ -1154,7 +1047,6 @@ void checkSeqlock(Report& r) {
             "並びが固定 (ca_eq_slot_t %zu / ca_eq_band_t %zu)", sizeof(ca_eq_slot_t),
             sizeof(ca_eq_band_t));
 
-    // 書き手と読み手を同時に回して、千切れた並びを採用しないことを見る。
     {
         auto* slot = new ca_eq_slot_t{};
         std::atomic<bool> stop{false};
@@ -1194,11 +1086,10 @@ void checkSeqlock(Report& r) {
         delete slot;
     }
 
-    // 書き手が書き込みの途中で死んだ場合。seq が奇数のまま残る。
     {
         ca_eq_slot_t slot{};
         fillGeneration(&slot, 7);
-        caeq::paramsBeginWrite(&slot);   // 奇数のまま放置 = 書き手が死んだ状態
+        caeq::paramsBeginWrite(&slot);
         ca_eq_slot_t snap;
         const auto t0 = std::chrono::steady_clock::now();
         const bool got = caeq::paramsRead(&slot, &snap);
@@ -1208,7 +1099,6 @@ void checkSeqlock(Report& r) {
                 "書き手が途中で死んでも %.1f us で諦める (スピンしない)", us);
     }
 
-    // 変換と検査。範囲の表は演算層にしか無いので、そこで弾かれることを見る。
     {
         Eq eq;
         eq.configure(kFs, 2, Structure::kTdf2);
@@ -1224,7 +1114,6 @@ void checkSeqlock(Report& r) {
         slot.band[5].type = 99;
         r.check(!caeq::paramsConvert(slot, &p), "未知の type を弾く");
 
-        // fc が Nyquist を越える並び。**送り手は fs を知らないので、ここが最後の砦。**
         fillGeneration(&slot, 3);
         slot.band[9].fc_hz = 30000.0f;
         const uint32_t before = eq.rejectedCount();
@@ -1233,11 +1122,6 @@ void checkSeqlock(Report& r) {
                 "48 kHz で fc 30 kHz の並びを丸ごと却下する");
     }
 
-    // --- 統計の向き (書き手が `.so`、読み手が caeqstat) ---------------------
-    //
-    // パラメータ側と同じ形で回す。**同じ共有メモリなのに片方向だけ網が無い**状態を
-    // 塞ぐのがこの節の目的で、ここが緑でも `caeqstat` の出力の正しさは何も言えない
-    // (見ているのは「千切れた枠を採用しないこと」だけ)。
     {
         auto* slot = new ca_slot_t{};
         slot->in_use = CA_SHM_MAGIC;
@@ -1278,15 +1162,13 @@ void checkSeqlock(Report& r) {
         delete slot;
     }
 
-    // 書き手が書き込みの途中で死んだ場合。**パラメータ側と挙動が違う** —
-    // こちらは諦めたときも dst を埋めて false を返す (caeqstat が印を付けて出すため)。
     {
         ca_slot_t slot{};
         slot.in_use = CA_SHM_MAGIC;
         fillStatSlot(&slot, 5);
-        caeq::statsBeginWrite(&slot);   // 奇数のまま放置 = 書き手が死んだ状態
+        caeq::statsBeginWrite(&slot);
         ca_slot_t snap{};
-        snap.frames = 0xDEADBEEFull;    // 埋め直されることを見るための印
+        snap.frames = 0xDEADBEEFull;
         const bool got = caeq::statsRead(&slot, &snap, 8);
         r.check(!got && snap.frames == 5000ull,
                 "統計: 書き手が途中で死んでも諦めて返り、その枠の中身は呼び手に届く");
@@ -1296,8 +1178,6 @@ void checkSeqlock(Report& r) {
 void checkRateChange(Report& r) {
     r.section("16. サンプルレートが変わったとき");
 
-    // 48 kHz で通る 20 kHz のバンドは、32 kHz では Nyquist を越える。
-    // runMono がインタリーブしない信号を渡すので 1 ch で組む。
     Eq eq;
     eq.configure(48000.0, 1, Structure::kTdf2);
     eq.setActive(true);
@@ -1312,12 +1192,10 @@ void checkRateChange(Report& r) {
     r.check(eq.activeBands() == 0 && eq.rejectedCount() == before + 1,
             "32 kHz に変わったら丸ごと捨てて平坦に戻す (勝手に fc を動かさない)");
 
-    // 32 kHz で収まる設定は通る。
     r.check(eq.snapParams(makeParams({Band{BandType::kPeaking, 12000.0, 2.0, 6.0}})) &&
                 eq.activeBands() == 1,
             "32 kHz で収まる設定は通る");
 
-    // 出力が有限であることも確かめる (係数が壊れていないこと)。
     std::vector<float> x = catest::makeNoise(4800, 0.3, 8);
     std::vector<float> y = runMono(eq, x, 960);
     r.check(catest::allFinite(y), "レート変更後の出力が有限");
@@ -1346,7 +1224,6 @@ void checkAccumulate(Report& r) {
     }
     r.check(worst < 1e-6, "ACCUMULATE は上書きせずに足す (最大差 %.2e)", worst);
 
-    // 無効かつフェード完了なら完全な素通し。
     Eq c;
     c.configure(kFs, 1, Structure::kTdf2);
     c.snapParams(p);
@@ -1359,23 +1236,6 @@ void checkAccumulate(Report& r) {
     r.check(same, "無効なあいだは入力をそのまま返す");
 }
 
-// --------------------------------------------------------------------------
-// 17. 実機で確かめること
-//
-// **実機は 1 台で、入れ替えるたびに時間がかかる。**一度の投入で全部確かめられるよう、
-// 「何が起きるはずか」と「違ったら何を疑うか」を並べる。数値はコードの定数から出しているので、
-// 既定を変えればこの一覧も一緒に動く (手で書いた表と違って古くならない)。
-// --------------------------------------------------------------------------
-
-// --------------------------------------------------------------------------
-// 17. 枠の選択 — 実機でしか出ない並びを静的に固定する
-// --------------------------------------------------------------------------
-//
-// **ここが間違うと、掛かる先が黙って変わる。**イヤホンの補正曲線がスピーカーに当たったり、
-// 2 台繋いだ人が「たまに別のイヤホンの設定になる」を踏んだりする。どちらも実機では
-// 「なんとなくおかしい」としか見えないので、並びのほうを固定して先に落とす。
-
-// 生きている pid の表。実機の /proc/<pid> の代わり。
 struct FakePids {
     uint64_t alive[8];
     int count;
@@ -1389,7 +1249,6 @@ bool fakePidAlive(uint64_t pid, void* user) {
     return false;
 }
 
-// 枠を 1 つ埋める。`.so` の ca_stats_attach が書くのと同じ顔ぶれ。
 void putSlot(ca_shm_t* m, uint32_t i, uint64_t pid, int32_t session) {
     ca_slot_t& s = m->slots[i];
     s.in_use = CA_SHM_MAGIC;
@@ -1399,8 +1258,6 @@ void putSlot(ca_shm_t* m, uint32_t i, uint64_t pid, int32_t session) {
     s.sample_rate = 48000;
 }
 
-// ca_stats_open() が書くのと同じ顔ぶれ。**ここを .so と食い違わせないこと** —
-// 食い違うと shmState の判定がハーネスでだけ通る。
 ca_shm_t* newShm() {
     auto* m = new ca_shm_t{};
     m->magic = CA_SHM_MAGIC;
@@ -1415,23 +1272,12 @@ ca_shm_t* newShm() {
 void checkSlotPick(Report& r) {
     r.section("17. 枠の選択 (書き手が「どの枠に書くか」を決める規則)");
 
-    // session_id は pad を潰して入れた。**ここがずれると版 2 の .so が書いた 0 を
-    // session_id として読むことになる** (共有メモリの版を上げてある理由でもある)。
-    // 版 4 で FIR の診断が付いて 256 B になったが、**版 3 の 128 B の並びは動かしていない。**
-    // ここがずれると版 2 の .so が書いた 0 を session_id として読むことになる。
     r.check(offsetof(ca_slot_t, session_id) == 124 && sizeof(ca_slot_t) == CA_SLOT_BYTES,
             "session_id は版 3 の 128 B の末尾のまま (offset %zu / 大きさ %zu)",
             offsetof(ca_slot_t, session_id), sizeof(ca_slot_t));
     r.check(CA_AUDIO_SESSION_DEVICE == -2, "AUDIO_SESSION_DEVICE は -2");
 
-    // --- 共有メモリそのものの状態 -----------------------------------------
-    //
-    // ⚠️ **version だけを見て「版ずれ」と言うと、毎回の起動で必ず嘘が出る。**
-    // post-fs-data は dd if=/dev/zero でファイルを作り、版を刻むのは ca_stats_open() =
-    // create_effect() からしか呼ばれない。**イヤホンを繋ぐまで version は 0 のまま。**
-
-    {   // **起動直後のゼロ埋め。**ここが「版ずれ」になると、登録した直後の未接続で
-        // 「アプリとモジュールの版が合っていません」が出る。真実は「繋がっていない」。
+    {
         auto* zero = new ca_shm_t{};
         r.check(caeq::shmState(zero) == caeq::ShmState::kNotInitialised,
                 "ゼロ埋めの共有メモリは「未初期化」— **版ずれではない**");
@@ -1446,7 +1292,6 @@ void checkSlotPick(Report& r) {
         r.check(caeq::shmState(m) == caeq::ShmState::kVersionMismatch,
                 "magic が正しくて版が古いのが**本物の版ずれ** (版 %u の .so)", m->version);
 
-        // magic が立つ前は版を信じない。ca_stats_open が magic を最後に書くのはこのため。
         m->magic = 0u;
         r.check(caeq::shmState(m) == caeq::ShmState::kNotInitialised,
                 "magic が 0 なら、版が何であれ「未初期化」");
@@ -1459,11 +1304,9 @@ void checkSlotPick(Report& r) {
 
     r.check(caeq::shmState(nullptr) == caeq::ShmState::kForeign, "nullptr を渡しても落ちない");
 
-    // --- 枠の選択 -----------------------------------------------------------
-
     FakePids pids{{100, 200, 300, 0, 0, 0, 0, 0}, 3};
 
-    {   // 何も生きていない = イヤホンが繋がっていない。**失敗ではない**
+    {
         ca_shm_t* m = newShm();
         const caeq::SlotPickResult p = caeq::pickDeviceSlot(m, fakePidAlive, &pids);
         r.check(p.status == caeq::SlotPick::kNone && p.live_count == 0,
@@ -1471,7 +1314,7 @@ void checkSlotPick(Report& r) {
         delete m;
     }
 
-    {   // イヤホン 1 台だけ。
+    {
         ca_shm_t* m = newShm();
         putSlot(m, 3, 100, CA_AUDIO_SESSION_DEVICE);
         const caeq::SlotPickResult p = caeq::pickDeviceSlot(m, fakePidAlive, &pids);
@@ -1480,11 +1323,10 @@ void checkSlotPick(Report& r) {
         delete m;
     }
 
-    {   // **通常の構成。**<postprocess> にも登録されていると、イヤホンが 1 台でも枠は複数立つ。
-        // ここを session_id で分けないと「2 台繋がっている」と誤判定して常に断ることになる。
+    {
         ca_shm_t* m = newShm();
-        putSlot(m, 0, 100, 0);                          // スピーカー / spatializer 側
-        putSlot(m, 1, 100, CA_AUDIO_SESSION_DEVICE);    // A2DP 側
+        putSlot(m, 0, 100, 0);
+        putSlot(m, 1, 100, CA_AUDIO_SESSION_DEVICE);
         const caeq::SlotPickResult p = caeq::pickDeviceSlot(m, fakePidAlive, &pids);
         r.check(p.status == caeq::SlotPick::kOk && p.param_slot == 1 && p.other_count == 1,
                 "DEVICE でない枠が同時に居ても、DEVICE の枠だけを選ぶ (枠 %u / 他 %u)",
@@ -1492,8 +1334,7 @@ void checkSlotPick(Report& r) {
         delete m;
     }
 
-    {   // **イヤホンが繋がっていないのにスピーカーで再生している状態。**
-        // session_id を見ないと、ここでスピーカーの枠に書いてしまう。
+    {
         ca_shm_t* m = newShm();
         putSlot(m, 0, 100, 0);
         const caeq::SlotPickResult p = caeq::pickDeviceSlot(m, fakePidAlive, &pids);
@@ -1502,9 +1343,9 @@ void checkSlotPick(Report& r) {
         delete m;
     }
 
-    {   // **死んだプロセスの枠は残る。**.so はプロセスの死で枠を掃除しない。
+    {
         ca_shm_t* m = newShm();
-        putSlot(m, 0, 999, CA_AUDIO_SESSION_DEVICE);    // 999 は死んでいる
+        putSlot(m, 0, 999, CA_AUDIO_SESSION_DEVICE);
         putSlot(m, 2, 200, CA_AUDIO_SESSION_DEVICE);
         const caeq::SlotPickResult p = caeq::pickDeviceSlot(m, fakePidAlive, &pids);
         r.check(p.status == caeq::SlotPick::kOk && p.param_slot == 2 && p.stale_count == 1,
@@ -1513,7 +1354,7 @@ void checkSlotPick(Report& r) {
         delete m;
     }
 
-    {   // 残骸だけ。in_use を信じると「繋がっている」に見える。
+    {
         ca_shm_t* m = newShm();
         putSlot(m, 0, 999, CA_AUDIO_SESSION_DEVICE);
         putSlot(m, 1, 998, CA_AUDIO_SESSION_DEVICE);
@@ -1523,7 +1364,7 @@ void checkSlotPick(Report& r) {
         delete m;
     }
 
-    {   // **イヤホンが 2 台。ここは断るのが正しい。**
+    {
         ca_shm_t* m = newShm();
         putSlot(m, 0, 100, CA_AUDIO_SESSION_DEVICE);
         putSlot(m, 1, 200, CA_AUDIO_SESSION_DEVICE);
@@ -1533,7 +1374,7 @@ void checkSlotPick(Report& r) {
         delete m;
     }
 
-    {   // attach の途中 (CAS は通ったが pid はまだ)。次に呼べば埋まっている。
+    {
         ca_shm_t* m = newShm();
         putSlot(m, 0, 0, CA_AUDIO_SESSION_DEVICE);
         const caeq::SlotPickResult p = caeq::pickDeviceSlot(m, fakePidAlive, &pids);
@@ -1542,7 +1383,7 @@ void checkSlotPick(Report& r) {
         delete m;
     }
 
-    {   // 読みに行く枠が決まっていないインスタンスは、書いても素通しのまま。
+    {
         ca_shm_t* m = newShm();
         putSlot(m, 0, 100, CA_AUDIO_SESSION_DEVICE);
         m->slots[0].param_slot = CA_PARAM_SLOT_NONE;
@@ -1552,7 +1393,7 @@ void checkSlotPick(Report& r) {
         delete m;
     }
 
-    {   // SET_PARAM (id=2) で読み先を移した場合。**統計の添字ではなく param_slot に書く。**
+    {
         ca_shm_t* m = newShm();
         putSlot(m, 1, 100, CA_AUDIO_SESSION_DEVICE);
         m->slots[1].param_slot = 5;
@@ -1563,7 +1404,7 @@ void checkSlotPick(Report& r) {
         delete m;
     }
 
-    {   // slot_count より後ろは見ない。古い .so が少ない枠数で開いていた場合。
+    {
         ca_shm_t* m = newShm();
         m->slot_count = 2;
         putSlot(m, 4, 100, CA_AUDIO_SESSION_DEVICE);
@@ -1572,7 +1413,7 @@ void checkSlotPick(Report& r) {
         delete m;
     }
 
-    {   // in_use が立っていない枠は、他のフィールドが残っていても見ない。
+    {
         ca_shm_t* m = newShm();
         putSlot(m, 0, 100, CA_AUDIO_SESSION_DEVICE);
         m->slots[0].in_use = 0;
@@ -1679,14 +1520,11 @@ void printDeviceChecklist(Report& r) {
     r.note("   **実機で見るのは「経路」と「フレームワークの挙動」だけ。**演算の正しさは見ない");
 }
 
-}  // namespace
+}
 
-// 「高精度」(最小位相 FIR) 経路のセクション (19〜)。ca_eq_fir_test.cpp。
 void runFirSections(catest::Report& r);
 void runFirAlignmentSection(catest::Report& r);
-// 検分 (eqfir-gate) が足した見張り (28)。ca_eq_fir_gate_test.cpp。
 void runFirGateSections(catest::Report& r);
-// 共有メモリ v4 の境界 (30〜31) と枠の取得・回収 (32)。ca_eq_shm_test.cpp。
 void runShmSections(catest::Report& r);
 void runSlotLifecycleSection(catest::Report& r);
 void runPreampBoundarySection(catest::Report& r);
@@ -1716,12 +1554,12 @@ int main(int argc, char** argv) {
     checkRateChange(r);
     checkSlotPick(r);
     printDeviceChecklist(r);
-    runFirSections(r);          // 19〜27
-    runFirGateSections(r);      // 28 (検分が足した節)
-    runFirAlignmentSection(r);  // 29
-    runShmSections(r);          // 30
-    runSlotLifecycleSection(r);   // 32
-    runPreampBoundarySection(r);  // 33
+    runFirSections(r);
+    runFirGateSections(r);
+    runFirAlignmentSection(r);
+    runShmSections(r);
+    runSlotLifecycleSection(r);
+    runPreampBoundarySection(r);
 
     std::printf("\n%d / %d 件が通った。\n", r.total() - r.failures(), r.total());
     return r.failures() == 0 ? 0 : 1;
