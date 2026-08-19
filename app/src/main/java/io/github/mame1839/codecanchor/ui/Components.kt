@@ -51,14 +51,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.mame1839.codecanchor.R
 
-/**
- * 画面の中身に付ける余白。`Scaffold` が渡す [inner] に画面共通の余白を足す。
- *
- * **左右は足す前に落とさない。**切り欠き・丸い角・折り畳みのぶんが [inner] に入ってくるので、
- * 16.dp を直接書くと端の機種で文字が欠ける。
- *
- * 3 つの画面 (一覧 / 機器の詳細 / 音響処理) に同じ式が書かれていたものを 1 箇所にまとめたもの。
- */
 @Composable
 fun screenPadding(inner: PaddingValues): PaddingValues {
     val layoutDirection = LocalLayoutDirection.current
@@ -150,7 +142,6 @@ fun <T> ChoiceRow(
     onSelect: (T) -> Unit,
     modifier: Modifier = Modifier,
     description: String? = null,
-    // 選択肢の下に出す 1 行。行に常時出す説明ではなく、選ぶ瞬間にだけ読ませたいものはこちらへ。
     optionDescriptions: Map<T, String> = emptyMap(),
     enabled: Boolean = true,
 ) {
@@ -232,12 +223,6 @@ fun <T> ChoiceRow(
     }
 }
 
-/**
- * 別の画面を開く行。
- *
- * [value] には**いまの状態の要約**を渡す。開かないと何も分からない行にすると、
- * 押す前に「見に行く必要があるか」が判断できない。
- */
 @Composable
 fun NavigationRow(
     title: String,
