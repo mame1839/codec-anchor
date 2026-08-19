@@ -27,14 +27,6 @@ import org.robolectric.Shadows
 import org.robolectric.util.ReflectionHelpers
 import java.time.Duration
 
-/**
- * ライブ題材 (いま流れている音楽) の全遷移。
- *
- * 検知は [MusicPlaybackMonitor] を AudioManager 無しで注入し、raw の遷移 (onRaw) を直接振る。
- * デバウンスは main looper の postDelayed なので、Robolectric の時計送りで実時間なしに踏める。
- * 音そのもの (実機のデコーダ・他アプリの再生) はここでは扱わない — 実機の
- * AudioPlaybackCallback が本当に届くかは統合後に実機で見る。
- */
 @RunWith(RobolectricTestRunner::class)
 class EqFinderLiveTest {
 
@@ -42,15 +34,6 @@ class EqFinderLiveTest {
 
     private fun app() = RuntimeEnvironment.getApplication()
 
-    /**
-     * 枠の持ち主がこの機器になった状態 (begin/resume のガード eqOwner を通すため)。
-     * どちらも本物の経路で作る — 登録済みは永続ストア、出口は ShadowAudioManager の
-     * デバイス一覧。vm の状態を直接書く裏口を作らない。
-     *
-     * AudioDeviceInfoBuilder (Robolectric 4.16) に setAddress が無いので、address だけ
-     * AudioDevicePort の mAddress へ反射で入れる。android-all の内部名が変わったら
-     * 最後の check が理由ごと落とす。
-     */
     private fun vm(): MainViewModel {
         EqDeviceStore(app()).save(listOf(mac))
         val audioManager = app().getSystemService(android.media.AudioManager::class.java)
@@ -81,10 +64,6 @@ class EqFinderLiveTest {
         Shadows.shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(ms))
     }
 
-    // ------------------------------------------------------------------
-    // 検知のデバウンス
-    // ------------------------------------------------------------------
-
     @Test
     fun theQuietDirectionIsDebouncedAndPlayIsImmediate() {
         val m = monitor(quietDelayMs = 1_500)
@@ -92,12 +71,10 @@ class EqFinderLiveTest {
         val changes = mutableListOf<Boolean>()
         m.onChange = { changes += it }
 
-        // 現れる方向は即時。
         m.onRaw(true)
         assertTrue(m.active)
         assertEquals(listOf(true), changes)
 
-        // 消える方向は遅れて確定する。生値 (rawActive) だけが即時に落ちる。
         m.onRaw(false)
         assertFalse(m.rawActive)
         assertTrue("デバウンス前に落ちた", m.active)
@@ -108,7 +85,6 @@ class EqFinderLiveTest {
         assertEquals(listOf(true, false), changes)
     }
 
-    /** 曲間の一瞬の無音では警告が明滅しない — 窓の中で戻れば何も起きない。 */
     @Test
     fun aGapBetweenSongsDoesNotFlicker() {
         val m = monitor(quietDelayMs = 1_500)
@@ -118,15 +94,11 @@ class EqFinderLiveTest {
         m.onRaw(true)
         m.onRaw(false)
         idle(800)
-        m.onRaw(true) // 次の曲が始まった
+        m.onRaw(true)
         idle(3_000)
         assertTrue(m.active)
         assertEquals("明滅した", listOf(true), changes)
     }
-
-    // ------------------------------------------------------------------
-    // 開始と保存
-    // ------------------------------------------------------------------
 
     @Test
     fun liveBeginNeedsNoSongAndSavesALiveRecord() {
@@ -153,14 +125,10 @@ class EqFinderLiveTest {
     fun liveBeginIsGatedOnPlayingMusic() {
         val c = controller(vm(), monitor())
         c.chooseMaterial(true)
-        c.begin() // 音楽が流れていない
+        c.begin()
         assertEquals(EqFinderPhase.INTRO, c.phase)
         assertNull(EqFinderStore(app()).load())
     }
-
-    // ------------------------------------------------------------------
-    // 試行中の一時停止と heard の正直さ
-    // ------------------------------------------------------------------
 
     @Test
     fun silenceRaisesTheNoMusicPauseAndHonestHeardMarks() {
@@ -172,32 +140,23 @@ class EqFinderLiveTest {
         c.begin()
         assertEquals(EqFinderPhase.TRIAL, c.phase)
 
-        // 音楽が止まった直後 (デバウンスの窓の中): 一時停止はまだ立たないが、
-        // この間に押した候補を「聴いた」ことにはしない — 実際には何も鳴っていない。
         m.onRaw(false)
         assertEquals(EqFinderPause.NONE, c.pause)
         c.listen(EqFinderCandidate.B)
         assertEquals(EqFinderCandidate.B, c.selected)
         assertFalse("無音のまま聴いたことになった", c.bHeard)
 
-        // 窓が閉じると自動で一時停止。回答も試聴も止まる。
         idle(1_600)
         assertEquals(EqFinderPause.NO_MUSIC, c.pause)
         val doneBefore = c.done
         c.answer(EqFinderAnswer.B)
         assertEquals("一時停止中に回答が通った", doneBefore, c.done)
 
-        // 音楽が戻れば自動で下りて、鳴り始めた選択中の候補が「聴いた」になる。
         m.onRaw(true)
         assertEquals(EqFinderPause.NONE, c.pause)
         assertTrue(c.bHeard)
     }
 
-    /**
-     * 切断からの復帰。ループはプレイヤーの play() の成否で戻るが、ライブにプレイヤーは無く
-     * play() は常に false — その経路に乗せると永久に DISCONNECTED のまま残る。
-     * 音楽の有無を直接見て戻ることの見張り。
-     */
     @Test
     fun reconnectingInLiveReturnsWithoutThePlayer() {
         val vm = vm()
@@ -212,7 +171,6 @@ class EqFinderLiveTest {
         c.onConnectionChanged(true)
         assertEquals("play() の成否に頼って戻れなくなっている", EqFinderPause.NONE, c.pause)
 
-        // 切断中に音楽も止まっていたら、復帰先は NO_MUSIC (鳴っていないのに再開しない)。
         c.onConnectionChanged(false)
         m.onRaw(false)
         idle(1_600)
@@ -221,12 +179,6 @@ class EqFinderLiveTest {
         assertEquals(EqFinderPause.NO_MUSIC, c.pause)
     }
 
-    /**
-     * 再接続が**デバウンスの窓の内側**に入る場合 (BT 切断 → 音楽アプリが自動停止 →
-     * 1.5 秒経つ前に再接続)。一時停止はデバウンス済みの値で解けてよいが、**heard は
-     * 生値で判定する** — この瞬間はまだ何も鳴っていないので、聴いていない候補が
-     * 解錠されてはいけない。
-     */
     @Test
     fun reconnectingInsideTheDebounceWindowDoesNotUnlockASilentCandidate() {
         val vm = vm()
@@ -236,35 +188,25 @@ class EqFinderLiveTest {
         c.chooseMaterial(true)
         c.begin()
 
-        // 音楽が止まった直後 (窓の中)。B へ切り替えても鳴っていないので bHeard は立たない。
         m.onRaw(false)
         c.listen(EqFinderCandidate.B)
         assertEquals(EqFinderCandidate.B, c.selected)
         assertFalse(c.bHeard)
 
-        // 窓が閉じる前に切断 → 再接続。music.active はまだ true なので一時停止は解けるが、
-        // 生値は false のままなので B は「聴いた」にならない。
         c.onConnectionChanged(false)
         assertEquals(EqFinderPause.DISCONNECTED, c.pause)
         c.onConnectionChanged(true)
         assertEquals(EqFinderPause.NONE, c.pause)
         assertFalse("無音のまま再接続で解錠された", c.bHeard)
 
-        // 実際に音楽が戻ったところで初めて立つ。
         m.onRaw(true)
         c.listen(EqFinderCandidate.B)
         assertTrue(c.bHeard)
     }
 
-    // ------------------------------------------------------------------
-    // 中断と再開
-    // ------------------------------------------------------------------
-
     @Test
     fun aLiveSessionResumesWithoutTouchingAnySong() {
         val vm = vm()
-        // onRaw はコントローラを作ってから振る — start() の初期読み (AudioManager 無し = 無音)
-        // が後から上書きするため。
         val m1 = monitor()
         val c1 = controller(vm, m1)
         m1.onRaw(true)
@@ -273,7 +215,6 @@ class EqFinderLiveTest {
         assertEquals(EqFinderPhase.TRIAL, c1.phase)
         c1.dispose()
 
-        // プロセス死からの開き直し。記録から題材が立ち、曲の読み直しも照合も無しで続きへ。
         val m2 = monitor()
         val c2 = controller(vm, m2)
         m2.onRaw(true)
@@ -285,7 +226,6 @@ class EqFinderLiveTest {
         assertTrue(c2.aHeard)
     }
 
-    /** 設定ずれの遮断はライブでも同じに効く (SONG_CHANGED はライブでは出ない)。 */
     @Test
     fun settingsDriftStillBlocksALiveResume() {
         val vm = vm()
@@ -306,7 +246,6 @@ class EqFinderLiveTest {
         assertEquals(EqFinderPhase.INTRO, c2.phase)
     }
 
-    /** やり直しは題材も既定 (ループ) へ戻す。 */
     @Test
     fun startingOverResetsTheMaterial() {
         val vm = vm()
