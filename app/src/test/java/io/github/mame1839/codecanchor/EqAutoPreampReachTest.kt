@@ -47,14 +47,16 @@ class EqAutoPreampReachTest {
     }
 
     @Test
-    fun theKdocFigureForTenBandsAtSixDb() {
-        println("=== 1. KDoc: バンドのゲインを全部 +6 dB (摘みではない) ===")
+    fun tenBandsAtRawSixDbStayNearMinus173() {
+        println("=== 1. バンドのゲインを全部 +6.0 dB にする (摘みではない) ===")
         val values = EqSettings.BAND_COUNTS.associateWith { n ->
             val bands = EqSolver.centerFrequencies(n)
                 .map { EqBand(freqHz = it, q100 = q100Of(n), gainDb10 = 60) }
             report("n=$n  raw band gain +6.0 dB  Q=${EqSolver.defaultQ(n)}", bands)
         }
-        require(values.getValue(10) in -174..-172) { "KDoc の -173 から動いた: ${values.getValue(10)}" }
+        require(values.getValue(10) in -174..-172) {
+            "10 バンドを素のゲイン +6.0 dB (Q=defaultQ(10)) にしたときの実測 -173 から動いた: ${values.getValue(10)}"
+        }
 
         println("=== 1b. 同じ +6 dB を『摘み (目標)』として解いた場合 ===")
         EqSettings.BAND_COUNTS.forEach { n ->
