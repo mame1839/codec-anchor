@@ -1,4 +1,3 @@
-// 規約は eq-shm-abi.md §4。ここを ca_eq.cpp に直接書かないこと (ホストで検証できなくなる)。
 #ifndef CA_EQ_POLL_H_
 #define CA_EQ_POLL_H_
 
@@ -9,18 +8,14 @@
 namespace caeq {
 
 struct PollState {
-    // 捨てた版も覚える — 覚えないと、同じ壊れた並びを毎ブロック検査し直す。
     uint32_t param_gen = 0;
     uint32_t rejected  = 0;
-    bool     user_enabled  = false;  // 共有メモリ側の on/off。framework の ENABLE とは別
+    bool     user_enabled  = false;
     bool     fir_requested = false;
 
-    // 2 KB 超あるので audio スレッドのスタックに置かない。
     ca_eq_slot_t snap{};
 };
 
-// process() の先頭で 1 回だけ呼ぶ。ブロックの途中で読み直さない。
-// ⚠️ 確保・ロック・ログ・例外・システムコールを一切しない。
 inline void pollSlot(const ca_eq_slot_t* src, PollState* st, EqPipeline* dsp,
                      bool framework_enabled) {
     if (src == nullptr || st == nullptr || dsp == nullptr) return;
@@ -74,6 +69,6 @@ inline void firStatsOf(const PollState& st, const EqPipeline& dsp, ca_slot_t* ou
     out->fir_scrubbed    = dsp.scrubbedSamples();
 }
 
-}  // namespace caeq
+}
 
-#endif  // CA_EQ_POLL_H_
+#endif
