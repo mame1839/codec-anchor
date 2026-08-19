@@ -11,6 +11,8 @@ class HookRequestReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.action) {
             Bridge.ACTION_REQUEST_CONFIG -> pushSaved(context)
+            // 設定アプリのフックはこちら。Bluetooth 側には何も投げない。
+            Bridge.ACTION_REQUEST_SETTINGS_HOOK -> pushSettingsHook(context)
             // 設定アプリのフックが判定を差し替えた合図。開発者向けオプションのトグルが
             // 解放されていることの裏付けになるので、案内の出し分けのために残す。
             Bridge.ACTION_SETTINGS_HOOKED -> runCatching { SettingsStore(context).markSettingsHooked() }
@@ -29,8 +31,19 @@ class BootReceiver : BroadcastReceiver() {
 private val BOOT_ACTIONS = setOf(Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED)
 
 // onReceive で投げた例外はアプリのプロセスを落とす。
+//
+// 起動と更新のときは両方の行き先へ配る。設定アプリ側の値は AppConfig とは別の鍵なので、
+// JSON が壊れていても送れる (送らないと、壊れた設定を直すまで介入のオンオフだけが届かない)。
 private fun pushSaved(context: Context) {
     runCatching {
-        SettingsStore(context).load()?.let { BridgeClient.pushConfig(context, it) }
+        val store = SettingsStore(context)
+        BridgeClient.pushSettingsHook(context, store.freeOffloadSwitch())
+        store.load()?.let { BridgeClient.pushConfig(context, it) }
+    }
+}
+
+private fun pushSettingsHook(context: Context) {
+    runCatching {
+        BridgeClient.pushSettingsHook(context, SettingsStore(context).freeOffloadSwitch())
     }
 }

@@ -251,12 +251,24 @@ class EqParamsTest {
         assertEquals(EqParamsOutcome.NO_LIVE_SLOT, EqParams.outcomeOf(EqParamsExit.NO_LIVE_SLOT))
         assertEquals(EqParamsOutcome.AMBIGUOUS_SLOT, EqParams.outcomeOf(EqParamsExit.AMBIGUOUS_SLOT))
         assertEquals(EqParamsOutcome.REJECTED, EqParams.outcomeOf(EqParamsExit.REJECTED))
+        assertEquals(EqParamsOutcome.SLOTS_FULL, EqParams.outcomeOf(EqParamsExit.SLOTS_FULL))
+    }
+
+    /**
+     * **16 (枠が尽きた) を 13 (枠が無い) に丸めない。**以前はどちらも 13 で、繋がっていて
+     * 再生中なのに「繋がっていない」側の扱いを受けていた (画面は黙る)。literal なのは
+     * 対応そのものを見張るため — 定数どうしの比較だと、両方を同じ値に付け替えても通る。
+     */
+    @Test
+    fun slotsFullIsItsOwnOutcome() {
+        assertEquals(EqParamsOutcome.SLOTS_FULL, EqParams.outcomeOf(16))
+        assertEquals(EqParamsOutcome.NO_LIVE_SLOT, EqParams.outcomeOf(13))
     }
 
     /** 表に無い値を黙って「成功」にも「原因不明」にもしない。数値は結果に残る。 */
     @Test
     fun unknownExitCodesStayUnknown() {
-        for (code in listOf(1, 2, 9, 16, 99, 127, -1)) {
+        for (code in listOf(1, 2, 9, 17, 99, 127, -1)) {
             assertEquals("コード $code", EqParamsOutcome.UNKNOWN, EqParams.outcomeOf(code))
         }
     }
@@ -271,6 +283,7 @@ class EqParamsTest {
             EqParamsExit.NO_LIVE_SLOT,
             EqParamsExit.AMBIGUOUS_SLOT,
             EqParamsExit.REJECTED,
+            EqParamsExit.SLOTS_FULL,
         )
         assertEquals(codes.size, codes.toSet().size)
     }

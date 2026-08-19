@@ -42,13 +42,15 @@
     <string name="toggle_enforce">システムや他アプリによる変更を上書きする</string>
     <string name="toggle_notify">コーデックが変わったら知らせる</string>
     <string name="toggle_verbose">詳細ログを出す</string>
+    <string name="toggle_free_offload_switch">開発者向けオプションの A2DP ハードウェアオフロードのトグルを解放する</string>
 
     <string name="permission_title">Bluetooth の権限が必要です</string>
     <string name="permission_body">許可すると、ペアリング済みの機器と名前を読み取れます。</string>
     <string name="permission_denied">権限がブロックされています。システムの設定から許可してください。</string>
     <string name="bluetooth_off">Bluetooth がオフです。オンにするとペアリング済みの機器が表示されます。</string>
     <string name="config_broken">保存された設定を読めませんでした。このままでは編集できません。バックアップを読み込むとやり直せます。</string>
-    <string name="offload_hint">Bluetooth A2DP ハードウェアオフロードが有効です。開発者向けオプションで「Bluetooth A2DP ハードウェアオフロードの無効化」をオンにすると、端末側で LDAC をエンコードするようになり、ビットレートが回線に追従します。</string>
+    <string name="offload_hint">Bluetooth A2DP ハードウェアオフロードが有効です。端末側で LDAC をエンコードしないため、ビットレートが回線に追従しません。</string>
+    <string name="offload_turn_off">開発者向けオプションで「Bluetooth A2DP ハードウェアオフロードの無効化」をオンにしてください。</string>
     <string name="offload_hint_scope">この端末ではそのトグルを操作できないようになっています。モジュールのスコープに設定アプリを追加してから、開発者向けオプションを開き直すと解放されます。</string>
 
     <string name="section_audio_devices">オーディオ機器</string>
@@ -73,7 +75,7 @@
 
     <string name="eq_module_version_mismatch">音響処理モジュール (%1$s) とアプリ (%2$s) のバージョンが違います。両方を同じバージョンに更新してから、端末を再起動してください。</string>
     <string name="eq_unavailable_not_registered">音響処理を使えません。音響処理モジュールが入っていないか、この端末がまだ読み込んでいません。導入してから端末を再起動してください。</string>
-    <string name="eq_unavailable_offload">Bluetooth A2DP ハードウェアオフロードが有効な間は音響処理を使えません。切り方は機器一覧の案内に書いてあります。</string>
+    <string name="eq_unavailable_offload">Bluetooth A2DP ハードウェアオフロードが有効な間は音響処理を使えません。</string>
     <string name="eq_unavailable_hook_old">音響処理を使えません。Bluetooth プロセスで動いているモジュールが、音響処理を知らない古いバージョンです。Bluetooth をオフにして、もう一度オンにしてください。</string>
     <string name="eq_unavailable_device">このイヤホンは音響処理に登録されていないため、ここで設定した内容は音に反映されません。</string>
 
@@ -98,7 +100,7 @@
 
     <string name="eq_delivery_other">いま別のイヤホンが接続されているため、ここでの変更はまだ音に反映されません。このイヤホンを接続すれば反映されます。</string>
     <string name="eq_delivery_ambiguous">イヤホン用のエフェクトが複数動いていて、どれがこのイヤホンのものかアプリには判別できないため、何も送っていません。もう一方のイヤホンの接続を切ってから、ここでもう一度何か変更してください。</string>
-    <string name="eq_delivery_not_live">この設定はまだ音に反映されていません。このイヤホンで何か再生するか、このアプリを開き直してください。</string>
+    <string name="eq_delivery_slots_full">この設定は音に反映されませんでした。このイヤホンの音響処理を一度オフにして、もう一度オンにしてください。直らないときは端末を再起動してください。</string>
     <string name="eq_delivery_failed_root">この設定は音に反映されませんでした。root 権限の要求が拒否されたか、この端末に root 管理アプリがありません。root 管理アプリで Codec Anchor を許可してください。</string>
     <string name="eq_delivery_failed_shm">この設定は音に反映されませんでした。音響処理モジュールが動いていません。端末を再起動してください。</string>
     <string name="eq_delivery_failed_version">この設定は音に反映されませんでした。アプリと音響処理モジュールのバージョンが違います。両方を同じバージョンに更新してから、端末を再起動してください。</string>
@@ -201,6 +203,7 @@
     <string name="eq_precision_standard_desc">バンドとバンドのあいだで曲線がわずかにずれます</string>
     <string name="eq_precision_high">高精度</string>
     <string name="eq_precision_high_desc">バンドを結んだ線により近い形で鳴ります</string>
+    <string name="eq_precision_fallback">この音源では標準の方式で鳴っています。</string>
     <string name="eq_band_none">バンドがありません。追加するか、AutoEQ のファイルを読み込んでください。</string>
     <string name="eq_band_add">バンドを追加</string>
     <string name="eq_band_remove">このバンドを削除</string>

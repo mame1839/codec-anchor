@@ -43,13 +43,15 @@
     <string name="toggle_enforce">Sistemin veya diğer uygulamaların değişikliklerini geri al</string>
     <string name="toggle_notify">Kodek değişimini bildir</string>
     <string name="toggle_verbose">Ayrıntılı günlük tut</string>
+    <string name="toggle_free_offload_switch">Geliştirici seçeneklerindeki A2DP donanım aktarımı anahtarını serbest bırak</string>
 
     <string name="permission_title">Bluetooth izni gerekiyor</string>
     <string name="permission_body">İzin verdiğinizde uygulama eşleştirilmiş cihazlarınızı ve adlarını okuyabilir.</string>
     <string name="permission_denied">İzin engellendi. Lütfen sistem ayarlarından izin verin.</string>
     <string name="bluetooth_off">Bluetooth kapalı. Eşleştirilmiş cihazlarınızı görmek için açın.</string>
     <string name="config_broken">Kaydedilmiş ayarlar okunamadı, bu yüzden düzenleme yapılamıyor. Yeniden başlamak için bir yedek içe aktarın.</string>
-    <string name="offload_hint">Bluetooth A2DP donanım aktarımı etkin. Telefonun LDAC\'ı kendisi kodlaması ve bit hızının bağlantıya uyum sağlayabilmesi için geliştirici seçeneklerinde \"Bluetooth A2DP donanım aktarımını devre dışı bırak\" seçeneğini açın.</string>
+    <string name="offload_hint">Bluetooth A2DP donanım aktarımı etkin; bu yüzden telefon LDAC\'ı kendisi kodlamıyor ve bit hızı bağlantıya uyum sağlayamıyor.</string>
+    <string name="offload_turn_off">Geliştirici seçeneklerinde \"Bluetooth A2DP donanım aktarımını devre dışı bırak\" seçeneğini açın.</string>
     <string name="offload_hint_scope">Bu cihazda o anahtar kullanılamıyor. Ayarlar uygulamasını modülün kapsamına ekleyin, sonra serbest bırakmak için geliştirici seçeneklerini yeniden açın.</string>
 
     <string name="section_audio_devices">Ses cihazları</string>
@@ -74,7 +76,7 @@
 
     <string name="eq_module_version_mismatch">Ses işleme modülü (%1$s) ile uygulama (%2$s) farklı sürümlerde. İkisini de aynı sürüme güncelleyin, sonra telefonu yeniden başlatın.</string>
     <string name="eq_unavailable_not_registered">Ses işleme kullanılamıyor: ses işleme modülü kurulu değil ya da bu telefon modülü henüz yüklemedi. Modülü kurun, sonra telefonu yeniden başlatın.</string>
-    <string name="eq_unavailable_offload">Bluetooth A2DP donanım boşaltma açıkken ses işleme kullanılamaz. Nasıl kapatılacağı cihaz listesindeki notta anlatılıyor.</string>
+    <string name="eq_unavailable_offload">Bluetooth A2DP donanım boşaltma açıkken ses işleme kullanılamaz.</string>
     <string name="eq_unavailable_hook_old">Ses işleme kullanılamıyor: Bluetooth sürecinde çalışan modül, bunu bilmeyen eski bir sürüm. Bluetooth\'u kapatıp yeniden açın.</string>
     <string name="eq_unavailable_device">Bu kulaklık ses işleme için kayıtlı değil, bu yüzden burada ayarladığınız hiçbir şey sese yansımaz.</string>
 
@@ -99,7 +101,7 @@
 
     <string name="eq_delivery_other">Şu anda başka bir kulaklık bağlı, bu yüzden burada yaptığınız değişiklikler sese henüz yansımıyor. Bu kulaklığı bağladığınızda uygulanır.</string>
     <string name="eq_delivery_ambiguous">Birden fazla kulaklık efekti çalışıyor ve uygulama hangisinin bu kulaklığa ait olduğunu ayırt edemiyor, bu yüzden hiçbir şey gönderilmedi. Diğer kulaklığın bağlantısını kesin, sonra burada yeniden bir şey değiştirin.</string>
-    <string name="eq_delivery_not_live">Bu ayarlar sese henüz yansımadı. Bu kulaklıkta bir şey çalın ya da bu uygulamayı yeniden açın.</string>
+    <string name="eq_delivery_slots_full">Bu ayarlar sese yansımadı. Bu kulaklık için ses işlemeyi kapatıp yeniden açın; bu da düzeltmezse telefonu yeniden başlatın.</string>
     <string name="eq_delivery_failed_root">Bu ayarlar sese yansımadı: root erişimi reddedildi ya da bu telefonda root yöneticisi yok. Root yöneticinizde Codec Anchor\'a izin verin.</string>
     <string name="eq_delivery_failed_shm">Bu ayarlar sese yansımadı: ses işleme modülü çalışmıyor. Telefonu yeniden başlatın.</string>
     <string name="eq_delivery_failed_version">Bu ayarlar sese yansımadı: uygulama ile ses işleme modülü farklı sürümlerde. İkisini de aynı sürüme güncelleyin, sonra telefonu yeniden başlatın.</string>
@@ -203,6 +205,7 @@
     <string name="eq_precision_standard_desc">Bantlar arasında eğri biraz sapar</string>
     <string name="eq_precision_high">Yüksek doğruluk</string>
     <string name="eq_precision_high_desc">Bantları birleştiren çizgiyi daha yakından izler</string>
+    <string name="eq_precision_fallback">Bu ses standart doğrulukla çalınıyor.</string>
     <string name="eq_band_none">Henüz bant yok. Bir tane ekleyin veya bir AutoEQ dosyası alın.</string>
     <string name="eq_band_add">Bant ekle</string>
     <string name="eq_band_remove">Bu bandı kaldır</string>

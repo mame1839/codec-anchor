@@ -42,13 +42,15 @@
     <string name="toggle_enforce">Batalkan perubahan dari sistem atau aplikasi lain</string>
     <string name="toggle_notify">Beri tahu saat codec berubah</string>
     <string name="toggle_verbose">Tulis log terperinci</string>
+    <string name="toggle_free_offload_switch">Buka kunci sakelar offload perangkat keras A2DP di opsi developer</string>
 
     <string name="permission_title">Perlu izin Bluetooth</string>
     <string name="permission_body">Dengan izin ini, aplikasi dapat membaca perangkat yang disandingkan beserta namanya.</string>
     <string name="permission_denied">Izin diblokir. Berikan izin dari setelan sistem.</string>
     <string name="bluetooth_off">Bluetooth nonaktif. Aktifkan untuk melihat perangkat yang disandingkan.</string>
     <string name="config_broken">Setelan yang tersimpan tidak dapat dibaca, jadi tidak ada yang bisa diubah. Impor cadangan untuk memulai dari awal.</string>
-    <string name="offload_hint">Offload perangkat keras Bluetooth A2DP aktif. Aktifkan \"Nonaktifkan offload perangkat keras Bluetooth A2DP\" di opsi developer agar ponsel mengodekan LDAC sendiri dan bitrate bisa mengikuti koneksi.</string>
+    <string name="offload_hint">Offload perangkat keras Bluetooth A2DP aktif, jadi ponsel tidak mengodekan LDAC sendiri dan bitrate tidak bisa mengikuti koneksi.</string>
+    <string name="offload_turn_off">Aktifkan \"Nonaktifkan offload perangkat keras Bluetooth A2DP\" di opsi developer.</string>
     <string name="offload_hint_scope">Di perangkat ini sakelar tersebut tidak bisa digunakan. Tambahkan aplikasi Setelan ke cakupan modul, lalu buka opsi developer lagi untuk membukanya.</string>
 
     <string name="section_audio_devices">Perangkat audio</string>
@@ -73,7 +75,7 @@
 
     <string name="eq_module_version_mismatch">Modul pemrosesan audio (%1$s) dan aplikasi (%2$s) berbeda versi. Perbarui keduanya ke versi yang sama, lalu mulai ulang ponsel.</string>
     <string name="eq_unavailable_not_registered">Pemrosesan audio tidak tersedia: modul pemrosesan audio belum terpasang, atau ponsel ini belum memuatnya. Pasang modulnya, lalu mulai ulang ponsel.</string>
-    <string name="eq_unavailable_offload">Pemrosesan audio tidak tersedia selama offload perangkat keras Bluetooth A2DP aktif. Cara mematikannya dijelaskan pada catatan di daftar perangkat.</string>
+    <string name="eq_unavailable_offload">Pemrosesan audio tidak tersedia selama offload perangkat keras Bluetooth A2DP aktif.</string>
     <string name="eq_unavailable_hook_old">Pemrosesan audio tidak tersedia: modul yang berjalan di proses Bluetooth adalah versi lama yang belum mengenalnya. Matikan Bluetooth, lalu nyalakan lagi.</string>
     <string name="eq_unavailable_device">Earphone ini belum terdaftar untuk pemrosesan audio, jadi apa pun yang disetel di sini tidak berpengaruh pada suara.</string>
 
@@ -98,7 +100,7 @@
 
     <string name="eq_delivery_other">Saat ini earphone lain sedang tersambung, jadi apa yang Anda ubah di sini belum berpengaruh pada suara. Sambungkan earphone ini, maka setelan akan diterapkan.</string>
     <string name="eq_delivery_ambiguous">Ada lebih dari satu efek earphone yang berjalan, dan aplikasi tidak dapat membedakan mana yang milik earphone ini, jadi tidak ada yang dikirim. Putuskan sambungan earphone yang lain, lalu ubah lagi sesuatu di sini.</string>
-    <string name="eq_delivery_not_live">Setelan ini belum berpengaruh pada suara. Putar sesuatu di earphone ini, atau buka lagi aplikasi ini.</string>
+    <string name="eq_delivery_slots_full">Setelan ini tidak berpengaruh pada suara. Matikan pemrosesan audio untuk earphone ini lalu nyalakan lagi; jika belum teratasi, mulai ulang ponsel.</string>
     <string name="eq_delivery_failed_root">Setelan ini tidak berpengaruh pada suara: akses root ditolak, atau ponsel ini tidak punya pengelola root. Izinkan Codec Anchor di pengelola root Anda.</string>
     <string name="eq_delivery_failed_shm">Setelan ini tidak berpengaruh pada suara: modul pemrosesan audio tidak berjalan. Mulai ulang ponsel.</string>
     <string name="eq_delivery_failed_version">Setelan ini tidak berpengaruh pada suara: aplikasi dan modul pemrosesan audio berbeda versi. Perbarui keduanya ke versi yang sama, lalu mulai ulang ponsel.</string>
@@ -201,6 +203,7 @@
     <string name="eq_precision_standard_desc">Di antara pita, kurva sedikit menyimpang</string>
     <string name="eq_precision_high">Akurasi tinggi</string>
     <string name="eq_precision_high_desc">Lebih dekat mengikuti garis yang menghubungkan pita</string>
+    <string name="eq_precision_fallback">Audio ini diputar dengan akurasi standar.</string>
     <string name="eq_band_none">Belum ada pita. Tambahkan satu, atau impor berkas AutoEQ.</string>
     <string name="eq_band_add">Tambah pita</string>
     <string name="eq_band_remove">Hapus pita ini</string>

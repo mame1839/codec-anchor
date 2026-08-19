@@ -42,13 +42,15 @@
     <string name="toggle_enforce">覆盖其他应用的修改</string>
     <string name="toggle_notify">编解码器变化时提示</string>
     <string name="toggle_verbose">输出详细日志</string>
+    <string name="toggle_free_offload_switch">解除开发者选项中 A2DP 硬件卸载开关的锁定</string>
 
     <string name="permission_title">需要蓝牙权限</string>
     <string name="permission_body">授予后即可读取已配对的设备及其名称。</string>
     <string name="permission_denied">权限已被阻止，请在系统设置中授予。</string>
     <string name="bluetooth_off">蓝牙已关闭。开启后即可看到已配对的设备。</string>
     <string name="config_broken">无法读取已保存的设置，因此无法编辑任何内容。导入备份即可重新开始。</string>
-    <string name="offload_hint">蓝牙 A2DP 硬件卸载已启用。在开发者选项中打开“停用蓝牙 A2DP 硬件卸载”，手机就会自行编码 LDAC，码率也能随链路变化。</string>
+    <string name="offload_hint">蓝牙 A2DP 硬件卸载已启用，手机不会自行编码 LDAC，码率也无法随链路变化。</string>
+    <string name="offload_turn_off">请在开发者选项中打开“停用蓝牙 A2DP 硬件卸载”。</string>
     <string name="offload_hint_scope">本机上该开关无法操作。把“设置”应用加入模块的作用域，再重新打开开发者选项即可解除。</string>
 
     <string name="section_audio_devices">音频设备</string>
@@ -73,7 +75,7 @@
 
     <string name="eq_module_version_mismatch">音频处理模块 (%1$s) 与应用 (%2$s) 的版本不一致。请把两者更新到同一版本，然后重启手机。</string>
     <string name="eq_unavailable_not_registered">无法使用音频处理：尚未安装音频处理模块，或本机还没有加载它。请先安装，然后重启手机。</string>
-    <string name="eq_unavailable_offload">蓝牙 A2DP 硬件卸载开启期间无法使用音频处理。关闭方法见设备列表中的提示。</string>
+    <string name="eq_unavailable_offload">蓝牙 A2DP 硬件卸载开启期间无法使用音频处理。</string>
     <string name="eq_unavailable_hook_old">无法使用音频处理：蓝牙进程中运行的模块是不认识音频处理的旧版本。请关闭蓝牙后再重新开启。</string>
     <string name="eq_unavailable_device">这副耳机还没有注册音频处理，因此这里设置的任何内容都不会影响声音。</string>
 
@@ -98,7 +100,7 @@
 
     <string name="eq_delivery_other">现在连接的是另一副耳机，所以这里的改动还不会影响声音。连接这副耳机后即可生效。</string>
     <string name="eq_delivery_ambiguous">有多个耳机音效正在运行，应用无法分辨哪一个属于这副耳机，因此没有发送任何内容。请断开另一副耳机，然后在这里重新改动一次。</string>
-    <string name="eq_delivery_not_live">这些设置还没有影响声音。请用这副耳机播放一些内容，或者重新打开本应用。</string>
+    <string name="eq_delivery_slots_full">这些设置没有影响声音。请先关闭这副耳机的音频处理，再重新打开；如果仍未解决，请重启手机。</string>
     <string name="eq_delivery_failed_root">这些设置没有影响声音：root 权限被拒绝，或者本机没有 root 管理器。请在你的 root 管理器中允许 Codec Anchor。</string>
     <string name="eq_delivery_failed_shm">这些设置没有影响声音：音频处理模块没有在运行。请重启手机。</string>
     <string name="eq_delivery_failed_version">这些设置没有影响声音：应用与音频处理模块的版本不一致。请把两者更新到同一版本，然后重启手机。</string>
@@ -201,6 +203,7 @@
     <string name="eq_precision_standard_desc">频段之间的曲线会略有偏差</string>
     <string name="eq_precision_high">高精度</string>
     <string name="eq_precision_high_desc">更贴近连接各频段的折线</string>
+    <string name="eq_precision_fallback">当前音源以标准精度播放。</string>
     <string name="eq_band_none">还没有频段。请添加一个，或读取 AutoEQ 文件。</string>
     <string name="eq_band_add">添加频段</string>
     <string name="eq_band_remove">删除此频段</string>

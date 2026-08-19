@@ -23,6 +23,7 @@ object EqParamsExit {
     const val NO_LIVE_SLOT = 13
     const val AMBIGUOUS_SLOT = 14
     const val REJECTED = 15
+    const val SLOTS_FULL = 16
 }
 
 /**
@@ -31,6 +32,9 @@ object EqParamsExit {
  * **[NO_LIVE_SLOT] を失敗として出さないこと。**イヤホンが繋がっていないだけで、
  * 設定は共有メモリに残らず次の接続で書き直すのが正しい姿。ここを赤く出すと、
  * 繋いでいないあいだスライダーを触るたびにエラーが出る画面になる。
+ *
+ * **[SLOTS_FULL] は逆で、画面に出すべき異常。**繋がっていて再生中でも起きるうえ、
+ * 押し直しでは直らないので、黙ると症状が「値を変えたのに音が変わらない」になる。
  */
 enum class EqParamsOutcome {
     /** 書けた。 */
@@ -47,6 +51,14 @@ enum class EqParamsOutcome {
      * 推測で 1 つ選ぶと「たまに別のイヤホンの設定になる」を踏むため、`caeqset` は断る。
      */
     AMBIGUOUS_SLOT,
+
+    /**
+     * 枠が尽きた。生きた枠が 0 で、かつ全部が使用中。**[NO_LIVE_SLOT] とは別物。**
+     *
+     * `caeqset` は判定の前に死んだ枠を自分で回収するので、ここまで来たものは
+     * **回収しても空かなかった** — イヤホンが繋がっていて再生中でも起きる。
+     */
+    SLOTS_FULL,
 
     /** 値が `.so` の検査に落ちた。範囲の表は演算層にしかないので、アプリ側では判定しない。 */
     REJECTED,
@@ -260,6 +272,7 @@ object EqParams {
         EqParamsExit.SHM_MISMATCH -> EqParamsOutcome.VERSION_MISMATCH
         EqParamsExit.NO_LIVE_SLOT -> EqParamsOutcome.NO_LIVE_SLOT
         EqParamsExit.AMBIGUOUS_SLOT -> EqParamsOutcome.AMBIGUOUS_SLOT
+        EqParamsExit.SLOTS_FULL -> EqParamsOutcome.SLOTS_FULL
         EqParamsExit.REJECTED -> EqParamsOutcome.REJECTED
         else -> EqParamsOutcome.UNKNOWN
     }

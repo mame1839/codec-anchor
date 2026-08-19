@@ -16,6 +16,9 @@
 // **`ca_eq.cpp` はホストのハーネスに入らない**ので、ここの include 漏れは
 // Android のビルドでしか出ない。
 #include "ca_eq_pick.h"
+// 生存確認の実装 (/proc)。**`ca_eq_pick.h` に POSIX を持ち込まないための分割**なので、
+// こちらを include するのは Android 側のソースだけ。
+#include "ca_eq_proc.h"
 #include "ca_eq_shm.h"
 #include "dsp/ca_eq_dsp.h"
 #include "dsp/ca_eq_params.h"
@@ -42,11 +45,12 @@ const effect_descriptor_t kCaEqDescriptor = {
     // DEVICE_IND はデバイスの変化を教えてもらうため。
     .flags       = EFFECT_FLAG_TYPE_POST_PROC | EFFECT_FLAG_INSERT_LAST | EFFECT_FLAG_DEVICE_IND,
     .cpuLoad     = 10,
-    // KB 単位。caeq::Eq が状態と作業領域で 40 KB ほど、「高精度」(最小位相 FIR) の
-    // 作業領域 (arena) が **ch <= 2 のインスタンスだけ** 更に載る。
-    // **数はここに書かない** — 出どころは dsp/ca_eq_pipeline.h の 1 箇所で、
-    // ハーネス 30 節が全サンプルレートの arena を実測して超えないことを見張っている。
-    // **12ch の spatializer インスタンスには arena を作らない**ので、そちらは 40 KB のまま。
+    // KB 単位。**⚠️ これは実際の使用量ではない。実測の最悪 (1233 KB + Eq 約 40 KB) の
+    // 20 分の 1 に意図的に切り下げてある** — 実機で 1536 を申告すると
+    // エフェクトのインスタンスが 1 つも生成されなくなる (dsp/ca_eq_pipeline.h に実測の経緯)。
+    // **「申告値を超えない」という見張りは存在しないし、できない。**上限の見張りは
+    // ハーネス (ca_eq_shm_test.cpp「申告するメモリ量」の節) が独立した literal で持っている。
+    // **数はここに書かない** — 出どころは dsp/ca_eq_pipeline.h の 1 箇所。
     .memoryUsage = caeq::kDeclaredMemoryKb,
     .name        = "Codec Anchor EQ",
     .implementor = "Codec Anchor",
@@ -66,6 +70,10 @@ struct CaCtx {
     // 読みに行くパラメータ枠。**割り当てられていないあいだは何も適用せず素通しする** —
     // 「たぶん自分宛て」で読むと、2 台目のイヤホンに 1 台目の設定が掛かる。
     uint32_t   param_slot;
+    // create_effect に渡された値。**枠を取り直すときに要る** — 生成時に枠が尽きていた
+    // インスタンスは、あとで空いたときにこの 2 つが無いと自分を名乗れない。
+    int32_t  session_id;
+    int32_t  io_id;
     // 枠の読み取りが持ち越す状態と写し取り先。**同じコードをホストのハーネスが回す**
     // (dsp/ca_eq_poll.h)。2 KB 超の写し取り先を含むので、audio スレッドのスタックに
     // 置かないためここに持つ。
@@ -127,11 +135,42 @@ constexpr caeq::Structure kStructure = caeq::kDefaultStructure;
 static_assert(sizeof(std::atomic<uint32_t>) == sizeof(uint32_t), "atomic が同じ大きさでない");
 static_assert(std::atomic<uint32_t>::is_always_lock_free, "atomic がロックを使う");
 
-ca_shm_t*        g_shm = nullptr;
-std::atomic<int> g_shm_tried{0};
+ca_shm_t* g_shm = nullptr;
 
+// **「開こうとした」と「開き終わった」は別の状態。**1 つの旗で兼ねると、2 スレッドが
+// 同時に create_effect に入ったときに負けた側が g_shm == nullptr のまま先へ進み、
+// **そのインスタンスは枠を取れず黙って素通しになる** (原因が残らない形の不具合)。
+enum { kShmIdle = 0, kShmOpening = 1, kShmDone = 2 };
+std::atomic<int> g_shm_state{kShmIdle};
+
+// 開き終わるのを待つ上限 (200 µs × 500 = 100 ms)。**無限には待たない** —
+// 開いている側が途中で死んだときに audio HAL の制御スレッドを道連れにしないため。
+// 期限切れの結末は「このインスタンスだけ統計を持たない」で、これは待たなかったときと同じ。
+constexpr int    kShmWaitSteps = 500;
+constexpr long   kShmWaitNs    = 200000;
+
+void ca_stats_open_locked();
+
+// **create_effect / SET_CONFIG からしか呼ばない。**開くのも待つのも制御スレッドの仕事で、
+// process() はここを通らない。
 void ca_stats_open() {
-    if (g_shm_tried.exchange(1)) return;   // 1 プロセスに 1 回だけ
+    if (g_shm_state.load(std::memory_order_acquire) == kShmDone) return;
+    int expected = kShmIdle;
+    if (g_shm_state.compare_exchange_strong(expected, kShmOpening)) {
+        ca_stats_open_locked();
+        g_shm_state.store(kShmDone, std::memory_order_release);
+        return;
+    }
+    // 負けた側。**ここで戻ると g_shm が nullptr のままになるので待つ。**
+    for (int i = 0; i < kShmWaitSteps; i++) {
+        if (g_shm_state.load(std::memory_order_acquire) == kShmDone) return;
+        struct timespec ts = {0, kShmWaitNs};
+        nanosleep(&ts, nullptr);
+    }
+    CA_LOGE("stats open wait timed out");
+}
+
+void ca_stats_open_locked() {
     const int fd = open(CA_SHM_PATH, O_RDWR | O_CLOEXEC);
     if (fd < 0) {
         // 開けなくても絶対に落ちない。この 1 行が唯一の手がかりになる。
@@ -174,57 +213,70 @@ inline void ca_seq_begin(ca_slot_t* s) { caeq::statsBeginWrite(s); }
 
 inline void ca_seq_end(ca_slot_t* s) { caeq::statsEndWrite(s); }
 
-inline std::atomic<uint32_t>* ca_in_use(ca_slot_t* s) {
-    return reinterpret_cast<std::atomic<uint32_t>*>(&s->in_use);
+// 枠を 1 つ取って中身を埋める。取れたら true。
+//
+// `reclaim` が false のときは死んだ枠の回収を行わない = **`/proc` を 1 度も見に行かない。**
+// 呼び手のスレッドが分からない経路 (EFFECT_CMD_ENABLE) 用。撃つのは `getpid()` 1 回と
+// `in_use` の CAS だけで、確保もログもファイルも触らない。
+bool ca_stats_take_slot(CaCtx* c, bool reclaim) {
+    if (g_shm == nullptr) return false;
+    const uint64_t self = static_cast<uint64_t>(getpid());
+    const uint32_t i = caeq::acquireSlot(g_shm, reclaim ? caeq::procPidAlive : nullptr, nullptr,
+                                         self);
+    if (i == caeq::kNoSlot) return false;
+    ca_slot_t* s = &g_shm->slots[i];
+    // ここに来た時点で中身はゼロ (releaseSlot の不変条件)。念のため書き直すが、
+    // ゼロ化を手放す側に置いてあることが、リーダの偽陽性を防いでいる本体。
+    s->seq = 0; s->frames = 0; s->sample_rate = 0; s->channels = 0;
+    s->block_frames = 0; s->state = 0; s->gain_mb = 0;
+    s->io_id = c->io_id;
+    // 読みに行くパラメータ枠。初回は「取った枠と同じ添字」が既定で、SET_PARAM (id=2) で
+    // 既に宛てられていればそれを保つ。**決定は caeq::paramSlotAfterAttach** — 保たずに
+    // 取った添字で上書きすると、再取得のとき読み手だけが空の枠へ移って素通しに戻る
+    // (理由の全文はあちらのコメント)。
+    c->param_slot = caeq::paramSlotAfterAttach(c->param_slot, i);
+    // **書き手が読むフィールドは pid より先に書くこと。**書き手 (caeqset) は pid が
+    // 入っている枠だけを見るので、この順序なら「pid は入ったが session_id / param_slot は
+    // まだ」を掴む隙が無い。param_slot は 0 も有効な添字で、ゼロのままでも「未割り当て」
+    // には見えないから、順序で守るしかない。
+    s->session_id = c->session_id;
+    s->param_slot = c->param_slot;
+    s->pid = self;
+    s->ctx = reinterpret_cast<uint64_t>(c);
+    s->last_ns = 0;
+    c->slot = s;
+    return true;
 }
 
-void ca_stats_attach(CaCtx* c, int32_t sessionId, int32_t ioId) {
+void ca_stats_attach(CaCtx* c) {
     ca_stats_open();
     c->slot = nullptr;
-    if (g_shm == nullptr) return;
-    for (int i = 0; i < CA_SHM_SLOTS; i++) {
-        ca_slot_t* s = &g_shm->slots[i];
-        uint32_t expected = 0;
-        if (ca_in_use(s)->compare_exchange_strong(expected, CA_SHM_MAGIC)) {
-            // ここに来た時点で中身はゼロ (ca_stats_detach の不変条件)。念のため書き直すが、
-            // ゼロ化を detach 側に置いてあることが、リーダの偽陽性を防いでいる本体。
-            s->seq = 0; s->frames = 0; s->sample_rate = 0; s->channels = 0;
-            s->block_frames = 0; s->state = 0; s->gain_mb = 0;
-            s->io_id = ioId;
-            // **pid より先に書くこと。**書き手 (caeqset) は pid が入っている枠だけを見るので、
-            // この順序なら「pid は入ったが session_id はまだ 0」を掴む隙が無い。
-            s->session_id = sessionId;
-            s->pid = static_cast<uint64_t>(getpid());
-            s->ctx = reinterpret_cast<uint64_t>(c);
-            s->last_ns = 0;
-            c->slot = s;
-            // 既定では自分が取った枠と同じ添字のパラメータを読む。書き手は統計側の
-            // session_id を見てイヤホン側の枠を選ぶので、これで足りる。
-            // SET_PARAM (id=2) が来たらそちらで上書きする。
-            c->param_slot = static_cast<uint32_t>(i);
-            s->param_slot = c->param_slot;
-            CA_LOGI("stats slot %d taken session=%d io=%d ctx=%p", i, sessionId, ioId,
-                    static_cast<void*>(c));
-            return;
-        }
+    if (!ca_stats_take_slot(c, /*reclaim=*/true)) {
+        CA_LOGE("stats: no free slot (session=%d io=%d)", c->session_id, c->io_id);
+        return;
     }
-    CA_LOGE("stats: no free slot");
+    // 統計の添字と宛先は別々に出す。再取得で宛先を保ったとき、この 2 つは食い違う。
+    CA_LOGI("stats slot %u taken session=%d io=%d param_slot=%u ctx=%p",
+            static_cast<uint32_t>(c->slot - g_shm->slots), c->session_id, c->io_id,
+            c->param_slot, static_cast<void*>(c));
 }
 
-// 不変条件: in_use == 0 のスロットは、中身も必ずゼロ。
+// 不変条件「in_use == 0 のスロットは中身も必ずゼロ」は caeq::releaseSlot が守る
+// (MAGIC → RECLAIM → 本体ゼロ → 0 の順。理由はあちらのコメント)。
 //
-// **この順序を入れ替えないこと。**先に in_use を落とすと、次に attach した側が CAS を通してから
-// フィールドを初期化するまでの隙に、リーダが前のインスタンスの frames を読む。それは
-// 「カウンタが進んでいる」という偽陽性になり、この実証の結論そのものを壊す
-// (処理フレーム数が唯一の観測点なので、そこに嘘が混じる経路を作らない)。
+// **memset の前に持ち主を確かめる。**回収 (caeq::reclaimDeadSlots) が万一この枠を
+// 誤って空きに戻していたら、いま入っているのは別の生きたインスタンスなので、
+// 無条件に消すと**その枠が空きに戻って 3 人目が取る**という連鎖になる。
+// 誤回収そのものは生存確認の側で防ぐが、**被害の伝播はここで止める。**
 void ca_stats_detach(CaCtx* c) {
     ca_slot_t* s = c->slot;
     if (s == nullptr) return;
     c->slot = nullptr;
-    // in_use 以外を全部ゼロにする。フィールドを足したときに消し忘れないよう memset で消す。
-    std::memset(&s->seq, 0, sizeof(ca_slot_t) - offsetof(ca_slot_t, seq));
-    std::atomic_thread_fence(std::memory_order_release);
-    ca_in_use(s)->store(0, std::memory_order_release);
+    if (s->ctx != reinterpret_cast<uint64_t>(c) || s->pid != static_cast<uint64_t>(getpid())) {
+        CA_LOGE("stats: slot no longer ours (ctx=%p) — 触らない", static_cast<void*>(c));
+        return;
+    }
+    caeq::releaseSlot(s);
 }
 
 void ca_stats_configure(CaCtx* c) {
@@ -412,6 +464,21 @@ extern "C" int32_t ca_command(effect_handle_t self, uint32_t cmd, uint32_t cmdSi
         // (新しい Nyquist で fc が範囲外になりうるため) ので、覚えたままの世代で
         // 「適用済み」と思っていると、EQ が黙って平坦に戻ったまま二度と戻らない。
         c->poll.param_gen = 0;
+        // **生成のときに枠を取れなかったインスタンスは、ここで取り直す。**
+        // 枠が無いと ca_params_poll が何も読まないので、そのインスタンスは
+        // 「生きているのに永久に素通し」になる。
+        //
+        // 取り直しをここに置く理由: この case は既に 791 KB の作業領域を確保して
+        // warmUp でページを触っている = **制御スレッド前提の重い経路。**
+        // open / mmap を足しても性格が変わらない。
+        // (ENABLE 側は同じことをしない。理由はあちらのコメント。)
+        if (c->slot == nullptr) {
+            ca_stats_attach(c);
+            // 取れた枠は真っさらなので、既に決まっている状態を書き戻す
+            // (この直後の ca_stats_configure が rate / ch / CONFIGURED を埋める)。
+            ca_stats_set_enabled(c, c->enabled);
+            ca_stats_set_gain(c, c->gain_mb);
+        }
         ca_stats_configure(c);
         *static_cast<int*>(pReply) = 0;
         return 0;
@@ -434,6 +501,24 @@ extern "C" int32_t ca_command(effect_handle_t self, uint32_t cmd, uint32_t cmdSi
         if (!intReply) return -EINVAL;
         c->enabled = (cmd == EFFECT_CMD_ENABLE);
         if (c->enabled) c->dsp.reset();
+        // **枠が無いまま有効化されたら、空きだけ探して取り直す。**
+        // 枠が無いインスタンスは ca_params_poll が何も読まないので、そのまま鳴らすと
+        // 「生きているのに永久に素通し」になる。
+        //
+        // ⚠️ **ここでは ca_stats_open も /proc の走査もしない。**
+        // このコマンドが制御スレッドで届くとは限らない — AOSP の AudioFlinger は
+        // EffectModule::updateState() (= EffectChain::process_l() の中 = 再生スレッド)
+        // からも EFFECT_CMD_ENABLE を出す。**未確認だが、そうでない保証も無い**ので、
+        // open / mmap / 待ち合わせ / ファイルを持ち込まない側に倒す。
+        // reclaim を渡さないので、ここで増えるのは getpid() 1 回と in_use の CAS
+        // (最大 8 回) だけ。すぐ下の CA_LOGI のほうがよほど重い。
+        // 死んだ枠の回収は、生成 (create_effect) と SET_CONFIG が受け持つ。
+        if (c->enabled && c->slot == nullptr) {
+            if (ca_stats_take_slot(c, /*reclaim=*/false)) {
+                ca_stats_configure(c);
+                ca_stats_set_gain(c, c->gain_mb);
+            }
+        }
         // 有効になるのは framework とユーザ設定の両方が有効なときだけ。
         // **どちらの側の OFF でも、素通しになるまでフェードを掛けてから止まる。**
         c->dsp.setActive(c->enabled && c->poll.user_enabled);
@@ -568,7 +653,9 @@ extern "C" int32_t ca_lib_create(const effect_uuid_t* uuid, int32_t sessionId, i
     c->dsp.warmUp();
     // sessionId をそのまま統計へ渡す。**これが「この枠はイヤホン側か」を外から判定できる
     // 唯一の手掛かり** — deviceId は SW の device effect では常に 0 で、MAC も運ばれない。
-    ca_stats_attach(c, sessionId, ioId);
+    c->session_id = sessionId;
+    c->io_id = ioId;
+    ca_stats_attach(c);
     CA_LOGI("create session=%d io=%d ctx=%p", sessionId, ioId, static_cast<void*>(c));
     *pHandle = reinterpret_cast<effect_handle_t>(c);
     return 0;

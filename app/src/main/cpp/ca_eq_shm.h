@@ -15,6 +15,22 @@
 #define CA_SHM_PATH   "/data/vendor/audio/ca_eq_stats.bin"
 #define CA_SHM_MAGIC  0x51454143u   /* 'CAEQ' (little endian で 43 41 45 51) */
 
+/* 統計の枠の `in_use` が取る 3 つ目の値。**枠を手放す最中**を表す。
+ *
+ * 「`in_use == 0` の枠は中身も必ずゼロ」という不変条件 (ca_eq_pick.h の releaseSlot と
+ * ca_eq.cpp の detach が守っている) を、**回収を足しても 1 文字も変えないため**に要る。
+ * `MAGIC → 0` を直接書くと、次に取った側が中身を初期化するまでの隙にリーダが前の
+ * インスタンスの `frames` を読み、「カウンタが進んでいる」という偽陽性になる。
+ * `MAGIC → RECLAIM → 本体ゼロ → 0` なら、`0` が見えた時点で中身は必ずゼロ。
+ *
+ * ⚠️ **奇数であること。**版 3 の `.so` が版 4 のファイルを読むと、この語を
+ * `ca_eq_slot_t::seq` として読む (このヘッダ冒頭の版ずれの節)。奇数なら
+ * seqlock が「書き込み中」と見て捨てるので、偶数にすると**そこだけ挙動が変わる。**
+ * `CA_SHM_MAGIC` (…43) が奇数なのと同じ理由。
+ *
+ * バイト列は 'CAER' (43 41 45 52)。`--show` の hexdump で MAGIC と見分けが付く。 */
+#define CA_SHM_RECLAIM 0x52454143u
+
 /* 版 2 でパラメータの領域が付いた。**ファイルが版 1 の大きさのままだと、後ろを触った
  * 瞬間に SIGBUS で vendor の audio HAL ごと落ちる。**読む側は必ず大きさを確かめること。
  *
@@ -154,6 +170,14 @@ typedef struct ca_slot_s {
  * 枠を増やすときに気づけるようコンパイル時に縛る。 */
 CA_STATIC_ASSERT(CA_SHM_SLOTS > 0 && CA_PARAM_SLOT_NONE > (unsigned)CA_SHM_SLOTS,
                  "CA_PARAM_SLOT_NONE が本物の枠の添字と衝突している");
+
+/* 「手放す最中」の印が、空きとも使用中とも見分けが付くこと。 */
+CA_STATIC_ASSERT(CA_SHM_RECLAIM != 0u && CA_SHM_RECLAIM != CA_SHM_MAGIC,
+                 "CA_SHM_RECLAIM が空き (0) か使用中 (MAGIC) と同じ値になっている");
+/* 上の ⚠️ の縛り。版 3 の .so がこれを seq として読んだとき、奇数でなければ
+ * 「書き込み中」に見えず、そこだけ版ずれの挙動が変わる。 */
+CA_STATIC_ASSERT((CA_SHM_RECLAIM & 1u) == 1u, "CA_SHM_RECLAIM が偶数");
+CA_STATIC_ASSERT((CA_SHM_MAGIC & 1u) == 1u, "CA_SHM_MAGIC が偶数");
 
 CA_STATIC_ASSERT(sizeof(ca_slot_t) == CA_SLOT_BYTES,
                  "ca_slot_t は 256 バイト固定 (pad を足し引きして合わせる)");

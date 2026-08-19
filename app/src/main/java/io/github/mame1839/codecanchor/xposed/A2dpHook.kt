@@ -9,7 +9,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Handler
 import android.os.HandlerThread
-import android.os.Build
 import android.os.Looper
 import android.os.PowerManager
 import android.os.Parcelable
@@ -227,7 +226,7 @@ internal object A2dpHook {
             addAction(Intent.ACTION_SCREEN_ON)
         }
         runCatching {
-            registerExported(ctx, btReceiver, btFilter, null)
+            registerExported(ctx, btReceiver, btFilter, null, worker)
         }.onFailure { XLog.e("A2DP ブロードキャストを受け取れない", it) }
 
         val bridgeFilter = IntentFilter().apply {
@@ -236,23 +235,10 @@ internal object A2dpHook {
             addAction(Bridge.ACTION_APPLY_NOW)
         }
         runCatching {
-            registerExported(ctx, bridgeReceiver, bridgeFilter, Bridge.PERMISSION)
+            registerExported(ctx, bridgeReceiver, bridgeFilter, Bridge.PERMISSION, worker)
         }.onFailure { XLog.e("設定の受け口を作れない", it) }
 
         receiverContext = ctx
-    }
-
-    private fun registerExported(
-        ctx: Context,
-        receiver: BroadcastReceiver,
-        filter: IntentFilter,
-        permission: String?,
-    ) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            ctx.registerReceiver(receiver, filter, permission, worker, Context.RECEIVER_EXPORTED)
-        } else {
-            ctx.registerReceiver(receiver, filter, permission, worker)
-        }
     }
 
     private fun unregisterReceivers() {

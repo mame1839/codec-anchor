@@ -42,13 +42,15 @@
     <string name="toggle_enforce">ย้อนการเปลี่ยนแปลงจากระบบหรือแอปอื่น</string>
     <string name="toggle_notify">แจ้งเมื่อโคเดกเปลี่ยน</string>
     <string name="toggle_verbose">บันทึกล็อกแบบละเอียด</string>
+    <string name="toggle_free_offload_switch">ปลดล็อกสวิตช์การถ่ายโอนงานด้วยฮาร์ดแวร์ของ A2DP ในตัวเลือกสำหรับนักพัฒนา</string>
 
     <string name="permission_title">ต้องมีสิทธิ์ Bluetooth</string>
     <string name="permission_body">เมื่อให้สิทธิ์ แอปจะอ่านอุปกรณ์ที่จับคู่ไว้และชื่อของอุปกรณ์ได้</string>
     <string name="permission_denied">สิทธิ์ถูกบล็อกอยู่ โปรดให้สิทธิ์จากการตั้งค่าของระบบ</string>
     <string name="bluetooth_off">Bluetooth ปิดอยู่ เปิดเพื่อดูอุปกรณ์ที่จับคู่ไว้</string>
     <string name="config_broken">อ่านการตั้งค่าที่บันทึกไว้ไม่ได้ จึงแก้ไขอะไรไม่ได้ นำเข้าข้อมูลสำรองเพื่อเริ่มต้นใหม่</string>
-    <string name="offload_hint">การถ่ายโอนงานด้วยฮาร์ดแวร์ของ Bluetooth A2DP เปิดใช้งานอยู่ ให้เปิด \"ปิดใช้การถ่ายโอนงานด้วยฮาร์ดแวร์ของ Bluetooth A2DP\" ในตัวเลือกสำหรับนักพัฒนา เพื่อให้เครื่องเข้ารหัส LDAC เองและบิตเรตปรับตามสัญญาณได้</string>
+    <string name="offload_hint">การถ่ายโอนงานด้วยฮาร์ดแวร์ของ Bluetooth A2DP เปิดใช้งานอยู่ เครื่องจึงไม่ได้เข้ารหัส LDAC เองและบิตเรตปรับตามสัญญาณไม่ได้</string>
+    <string name="offload_turn_off">ให้เปิด \"ปิดใช้การถ่ายโอนงานด้วยฮาร์ดแวร์ของ Bluetooth A2DP\" ในตัวเลือกสำหรับนักพัฒนา</string>
     <string name="offload_hint_scope">บนเครื่องนี้สวิตช์ดังกล่าวใช้งานไม่ได้ ให้เพิ่มแอปการตั้งค่าในขอบเขตของโมดูล แล้วเปิดตัวเลือกสำหรับนักพัฒนาอีกครั้งเพื่อปลดล็อก</string>
 
     <string name="section_audio_devices">อุปกรณ์เสียง</string>
@@ -73,7 +75,7 @@
 
     <string name="eq_module_version_mismatch">โมดูลประมวลผลเสียง (%1$s) กับแอป (%2$s) เป็นคนละเวอร์ชัน โปรดอัปเดตทั้งสองให้เป็นเวอร์ชันเดียวกัน แล้วรีสตาร์ทเครื่อง</string>
     <string name="eq_unavailable_not_registered">ใช้การประมวลผลเสียงไม่ได้ เพราะยังไม่ได้ติดตั้งโมดูลประมวลผลเสียง หรือเครื่องนี้ยังไม่ได้โหลดโมดูล โปรดติดตั้งแล้วรีสตาร์ทเครื่อง</string>
-    <string name="eq_unavailable_offload">ใช้การประมวลผลเสียงไม่ได้ขณะที่เปิด Bluetooth A2DP hardware offload อยู่ วิธีปิดอธิบายไว้ในหมายเหตุที่รายการอุปกรณ์</string>
+    <string name="eq_unavailable_offload">ใช้การประมวลผลเสียงไม่ได้ขณะที่เปิด Bluetooth A2DP hardware offload อยู่</string>
     <string name="eq_unavailable_hook_old">ใช้การประมวลผลเสียงไม่ได้ เพราะโมดูลที่ทำงานอยู่ในโปรเซส Bluetooth เป็นเวอร์ชันเก่าที่ยังไม่รู้จักการประมวลผลเสียง โปรดปิด Bluetooth แล้วเปิดอีกครั้ง</string>
     <string name="eq_unavailable_device">หูฟังคู่นี้ยังไม่ได้ลงทะเบียนสำหรับการประมวลผลเสียง สิ่งที่ตั้งค่าไว้ที่นี่จึงไม่มีผลกับเสียงที่ได้ยิน</string>
 
@@ -98,7 +100,7 @@
 
     <string name="eq_delivery_other">ตอนนี้มีหูฟังคู่อื่นเชื่อมต่ออยู่ สิ่งที่เปลี่ยนที่นี่จึงยังไม่มีผลกับเสียง เมื่อเชื่อมต่อหูฟังคู่นี้แล้วจะถูกนำไปใช้</string>
     <string name="eq_delivery_ambiguous">มีเอฟเฟกต์สำหรับหูฟังทำงานอยู่มากกว่าหนึ่งชุด และแอปแยกไม่ออกว่าชุดใดเป็นของหูฟังคู่นี้ จึงยังไม่ได้ส่งอะไรเลย โปรดยกเลิกการเชื่อมต่อหูฟังคู่อื่น แล้วเปลี่ยนอะไรบางอย่างที่นี่อีกครั้ง</string>
-    <string name="eq_delivery_not_live">การตั้งค่านี้ยังไม่มีผลกับเสียง โปรดเล่นอะไรสักอย่างผ่านหูฟังคู่นี้ หรือเปิดแอปนี้อีกครั้ง</string>
+    <string name="eq_delivery_slots_full">การตั้งค่านี้ไม่มีผลกับเสียง โปรดปิดการประมวลผลเสียงของหูฟังคู่นี้แล้วเปิดใหม่ หากยังไม่หาย โปรดรีสตาร์ทเครื่อง</string>
     <string name="eq_delivery_failed_root">การตั้งค่านี้ไม่มีผลกับเสียง: สิทธิ์ root ถูกปฏิเสธ หรือเครื่องนี้ไม่มีตัวจัดการสิทธิ์ root โปรดอนุญาต Codec Anchor ในตัวจัดการสิทธิ์ root ของคุณ</string>
     <string name="eq_delivery_failed_shm">การตั้งค่านี้ไม่มีผลกับเสียง: โมดูลประมวลผลเสียงไม่ได้ทำงานอยู่ โปรดรีสตาร์ทเครื่อง</string>
     <string name="eq_delivery_failed_version">การตั้งค่านี้ไม่มีผลกับเสียง: แอปกับโมดูลประมวลผลเสียงเป็นคนละเวอร์ชัน โปรดอัปเดตทั้งสองให้เป็นเวอร์ชันเดียวกัน แล้วรีสตาร์ทเครื่อง</string>
@@ -201,6 +203,7 @@
     <string name="eq_precision_standard_desc">ระหว่างแบนด์ เส้นโค้งจะเบี่ยงเล็กน้อย</string>
     <string name="eq_precision_high">ความแม่นยำสูง</string>
     <string name="eq_precision_high_desc">ตามเส้นที่ลากผ่านแบนด์ได้ใกล้เคียงกว่า</string>
+    <string name="eq_precision_fallback">เสียงนี้กำลังเล่นด้วยความแม่นยำมาตรฐาน</string>
     <string name="eq_band_none">ยังไม่มีแบนด์ เพิ่มสักอันหรือนำเข้าไฟล์ AutoEQ</string>
     <string name="eq_band_add">เพิ่มแบนด์</string>
     <string name="eq_band_remove">ลบแบนด์นี้</string>

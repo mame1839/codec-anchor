@@ -45,13 +45,15 @@
     <string name="toggle_enforce">Undo changes by the system or other apps</string>
     <string name="toggle_notify">Announce codec changes</string>
     <string name="toggle_verbose">Write verbose logs</string>
+    <string name="toggle_free_offload_switch">Unlock the A2DP hardware offload switch in Developer options</string>
 
     <string name="permission_title">Bluetooth permission needed</string>
     <string name="permission_body">Granting it lets the app read your paired devices and their names.</string>
     <string name="permission_denied">The permission is blocked. Please grant it from the system settings.</string>
     <string name="bluetooth_off">Bluetooth is off. Turn it on to see your paired devices.</string>
     <string name="config_broken">The saved settings could not be read, so nothing can be edited. Import a backup to start over.</string>
-    <string name="offload_hint">Bluetooth A2DP hardware offload is enabled. Turn on \"Disable Bluetooth A2DP hardware offload\" in Developer options so that the phone encodes LDAC itself and the bitrate can follow the link.</string>
+    <string name="offload_hint">Bluetooth A2DP hardware offload is enabled, so the phone is not encoding LDAC itself and the bitrate cannot follow the link.</string>
+    <string name="offload_turn_off">Turn on \"Disable Bluetooth A2DP hardware offload\" in Developer options.</string>
     <string name="offload_hint_scope">On this device that switch cannot be operated. Add the Settings app to the scope of the module, then open Developer options again to free it.</string>
 
     <string name="section_audio_devices">Audio devices</string>
@@ -79,7 +81,7 @@
          what every other module_* string above means. -->
     <string name="eq_module_version_mismatch">The audio processing module (%1$s) and the app (%2$s) are different versions. Update both to the same version, then restart the phone.</string>
     <string name="eq_unavailable_not_registered">Audio processing is unavailable: the audio processing module is not installed, or this phone has not loaded it. Install it, then restart the phone.</string>
-    <string name="eq_unavailable_offload">Audio processing is unavailable while Bluetooth A2DP hardware offload is enabled. The note in the device list explains how to turn it off.</string>
+    <string name="eq_unavailable_offload">Audio processing is unavailable while Bluetooth A2DP hardware offload is enabled.</string>
     <string name="eq_unavailable_hook_old">Audio processing is unavailable: the module running in the Bluetooth process is an older version that does not know about it. Turn Bluetooth off, then on again.</string>
     <string name="eq_unavailable_device">These earphones are not registered for audio processing, so nothing set here reaches the sound.</string>
 
@@ -121,7 +123,10 @@
          same as above (see the note there). -->
     <string name="eq_delivery_other">Different earphones are connected right now, so what you change here does not reach the sound yet. Connect these earphones and it is applied.</string>
     <string name="eq_delivery_ambiguous">More than one set of earphone effects is running, and the app cannot tell which one belongs to these earphones, so nothing was sent. Disconnect the other earphones, then change something here again.</string>
-    <string name="eq_delivery_not_live">These settings have not reached the sound yet. Play something on these earphones, or open this app again.</string>
+    <!-- The "off and back on" is the eq_device_register toggle on the same screen: it rebuilds
+         the audio service, which is what actually clears this state. Reconnecting or playing
+         again does not; that is why this one does not reuse the wording of the rows above. -->
+    <string name="eq_delivery_slots_full">These settings did not reach the sound. Turn audio processing for these earphones off and back on; if that does not fix it, restart the phone.</string>
     <string name="eq_delivery_failed_root">These settings did not reach the sound: root access was refused, or this phone has no root manager. Allow Codec Anchor in your root manager.</string>
     <string name="eq_delivery_failed_shm">These settings did not reach the sound: the audio processing module is not running. Restart the phone.</string>
     <string name="eq_delivery_failed_version">These settings did not reach the sound: the app and the audio processing module are different versions. Update both to the same version, then restart the phone.</string>
@@ -234,6 +239,7 @@
     <string name="eq_precision_standard_desc">The curve drifts a little between bands</string>
     <string name="eq_precision_high">High accuracy</string>
     <string name="eq_precision_high_desc">Follows the line through the bands more closely</string>
+    <string name="eq_precision_fallback">This audio is playing at the standard accuracy.</string>
     <string name="eq_band_none">No band yet. Add one, or import an AutoEQ file.</string>
     <string name="eq_band_add">Add a band</string>
     <string name="eq_band_remove">Remove this band</string>

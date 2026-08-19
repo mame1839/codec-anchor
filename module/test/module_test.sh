@@ -565,5 +565,49 @@ else
                  || ng "アプリ側と終了コード・綴りが一致する"
 fi
 
+# ⚠️ 36 と同じ形だが**別の表**。`eq_devices.sh` (登録) と `caeqset` (パラメータ) は
+#    番号の意味が違うコマンドで、揃えてあるのは 0 と 10 だけ。
+#    36 が通っていても、こちらは片方だけ変わりうる。
+#
+#    `caeqset.cpp` の先頭に「EqParams.kt が同じ値を literal で持っている。片方だけ
+#    変えないこと」と書いてあるのに、**それを見張るものが 1 つも無かった。**
+#    このプロジェクトは同じ形 (同じ値が 2 箇所) で共有メモリの大きさを 1152 と 5760 に
+#    分けたまま統合しかけた実績がある — git は衝突として報告しない。
+#
+#    **落ちているからといって消さないこと。**片側だけのブランチでは必ず落ちる。
+
+# 37. caeqset の終了コードがアプリ側と一致する
+CAEQSET=app/src/main/cpp/caeqset.cpp
+APP_PARAMS=app/src/main/java/io/github/mame1839/codecanchor/core/EqParams.kt
+if [ ! -f "$CAEQSET" ] || [ ! -f "$APP_PARAMS" ]; then
+    ng "caeqset の終了コードがアプリ側と一致する ($CAEQSET か $APP_PARAMS が無い)"
+else
+    e=0
+    # 表 = 先頭のコメントの「|  N | …」の行。実装 = enum の「kExit… = N,」。
+    # 区切りに | は使えない (表そのものが | で書かれている)。
+    set_tbl=$(sed -n 's@^//[[:space:]]*|[[:space:]]*\([0-9]\{1,\}\)[[:space:]]*|.*@\1@p' \
+              "$CAEQSET" | sort -un | tr '\n' ' ')
+    set_impl=$(grep -oE '\bkExit[A-Za-z]+ +=[[:space:]]*[0-9]+' "$CAEQSET" \
+               | grep -oE '[0-9]+$' | sort -un | tr '\n' ' ')
+    # アプリ側は EqParamsExit の「const val NAME = N」。**literal で持つ約束**
+    # (式で組むと突き合わせられない) が、この grep が成立することそのもの。
+    app_set=$(sed -n '/^object EqParamsExit {/,/^}/p' "$APP_PARAMS" \
+              | grep -oE 'const val [A-Z_]+ = [0-9]+' | awk '{print $5}' | sort -un | tr '\n' ' ')
+    [ -n "$set_tbl" ]  || { e=1; echo "    $CAEQSET の先頭コメントから表を読めない"; }
+    [ -n "$set_impl" ] || { e=1; echo "    $CAEQSET の enum から kExit… を読めない"; }
+    [ -n "$app_set" ]  || { e=1; echo "    $APP_PARAMS の EqParamsExit を読めない"; }
+    [ "$set_tbl" = "$set_impl" ] \
+      || { e=1; echo "    caeqset 内で不一致: 表 [$set_tbl] / enum [$set_impl]"; }
+    [ "$set_tbl" = "$app_set" ] \
+      || { e=1; echo "    終了コード: caeqset [$set_tbl] / アプリ [$app_set]"; }
+    # 印の綴りも同じ理由で 2 箇所にある。
+    set_begin=$(grep -oE '#define CA_EQ_SET_BEGIN "[^"]*"' "$CAEQSET" | sed 's/.*"\(.*\)"/\1/')
+    app_begin=$(grep -oE 'BEGIN_MARKER = "[^"]*"' "$APP_PARAMS" | sed 's/.*"\(.*\)"/\1/')
+    [ -n "$set_begin" ] && [ "$set_begin" = "$app_begin" ] \
+      || { e=1; echo "    BEGIN_MARKER: caeqset [$set_begin] / アプリ [$app_begin]"; }
+    [ $e -eq 0 ] && ok "caeqset の終了コードがアプリ側と一致する ($set_tbl)" \
+                 || ng "caeqset の終了コードがアプリ側と一致する"
+fi
+
 [ $fail -eq 0 ] && echo "すべて成功" || echo "失敗あり"
 exit $fail

@@ -43,13 +43,15 @@
     <string name="toggle_enforce">Änderungen des Systems oder anderer Apps zurücknehmen</string>
     <string name="toggle_notify">Codec-Wechsel melden</string>
     <string name="toggle_verbose">Ausführliche Logs schreiben</string>
+    <string name="toggle_free_offload_switch">Schalter für die A2DP-Hardware-Auslagerung in den Entwickleroptionen freigeben</string>
 
     <string name="permission_title">Bluetooth-Berechtigung erforderlich</string>
     <string name="permission_body">Mit ihr kann die App die gekoppelten Geräte und ihre Namen lesen.</string>
     <string name="permission_denied">Die Berechtigung ist blockiert. Erteile sie bitte in den Systemeinstellungen.</string>
     <string name="bluetooth_off">Bluetooth ist aus. Schalte es ein, um die gekoppelten Geräte zu sehen.</string>
     <string name="config_broken">Die gespeicherten Einstellungen konnten nicht gelesen werden, daher lässt sich nichts bearbeiten. Importiere ein Backup, um neu zu beginnen.</string>
-    <string name="offload_hint">Die Hardware-Auslagerung von Bluetooth A2DP ist aktiviert. Schalte in den Entwickleroptionen „Bluetooth A2DP-Hardware-Auslagerung deaktivieren“ ein, damit das Telefon LDAC selbst codiert und die Bitrate der Verbindung folgen kann.</string>
+    <string name="offload_hint">Die Hardware-Auslagerung von Bluetooth A2DP ist aktiviert, deshalb codiert das Telefon LDAC nicht selbst und die Bitrate kann der Verbindung nicht folgen.</string>
+    <string name="offload_turn_off">Schalte in den Entwickleroptionen „Bluetooth A2DP-Hardware-Auslagerung deaktivieren“ ein.</string>
     <string name="offload_hint_scope">Auf diesem Gerät lässt sich dieser Schalter nicht bedienen. Füge die Einstellungen-App zum Anwendungsbereich des Moduls hinzu und öffne die Entwickleroptionen erneut, um ihn freizugeben.</string>
 
     <string name="section_audio_devices">Audiogeräte</string>
@@ -74,7 +76,7 @@
 
     <string name="eq_module_version_mismatch">Das Audiobearbeitungsmodul (%1$s) und die App (%2$s) haben unterschiedliche Versionen. Bringe beide auf dieselbe Version und starte das Telefon neu.</string>
     <string name="eq_unavailable_not_registered">Audiobearbeitung ist nicht verfügbar: Das Audiobearbeitungsmodul ist nicht installiert, oder dieses Telefon hat es noch nicht geladen. Installiere es und starte das Telefon neu.</string>
-    <string name="eq_unavailable_offload">Audiobearbeitung ist nicht verfügbar, solange die Bluetooth-A2DP-Hardwareauslagerung aktiviert ist. Der Hinweis in der Geräteliste erklärt, wie du sie ausschaltest.</string>
+    <string name="eq_unavailable_offload">Audiobearbeitung ist nicht verfügbar, solange die Bluetooth-A2DP-Hardware-Auslagerung aktiviert ist.</string>
     <string name="eq_unavailable_hook_old">Audiobearbeitung ist nicht verfügbar: Im Bluetooth-Prozess läuft eine ältere Version des Moduls, die sie noch nicht kennt. Schalte Bluetooth aus und wieder ein.</string>
     <string name="eq_unavailable_device">Diese Kopfhörer sind nicht für die Audiobearbeitung registriert, daher wirkt sich hier nichts Eingestelltes auf den Klang aus.</string>
 
@@ -99,7 +101,7 @@
 
     <string name="eq_delivery_other">Zurzeit sind andere Kopfhörer verbunden, daher wirkt sich das, was Sie hier ändern, noch nicht auf den Klang aus. Verbinden Sie diese Kopfhörer, dann wird es angewendet.</string>
     <string name="eq_delivery_ambiguous">Es laufen mehrere Kopfhörer-Effekte, und die App kann nicht erkennen, welcher zu diesen Kopfhörern gehört, daher wurde nichts gesendet. Trennen Sie die anderen Kopfhörer, und ändern Sie hier dann noch einmal etwas.</string>
-    <string name="eq_delivery_not_live">Diese Einstellungen wirken sich noch nicht auf den Klang aus. Spielen Sie etwas über diese Kopfhörer ab, oder öffnen Sie diese App erneut.</string>
+    <string name="eq_delivery_slots_full">Diese Einstellungen wirken sich nicht auf den Klang aus. Schalten Sie die Audiobearbeitung für diese Kopfhörer aus und wieder ein; hilft das nicht, starten Sie das Telefon neu.</string>
     <string name="eq_delivery_failed_root">Diese Einstellungen wirken sich nicht auf den Klang aus: Der Root-Zugriff wurde verweigert, oder dieses Telefon hat keinen Root-Manager. Erlauben Sie Codec Anchor in Ihrem Root-Manager.</string>
     <string name="eq_delivery_failed_shm">Diese Einstellungen wirken sich nicht auf den Klang aus: Das Audiobearbeitungsmodul läuft nicht. Starten Sie das Telefon neu.</string>
     <string name="eq_delivery_failed_version">Diese Einstellungen wirken sich nicht auf den Klang aus: Die App und das Audiobearbeitungsmodul haben unterschiedliche Versionen. Bringen Sie beide auf dieselbe Version und starten Sie dann das Telefon neu.</string>
@@ -203,6 +205,7 @@
     <string name="eq_precision_standard_desc">Zwischen den Bändern weicht die Kurve leicht ab</string>
     <string name="eq_precision_high">Hohe Genauigkeit</string>
     <string name="eq_precision_high_desc">Folgt der Linie durch die Bänder genauer</string>
+    <string name="eq_precision_fallback">Dieses Audio wird mit der Standardgenauigkeit wiedergegeben.</string>
     <string name="eq_band_none">Noch kein Band. Fügen Sie eines hinzu oder laden Sie eine AutoEQ-Datei.</string>
     <string name="eq_band_add">Band hinzufügen</string>
     <string name="eq_band_remove">Dieses Band entfernen</string>

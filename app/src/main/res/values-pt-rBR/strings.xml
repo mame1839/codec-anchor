@@ -44,13 +44,15 @@
     <string name="toggle_enforce">Desfazer alterações do sistema ou de outros apps</string>
     <string name="toggle_notify">Avisar quando o codec mudar</string>
     <string name="toggle_verbose">Gravar logs detalhados</string>
+    <string name="toggle_free_offload_switch">Desbloquear o botão de offload de hardware do A2DP nas opções do desenvolvedor</string>
 
     <string name="permission_title">É necessária a permissão de Bluetooth</string>
     <string name="permission_body">Ao conceder, o app pode ler seus dispositivos pareados e os nomes deles.</string>
     <string name="permission_denied">A permissão está bloqueada. Conceda-a nas configurações do sistema.</string>
     <string name="bluetooth_off">O Bluetooth está desativado. Ative-o para ver seus dispositivos pareados.</string>
     <string name="config_broken">Não foi possível ler as configurações salvas, então não há como editar nada. Importe um backup para começar de novo.</string>
-    <string name="offload_hint">O offload de hardware do Bluetooth A2DP está ativado. Ative \"Desativar offload de hardware do Bluetooth A2DP\" nas opções do desenvolvedor para que o telefone codifique o LDAC por conta própria e a taxa de bits acompanhe o enlace.</string>
+    <string name="offload_hint">O offload de hardware do Bluetooth A2DP está ativado, então o telefone não codifica o LDAC por conta própria e a taxa de bits não acompanha o enlace.</string>
+    <string name="offload_turn_off">Ative \"Desativar offload de hardware do Bluetooth A2DP\" nas opções do desenvolvedor.</string>
     <string name="offload_hint_scope">Neste aparelho esse botão não pode ser usado. Adicione o app Configurações ao escopo do módulo e abra as opções do desenvolvedor de novo para liberá-lo.</string>
 
     <string name="section_audio_devices">Dispositivos de áudio</string>
@@ -75,7 +77,7 @@
 
     <string name="eq_module_version_mismatch">O módulo de processamento de áudio (%1$s) e o app (%2$s) estão em versões diferentes. Atualize os dois para a mesma versão e reinicie o aparelho.</string>
     <string name="eq_unavailable_not_registered">O processamento de áudio não está disponível: o módulo de processamento de áudio não está instalado, ou este aparelho ainda não o carregou. Instale-o e reinicie o aparelho.</string>
-    <string name="eq_unavailable_offload">O processamento de áudio não está disponível enquanto a descarga por hardware do Bluetooth A2DP estiver ativada. O aviso na lista de dispositivos explica como desativá-la.</string>
+    <string name="eq_unavailable_offload">O processamento de áudio não está disponível enquanto a descarga por hardware do Bluetooth A2DP estiver ativada.</string>
     <string name="eq_unavailable_hook_old">O processamento de áudio não está disponível: o módulo que roda no processo do Bluetooth é de uma versão anterior que não o conhece. Desative o Bluetooth e ative de novo.</string>
     <string name="eq_unavailable_device">Estes fones não estão registrados para o processamento de áudio, então nada do que for definido aqui chega ao som.</string>
 
@@ -100,7 +102,7 @@
 
     <string name="eq_delivery_other">No momento há outros fones conectados, então o que você mudar aqui ainda não chega ao som. Conecte estes fones e será aplicado.</string>
     <string name="eq_delivery_ambiguous">Há mais de um efeito de fones em execução e o app não consegue saber qual pertence a estes fones, então nada foi enviado. Desconecte os outros fones e mude algo aqui de novo.</string>
-    <string name="eq_delivery_not_live">Estas configurações ainda não chegaram ao som. Reproduza algo nestes fones, ou abra este app de novo.</string>
+    <string name="eq_delivery_slots_full">Estas configurações não chegaram ao som. Desative o processamento de áudio destes fones e ative-o de novo; se isso não resolver, reinicie o aparelho.</string>
     <string name="eq_delivery_failed_root">Estas configurações não chegaram ao som: o acesso root foi recusado, ou este aparelho não tem gerenciador de root. Permita o Codec Anchor no seu gerenciador de root.</string>
     <string name="eq_delivery_failed_shm">Estas configurações não chegaram ao som: o módulo de processamento de áudio não está em execução. Reinicie o aparelho.</string>
     <string name="eq_delivery_failed_version">Estas configurações não chegaram ao som: o app e o módulo de processamento de áudio estão em versões diferentes. Atualize os dois para a mesma versão e reinicie o aparelho.</string>
@@ -205,6 +207,7 @@
     <string name="eq_precision_standard_desc">Entre as bandas a curva se desvia um pouco</string>
     <string name="eq_precision_high">Alta precisão</string>
     <string name="eq_precision_high_desc">Segue mais de perto a linha que liga as bandas</string>
+    <string name="eq_precision_fallback">Este áudio está sendo reproduzido com a precisão padrão.</string>
     <string name="eq_band_none">Nenhuma banda ainda. Adicione uma ou importe um arquivo do AutoEQ.</string>
     <string name="eq_band_add">Adicionar uma banda</string>
     <string name="eq_band_remove">Remover esta banda</string>
