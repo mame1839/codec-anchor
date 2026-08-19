@@ -101,7 +101,7 @@
 
     <string name="eq_delivery_other">अभी दूसरे ईयरफ़ोन कनेक्ट हैं, इसलिए यहाँ किया गया बदलाव अभी आवाज़ तक नहीं पहुँचता। इन ईयरफ़ोन को कनेक्ट करें, तब यह लागू हो जाएगा।</string>
     <string name="eq_delivery_ambiguous">ईयरफ़ोन के एक से ज़्यादा इफ़ेक्ट चल रहे हैं और ऐप यह नहीं बता सकता कि इनमें से कौन-सा इन ईयरफ़ोन का है, इसलिए कुछ नहीं भेजा गया। दूसरे ईयरफ़ोन डिसकनेक्ट करें, फिर यहाँ दोबारा कुछ बदलें।</string>
-    <string name="eq_delivery_not_live">ये सेटिंग अभी आवाज़ तक नहीं पहुँची हैं। इन ईयरफ़ोन पर कुछ चलाएँ, या यह ऐप दोबारा खोलें।</string>
+    <string name="eq_delivery_slots_full">ये सेटिंग आवाज़ तक नहीं पहुँचीं। इन ईयरफ़ोन की ऑडियो प्रोसेसिंग बंद करके फिर से चालू करें; अगर इससे ठीक न हो, तो फ़ोन को रीस्टार्ट करें।</string>
     <string name="eq_delivery_failed_root">ये सेटिंग आवाज़ तक नहीं पहुँचीं: root ऐक्सेस से मना कर दिया गया, या इस फ़ोन में कोई root मैनेजर नहीं है। अपने root मैनेजर में Codec Anchor को अनुमति दें।</string>
     <string name="eq_delivery_failed_shm">ये सेटिंग आवाज़ तक नहीं पहुँचीं: ऑडियो प्रोसेसिंग मॉड्यूल चल नहीं रहा। फ़ोन को रीस्टार्ट करें।</string>
     <string name="eq_delivery_failed_version">ये सेटिंग आवाज़ तक नहीं पहुँचीं: ऐप और ऑडियो प्रोसेसिंग मॉड्यूल के वर्शन अलग हैं। दोनों को एक ही वर्शन पर अपडेट करें, फिर फ़ोन को रीस्टार्ट करें।</string>
@@ -205,6 +205,7 @@
     <string name="eq_precision_standard_desc">बैंड के बीच कर्व थोड़ा हट जाता है</string>
     <string name="eq_precision_high">उच्च सटीकता</string>
     <string name="eq_precision_high_desc">बैंड को जोड़ने वाली रेखा का ज़्यादा नज़दीकी से पालन करता है</string>
+    <string name="eq_precision_fallback">यह ऑडियो मानक सटीकता पर चल रहा है।</string>
     <string name="eq_band_none">अभी कोई बैंड नहीं है। एक जोड़ें, या AutoEQ फ़ाइल पढ़वाएँ।</string>
     <string name="eq_band_add">बैंड जोड़ें</string>
     <string name="eq_band_remove">यह बैंड हटाएँ</string>

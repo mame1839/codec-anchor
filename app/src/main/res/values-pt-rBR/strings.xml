@@ -102,7 +102,7 @@
 
     <string name="eq_delivery_other">No momento há outros fones conectados, então o que você mudar aqui ainda não chega ao som. Conecte estes fones e será aplicado.</string>
     <string name="eq_delivery_ambiguous">Há mais de um efeito de fones em execução e o app não consegue saber qual pertence a estes fones, então nada foi enviado. Desconecte os outros fones e mude algo aqui de novo.</string>
-    <string name="eq_delivery_not_live">Estas configurações ainda não chegaram ao som. Reproduza algo nestes fones, ou abra este app de novo.</string>
+    <string name="eq_delivery_slots_full">Estas configurações não chegaram ao som. Desative o processamento de áudio destes fones e ative-o de novo; se isso não resolver, reinicie o aparelho.</string>
     <string name="eq_delivery_failed_root">Estas configurações não chegaram ao som: o acesso root foi recusado, ou este aparelho não tem gerenciador de root. Permita o Codec Anchor no seu gerenciador de root.</string>
     <string name="eq_delivery_failed_shm">Estas configurações não chegaram ao som: o módulo de processamento de áudio não está em execução. Reinicie o aparelho.</string>
     <string name="eq_delivery_failed_version">Estas configurações não chegaram ao som: o app e o módulo de processamento de áudio estão em versões diferentes. Atualize os dois para a mesma versão e reinicie o aparelho.</string>
@@ -207,6 +207,7 @@
     <string name="eq_precision_standard_desc">Entre as bandas a curva se desvia um pouco</string>
     <string name="eq_precision_high">Alta precisão</string>
     <string name="eq_precision_high_desc">Segue mais de perto a linha que liga as bandas</string>
+    <string name="eq_precision_fallback">Este áudio está sendo reproduzido com a precisão padrão.</string>
     <string name="eq_band_none">Nenhuma banda ainda. Adicione uma ou importe um arquivo do AutoEQ.</string>
     <string name="eq_band_add">Adicionar uma banda</string>
     <string name="eq_band_remove">Remover esta banda</string>

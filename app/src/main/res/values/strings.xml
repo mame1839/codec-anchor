@@ -123,7 +123,10 @@
          same as above (see the note there). -->
     <string name="eq_delivery_other">Different earphones are connected right now, so what you change here does not reach the sound yet. Connect these earphones and it is applied.</string>
     <string name="eq_delivery_ambiguous">More than one set of earphone effects is running, and the app cannot tell which one belongs to these earphones, so nothing was sent. Disconnect the other earphones, then change something here again.</string>
-    <string name="eq_delivery_not_live">These settings have not reached the sound yet. Play something on these earphones, or open this app again.</string>
+    <!-- The "off and back on" is the eq_device_register toggle on the same screen: it rebuilds
+         the audio service, which is what actually clears this state. Reconnecting or playing
+         again does not; that is why this one does not reuse the wording of the rows above. -->
+    <string name="eq_delivery_slots_full">These settings did not reach the sound. Turn audio processing for these earphones off and back on; if that does not fix it, restart the phone.</string>
     <string name="eq_delivery_failed_root">These settings did not reach the sound: root access was refused, or this phone has no root manager. Allow Codec Anchor in your root manager.</string>
     <string name="eq_delivery_failed_shm">These settings did not reach the sound: the audio processing module is not running. Restart the phone.</string>
     <string name="eq_delivery_failed_version">These settings did not reach the sound: the app and the audio processing module are different versions. Update both to the same version, then restart the phone.</string>
@@ -236,6 +239,7 @@
     <string name="eq_precision_standard_desc">The curve drifts a little between bands</string>
     <string name="eq_precision_high">High accuracy</string>
     <string name="eq_precision_high_desc">Follows the line through the bands more closely</string>
+    <string name="eq_precision_fallback">This audio is playing at the standard accuracy.</string>
     <string name="eq_band_none">No band yet. Add one, or import an AutoEQ file.</string>
     <string name="eq_band_add">Add a band</string>
     <string name="eq_band_remove">Remove this band</string>

@@ -100,7 +100,7 @@
 
     <string name="eq_delivery_other">目前連線的是另一副耳機，所以這裡的變更還不會影響聲音。連線這副耳機後即可套用。</string>
     <string name="eq_delivery_ambiguous">有多個耳機音效正在執行，應用程式無法分辨哪一個屬於這副耳機，因此沒有傳送任何內容。請中斷另一副耳機的連線，然後在這裡重新變更一次。</string>
-    <string name="eq_delivery_not_live">這些設定還沒有影響聲音。請用這副耳機播放一些內容，或重新開啟本應用程式。</string>
+    <string name="eq_delivery_slots_full">這些設定沒有影響聲音。請先關閉這副耳機的音訊處理，再重新開啟；如果仍未解決，請重新啟動手機。</string>
     <string name="eq_delivery_failed_root">這些設定沒有影響聲音：root 權限遭拒，或本機沒有 root 管理程式。請在你的 root 管理程式中允許 Codec Anchor。</string>
     <string name="eq_delivery_failed_shm">這些設定沒有影響聲音：音訊處理模組沒有在執行。請重新啟動手機。</string>
     <string name="eq_delivery_failed_version">這些設定沒有影響聲音：應用程式與音訊處理模組的版本不一致。請將兩者更新到相同版本，然後重新啟動手機。</string>
@@ -203,6 +203,7 @@
     <string name="eq_precision_standard_desc">頻段之間的曲線會略有偏差</string>
     <string name="eq_precision_high">高精度</string>
     <string name="eq_precision_high_desc">更貼近連接各頻段的折線</string>
+    <string name="eq_precision_fallback">目前音源以標準精度播放。</string>
     <string name="eq_band_none">還沒有頻段。請新增一個，或讀取 AutoEQ 檔案。</string>
     <string name="eq_band_add">新增頻段</string>
     <string name="eq_band_remove">刪除這個頻段</string>

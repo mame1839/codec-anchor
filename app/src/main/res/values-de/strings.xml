@@ -101,7 +101,7 @@
 
     <string name="eq_delivery_other">Zurzeit sind andere Kopfhörer verbunden, daher wirkt sich das, was Sie hier ändern, noch nicht auf den Klang aus. Verbinden Sie diese Kopfhörer, dann wird es angewendet.</string>
     <string name="eq_delivery_ambiguous">Es laufen mehrere Kopfhörer-Effekte, und die App kann nicht erkennen, welcher zu diesen Kopfhörern gehört, daher wurde nichts gesendet. Trennen Sie die anderen Kopfhörer, und ändern Sie hier dann noch einmal etwas.</string>
-    <string name="eq_delivery_not_live">Diese Einstellungen wirken sich noch nicht auf den Klang aus. Spielen Sie etwas über diese Kopfhörer ab, oder öffnen Sie diese App erneut.</string>
+    <string name="eq_delivery_slots_full">Diese Einstellungen wirken sich nicht auf den Klang aus. Schalten Sie die Audiobearbeitung für diese Kopfhörer aus und wieder ein; hilft das nicht, starten Sie das Telefon neu.</string>
     <string name="eq_delivery_failed_root">Diese Einstellungen wirken sich nicht auf den Klang aus: Der Root-Zugriff wurde verweigert, oder dieses Telefon hat keinen Root-Manager. Erlauben Sie Codec Anchor in Ihrem Root-Manager.</string>
     <string name="eq_delivery_failed_shm">Diese Einstellungen wirken sich nicht auf den Klang aus: Das Audiobearbeitungsmodul läuft nicht. Starten Sie das Telefon neu.</string>
     <string name="eq_delivery_failed_version">Diese Einstellungen wirken sich nicht auf den Klang aus: Die App und das Audiobearbeitungsmodul haben unterschiedliche Versionen. Bringen Sie beide auf dieselbe Version und starten Sie dann das Telefon neu.</string>
@@ -205,6 +205,7 @@
     <string name="eq_precision_standard_desc">Zwischen den Bändern weicht die Kurve leicht ab</string>
     <string name="eq_precision_high">Hohe Genauigkeit</string>
     <string name="eq_precision_high_desc">Folgt der Linie durch die Bänder genauer</string>
+    <string name="eq_precision_fallback">Dieses Audio wird mit der Standardgenauigkeit wiedergegeben.</string>
     <string name="eq_band_none">Noch kein Band. Fügen Sie eines hinzu oder laden Sie eine AutoEQ-Datei.</string>
     <string name="eq_band_add">Band hinzufügen</string>
     <string name="eq_band_remove">Dieses Band entfernen</string>

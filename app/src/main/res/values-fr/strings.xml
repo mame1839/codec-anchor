@@ -102,7 +102,7 @@
 
     <string name="eq_delivery_other">D\'autres écouteurs sont connectés en ce moment, donc ce que vous modifiez ici n\'agit pas encore sur le son. Connectez ces écouteurs et le réglage sera appliqué.</string>
     <string name="eq_delivery_ambiguous">Plusieurs effets d\'écouteurs sont actifs, et l\'application ne peut pas déterminer lequel appartient à ces écouteurs : rien n\'a donc été envoyé. Déconnectez les autres écouteurs, puis modifiez de nouveau quelque chose ici.</string>
-    <string name="eq_delivery_not_live">Ces réglages n\'agissent pas encore sur le son. Lancez une lecture sur ces écouteurs, ou rouvrez cette application.</string>
+    <string name="eq_delivery_slots_full">Ces réglages n\'ont pas agi sur le son. Désactivez le traitement audio pour ces écouteurs, puis réactivez-le ; si cela ne suffit pas, redémarrez le téléphone.</string>
     <string name="eq_delivery_failed_root">Ces réglages n\'ont pas agi sur le son : l\'accès root a été refusé, ou ce téléphone n\'a pas de gestionnaire root. Autorisez Codec Anchor dans votre gestionnaire root.</string>
     <string name="eq_delivery_failed_shm">Ces réglages n\'ont pas agi sur le son : le module de traitement audio ne tourne pas. Redémarrez le téléphone.</string>
     <string name="eq_delivery_failed_version">Ces réglages n\'ont pas agi sur le son : l\'application et le module de traitement audio sont dans des versions différentes. Mettez les deux à la même version, puis redémarrez le téléphone.</string>
@@ -207,6 +207,7 @@
     <string name="eq_precision_standard_desc">Entre les bandes, la courbe s\'écarte un peu</string>
     <string name="eq_precision_high">Haute précision</string>
     <string name="eq_precision_high_desc">Suit de plus près la ligne qui relie les bandes</string>
+    <string name="eq_precision_fallback">Cet audio est reproduit avec la précision standard.</string>
     <string name="eq_band_none">Aucune bande pour le moment. Ajoutez-en une ou importez un fichier AutoEQ.</string>
     <string name="eq_band_add">Ajouter une bande</string>
     <string name="eq_band_remove">Supprimer cette bande</string>

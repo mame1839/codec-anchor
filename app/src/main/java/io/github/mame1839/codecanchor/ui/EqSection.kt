@@ -180,6 +180,14 @@ fun EqSection(vm: MainViewModel, mac: String, profile: DeviceProfile) {
                     selected = eq.precision,
                     onSelect = { value -> vm.updateEq(mac) { it.copy(precision = value) } },
                 )
+
+                // 高精度が効かない音源では、選んだ行のその場で言う (別の画面の案内を指さない)。
+                EqPrecisionFallbackNotice(
+                    eq = eq,
+                    delivery = vm.eqDelivery(mac),
+                    report = vm.eqParamsReport,
+                    mac = mac,
+                )
             }
 
             RowDivider()

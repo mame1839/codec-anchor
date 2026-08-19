@@ -117,8 +117,9 @@ class EqPrecisionRowTest {
      *
      * 言語に依らず言えることだけを見張る:
      * - **数字を書かない** — 遅延 (0 ms) も精度も、こちらから数を約束しない。
-     *   20〜32 Hz には物理の床があり、「0 ms」はこちらから言うと無かった心配を作る
-     * - **5 つのキーがどのロケールにも揃っている** — 抜けた言語は既定の英語に落ちるだけで、
+     *   20〜32 Hz には物理の床があり、「0 ms」はこちらから言うと無かった心配を作る。
+     *   標準へ落ちた理由 (44.1 kHz・ブロック長) も同じ — 数字はユーザに意味がない
+     * - **6 つのキーがどのロケールにも揃っている** — 抜けた言語は既定の英語に落ちるだけで、
      *   画面は壊れないので気づけない
      *
      * 言語ごとの言い回し (「高速」「高音質」など) は、既定の英語と日本語だけ名指しで見る。
@@ -131,6 +132,7 @@ class EqPrecisionRowTest {
             "eq_precision_standard_desc",
             "eq_precision_high",
             "eq_precision_high_desc",
+            "eq_precision_fallback",
         )
         val res = repoDir().resolve("app/src/main/res")
         val dirs = res.listFiles()

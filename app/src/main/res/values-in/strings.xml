@@ -100,7 +100,7 @@
 
     <string name="eq_delivery_other">Saat ini earphone lain sedang tersambung, jadi apa yang Anda ubah di sini belum berpengaruh pada suara. Sambungkan earphone ini, maka setelan akan diterapkan.</string>
     <string name="eq_delivery_ambiguous">Ada lebih dari satu efek earphone yang berjalan, dan aplikasi tidak dapat membedakan mana yang milik earphone ini, jadi tidak ada yang dikirim. Putuskan sambungan earphone yang lain, lalu ubah lagi sesuatu di sini.</string>
-    <string name="eq_delivery_not_live">Setelan ini belum berpengaruh pada suara. Putar sesuatu di earphone ini, atau buka lagi aplikasi ini.</string>
+    <string name="eq_delivery_slots_full">Setelan ini tidak berpengaruh pada suara. Matikan pemrosesan audio untuk earphone ini lalu nyalakan lagi; jika belum teratasi, mulai ulang ponsel.</string>
     <string name="eq_delivery_failed_root">Setelan ini tidak berpengaruh pada suara: akses root ditolak, atau ponsel ini tidak punya pengelola root. Izinkan Codec Anchor di pengelola root Anda.</string>
     <string name="eq_delivery_failed_shm">Setelan ini tidak berpengaruh pada suara: modul pemrosesan audio tidak berjalan. Mulai ulang ponsel.</string>
     <string name="eq_delivery_failed_version">Setelan ini tidak berpengaruh pada suara: aplikasi dan modul pemrosesan audio berbeda versi. Perbarui keduanya ke versi yang sama, lalu mulai ulang ponsel.</string>
@@ -203,6 +203,7 @@
     <string name="eq_precision_standard_desc">Di antara pita, kurva sedikit menyimpang</string>
     <string name="eq_precision_high">Akurasi tinggi</string>
     <string name="eq_precision_high_desc">Lebih dekat mengikuti garis yang menghubungkan pita</string>
+    <string name="eq_precision_fallback">Audio ini diputar dengan akurasi standar.</string>
     <string name="eq_band_none">Belum ada pita. Tambahkan satu, atau impor berkas AutoEQ.</string>
     <string name="eq_band_add">Tambah pita</string>
     <string name="eq_band_remove">Hapus pita ini</string>

@@ -103,7 +103,7 @@
 
     <string name="eq_delivery_other">Teraz połączone są inne słuchawki, więc to, co tu zmienisz, jeszcze nie dociera do dźwięku. Połącz te słuchawki, a ustawienia zostaną zastosowane.</string>
     <string name="eq_delivery_ambiguous">Działa więcej niż jeden efekt słuchawkowy, a aplikacja nie potrafi rozpoznać, który należy do tych słuchawek, więc nic nie zostało wysłane. Rozłącz pozostałe słuchawki, a potem zmień tutaj coś jeszcze raz.</string>
-    <string name="eq_delivery_not_live">Te ustawienia jeszcze nie dotarły do dźwięku. Odtwórz coś na tych słuchawkach albo otwórz tę aplikację ponownie.</string>
+    <string name="eq_delivery_slots_full">Te ustawienia nie dotarły do dźwięku. Wyłącz przetwarzanie dźwięku dla tych słuchawek i włącz je ponownie; jeśli to nie pomoże, uruchom telefon ponownie.</string>
     <string name="eq_delivery_failed_root">Te ustawienia nie dotarły do dźwięku: dostęp roota został odrzucony albo ten telefon nie ma menedżera roota. Zezwól na Codec Anchor w swoim menedżerze roota.</string>
     <string name="eq_delivery_failed_shm">Te ustawienia nie dotarły do dźwięku: moduł przetwarzania dźwięku nie działa. Uruchom telefon ponownie.</string>
     <string name="eq_delivery_failed_version">Te ustawienia nie dotarły do dźwięku: aplikacja i moduł przetwarzania dźwięku mają różne wersje. Zaktualizuj oba do tej samej wersji, a potem uruchom telefon ponownie.</string>
@@ -209,6 +209,7 @@
     <string name="eq_precision_standard_desc">Między pasmami krzywa nieco odbiega</string>
     <string name="eq_precision_high">Wysoka dokładność</string>
     <string name="eq_precision_high_desc">Dokładniej podąża za linią łączącą pasma</string>
+    <string name="eq_precision_fallback">To audio jest odtwarzane ze standardową dokładnością.</string>
     <string name="eq_band_none">Nie ma jeszcze żadnego pasma. Dodaj je albo wczytaj plik AutoEQ.</string>
     <string name="eq_band_add">Dodaj pasmo</string>
     <string name="eq_band_remove">Usuń to pasmo</string>

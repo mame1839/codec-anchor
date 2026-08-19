@@ -100,7 +100,7 @@
 
     <string name="eq_delivery_other">いま別のイヤホンが接続されているため、ここでの変更はまだ音に反映されません。このイヤホンを接続すれば反映されます。</string>
     <string name="eq_delivery_ambiguous">イヤホン用のエフェクトが複数動いていて、どれがこのイヤホンのものかアプリには判別できないため、何も送っていません。もう一方のイヤホンの接続を切ってから、ここでもう一度何か変更してください。</string>
-    <string name="eq_delivery_not_live">この設定はまだ音に反映されていません。このイヤホンで何か再生するか、このアプリを開き直してください。</string>
+    <string name="eq_delivery_slots_full">この設定は音に反映されませんでした。このイヤホンの音響処理を一度オフにして、もう一度オンにしてください。直らないときは端末を再起動してください。</string>
     <string name="eq_delivery_failed_root">この設定は音に反映されませんでした。root 権限の要求が拒否されたか、この端末に root 管理アプリがありません。root 管理アプリで Codec Anchor を許可してください。</string>
     <string name="eq_delivery_failed_shm">この設定は音に反映されませんでした。音響処理モジュールが動いていません。端末を再起動してください。</string>
     <string name="eq_delivery_failed_version">この設定は音に反映されませんでした。アプリと音響処理モジュールのバージョンが違います。両方を同じバージョンに更新してから、端末を再起動してください。</string>
@@ -203,6 +203,7 @@
     <string name="eq_precision_standard_desc">バンドとバンドのあいだで曲線がわずかにずれます</string>
     <string name="eq_precision_high">高精度</string>
     <string name="eq_precision_high_desc">バンドを結んだ線により近い形で鳴ります</string>
+    <string name="eq_precision_fallback">この音源では標準の方式で鳴っています。</string>
     <string name="eq_band_none">バンドがありません。追加するか、AutoEQ のファイルを読み込んでください。</string>
     <string name="eq_band_add">バンドを追加</string>
     <string name="eq_band_remove">このバンドを削除</string>

@@ -105,7 +105,7 @@
 
     <string name="eq_delivery_other">سماعات أخرى متصلة الآن، لذلك لا يصل ما تغيّره هنا إلى الصوت بعد. وصّل هذه السماعات ليُطبَّق الإعداد.</string>
     <string name="eq_delivery_ambiguous">تعمل أكثر من مجموعة من مؤثرات السماعات، ولا يستطيع التطبيق تحديد أيها يخص هذه السماعات، لذا لم يُرسَل أي شيء. افصل السماعات الأخرى، ثم غيّر شيئًا هنا مرة أخرى.</string>
-    <string name="eq_delivery_not_live">لم تصل هذه الإعدادات إلى الصوت بعد. شغّل شيئًا على هذه السماعات، أو افتح هذا التطبيق من جديد.</string>
+    <string name="eq_delivery_slots_full">لم تصل هذه الإعدادات إلى الصوت. أوقف معالجة الصوت لهذه السماعات ثم أعد تفعيلها؛ إذا لم يُصلح ذلك المشكلة، أعد تشغيل الهاتف.</string>
     <string name="eq_delivery_failed_root">لم تصل هذه الإعدادات إلى الصوت: رُفض الوصول بصلاحيات root، أو لا يملك هذا الهاتف مدير صلاحيات root. اسمح لـ Codec Anchor في مدير صلاحيات root.</string>
     <string name="eq_delivery_failed_shm">لم تصل هذه الإعدادات إلى الصوت: وحدة معالجة الصوت لا تعمل. أعد تشغيل الهاتف.</string>
     <string name="eq_delivery_failed_version">لم تصل هذه الإعدادات إلى الصوت: التطبيق ووحدة معالجة الصوت بإصدارين مختلفين. حدّث كليهما إلى الإصدار نفسه، ثم أعد تشغيل الهاتف.</string>
@@ -213,6 +213,7 @@
     <string name="eq_precision_standard_desc">ينحرف المنحنى قليلاً بين النطاقات</string>
     <string name="eq_precision_high">دقة عالية</string>
     <string name="eq_precision_high_desc">يتبع الخط الواصل بين النطاقات بدقة أكبر</string>
+    <string name="eq_precision_fallback">يُشغَّل هذا الصوت بالدقة القياسية.</string>
     <string name="eq_band_none">لا توجد نطاقات بعد. أضِف نطاقًا أو استورد ملف AutoEQ.</string>
     <string name="eq_band_add">إضافة نطاق</string>
     <string name="eq_band_remove">إزالة هذا النطاق</string>

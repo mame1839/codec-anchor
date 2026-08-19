@@ -102,7 +102,7 @@
 
     <string name="eq_delivery_other">Ahora mismo hay otros auriculares conectados, así que lo que cambies aquí todavía no llega al sonido. Conecta estos auriculares y se aplicará.</string>
     <string name="eq_delivery_ambiguous">Hay más de un efecto de auriculares en marcha y la app no puede saber cuál corresponde a estos auriculares, así que no se ha enviado nada. Desconecta los otros auriculares y luego vuelve a cambiar algo aquí.</string>
-    <string name="eq_delivery_not_live">Estos ajustes todavía no han llegado al sonido. Reproduce algo en estos auriculares, o vuelve a abrir esta app.</string>
+    <string name="eq_delivery_slots_full">Estos ajustes no han llegado al sonido. Desactiva el procesamiento de audio de estos auriculares y vuelve a activarlo; si eso no lo arregla, reinicia el teléfono.</string>
     <string name="eq_delivery_failed_root">Estos ajustes no han llegado al sonido: se denegó el acceso root, o este teléfono no tiene gestor de root. Permite Codec Anchor en tu gestor de root.</string>
     <string name="eq_delivery_failed_shm">Estos ajustes no han llegado al sonido: el módulo de procesamiento de audio no está en marcha. Reinicia el teléfono.</string>
     <string name="eq_delivery_failed_version">Estos ajustes no han llegado al sonido: la app y el módulo de procesamiento de audio tienen versiones distintas. Actualiza ambos a la misma versión y reinicia el teléfono.</string>
@@ -207,6 +207,7 @@
     <string name="eq_precision_standard_desc">Entre bandas la curva se desvía un poco</string>
     <string name="eq_precision_high">Alta precisión</string>
     <string name="eq_precision_high_desc">Sigue más de cerca la línea que une las bandas</string>
+    <string name="eq_precision_fallback">Este audio se está reproduciendo con la precisión estándar.</string>
     <string name="eq_band_none">Todavía no hay ninguna banda. Añade una o importa un archivo de AutoEQ.</string>
     <string name="eq_band_add">Añadir una banda</string>
     <string name="eq_band_remove">Quitar esta banda</string>

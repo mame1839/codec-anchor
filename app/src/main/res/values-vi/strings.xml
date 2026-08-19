@@ -100,7 +100,7 @@
 
     <string name="eq_delivery_other">Hiện đang kết nối tai nghe khác, nên những gì bạn thay đổi ở đây chưa ảnh hưởng đến âm thanh. Hãy kết nối tai nghe này thì cài đặt sẽ được áp dụng.</string>
     <string name="eq_delivery_ambiguous">Có nhiều hiệu ứng tai nghe đang chạy và ứng dụng không phân biệt được cái nào thuộc về tai nghe này, nên chưa gửi gì cả. Hãy ngắt kết nối tai nghe kia, rồi thay đổi lại thứ gì đó ở đây.</string>
-    <string name="eq_delivery_not_live">Các cài đặt này chưa ảnh hưởng đến âm thanh. Hãy phát thứ gì đó trên tai nghe này, hoặc mở lại ứng dụng.</string>
+    <string name="eq_delivery_slots_full">Các cài đặt này không ảnh hưởng đến âm thanh. Hãy tắt xử lý âm thanh cho tai nghe này rồi bật lại; nếu vẫn không được, hãy khởi động lại điện thoại.</string>
     <string name="eq_delivery_failed_root">Các cài đặt này không ảnh hưởng đến âm thanh: quyền root bị từ chối, hoặc máy này không có ứng dụng quản lý root. Hãy cho phép Codec Anchor trong ứng dụng quản lý root của bạn.</string>
     <string name="eq_delivery_failed_shm">Các cài đặt này không ảnh hưởng đến âm thanh: mô-đun xử lý âm thanh không chạy. Hãy khởi động lại điện thoại.</string>
     <string name="eq_delivery_failed_version">Các cài đặt này không ảnh hưởng đến âm thanh: ứng dụng và mô-đun xử lý âm thanh khác phiên bản. Hãy cập nhật cả hai lên cùng một phiên bản, rồi khởi động lại điện thoại.</string>
@@ -203,6 +203,7 @@
     <string name="eq_precision_standard_desc">Giữa các dải, đường cong lệch đi một chút</string>
     <string name="eq_precision_high">Độ chính xác cao</string>
     <string name="eq_precision_high_desc">Bám sát hơn đường nối các dải</string>
+    <string name="eq_precision_fallback">Âm thanh này đang phát ở độ chính xác tiêu chuẩn.</string>
     <string name="eq_band_none">Chưa có dải nào. Hãy thêm một dải, hoặc nhập tệp AutoEQ.</string>
     <string name="eq_band_add">Thêm dải</string>
     <string name="eq_band_remove">Bỏ dải này</string>
