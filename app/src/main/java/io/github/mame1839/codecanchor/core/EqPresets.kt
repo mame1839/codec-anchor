@@ -3,8 +3,6 @@ package io.github.mame1839.codecanchor.core
 import org.json.JSONArray
 import org.json.JSONObject
 
-// プリセットは AppConfig に載せない。フックが必要とするのは「いま適用中の EQ」だけで、
-// 載せると hash の契約が広がり、ブロードキャストが Binder のトランザクション上限へ近づく。
 data class EqPreset(val name: String, val settings: EqSettings) {
     fun toJson(): JSONObject = JSONObject().apply {
         put("name", name)
