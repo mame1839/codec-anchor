@@ -1,5 +1,3 @@
-// 書式: 1 行 1 値の dB を kCurvePoints 行。周波数は書かない — グリッドは
-// dsp/ca_eq_curve.h ただ 1 箇所で定義され、書くと定義が 2 箇所になる。
 #ifndef CA_EQ_CURVE_IO_H_
 #define CA_EQ_CURVE_IO_H_
 
@@ -13,8 +11,6 @@ namespace caeq {
 enum class CurveRead {
     kOk = 0,
     kOpenFailed,
-    // 点数が kCurvePoints ちょうどでない。多くても少なくても失敗 — 足りない分を
-    // 0 dB で埋めると、送り手が意図していない平坦部が黙って鳴る。
     kWrongCount,
 };
 
@@ -23,7 +19,6 @@ struct CurveReadResult {
     int       count  = 0;
 };
 
-// 開いてある FILE* から読む。out は kCurvePoints 個ぶん。
 inline CurveReadResult readCurveStream(std::FILE* f, float* out) {
     CurveReadResult r;
     if (f == nullptr) { r.status = CurveRead::kOpenFailed; return r; }
@@ -48,6 +43,6 @@ inline CurveReadResult readCurveFile(const char* path, float* out) {
     return r;
 }
 
-}  // namespace caeq
+}
 
-#endif  // CA_EQ_CURVE_IO_H_
+#endif

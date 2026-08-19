@@ -1,4 +1,3 @@
-// 目標曲線のグリッド。定義・補間規則は eq-dsp-internals.md §6。
 #ifndef CA_EQ_CURVE_H_
 #define CA_EQ_CURVE_H_
 
@@ -14,7 +13,6 @@ inline constexpr int    kCurvePoints = 401;
 inline constexpr double kCurveMinHz  = 20.0;
 inline constexpr double kCurveMaxHz  = 20000.0;
 
-// ⚠️ 演算層のゲイン上限 (kMaxGainDb) とたまたま同じ値なだけの別の量。参照しない。
 inline constexpr float kCurveMaxAbsDb = 40.0f;
 
 inline double curvePointHz(int i) {
@@ -44,6 +42,6 @@ inline double curveDbAt(const float* db401, double f_hz) {
            t * static_cast<double>(db401[i + 1]);
 }
 
-}  // namespace caeq
+}
 
-#endif  // CA_EQ_CURVE_H_
+#endif

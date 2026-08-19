@@ -20,7 +20,7 @@ inline double warpRatio(double fc, double fs) {
     return clampd(fc / fs, kMinFcHz / 192000.0, kMaxFcRatio);
 }
 
-}  // namespace
+}
 
 Coef designTdf2(const Band& band, double fs) {
     const double A  = std::pow(10.0, band.gain_db / 40.0);
@@ -78,7 +78,6 @@ Coef designSvf(const Band& band, double fs) {
     double g = t, k = 1.0 / band.q, m0 = 1.0, m1 = 0.0, m2 = 0.0;
     switch (band.type) {
     case BandType::kPeaking:
-        // k に A が入るのが RBJ の peaking と一致する条件。m1 = k(A^2-1)。
         g  = t;
         k  = 1.0 / (band.q * A);
         m0 = 1.0;
@@ -86,7 +85,6 @@ Coef designSvf(const Band& band, double fs) {
         m2 = 0.0;
         break;
     case BandType::kLowShelf:
-        // g を sqrt(A) で割ると、プリワープ後の s 平面で RBJ の低域シェルフと一致する。
         g  = t / std::sqrt(A);
         k  = 1.0 / band.q;
         m0 = 1.0;
@@ -104,9 +102,9 @@ Coef designSvf(const Band& band, double fs) {
 
     const double d = 1.0 / (1.0 + g * (g + k));
     Coef c;
-    c.c[0] = d;          // a1
-    c.c[1] = g * d;      // a2
-    c.c[2] = g * g * d;  // a3
+    c.c[0] = d;
+    c.c[1] = g * d;
+    c.c[2] = g * g * d;
     c.c[3] = m0;
     c.c[4] = m1;
     c.c[5] = m2;
@@ -142,8 +140,6 @@ bool validate(const Params& p, double fs) {
     }
     return true;
 }
-
-// ---------------------------------------------------------------------------
 
 Eq::Eq() {
     setRampMillis(10.0);
@@ -291,7 +287,6 @@ void Eq::updateRampCoef() {
         const Band& f = band_from_[b];
         const Band& t = band_to_[b];
         if (interp_ == Interp::kParam && f.type == t.type) {
-            // fc と Q は対数、ゲインは dB で補間する (1 オクターブのスイープが等速になる並べ方)。
             Band& c = band_cur_[b];
             c.type    = t.type;
             c.fc      = f.fc * std::pow(t.fc / f.fc, u);
@@ -374,7 +369,6 @@ void Eq::process(const float* in, float* out, int frames, bool accumulate) {
     applyPending();
 
     if (wet_cur_ == 0.0 && wet_target_ == 0.0) {
-        // 音に出ない区間でランプを引きずらない。次に有効化されたときは目標の係数から始まる。
         if (ramping()) finishRamp();
         if (accumulate) {
             const size_t ns = static_cast<size_t>(frames) * static_cast<size_t>(ch_);
@@ -416,7 +410,6 @@ void Eq::process(const float* in, float* out, int frames, bool accumulate) {
             if (!std::isfinite(out[i])) out[i] = 0.0f;
         }
     } else if (acc == 0.0 && st > 0.0 && st < kDenormalFloor) {
-        // 無音が続くと状態は指数的に小さくなり、非正規化数の領域では実行時間が跳ねる実装がある。
         clearState();
         denormal_flushes_++;
     }
@@ -427,7 +420,6 @@ double Eq::processChunk(const float* in, float* out, int n, bool accumulate) {
     const int ns = n * ch;
     double* buf = scratch_;
 
-    // 1 パス目: float -> double。プリアンプを掛けながら、合計で入力の健全性を見る。
     const double pre = pre_cur_;
     double acc = 0.0;
     for (int i = 0; i < ns; i++) {
@@ -446,7 +438,6 @@ double Eq::processChunk(const float* in, float* out, int n, bool accumulate) {
         scrubbed_++;
     }
 
-    // 2 パス目: バンドの直列。段の間は double のまま。
     if (structure_ == Structure::kSvf) {
         for (int b = 0; b < nb_run_; b++) {
             const double a1 = cur_[b].c[0], a2 = cur_[b].c[1], a3 = cur_[b].c[2];
@@ -485,7 +476,6 @@ double Eq::processChunk(const float* in, float* out, int n, bool accumulate) {
         }
     }
 
-    // 3 パス目: wet / dry を混ぜて float へ戻す。
     if (wet_cur_ != 1.0 || wet_target_ != 1.0) {
         for (int f = 0; f < n; f++) {
             const double w = wet_cur_;
@@ -512,4 +502,4 @@ double Eq::processChunk(const float* in, float* out, int n, bool accumulate) {
     return acc;
 }
 
-}  // namespace caeq
+}

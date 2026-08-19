@@ -10,7 +10,7 @@ bool FirKernel::bind(const FftPlan* plan, int block, int taps, int channels,
     bound_ = false;
     if (!convBlockSizeValid(block)) return false;
     if (taps <= 0 || 2 * block > taps) return false;
-    if (channels < 1 || channels > 2) return false;  // FIR が乗るのは device 枠 (≤ 2ch) だけ
+    if (channels < 1 || channels > 2) return false;
     if (plan == nullptr || plan->size() != 2 * block) return false;
     if (b.fdl == nullptr || b.filt[0] == nullptr || b.filt[1] == nullptr ||
         b.tail == nullptr || b.stage == nullptr || b.acc == nullptr || b.acc2 == nullptr ||
@@ -46,7 +46,6 @@ void FirKernel::reset() {
                                 static_cast<size_t>(block_));
 }
 
-// ⚠️ NaN / Inf はここで 0 に潰す (eq-dsp-internals.md §2)。
 void FirKernel::pushInput(const float* in) {
     head_ = (head_ + 1) % k_total_;
     for (int c = 0; c < ch_; c++) {
@@ -74,7 +73,6 @@ void FirKernel::pushBlock(const float* in) {
     pushInput(in);
 }
 
-// 分割 k は k ブロック前の入力に当たる。正規化はフィルタスペクトルに焼いてあるので scaling は 1。
 void FirKernel::macFace(int ch_index, int face, float* acc) const {
     const int valid = fill_ < k_total_ ? fill_ : k_total_;
     const float* fdl_ch = b_.fdl + static_cast<size_t>(ch_index) *
@@ -122,4 +120,4 @@ void FirKernel::processBlock(const float* in, float* out, int face, int fade_fac
     }
 }
 
-}  // namespace caeq
+}

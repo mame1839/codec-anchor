@@ -1,4 +1,3 @@
-// 規約は eq-shm-abi.md §4。
 #ifndef CA_EQ_PARAMS_H_
 #define CA_EQ_PARAMS_H_
 
@@ -17,13 +16,9 @@ inline uint32_t paramsGeneration(const ca_eq_slot_t* s) {
     return asAtomic(&s->generation)->load(std::memory_order_relaxed);
 }
 
-// --- 書き手 ---------------------------------------------------------------
-
 inline void paramsBeginWrite(ca_eq_slot_t* s) { seqBeginWrite(&s->seq); }
 
 inline void paramsEndWrite(ca_eq_slot_t* s) { seqEndWrite(&s->seq); }
-
-// --- 読み手 ---------------------------------------------------------------
 
 inline bool paramsRead(const ca_eq_slot_t* src, ca_eq_slot_t* dst) {
     const std::atomic<uint32_t>* seq = asAtomic(&src->seq);
@@ -56,6 +51,6 @@ inline bool paramsConvert(const ca_eq_slot_t& s, Params* out) {
     return true;
 }
 
-}  // namespace caeq
+}
 
-#endif  // CA_EQ_PARAMS_H_
+#endif

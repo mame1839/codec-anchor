@@ -11,7 +11,7 @@ constexpr double kLn10 = 2.30258509299404568402;
 
 inline int minInt(int a, int b) { return a < b ? a : b; }
 
-}  // namespace
+}
 
 bool FirDesigner::start(const FirDesignSpec& spec, const FftPlan* plan_m,
                         const FftPlan* plan_2p, float* data, float* work, float* filt) {
@@ -58,7 +58,6 @@ void FirDesigner::resampleRange(int from, int to) {
         double db = curveDbAt(spec_.curve_db, static_cast<double>(k) * step);
         if (db < -100.0) db = -100.0;
         const float lnmag = static_cast<float>(db * (kLn10 / 20.0));
-        // 順序付き実スペクトルの並び: [X0, XM/2, Re X1, Im X1, ...]。log|H| は実数なので虚部は 0。
         if (k == 0) {
             data_[0] = lnmag;
         } else if (k == half) {
@@ -70,8 +69,6 @@ void FirDesigner::resampleRange(int from, int to) {
     }
 }
 
-// cep[0]/cep[M/2] は ×1/M、cep[1..M/2-1] は ×2/M、上半分はゼロ。
-// M は 2 の冪なので 1/M も 2/M も f32 で厳密 (丸めを足さない)。
 void FirDesigner::foldRange(int from, int to) {
     const int   half = spec_.m / 2;
     const float inv  = 1.0f / static_cast<float>(spec_.m);
@@ -157,7 +154,6 @@ bool FirDesigner::step(int64_t budget_ns) {
     const int64_t start_left = budget_ns;
     int64_t left  = budget_ns;
     bool    first = true;
-    // 抜けるときに「モデル上いくら使ったか」を残す (ハーネス 26 節の会計)。
     struct Spend {
         int64_t* out;
         const int64_t* left;
@@ -165,14 +161,10 @@ bool FirDesigner::step(int64_t budget_ns) {
         ~Spend() { *out = start - *left; }
     } spend{&last_step_ns_, &left, start_left};
 
-    // 予算が尽きるまで工程を進める。不可分工程は「この呼び出しでまだ何もしていない」か
-    // 「残り予算に収まる」ときだけ実行する — 予算の過小をスライスの肥大ではなく
-    // 呼び出し回数の増加に倒す。
     while (phase_ != Phase::kDone) {
         switch (phase_) {
         case Phase::kResample: {
             const int total = spec_.m / 2 + 1;
-            // int に落とす前に残数で頭打ちにする (巨大な予算で int が溢れる)。
             const int64_t want64 = left / fircost::kResampleNsPerBin;
             int want = want64 > total ? total : static_cast<int>(want64);
             if (want < 1) {
@@ -293,4 +285,4 @@ bool FirDesigner::step(int64_t budget_ns) {
     return true;
 }
 
-}  // namespace caeq
+}

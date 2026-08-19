@@ -1,4 +1,3 @@
-// 規約は eq-shm-abi.md §3。ここを ca_eq.cpp に直接書かないこと (ホストで検証できなくなる)。
 #ifndef CA_EQ_STATS_H_
 #define CA_EQ_STATS_H_
 
@@ -9,13 +8,9 @@
 
 namespace caeq {
 
-// --- 書き手 (`.so`。オーディオスレッドと制御スレッドの両方から) ---------------
-
 inline void statsBeginWrite(ca_slot_t* s) { seqBeginWrite(&s->seq); }
 
 inline void statsEndWrite(ca_slot_t* s) { seqEndWrite(&s->seq); }
-
-// --- 読み手 (`caeqstat`。別プロセス) -----------------------------------------
 
 inline bool statsRead(const ca_slot_t* src, ca_slot_t* dst, int attempts = 100) {
     const std::atomic<uint32_t>* seq = asAtomic(&src->seq);
@@ -30,6 +25,6 @@ inline bool statsRead(const ca_slot_t* src, ca_slot_t* dst, int attempts = 100) 
     return false;
 }
 
-}  // namespace caeq
+}
 
-#endif  // CA_EQ_STATS_H_
+#endif
