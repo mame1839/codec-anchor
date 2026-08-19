@@ -2,7 +2,6 @@ package io.github.mame1839.codecanchor.core
 
 import org.json.JSONObject
 
-// codecType は -1、マスク系は 0、codecSpecific は -1 が「変更しない」。
 data class DeviceProfile(
     val mac: String,
     val name: String = "",
@@ -82,8 +81,6 @@ data class DeviceProfile(
             )
         }
 
-        // 「変更しない」でも有効値でもない中間の値は、適用も一致判定も通らないまま再試行を使い切るので、
-        // 読み込みの時点で「変更しない」側に寄せる。
         private fun mask(value: Int, known: Int): Int =
             if (value < 0) CodecKeys.KEEP_MASK else value and known
 
@@ -104,7 +101,6 @@ data class AppConfig(
 ) {
     fun profileFor(mac: String?): DeviceProfile? = mac?.uppercase()?.let { profiles[it] }
 
-    // 鍵と profile.mac が食い違うと encode の結果がフック側の再 encode と一致しなくなる
     fun withProfile(profile: DeviceProfile): AppConfig {
         val key = profile.mac.uppercase()
         return copy(profiles = profiles + (key to profile.copy(mac = key)))
@@ -131,7 +127,6 @@ data class AppConfig(
     companion object {
         const val VERSION = 1
 
-        // 読めなかったときは null。既定値を返すと、呼び出し側が「設定が無い」と区別できず上書きしてしまう。
         fun decode(json: String?): AppConfig? {
             if (json.isNullOrBlank()) return AppConfig()
             return try {

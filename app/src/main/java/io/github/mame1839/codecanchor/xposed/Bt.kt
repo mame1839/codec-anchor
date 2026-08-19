@@ -15,7 +15,6 @@ internal object Bt {
         private set
     private var builderClass: Class<*>? = null
 
-    // 名前は binder / スタック / worker の各スレッドから読み書きされる。順序は表示に使うので保ちたい。
     private val names = linkedMapOf<Int, String>()
     private val nameLock = Any()
 
@@ -108,7 +107,6 @@ internal object Bt {
         }.getOrNull()
     }
 
-    // 名前が取れないときは空で返す。表示名の組み立ては翻訳を持っているアプリ側に任せる。
     fun codecName(config: Any?, codecType: Int): String {
         if (config != null) {
             runCatching {
@@ -155,8 +153,6 @@ internal object Bt {
         config?.let { runCatching { XposedHelpers.callMethod(it, "getCodecType") as Int }.getOrNull() }
 }
 
-// 自分が投げた設定かどうかを、オブジェクトの同一性と時間窓で判定する。スタックが別スレッドへ post した
-// 先でも成立させるため ThreadLocal は使わない。複数の機器が同時に接続するので枠は 1 つでは足りない。
 internal object Applying {
     private class Entry(val config: Any, val force: Boolean, val expiresAt: Long)
 

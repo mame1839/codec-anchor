@@ -9,13 +9,8 @@ import io.github.mame1839.codecanchor.core.Spectrum
 import kotlin.math.max
 import kotlin.math.min
 
-// 題材のギャップレスループ再生。MODE_STREAM に自前の給紙スレッドで書き続ける — 折り返しは
-// 「同じストリームに続きを書く」だけなので継ぎ目が無い (クロスフェードは Spectrum.crossfadeLoop が
-// PCM に焼き込む)。MODE_STATIC + setLoopPoints にしないのは、題材の static バッファ確保が
-// 端末依存で失敗しうるため。再生開始時に AudioFocus GAIN を取り、喪失は onFocusLost で返す。
 class LoopPlayer(private val audioManager: AudioManager?) {
 
-    /** フォーカスを失って止まったときに呼ばれる。呼ばれるスレッドはシステム任せ。 */
     var onFocusLost: (() -> Unit)? = null
 
     private var loop = FloatArray(0)
@@ -35,7 +30,6 @@ class LoopPlayer(private val audioManager: AudioManager?) {
         .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
         .build()
 
-    // PCM はフルスケール ±1.0 の前提 (float トラックは超過をクリップする)。
     @Synchronized
     fun prepare(pcm: FloatArray, channels: Int, sampleRate: Int, fadeMs: Int = FADE_MS): Boolean {
         if (channels !in 1..2 || sampleRate !in 4_000..192_000 || pcm.size < channels) return false
@@ -59,7 +53,6 @@ class LoopPlayer(private val audioManager: AudioManager?) {
         }
         track = built
         feeding = true
-        // ループ本体と形式はスレッドへ値で渡す。prepare で差し替わっても走行中の給紙が混ざらない
         val data = loop
         val frameFloats = channels
         feeder = Thread { feed(built, data, frameFloats) }.also {
@@ -85,7 +78,6 @@ class LoopPlayer(private val audioManager: AudioManager?) {
         feeding = false
         val t = track
         track = null
-        // pause + flush が書き込み待ちの給紙スレッドを解放する。順序を入れ替えない
         if (t != null) {
             runCatching { t.pause() }
             runCatching { t.flush() }
@@ -117,8 +109,6 @@ class LoopPlayer(private val audioManager: AudioManager?) {
                 val n = runCatching {
                     track.write(chunk, off, chunk.size - off, AudioTrack.WRITE_BLOCKING)
                 }.getOrDefault(-1)
-                // 負はトラックの死 (デバイス消失等)、0 は停止系で解放された印。どちらも黙って抜ける
-                // — 回り続けると busy loop になる
                 if (n <= 0) {
                     if (n < 0) feeding = false
                     return
@@ -131,7 +121,6 @@ class LoopPlayer(private val audioManager: AudioManager?) {
     private fun buildTrack(): AudioTrack? = runCatching {
         val mask = if (channels == 2) AudioFormat.CHANNEL_OUT_STEREO else AudioFormat.CHANNEL_OUT_MONO
         val minBytes = AudioTrack.getMinBufferSize(sampleRate, mask, AudioFormat.ENCODING_PCM_FLOAT)
-        // 200 ms 以上。折り返しはストリームの中で連続しているので、ここはアンダーラン耐性だけ
         val bytes = max(minBytes * 2, sampleRate * channels * Float.SIZE_BYTES / 5)
         AudioTrack.Builder()
             .setAudioAttributes(audioAttributes)
@@ -149,7 +138,6 @@ class LoopPlayer(private val audioManager: AudioManager?) {
     }.getOrNull()
 
     private val focusListener = AudioManager.OnAudioFocusChangeListener { change ->
-        // CAN_DUCK は系が音量を下げるだけなので流す。A/B 比較には両候補へ同じに掛かる共通モード
         if (change == AudioManager.AUDIOFOCUS_LOSS || change == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
             stop()
             onFocusLost?.invoke()
@@ -175,10 +163,8 @@ class LoopPlayer(private val audioManager: AudioManager?) {
     }
 
     companion object {
-        /** 継ぎ目のクロスフェード。クリックを消すのに十分で、リズムを滲ませない長さ。 */
         const val FADE_MS = 30
 
-        /** 給紙 1 回分。約 85 ms @ 48 kHz — 停止要求への反応の上限になる。 */
         private const val CHUNK_FRAMES = 4_096
     }
 }

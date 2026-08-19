@@ -11,7 +11,6 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.math.min
 
-// data class にしない — 配列の equals/hashCode は参照比較で、lint (ArrayInDataClass) にも落ちる。
 class Loaded(
     val pcm: FloatArray,
     val channels: Int,
@@ -21,13 +20,11 @@ class Loaded(
     fun monoMix(): FloatArray = Spectrum.monoMix(pcm, channels)
 }
 
-// ⚠️ 同期で走るので、呼び出し側がワーカースレッドに置くこと。
 object LoopSource {
 
     private const val TIMEOUT_US = 10_000L
     private const val STALL_LIMIT = 1_000
 
-    // 題材は長くて数十秒。上限はメモリ保護 (120s ステレオ 48kHz float ≈ 46 MB)。
     const val MAX_CLIP_MS = 120_000L
 
     fun load(context: Context, uri: Uri, startMs: Long, lengthMs: Long): Result<Loaded> = runCatching {
@@ -81,7 +78,6 @@ object LoopSource {
         endUs: Long,
         durationMs: Long,
     ): Loaded {
-        // 実際の PCM の形は INFO_OUTPUT_FORMAT_CHANGED が上書きする。ここは初期値
         var sampleRate = inputFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)
         var channels = inputFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
         var encoding = AudioFormat.ENCODING_PCM_16BIT
@@ -110,8 +106,6 @@ object LoopSource {
                             val ptsUs = extractor.sampleTime
                             codec.queueInputBuffer(ix, 0, size, ptsUs, 0)
                             extractor.advance()
-                            // 終端を過ぎた入力まで送ってから EOS。デコーダ内部の遅延分を
-                            // 流しきらないと、最後のバッファが欠ける
                             if (ptsUs >= endUs) pastEnd = true
                         }
                     }
@@ -161,8 +155,6 @@ object LoopSource {
         return Loaded(pcm, channels, sampleRate, durationMs)
     }
 
-    // ⚠️ 内側のバッファは丸めに触らせず全量を取る (先頭・終端に掛かるバッファだけ刻む)。
-    // take を µs 経由で計算すると整数除算で毎バッファ 1 フレーム欠け、周期的なクリックになる。
     private fun appendClipped(
         into: MutableList<FloatArray>,
         floats: FloatArray,
@@ -177,12 +169,12 @@ object LoopSource {
         if (frames == 0 || ptsUs >= endUs) return
         val skip =
             if (ptsUs >= startUs) 0
-            else (((startUs - ptsUs) * sampleRate + 999_999) / 1_000_000).toInt() // ceil
+            else (((startUs - ptsUs) * sampleRate + 999_999) / 1_000_000).toInt()
         if (skip >= frames) return
         var take = frames - skip
         val bufEndUs = ptsUs + frames * 1_000_000L / sampleRate
         if (bufEndUs > endUs) {
-            val wanted = ((endUs - ptsUs) * sampleRate / 1_000_000).toInt() - skip // floor
+            val wanted = ((endUs - ptsUs) * sampleRate / 1_000_000).toInt() - skip
             take = min(take, wanted)
         }
         if (take <= 0) return
