@@ -41,38 +41,19 @@ import io.github.mame1839.codecanchor.core.EqSettings
 import io.github.mame1839.codecanchor.core.EqSlotBook
 import io.github.mame1839.codecanchor.core.EqSolver
 
-// ±12.0 dB を 0.1 dB 刻み。範囲は EqCurve.kt が持つ (絵の縦軸と同じ値を見るため)。
-// private ではなく internal なのは、単体テストが写しではなく実物の刻みを見るため。
 internal val GAIN_SCALE = EqScale.Linear(EQ_GAIN_RANGE, EQ_GAIN_STEP)
 
-// 範囲は EqSettings.PREAMP_RANGE をそのまま引く。**モデルが持てる値の全部に届かせること** —
-// EqScale.Linear.fromPosition は範囲でクランプするので、届かない値を持つ設定に触ると
-// 摘みが動いていなくても保存値が書き換わる。取り込み (AutoEQ) と探索の焼き込みは
-// 正のプリアンプも負の深い値も作る。刻みは dB のスライダーで揃えて 0.1 dB。
 internal val PREAMP_SCALE = EqScale.Linear(EqSettings.PREAMP_RANGE, 1)
 
-// 可聴帯域。AutoEQ が出す fc もこの中に収まる。
 private val FREQ_SCALE = EqScale.Log(20..20_000)
 
-// Q は 0.10 〜 10.00。シェルフは 0.7 を超えるとオーバーシュートするが、
-// 種別ごとに範囲を変えると種別を切り替えた瞬間に値が動くので、範囲は 1 つにする。
 private val Q_SCALE = EqScale.Log(10..1_000)
 
-// バンドを足したときの初期値。1 kHz / Q 1.41 / 0 dB は EqBand.fromJson の既定と同じ。
 private const val NEW_BAND_HZ = 1_000
 private const val NEW_BAND_Q100 = 141
 
-// パラメトリックを何も無いところから始めるときの並び。低・中・高に 1 本ずつ (1 桁ごと)。
-// 自由に足したり消したりできるので、最初から埋めておく理由が無い。
 private val PARAMETRIC_START_HZ = listOf(100, 1_000, 10_000)
 
-/**
- * 音響処理の中身。入口はここ 1 つで、[EqScreen] から呼ぶ。
- *
- * **重い操作は `EqRegisterRow` の 1 つだけ。**EQ のオン・オフと値の変更は共有メモリ越しなので
- * 音は切れないが、登録 (`audio_effects.xml` の書き換えと audioserver の再起動) は再生中の音を
- * 一瞬切る。だからそこにだけ確認とタイムアウトと結果表示が付いている。
- */
 @Composable
 fun EqSection(vm: MainViewModel, mac: String, profile: DeviceProfile) {
     val eq = profile.eq
@@ -81,25 +62,16 @@ fun EqSection(vm: MainViewModel, mac: String, profile: DeviceProfile) {
     var confirmGraphic by rememberSaveable { mutableStateOf(false) }
     var confirmReset by rememberSaveable { mutableStateOf(false) }
 
-    // 書式は stringResource で取ってから数字を流し込む。新しいファイルで
-    // LocalContext.current.resources を書くと lint の LocalContextResourcesRead で落ちる。
     val dbUnit = stringResource(R.string.eq_unit_db)
     val hzUnit = stringResource(R.string.eq_unit_hz)
     val kiloHzUnit = stringResource(R.string.eq_unit_khz)
     val gainText: (Int) -> String = { eqGainText(it, dbUnit) }
     val frequencyText: (Int) -> String = { eqFrequencyText(it, hzUnit, kiloHzUnit) }
 
-    // 見出しは画面の上 (TopAppBar) が持っているので、カードには付けない。
     SettingsCard {
-        // 使えないときも項目は伸ばしたまま残して理由を出す。OK なら何も出ない。
-        // カードの先頭に置くのは、理由がセクション全体に掛かるため — 下の 2 つのトグルは
-        // 理由によって片方だけ押せなくなるので、どちらかの直後に付けるともう片方の説明が消える。
         EqUnavailableNotice(vm = vm, availability = availability)
-        // 値がいま音に届いているか。使えるかどうか (上) とは別の軸なので行を分けてある。
         EqDeliveryNotice(vm = vm, mac = mac, availability = availability)
 
-        // 登録が入口。EQ を作ってから登録する順にも、登録してから作る順にも進めるよう、
-        // ここは EQ が切れていても出す (どちらの順でも、音が切れる操作は 1 回で済む)。
         EqRegisterRow(vm = vm, mac = mac, availability = availability)
 
         RowDivider()
@@ -113,28 +85,19 @@ fun EqSection(vm: MainViewModel, mac: String, profile: DeviceProfile) {
                     if (value) withStartingBands(next) else next
                 }
             },
-            // 使えないときに新しく入れることはできないが、入っているものを切ることはできる。
-            // 切れないと、あとから使えなくなった時点 (オフロードが入った・フックが古い) で
-            // 設定が固定されてしまう。
             enabled = availability.allowsEditing || eq.enabled,
         )
         if (!eq.enabled) return@SettingsCard
 
         RowDivider()
 
-        // スロットの行はトグルの下・曲線の上 (eq-slot-design.md §1)。切り替えは 1 タップで、
-        // ダイアログを挟まない — 耳で聞き比べながら往復する操作なので、1 往復に 2 タップ増えると死ぬ。
         EqSlotRow(vm = vm, mac = mac)
 
-        // **フラットを選んでいる間は編集 UI を出さない。**0 のスライダーを 10 本 disabled で
-        // 並べるより、行ごと消すほうが「ここは固定」が伝わる。曲線 (平ら) だけは出す。
         val flat = vm.slotsOf(mac).active == EqSlotBook.FLAT_ID
 
         RowDivider()
 
         if (!flat) {
-            // グラフィックは「fc と Q を固定したパラメトリック」なので内部表現は 1 つ。
-            // 方式の違いは行に常時出さず、選ぶダイアログの選択肢に副題として付ける。
             ChoiceRow(
                 title = stringResource(R.string.eq_mode),
                 options = listOf(
@@ -149,7 +112,6 @@ fun EqSection(vm: MainViewModel, mac: String, profile: DeviceProfile) {
                 onSelect = { value ->
                     when {
                         value == eq.mode -> Unit
-                        // グラフィックへ移ると fc と Q が固定値へ丸められる。戻せないので一度だけ確認する。
                         value == EqMode.GRAPHIC && !vm.eqRoundingConfirmed -> confirmGraphic = true
                         value == EqMode.GRAPHIC -> vm.updateEq(mac) { toGraphic(it) }
                         else -> vm.updateEq(mac) { toParametric(it) }
@@ -166,9 +128,6 @@ fun EqSection(vm: MainViewModel, mac: String, profile: DeviceProfile) {
                     onSelect = { value -> vm.updateEq(mac) { reband(it, value) } },
                 )
 
-                // **グラフィックにだけ出す。**パラメトリックは fc と Q をユーザが決めていて
-                // biquad が定義どおりの厳密値なので、切り替えても何も変わらない
-                // (「切り替えたのに変わらない」を生むトグルを出さない)。
                 ChoiceRow(
                     title = stringResource(R.string.eq_precision),
                     options = listOf(
@@ -183,7 +142,6 @@ fun EqSection(vm: MainViewModel, mac: String, profile: DeviceProfile) {
                     onSelect = { value -> vm.updateEq(mac) { it.copy(precision = value) } },
                 )
 
-                // 高精度が効かない音源では、選んだ行のその場で言う (別の画面の案内を指さない)。
                 EqPrecisionFallbackNotice(
                     eq = eq,
                     delivery = vm.eqDelivery(mac),
@@ -195,7 +153,6 @@ fun EqSection(vm: MainViewModel, mac: String, profile: DeviceProfile) {
             RowDivider()
         }
 
-        // 絵はスライダーと同じ EqPreviewHost の下に置く。ドラッグ中の値が絵にだけ流れる。
         EqPreviewHost {
             EqCurve(eq)
             if (!flat) {
@@ -208,9 +165,6 @@ fun EqSection(vm: MainViewModel, mac: String, profile: DeviceProfile) {
         }
 
         if (!flat) {
-            // バンド列の末尾に置く。戻す対象 (上のバンドと下のプリアンプ) の両方に掛かる操作なので、
-            // その境目が置き場所として読み取りやすい。既に全部 0 なら押せない — 押しても何も
-            // 起きないのに確認だけ出るのを避ける。
             TextButton(
                 onClick = { confirmReset = true },
                 enabled = eq.bands.any { it.gainDb10 != 0 } || eq.preampDb10 != 0,
@@ -232,7 +186,6 @@ fun EqSection(vm: MainViewModel, mac: String, profile: DeviceProfile) {
 
         RowDivider()
 
-        // 追加遅延は設定によらず 0 ms なので常時出す (eq-spec.md §9)。
         NoticeRow(
             icon = R.drawable.ic_info,
             text = stringResource(R.string.eq_latency_zero),
@@ -262,8 +215,6 @@ fun EqSection(vm: MainViewModel, mac: String, profile: DeviceProfile) {
         )
     }
 
-    // undo が無いので確認を挟む (プリセット削除と同じ作法)。手で作った曲線が誤タップ 1 回で
-    // 消えるのを防ぐ。よく使う操作ではないので「次から聞かない」は付けない。
     if (confirmReset) {
         AlertDialog(
             onDismissRequest = { confirmReset = false },
@@ -294,8 +245,6 @@ private fun GraphicBands(
     gainText: (Int) -> String,
     frequencyText: (Int) -> String,
 ) {
-    // 摘みが表すのは「そのバンド中心で実際に鳴る音量」であって、フィルタに渡すゲインではない。
-    // 目標値は保存していない — 保存中のバンドから復元する (EqSolver.graphicTargetsDb10)。
     val targets = remember(eq.bands) { EqSolver.graphicTargetsDb10(eq.bands) }
     eq.bands.forEachIndexed { index, band ->
         EqSliderRow(
@@ -311,7 +260,6 @@ private fun GraphicBands(
     }
 }
 
-// private ではなく internal なのは、バンドを開き閉じする回帰テストから直接呼ぶため。
 @Composable
 internal fun ParametricBands(
     vm: MainViewModel,
@@ -320,7 +268,6 @@ internal fun ParametricBands(
     gainText: (Int) -> String,
     frequencyText: (Int) -> String,
 ) {
-    // 開いたバンドの番号。-1 は全部閉じている。
     var openIndex by rememberSaveable { mutableIntStateOf(-1) }
     val typeLabels = listOf(
         EqBandType.PEAKING to stringResource(R.string.eq_type_peaking),
@@ -336,17 +283,6 @@ internal fun ParametricBands(
         )
     }
 
-    // **1 バンドぶんを key() で包み、開いたときの中身を if の本体に置く。**この 2 つで、
-    // 1 回のくり返しが吐くグループとスロットの並びが必ず一定になる。
-    //
-    // Compose のループはくり返しごとの目印を持たない — `forEachIndexed` 全体が 1 つの
-    // replaceGroup で、その中に全バンドのスロットが平らに並び、位置だけで前回と突き合わされる。
-    // ここで**末尾以外**のバンドを開くと、そのバンドが吐く量だけ後ろのバンドのスロットがずれ、
-    // 覚えてある値を別の型として読んで落ちる (`Integer cannot be cast to KFunction`)。
-    // 末尾なら後ろに兄弟がいないので露見しない。
-    //
-    // `return@forEachIndexed` での打ち切りは、この「量が変わる」ことを Compose の
-    // コンパイラから隠す — if の本体に composable が入っていないとグループが作られない。
     eq.bands.forEachIndexed { index, band ->
         key(index) {
             val typeLabel = typeLabels.firstOrNull { it.first == band.type }?.second.orEmpty()
@@ -428,7 +364,6 @@ internal fun ParametricBands(
 private fun EqPresetRows(vm: MainViewModel, mac: String, eq: EqSettings) {
     var deleting by rememberSaveable { mutableStateOf<String?>(null) }
 
-    // 書き出しの対象は名前で持つ。ファイル選択の間にプロセスが作り直されても復元できる。
     var exporting by rememberSaveable { mutableStateOf<String?>(null) }
 
     val exportLauncher = rememberLauncherForActivityResult(
@@ -479,9 +414,6 @@ private fun EqPresetRows(vm: MainViewModel, mac: String, eq: EqSettings) {
     }
 
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)) {
-        // 保存の入口はここではなくスロットのメニュー (「プリセットとして保存」)。**主語が要るから** —
-        // スロットが入ってからの「いまの設定」は「選択中スロットの曲線」で、
-        // フラットを選んでいるときは保存する中身が無い。
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             OutlinedButton(
                 onClick = { importLauncher.launch(arrayOf("*/*")) },
@@ -560,33 +492,6 @@ private fun RoundingDialog(onDismiss: () -> Unit, onConfirm: (Boolean) -> Unit) 
 private fun EqSettings.mapBand(index: Int, transform: (EqBand) -> EqBand): EqSettings =
     copy(bands = bands.mapIndexed { i, band -> if (i == index) transform(band) else band })
 
-/**
- * グラフィックの並びに合わせる。**バンド数を変えたときも、パラメトリックから移ってきたときも
- * 同じ 1 本を通す。**目標の読み方だけが 2 通りある:
- *
- * - **いまの並びがグラフィックのグリッドなら、摘みの値 (目標) の折れ線を新しい中心で読む**
- *   (対数周波数上の線形補間・範囲外は端の値。[AutoEqParser.interpolate] と同じ規約)。
- *   摘みの値こそが状態 (eq-spec.md §7。bands から復元できる唯一のユーザ入力) なので、
- *   切り替えで運ぶのはそれ。真の合成応答をサンプルすると**解の残差 (中心間の谷) を
- *   次の目標に焼き込む** — 全バンド +12 のまま 5→10 と切り替えると摘みが
- *   [7.8, 12.0, 12.4, ...] になっていた (2026-08-12 のユーザの試し方そのもの)。
- *   折れ線なら全 +12 はどの並びでも全 +12 のまま渡る
- *   (EqSectionTest.flatKnobsSurviveEveryBandCountSwitch)。
- * - **それ以外 (パラメトリック由来・手書きのプリセット) は真の合成応答を読む。**
- *   fc が自由でシェルフも混ざる並びでは、バンド中心の値の折れ線は曲線を表さない —
- *   シェルフは fc でゲインの約半分にしかならず、fc より上の実体が点に現れない。
- *
- * 捨てて 0 にすると、バンド数を変えただけで音が消える。
- *
- * **解けなくても拒まない。** `EqSolver.solve()` が Q を上げて解き直し、それでも収まらなければ
- * 素朴な値 (目標をそのままゲインにしただけ) に戻る。素朴な値は必ず計算できるので、
- * ここで必ず止まる。1〜3 dB ずれるだけで形はおおむね保たれるし、
- * ユーザがバンド数を変えると言っているのに拒むほうが悪い。**通知も出さない** —
- * 操作のたびに消せない警告が出る画面になる。
- *
- * private ではなく internal なのは単体テストから呼ぶため。ここは黙って曲線を壊しうる唯一の場所で、
- * 壊れても画面上は「なんとなく音が変わった」にしか見えない。
- */
 internal fun reband(settings: EqSettings, bandCount: Int): EqSettings {
     val count = EqSettings.normalizeBandCount(bandCount)
     val freqs = EqSolver.centerFrequencies(count)
@@ -607,14 +512,6 @@ internal fun reband(settings: EqSettings, bandCount: Int): EqSettings {
     )
 }
 
-/**
- * いまの並びが (いまのバンド数の) グラフィックのグリッドか。
- *
- * 種別も見る — グリッドと同じ並びにシェルフを書いたプリセットでは、摘みの値の折れ線が
- * 曲線を表さないので、真の応答を読む側 ([reband] の else) に倒す。
- * [withGraphicGrid] の一致判定に種別が無いのは目的が違うため — あちらは「作り直すと
- * 値がわずかに動くから、スライダーを出せる並びなら触らない」の判定。
- */
 private fun matchesGraphicGrid(settings: EqSettings): Boolean {
     val freqs = EqSolver.centerFrequencies(settings.bandCount)
     return settings.bands.size == freqs.size &&
@@ -625,59 +522,20 @@ private fun matchesGraphicGrid(settings: EqSettings): Boolean {
 private fun toGraphic(settings: EqSettings): EqSettings =
     reband(settings.copy(mode = EqMode.GRAPHIC), settings.bandCount)
 
-/**
- * パラメトリックへ移る。**曲線があるならそのまま引き継ぐ** — グラフィックの並びは
- * パラメトリックとしてそのまま読めるので、丸めも解き直しも起きない。
- *
- * **例外は「まだ何も無いとき」だけ。**グラフィックでユーザが決められるのは**ゲインだけ**で、
- * 並びも Q もアプリが作ったもの。全部 0 dB なら曲線は平らで、引き継ぐ情報が 1 つも無い。
- * そこに 0 dB のバンドが 10 本並んでいても操作の邪魔にしかならないので、[PARAMETRIC_START_HZ]
- * の 3 本から始める。
- *
- * **オンにするとき ([withStartingBands]) は同じ条件にしない。**あちらは「1 本も無いとき」だけ。
- * パラメトリックでは fc と Q をユーザが決めるので、**「置いたがゲインはまだ 0」**という状態が
- * 実在する。そこで「平ら」を条件にすると、EQ を切って入れ直しただけでその作業が消える。
- */
 internal fun toParametric(settings: EqSettings): EqSettings {
     val next = settings.copy(mode = EqMode.PARAMETRIC)
     return if (next.bands.all { it.gainDb10 == 0 }) next.copy(bands = startingBands()) else next
 }
 
-/**
- * 全部 0 に戻す。戻した直後は素通し (全ゲイン 0 dB・手動プリアンプ 0 dB) になる。
- *
- * - グラフィックは平らなグリッドを [reband] で作り直す。ゲインだけ 0 にしないのは、
- *   solve() が Q を上げた跡がバンドに残ると「オンにした直後」と同じ状態に戻らないため。
- *   fc と Q はアプリが決めるものなので、作り直しても失われる情報は無い
- * - パラメトリックはゲインだけ 0 にする。fc と Q はユーザが置いたものなので保つ —
- *   バンドごと消すのはリセットではなく削除
- *
- * private ではなく internal なのは単体テストから呼ぶため。
- */
 internal fun resetToZero(settings: EqSettings): EqSettings = when (settings.mode) {
     EqMode.GRAPHIC -> reband(settings.copy(bands = emptyList()), settings.bandCount).copy(preampDb10 = 0)
     else -> settings.copy(bands = settings.bands.map { it.copy(gainDb10 = 0) }, preampDb10 = 0)
 }
 
-/**
- * フラット (読み取り専用の暗黙スロット) の中身。[base] からは主電源 ([EqSettings.enabled]) と
- * バンド数だけを引き継ぐ。
- *
- * **必ず [EqSlotBook.isNeutral] を満たすこと。**満たさないと、フラットのチップを押した瞬間に
- * write-through の和解がそれを「中立でない曲線」と読んで**新しいスロットを勝手に作る** —
- * フラットに戻すたびにスロットが 1 つ増える。
- * `EqSlotSelectionTest.theFlatCurveIsWhatTheLedgerCallsNeutral` がこの一致を見張っている。
- */
 internal fun flatEq(base: EqSettings): EqSettings = withStartingBands(
     base.copy(mode = EqMode.GRAPHIC, bands = emptyList(), preampDb10 = 0),
 )
 
-/**
- * EQ をオンにしたときに、バンドが 1 本も出ない状態を避ける。
- *
- * グラフィックは並びが中心周波数と一致している必要があるので [withGraphicGrid] へ、
- * パラメトリックは**空のときだけ** 3 本を置く (値のあるバンドには触らない)。
- */
 internal fun withStartingBands(settings: EqSettings): EqSettings = when {
     settings.mode == EqMode.GRAPHIC -> withGraphicGrid(settings)
     settings.bands.isEmpty() -> settings.copy(bands = startingBands())
@@ -687,13 +545,6 @@ internal fun withStartingBands(settings: EqSettings): EqSettings = when {
 private fun startingBands(): List<EqBand> =
     PARAMETRIC_START_HZ.map { EqBand(freqHz = it, q100 = NEW_BAND_Q100, gainDb10 = 0) }
 
-/**
- * グラフィックなのに並びが中心周波数と食い違っていたら作り直す。
- *
- * 起きるのは EQ を初めてオンにしたとき (既定の `bands` は空) と、手で書いたプリセットを
- * 読み込んだとき。並びが合っているときは触らない — 解き直すと値がわずかに動くので、
- * オンにするたびに設定が変わったことになる。
- */
 internal fun withGraphicGrid(settings: EqSettings): EqSettings {
     if (settings.mode != EqMode.GRAPHIC) return settings
     val freqs = EqSolver.centerFrequencies(settings.bandCount)
@@ -702,6 +553,5 @@ internal fun withGraphicGrid(settings: EqSettings): EqSettings {
     return if (matches) settings else reband(settings, settings.bandCount)
 }
 
-// SAF は自由な名前を受け付けるが、区切り文字が入るとプロバイダによって扱いが変わる。
 private fun safeFileName(name: String): String =
     name.replace(Regex("""[^\p{L}\p{N}._-]"""), "-").take(48).ifBlank { "preset" }
