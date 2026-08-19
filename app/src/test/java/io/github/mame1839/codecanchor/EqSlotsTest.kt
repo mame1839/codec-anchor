@@ -37,7 +37,6 @@ class EqSlotsTest {
         enabled = true,
         mode = EqMode.PARAMETRIC,
         bands = listOf(EqBand(freqHz = 105, q100 = 71, gainDb10 = -25)),
-        preampAuto = false,
         preampDb10 = -60,
     )
 
@@ -99,21 +98,21 @@ class EqSlotsTest {
     }
 
     // バンド数や有効オフは音を変えない。ゲイン 0 のグラフィックはバンドの位置も固定なので
-    // 情報を失わない。手動プリアンプも 0 dB なら鳴りはフラットと同じ。
+    // 情報を失わない。プリアンプも 0 dB なら鳴りはフラットと同じ。
     @Test
     fun zeroGainGraphicIsNeutralRegardlessOfShape() {
         val zeroBands = listOf(EqBand(freqHz = 31, q100 = 50, gainDb10 = 0), EqBand(freqHz = 16_000, q100 = 50, gainDb10 = 0))
         assertTrue(EqSlotBook.isNeutral(EqSettings(enabled = true, bandCount = 31, bands = zeroBands)))
         assertTrue(EqSlotBook.isNeutral(EqSettings(enabled = false, bands = zeroBands)))
-        assertTrue(EqSlotBook.isNeutral(EqSettings(preampAuto = false, preampDb10 = 0)))
+        assertTrue(EqSlotBook.isNeutral(EqSettings(preampDb10 = 0)))
     }
 
     @Test
     fun audibleSettingsAreNotNeutral() {
         // ゲインが立っている
         assertFalse(EqSlotBook.isNeutral(curveA))
-        // 手動プリアンプが 0 dB 以外
-        assertFalse(EqSlotBook.isNeutral(EqSettings(preampAuto = false, preampDb10 = -30)))
+        // プリアンプが 0 dB 以外
+        assertFalse(EqSlotBook.isNeutral(EqSettings(preampDb10 = -30)))
     }
 
     // 仕様 §2 の名指しの罠: パラメトリックで fc / Q だけ置いた「作業中」の全ゲイン 0 を

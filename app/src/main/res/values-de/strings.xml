@@ -103,7 +103,7 @@
     <string name="eq_delivery_failed_root">Diese Einstellungen wirken sich nicht auf den Klang aus: Der Root-Zugriff wurde verweigert, oder dieses Telefon hat keinen Root-Manager. Erlauben Sie Codec Anchor in Ihrem Root-Manager.</string>
     <string name="eq_delivery_failed_shm">Diese Einstellungen wirken sich nicht auf den Klang aus: Das Audiobearbeitungsmodul läuft nicht. Starten Sie das Telefon neu.</string>
     <string name="eq_delivery_failed_version">Diese Einstellungen wirken sich nicht auf den Klang aus: Die App und das Audiobearbeitungsmodul haben unterschiedliche Versionen. Bringen Sie beide auf dieselbe Version und starten Sie dann das Telefon neu.</string>
-    <string name="eq_delivery_failed_rejected">Diese Einstellungen wurden als außerhalb des zulässigen Bereichs abgelehnt, der Klang bleibt daher unverändert. Verringern Sie die Verstärkung der Bänder.</string>
+    <string name="eq_delivery_failed_rejected">Diese Einstellungen wurden als außerhalb des zulässigen Bereichs abgelehnt, der Klang bleibt daher unverändert. Senken Sie das Band mit der höchsten Frequenz ab oder entfernen Sie es.</string>
     <string name="eq_delivery_failed_timeout">Das Senden dieser Einstellungen wurde nicht rechtzeitig abgeschlossen und daher gestoppt.</string>
     <string name="eq_delivery_failed_input">Diese Einstellungen wirken sich nicht auf den Klang aus: Die App hat die Anfrage falsch aufgebaut. Das ist ein Fehler der App.</string>
     <string name="eq_delivery_failed_unknown">Das Senden dieser Einstellungen ist auf eine Weise fehlgeschlagen, die diese Version der App nicht kennt (Code %1$d).</string>
@@ -213,8 +213,6 @@
     <string name="eq_type_peaking">Glocke</string>
     <string name="eq_type_low_shelf">Tiefen-Shelf</string>
     <string name="eq_type_high_shelf">Höhen-Shelf</string>
-    <string name="eq_preamp_auto">Vorverstärkung automatisch setzen</string>
-    <string name="eq_preamp_auto_desc">Senkt den Pegel gerade so weit, dass die angehobenen Stellen nicht übersteuern (derzeit %1$s)</string>
     <string name="eq_preamp">Vorverstärkung</string>
     <string name="eq_round_title">Zu grafisch wechseln?</string>
     <string name="eq_round_body">Jedes Band rückt auf eine der festen Frequenzen des grafischen Equalizers, und sein Q wird passend gesetzt. Die Form der Kurve bleibt so weit wie möglich erhalten, aber die jetzigen Frequenzen und Q-Werte gehen verloren.</string>
@@ -266,7 +264,7 @@
     <string name="eq_finder_include_mid_desc">Fügt eine dritte Achse rund um die Stimmen hinzu. Ein paar Fragen mehr.</string>
     <string name="eq_finder_fine_tune">Aktuelle Einstellungen feinjustieren</string>
     <string name="eq_finder_notes">Vor dem Start</string>
-    <string name="eq_finder_note_volume">Der Test klingt etwas leiser als gewohnt. Die Lautstärke erst nach dem Start angenehm einstellen und bis zum Ende nicht mehr ändern.</string>
+    <string name="eq_finder_note_volume">Die Lautstärke erst nach dem Start angenehm einstellen und bis zum Ende nicht mehr ändern.</string>
     <string name="eq_finder_note_earphones">Mit diesen Kopfhörern an einem ruhigen Ort hören.</string>
     <string name="eq_finder_note_length">Etwa 25 bis 40 Fragen, 10 bis 15 Minuten. Jederzeit unterbrechen und später fortsetzen.</string>
     <string name="eq_finder_begin">Starten</string>

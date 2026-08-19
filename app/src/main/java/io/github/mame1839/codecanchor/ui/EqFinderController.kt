@@ -68,8 +68,9 @@ enum class EqFinderPhase { INTRO, TRIAL, RESULT }
  *   `EqParams.apply` を呼ばない (single-flight と「同じ枠に 2 本書かない」規約は vm 側が持つ)。
  *   トグルの体感は su 一発 (実測 median 109 ms) なので、人工的な待ちやデバウンスも置かない
  * - **セッション中は `updateEq` を通さない** (あれは永続化する)。永続化は確定 (apply) の 1 回だけ
- * - **聴感の重みとセッション共通トリムはセッション開始時に 1 回決めて固定** (eq-finder-design.md §1)。
- *   途中で計算し直すと候補間の相対音量が崩れ、音量バイアスが戻ってくる
+ * - **聴感の重みと土台の聴感レベルはセッション開始時に 1 回決めて固定**
+ *   (eq-finder-design.md §1)。途中で計算し直すと候補間の相対音量が崩れ、
+ *   音量バイアスが戻ってくる
  * - 進行状態は回答のたびに保存する。中断・プロセス死のどちらでも「続きから」が立つ
  */
 class EqFinderController(
@@ -83,7 +84,10 @@ class EqFinderController(
         runCatching { context.getSystemService(AudioManager::class.java) }.getOrNull(),
         Handler(Looper.getMainLooper()),
     ),
-    /** 重い計算 (重み・トリム・焼き込み計画) の走り先。テストは Unconfined を入れて同期に落とす。 */
+    /**
+     * 重い計算 (重み・土台の聴感レベル・焼き込み計画) の走り先。
+     * テストは Unconfined を入れて同期に落とす。
+     */
     private val compute: CoroutineDispatcher = Dispatchers.Default,
 ) {
     private val store = EqFinderStore(context)
@@ -163,7 +167,7 @@ class EqFinderController(
     private var base: EqSettings = EqSettings()
     private var baseBands: List<EqBand> = emptyList()
     private var weights: DoubleArray = DoubleArray(0)
-    private var trimDb = 0.0
+    private var baseLevelDb = 0.0
     private var pcmHash = 0L
 
     // ---- 試行 ----
@@ -302,7 +306,7 @@ class EqFinderController(
     // セッションの開始と再開
     // ------------------------------------------------------------------
 
-    /** 新規に始める。重み・トリム・開始点をここで固定する。 */
+    /** 新規に始める。重み・土台の聴感レベル・開始点をここで固定する。 */
     fun begin() {
         // ライブ題材に一節は無い (再生はユーザのアプリのまま。AudioFocus も取らない)。
         val clip = if (materialLive) null else (loaded ?: return)
@@ -398,24 +402,22 @@ class EqFinderController(
     }
 
     /**
-     * 聴感の重みとセッション共通トリムを決めて固定する。**begin と resume の唯一の共通経路** —
-     * 2 箇所に複製すると片方だけ直る (このリポジトリで繰り返している「同じ値が 2 箇所」)。
+     * 聴感の重みと、候補を揃える先の土台のレベルを決めて固定する。**begin と resume の
+     * 唯一の共通経路** — 2 箇所に複製すると片方だけ直る (このリポジトリで繰り返している
+     * 「同じ値が 2 箇所」)。
      *
-     * [clip] が null (ライブ題材) なら重みは既定 (ピンク × K 特性)。トリムは同じ式。
-     * ループでは重みとトリムを保存せず毎回ここで計算し直す — 同じ一節から決定的に
-     * 同じ値が出る (同じであることは呼び出し側がハッシュで確かめた後)。
+     * [clip] が null (ライブ題材) なら重みは既定 (ピンク × K 特性)。ループでは重みを保存せず
+     * 毎回ここで計算し直す — 同じ一節から決定的に同じ値が出る (同じであることは呼び出し側が
+     * ハッシュで確かめた後)。
      */
     private suspend fun prepareLoudness(clip: Loaded?) {
-        val bands = baseBands
-        val ax = axes
+        val theBase = base
         val prep = withContext(compute) {
             val w = if (clip == null) EqLoudness.defaultWeights() else weightsOf(clip)
-            val corners = eqFinderCornerOverlays(ax)
-                .map { EqFinderMaterialize.candidateBands(bands, ax, it) }
-            w to EqLoudness.sessionTrimDb(corners, w)
+            w to EqLoudness.baseLevelDb(theBase, w)
         }
         weights = prep.first
-        trimDb = prep.second
+        baseLevelDb = prep.second
     }
 
     /** 保存済みセッションを消して新規の導入に戻す (確認は画面側で済んでいる)。 */
@@ -520,9 +522,11 @@ class EqFinderController(
         val theAxes = axes
         val theBaseBands = baseBands
         val theOverlay = overlay
+        val theWeights = weights
+        val theBaseLevelDb = baseLevelDb
         scope.launch {
             val built = withContext(compute) {
-                val plan = eqFinderBakePlan(theBase, theAxes, theOverlay)
+                val plan = eqFinderBakePlan(theBase, theAxes, theOverlay, theWeights, theBaseLevelDb)
                 plan to EqFinderResultUi(
                     axes = theAxes.mapIndexed { i, axis ->
                         EqFinderAxisDelta(axisKind(axis), theOverlay.getOrElse(i) { 0 })
@@ -696,7 +700,9 @@ class EqFinderController(
     }
 
     private fun pushBands(bands: List<EqBand>) {
-        vm.setEqPreview(EqSessionPreview(mac, eqFinderCandidateSettings(base, bands, weights, trimDb)))
+        vm.setEqPreview(
+            EqSessionPreview(mac, eqFinderCandidateSettings(base, bands, weights, baseLevelDb)),
+        )
     }
 
     private fun persist() {
@@ -789,6 +795,8 @@ internal fun eqFinderBakePlan(
     base: EqSettings,
     axes: List<EqFinderAxis>,
     overlayDb10: List<Int>,
+    weights: DoubleArray,
+    baseLevelDb: Double,
 ): Map<Int, EqFinderBaked?> {
     val heardBands = EqFinderMaterialize.candidateBands(
         if (base.enabled) base.bands else emptyList(),
@@ -796,10 +804,13 @@ internal fun eqFinderBakePlan(
         overlayDb10,
     )
     val heardDb = eqFinderResponseDb(heardBands)
+    // **耳で聴いた候補のプリアンプ。**摘み数ごとに解き直した bands から取り直すと、
+    // 解の残差の分だけ音量が動いて「試聴した音と同じ」が音量の側で崩れる。
+    val heardPreampDb10 = EqLoudness.preampDb10(heardBands, weights, baseLevelDb)
     val counts = if (base.mode == EqMode.GRAPHIC) EqSettings.BAND_COUNTS else listOf(base.bandCount)
     return counts.associateWith { count ->
         val seed = if (base.mode == EqMode.GRAPHIC) reband(base, count) else base
-        EqFinderMaterialize.bake(seed, axes, overlayDb10)?.let { baked ->
+        EqFinderMaterialize.bake(seed, axes, overlayDb10, heardPreampDb10)?.let { baked ->
             val bakedDb = eqFinderResponseDb(baked.bands)
             EqFinderBaked(baked, heardDb.indices.maxOf { abs(heardDb[it] - bakedDb[it]) })
         }
@@ -807,20 +818,20 @@ internal fun eqFinderBakePlan(
 }
 
 /**
- * 押し込む候補の設定。**プリアンプは聴感等価** (音量で選ばせない — この機能の成立条件) で、
- * 自動プリアンプ (ピーク基準) はセッション中だけこの値で上書きする。
+ * 押し込む候補の設定。**プリアンプは土台の聴感レベルに揃えた値** (音量で選ばせない —
+ * この機能の成立条件)。オーバーレイが全部 0 の候補では土台のプリアンプそのものに戻るので、
+ * 「なし」は普段ちょうどそのままの音量で鳴る。
  * mode / bandCount は元の値のまま — 変えると hash の往復とグラフィックの解き直しに波及する。
  */
 internal fun eqFinderCandidateSettings(
     base: EqSettings,
     bands: List<EqBand>,
     weights: DoubleArray,
-    trimDb: Double,
+    baseLevelDb: Double,
 ): EqSettings = base.copy(
     enabled = true,
     bands = bands,
-    preampAuto = false,
-    preampDb10 = EqLoudness.preampDb10(bands, weights, trimDb),
+    preampDb10 = EqLoudness.preampDb10(bands, weights, baseLevelDb),
     // **セッション中の A/B は必ず標準 (biquad)。**候補はシェルフのオーバーレイで、そこでは
     // biquad が定義どおりの厳密値なので高精度にする利得が無い。一方で切り替えのたびに
     // FIR の組み直し (0.3〜0.6 s) が挟まり、**即時に切り替わることを前提にした聴き比べが壊れる。**
@@ -833,18 +844,6 @@ internal fun axisKind(axis: EqFinderAxis): EqFinderAxisKind = when (axis.type) {
     EqBandType.LOW_SHELF -> EqFinderAxisKind.BASS
     EqBandType.HIGH_SHELF -> EqFinderAxisKind.TREBLE
     else -> EqFinderAxisKind.MID
-}
-
-/**
- * セッション共通トリムに使う「端」の候補群 — 各軸 min/max の全組合せ + 全 0。
- * 最悪候補 (ピーク − 聴感が最大のもの) は端に出るので、この集合で足りる。
- */
-internal fun eqFinderCornerOverlays(axes: List<EqFinderAxis>): List<List<Int>> {
-    var combos = listOf(emptyList<Int>())
-    for (axis in axes) {
-        combos = combos.flatMap { listOf(it + axis.minDb10, it + axis.maxDb10) }
-    }
-    return combos + listOf(axes.map { 0 })
 }
 
 /**

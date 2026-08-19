@@ -168,14 +168,12 @@ fun ColumnScope.EqPreviewHost(content: @Composable ColumnScope.() -> Unit) {
  * 点は小さく、影も立体感も付けない。
  *
  * **描くのは目標値ではなく実際に鳴る特性。** `EqSettings.bands` の `gainDb10` は
- * フィルタに渡すゲインで (`EqSolver.solveBands()` が解をここへ書き、`autoPreampDb10()` も
- * これを合成応答として読む)、目標値はモデルのどこにも保存されていない。
- * 曲線は `EqSolver.combinedResponseDb()` をそのまま引く — 応答の式をここで書き直すと、
- * 片方だけ直したときに絵と音が黙ってずれる。
+ * フィルタに渡すゲインで (`EqSolver.solveBands()` が解をここへ書く)、目標値はモデルの
+ * どこにも保存されていない。曲線は `EqSolver.combinedResponseDb()` をそのまま引く —
+ * 応答の式をここで書き直すと、片方だけ直したときに絵と音が黙ってずれる。
  *
- * **プリアンプは含めない。** 既定の `preampAuto` はプリアンプ = −(合成ピーク) なので、
- * 含めるとどの設定でも曲線の最大が 0 dB に貼り付き、バンドを上げても曲線が下がるだけになる。
- * プリアンプは音色ではなく音量で、曲線を平行移動するだけなので形の情報は増えない。
+ * **プリアンプは含めない。** 音色ではなく音量で、曲線を平行移動するだけなので形の情報が
+ * 増えない。含めると、プリアンプを下げただけで曲線全体が沈む絵になる。
  */
 @Composable
 fun EqCurve(eq: EqSettings, modifier: Modifier = Modifier) {

@@ -53,7 +53,6 @@ class ConfigRoundTripTest {
                 mode = EqMode.PARAMETRIC,
                 bandCount = 31,
                 bands = bands,
-                preampAuto = false,
                 preampDb10 = -85,
             ),
         )

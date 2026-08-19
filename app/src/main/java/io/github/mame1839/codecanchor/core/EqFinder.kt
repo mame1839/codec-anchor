@@ -686,14 +686,20 @@ object EqFinderMaterialize {
      * 適用は開始点のスロットを書き換えず新しいスロットへ着地するので、旧カーブは
      * 開始点のスロットにそのまま在る (`llmdocs/eq-slot-design.md` §1)。
      *
-     * 焼き込み後は enabled=true、そして preampAuto=true に戻す。セッション中のプリアンプは
-     * 聴感等価 ([EqLoudness]) の一時値で、恒久設定に残すと「なし」側と揃えるための
-     * 下駄が鳴りっぱなしになる。自動に戻せば適用側 ([EqParams]) がクリップ防止として解き直す。
+     * 焼き込み後は enabled=true、プリアンプは [preampDb10]。**[preampDb10] は
+     * 試聴していた候補の値をそのまま渡すこと** ([EqLoudness.preampDb10] が
+     * `candidateBands` から求めた値)。ここで解き直した [EqSettings.bands] から計算し直しては
+     * ならない — グラフィックは摘み数ごとに解き直すので、バンドが候補と一致しない。
+     *
+     * **不変条件「試聴した音と同じ応答」は音量まで含めて成立する。**セッション中の
+     * プリアンプは土台の聴感レベルに揃えた値 ([EqLoudness]) で、オーバーレイが 0 なら
+     * 土台の値そのものに戻る。恒久設定に残しても下駄にはならない。
      */
     fun bake(
         settings: EqSettings,
         axes: List<EqFinderAxis>,
         overlayDb10: List<Int>,
+        preampDb10: Int,
     ): EqSettings? {
         val overlay = axisBands(axes, overlayDb10)
         return when (settings.mode) {
@@ -708,7 +714,7 @@ object EqFinderMaterialize {
                 if (bands.size > EqSettings.MAX_BANDS) {
                     null
                 } else {
-                    settings.copy(bands = bands, enabled = true, preampAuto = true)
+                    settings.copy(bands = bands, enabled = true, preampDb10 = preampDb10)
                 }
             }
             else -> {
@@ -722,7 +728,7 @@ object EqFinderMaterialize {
                 settings.copy(
                     bands = EqSolver.solveBands(target, freqs, EqSolver.defaultQ(freqs.size)),
                     enabled = true,
-                    preampAuto = true,
+                    preampDb10 = preampDb10,
                 )
             }
         }

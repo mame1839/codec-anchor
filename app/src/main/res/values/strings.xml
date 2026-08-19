@@ -125,7 +125,7 @@
     <string name="eq_delivery_failed_root">These settings did not reach the sound: root access was refused, or this phone has no root manager. Allow Codec Anchor in your root manager.</string>
     <string name="eq_delivery_failed_shm">These settings did not reach the sound: the audio processing module is not running. Restart the phone.</string>
     <string name="eq_delivery_failed_version">These settings did not reach the sound: the app and the audio processing module are different versions. Update both to the same version, then restart the phone.</string>
-    <string name="eq_delivery_failed_rejected">These settings were refused as out of range, so the sound is unchanged. Lower the gain of the bands.</string>
+    <string name="eq_delivery_failed_rejected">These settings were refused as out of range, so the sound is unchanged. Lower or remove the band with the highest frequency.</string>
     <string name="eq_delivery_failed_timeout">Sending these settings did not finish in time and was stopped.</string>
     <string name="eq_delivery_failed_input">These settings did not reach the sound: the app built the request wrongly. This is a fault in the app.</string>
     <string name="eq_delivery_failed_unknown">Sending these settings failed in a way this version of the app does not know about (code %1$d).</string>
@@ -244,8 +244,6 @@
     <string name="eq_type_peaking">Peak</string>
     <string name="eq_type_low_shelf">Low shelf</string>
     <string name="eq_type_high_shelf">High shelf</string>
-    <string name="eq_preamp_auto">Set the preamp automatically</string>
-    <string name="eq_preamp_auto_desc">Lowers the level just enough that the parts you boosted do not clip (now %1$s)</string>
     <string name="eq_preamp">Preamp</string>
     <string name="eq_round_title">Switch to graphic?</string>
     <string name="eq_round_body">Every band moves to one of the fixed frequencies of the graphic equaliser and its Q is set to match. The shape of the curve is kept as closely as it can be, but the frequencies and Q values you have now are lost.</string>
@@ -306,7 +304,7 @@
     <string name="eq_finder_include_mid_desc">Adds a third dimension around voices. A few more questions.</string>
     <string name="eq_finder_fine_tune">Fine-tune the current settings</string>
     <string name="eq_finder_notes">Before you start</string>
-    <string name="eq_finder_note_volume">The test plays a little quieter than normal. Set a comfortable volume after it starts, then do not change it until the end.</string>
+    <string name="eq_finder_note_volume">Set a comfortable volume after it starts, then do not change it until the end.</string>
     <string name="eq_finder_note_earphones">Listen on these earphones, in a quiet place.</string>
     <string name="eq_finder_note_length">Around 25 to 40 questions, 10 to 15 minutes. You can stop at any time and continue later.</string>
     <string name="eq_finder_begin">Start</string>

@@ -155,7 +155,7 @@ data class EqSlotBook(val devices: Map<String, DeviceSlots> = emptyMap()) {
         /**
          * 音を変えない曲線か (移行で active=flat にしてよいか)。
          *
-         * GRAPHIC・全バンド 0・プリアンプ 0 dB (自動は全 0 なら 0 を返す: [EqSolver.autoPreampDb10])。
+         * GRAPHIC・全バンド 0・プリアンプ 0 dB。
          * enabled は見ない — オンオフは主電源で、曲線の中立とは別の層。
          * パラメトリックは全ゲイン 0 でも中立にしない — 置いた fc / Q が作業中の情報で、
          * フラット (実体を保存しない) に倒すと台帳から消える。
@@ -163,7 +163,7 @@ data class EqSlotBook(val devices: Map<String, DeviceSlots> = emptyMap()) {
         fun isNeutral(eq: EqSettings): Boolean =
             eq.mode == EqMode.GRAPHIC &&
                 eq.bands.all { it.gainDb10 == 0 } &&
-                (eq.preampAuto || eq.preampDb10 == 0)
+                eq.preampDb10 == 0
 
         fun decode(json: String?): EqSlotBook {
             if (json.isNullOrBlank()) return EqSlotBook()

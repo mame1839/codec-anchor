@@ -29,15 +29,29 @@ class EqSectionTest {
     private val frequency = EqScale.Log(20..20_000)
     private val q = EqScale.Log(10..1_000)
 
-    // 両端の literal は仕様の固定 (±12 dB / プリアンプは -30〜0 dB)。実物が動いたらここで気づく。
+    // 両端の literal は仕様の固定 (±12 dB)。実物が動いたらここで気づく。
     @Test
     fun linearScaleHitsBothEnds() {
         assertEquals(-120, gain.fromPosition(0f))
         assertEquals(120, gain.fromPosition(1f))
         assertEquals(0f, gain.toPosition(-120), 1e-6f)
         assertEquals(1f, gain.toPosition(120), 1e-6f)
-        assertEquals(-300, preamp.fromPosition(0f))
-        assertEquals(0, preamp.fromPosition(1f))
+    }
+
+    /**
+     * **プリアンプの摘みはモデルが持てる値の全部に届く。**`EqScale.Linear.fromPosition` は
+     * 自分の範囲でクランプするので、届かない値を持つ設定に触ると、摘みを動かしていなくても
+     * 保存値が書き換わる (= 音が変わる)。取り込み (AutoEQ) と探索の焼き込みは
+     * [EqSettings.PREAMP_RANGE] の端まで値を作るので、摘みも同じ端まで要る。
+     *
+     * `PREAMP_SCALE` が `PREAMP_RANGE` を参照していても、狭い範囲を書き直せばここが落ちる
+     * (見ているのは参照の一致ではなく、摘みが実際に端まで届くこと)。
+     */
+    @Test
+    fun thePreampSliderReachesEveryStorableValue() {
+        assertEquals(EqSettings.PREAMP_RANGE.first, preamp.fromPosition(0f))
+        assertEquals(EqSettings.PREAMP_RANGE.last, preamp.fromPosition(1f))
+        assertTrue("正のプリアンプに届かない", preamp.fromPosition(1f) > 0)
     }
 
     // 保存は最初から 0.1 dB 単位 (gainDb10)。摘みも同じ粒度なので、どの保存値も摘みに乗せて
@@ -46,7 +60,7 @@ class EqSectionTest {
     @Test
     fun gainSlidersRoundTripEveryStoredValue() {
         for (v in -120..120) assertEquals(v, gain.fromPosition(gain.toPosition(v)))
-        for (v in -300..0) assertEquals(v, preamp.fromPosition(preamp.toPosition(v)))
+        for (v in EqSettings.PREAMP_RANGE) assertEquals(v, preamp.fromPosition(preamp.toPosition(v)))
     }
 
     @Test
@@ -287,14 +301,13 @@ class EqSectionTest {
     @Test
     fun resetRebuildsAFlatGraphicGrid() {
         val curved = reband(
-            EqSettings(enabled = true, bandCount = 10, preampAuto = false, preampDb10 = -45),
+            EqSettings(enabled = true, bandCount = 10, preampDb10 = -45),
             10,
         ).let { it.copy(bands = EqSolver.withGraphicTarget(it.bands, 3, -80)) }
         val after = resetToZero(curved)
         assertEquals(withStartingBands(EqSettings(enabled = true, bandCount = 10)).bands, after.bands)
         assertTrue(EqSolver.graphicTargetsDb10(after.bands).all { it == 0 })
         assertEquals(0, after.preampDb10)
-        assertEquals(false, after.preampAuto)
     }
 
     // パラメトリックのリセットはゲインだけ。fc・Q・種別はユーザが置いたものなので消えない。
@@ -307,7 +320,6 @@ class EqSectionTest {
                 EqBand(105, 70, -65, EqBandType.LOW_SHELF),
                 EqBand(3_150, 141, 25),
             ),
-            preampAuto = false,
             preampDb10 = -120,
         )
         val after = resetToZero(before)
@@ -315,24 +327,23 @@ class EqSectionTest {
         assertTrue(after.bands.all { it.gainDb10 == 0 })
         assertEquals(before.bands.map { it.copy(gainDb10 = 0) }, after.bands)
         assertEquals(0, after.preampDb10)
-        assertEquals(false, after.preampAuto)
     }
 
-    // 手動プリアンプはリセットの対象 (0 に戻さないと、平らなのに音量だけ下がった状態が残る)。
-    // 自動のスイッチは方式の選択なので触らない。自動側は平らな曲線から 0 dB を導く。
+    // プリアンプはリセットの対象 (0 に戻さないと、平らなのに音量だけ下がった状態が残る)。
+    // 「自動なら触らない」の特例は無い — 自動を廃したので、プリアンプはどの経路でも
+    // ユーザが決めた 1 つの値。
     @Test
-    fun resetZeroesTheManualPreampAndDerivesZeroForAuto() {
-        val after = resetToZero(
-            EqSettings(
-                enabled = true,
-                mode = EqMode.PARAMETRIC,
-                bands = listOf(EqBand(1_000, 100, 80)),
-                preampAuto = true,
-                preampDb10 = -95,
-            ),
-        )
-        assertEquals(true, after.preampAuto)
-        assertEquals(0, after.preampDb10)
-        assertEquals(0, EqSolver.autoPreampDb10(after.bands))
+    fun resetZeroesThePreampWhicheverWayItWasSet() {
+        for (preamp in listOf(-95, -400, 120)) {
+            val after = resetToZero(
+                EqSettings(
+                    enabled = true,
+                    mode = EqMode.PARAMETRIC,
+                    bands = listOf(EqBand(1_000, 100, 80)),
+                    preampDb10 = preamp,
+                ),
+            )
+            assertEquals("$preamp から戻らなかった", 0, after.preampDb10)
+        }
     }
 }

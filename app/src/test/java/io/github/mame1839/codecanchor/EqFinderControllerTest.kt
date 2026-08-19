@@ -27,7 +27,6 @@ import io.github.mame1839.codecanchor.ui.MainViewModel
 import io.github.mame1839.codecanchor.ui.axisKind
 import io.github.mame1839.codecanchor.ui.EqFinderAxisKind
 import io.github.mame1839.codecanchor.ui.eqFinderCandidateSettings
-import io.github.mame1839.codecanchor.ui.eqFinderCornerOverlays
 import io.github.mame1839.codecanchor.ui.pcmContentHash
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -47,8 +46,8 @@ import org.robolectric.Shadows
 /**
  * セッション進行の接着のうち、音 (実機のデコーダ) に依らない部分。
  *
- * 音量等価の要 — **候補の設定は聴感等価プリアンプで押し、共通トリムの端は全組合せで洗う** —
- * が黙って崩れると、探索がフラットへ潰れる (eq-finder-design.md §1)。ここはその見張り。
+ * 音量等価の要 — **候補の設定は土台の聴感レベルに揃えたプリアンプで押す** — が黙って崩れると、
+ * 探索がフラットへ潰れる (eq-finder-design.md §1)。ここはその見張り。
  */
 @RunWith(RobolectricTestRunner::class)
 class EqFinderControllerTest {
@@ -62,7 +61,6 @@ class EqFinderControllerTest {
         mode = EqMode.PARAMETRIC,
         bandCount = 15,
         bands = listOf(EqBand(freqHz = 1_000, q100 = 141, gainDb10 = 20)),
-        preampAuto = true,
         preampDb10 = -30,
     )
 
@@ -73,16 +71,15 @@ class EqFinderControllerTest {
             EqBand(freqHz = 2_500, q100 = 71, gainDb10 = -20, type = EqBandType.HIGH_SHELF),
         )
         val weights = EqLoudness.defaultWeights()
-        val settings = eqFinderCandidateSettings(base, bands, weights, trimDb = 1.5)
+        val settings = eqFinderCandidateSettings(base, bands, weights, baseLevelDb = -1.5)
 
         // mode / bandCount は元の値のまま (変えると hash の往復とグラフィックの解き直しに波及)。
         assertEquals(EqMode.PARAMETRIC, settings.mode)
         assertEquals(15, settings.bandCount)
         // 鳴らすために enabled は必ず true。プリアンプは自動 (ピーク基準) ではなく聴感等価。
         assertTrue(settings.enabled)
-        assertFalse(settings.preampAuto)
         assertEquals(bands, settings.bands)
-        assertEquals(EqLoudness.preampDb10(bands, weights, 1.5), settings.preampDb10)
+        assertEquals(EqLoudness.preampDb10(bands, weights, -1.5), settings.preampDb10)
     }
 
     /** 聴感等価が輪切りで潰れていないこと: 低域ブーストの候補はピーク基準より静かにならない。 */
@@ -90,30 +87,40 @@ class EqFinderControllerTest {
     fun theSessionPreampIsLoudnessEqualNotPeakBased() {
         val boost = listOf(EqBand(freqHz = 105, q100 = 71, gainDb10 = 60, type = EqBandType.LOW_SHELF))
         val weights = EqLoudness.defaultWeights()
-        val session = eqFinderCandidateSettings(base, boost, weights, trimDb = 0.0).preampDb10
+        val session = eqFinderCandidateSettings(base, boost, weights, baseLevelDb = 0.0).preampDb10
         // ピーク基準なら約 -60。聴感基準は音楽のエネルギー分布で決まり、それより浅い。
         assertTrue("聴感等価 ($session) がピーク基準相当まで沈んでいる", session > -60)
     }
 
-    // ------------------------------------------------------------------
-    // 共通トリムの端
-    // ------------------------------------------------------------------
-
+    /**
+     * **土台のプリアンプが候補に引き継がれる。**EQ を入れて −6.0 dB にしている人の探索では、
+     * オーバーレイ全 0 の候補が −6.0 dB ちょうどで鳴る (= 普段そのままの音量)。
+     * ここが 0 に戻ると、探索を始めた瞬間に 6 dB 大きくなる。
+     */
     @Test
-    fun cornerOverlaysCoverEveryExtremeAndTheFlatCentre() {
-        val axes = EqFinderAxes.default(includeMid = true)
-        val corners = eqFinderCornerOverlays(axes)
+    fun theZeroOverlayCandidateSoundsAtTheBaseVolume() {
+        val weights = EqLoudness.defaultWeights()
+        val curve = listOf(EqBand(freqHz = 105, q100 = 71, gainDb10 = 40, type = EqBandType.LOW_SHELF))
+        val on = EqSettings(enabled = true, mode = EqMode.PARAMETRIC, bands = curve, preampDb10 = -60)
+        // 土台のバンドに、ゲイン 0 の軸を重ねただけの候補 = 「なし」
+        val zeroOverlay = curve + listOf(
+            EqBand(freqHz = 105, q100 = 71, gainDb10 = 0, type = EqBandType.LOW_SHELF),
+            EqBand(freqHz = 2_500, q100 = 71, gainDb10 = 0, type = EqBandType.HIGH_SHELF),
+        )
+        val level = EqLoudness.baseLevelDb(on, weights)
+        assertEquals(-60, eqFinderCandidateSettings(on, zeroOverlay, weights, level).preampDb10)
 
-        assertEquals("2^3 + 全 0", 9, corners.size)
-        assertTrue(corners.all { it.size == axes.size })
-        assertTrue("全 0 が入っていない", corners.any { overlay -> overlay.all { it == 0 } })
-        // 全 min と全 max の角が必ずある。最悪候補は端に出る。
-        assertTrue(corners.any { o -> o.withIndex().all { (i, v) -> v == axes[i].minDb10 } })
-        assertTrue(corners.any { o -> o.withIndex().all { (i, v) -> v == axes[i].maxDb10 } })
-        // 重複が無い (同じ候補を 2 回測っても害は無いが、数が合っていることの裏取り)。
-        assertEquals(corners.size, corners.toSet().size)
-
-        assertEquals(5, eqFinderCornerOverlays(EqFinderAxes.default(includeMid = false)).size)
+        // 切ってある土台では P_eff = 0 (baseBands が空になるのと同じ規則)。
+        val off = on.copy(enabled = false)
+        assertEquals(0.0, EqLoudness.baseLevelDb(off, weights), 0.0)
+        val bare = listOf(
+            EqBand(freqHz = 105, q100 = 71, gainDb10 = 0, type = EqBandType.LOW_SHELF),
+            EqBand(freqHz = 2_500, q100 = 71, gainDb10 = 0, type = EqBandType.HIGH_SHELF),
+        )
+        assertEquals(
+            0,
+            eqFinderCandidateSettings(off, bare, weights, EqLoudness.baseLevelDb(off, weights)).preampDb10,
+        )
     }
 
     @Test

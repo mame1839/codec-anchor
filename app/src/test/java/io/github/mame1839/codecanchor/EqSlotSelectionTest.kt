@@ -41,7 +41,6 @@ class EqSlotSelectionTest {
         enabled = true,
         mode = EqMode.PARAMETRIC,
         bands = listOf(EqBand(freqHz = 105, q100 = 71, gainDb10 = -25)),
-        preampAuto = false,
         preampDb10 = -60,
     )
 
@@ -63,7 +62,7 @@ class EqSlotSelectionTest {
             EqSettings(enabled = true),
             curveA,
             curveB,
-            EqSettings(enabled = true, bandCount = 31, preampAuto = false, preampDb10 = -120),
+            EqSettings(enabled = true, bandCount = 31, preampDb10 = -120),
         )
         for (base in bases) {
             val flat = flatEq(base)
