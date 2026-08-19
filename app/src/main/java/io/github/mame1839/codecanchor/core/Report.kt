@@ -61,7 +61,6 @@ data class DeviceStatus(
     val connected: Boolean = false,
     val active: Boolean = false,
     val current: CodecInfo? = null,
-    // 読めないときと、読んでも無意味なオフロード中は空 / 0。
     val ldacQualityMode: String = "",
     val ldacBitrateKbps: Int = 0,
     val selectable: List<CodecInfo> = emptyList(),
@@ -115,9 +114,7 @@ data class StatusReport(
     val hostPackage: String = "",
     val configHash: Int = 0,
     val configLoaded: Boolean = false,
-    // 端末ごとの性質なので機器ではなく報告に載せる。
     val a2dpOffloadEnabled: Boolean = false,
-    // フック側の音響処理の受け口の版。0 = 音響処理を知らない版。
     val eqSchema: Int = 0,
     val devices: List<DeviceStatus> = emptyList(),
     val codecNames: Map<Int, String> = emptyMap(),
