@@ -1,5 +1,3 @@
-// 19_minphase_golden.py (llmdocs/tools/eq) が生成した golden。手で編集しない。
-// 参照は numpy (float64)。C 側 (float32) との差はテスト側の許容が持つ。
 #ifndef CA_EQ_FIR_GOLDEN_H_
 #define CA_EQ_FIR_GOLDEN_H_
 
@@ -85,7 +83,6 @@ inline constexpr FftCase kFftCases[] = {
 };
 inline constexpr int kFftCaseCount = 6;
 
-// 摘みの位置 (グリッド添字)。round(400·i/30) — 折れ線の頂点をグリッド点に載せる
 inline constexpr int kKnobGridIdx[31] = {
     0, 13, 27, 40, 53, 67, 80, 93, 107, 120, 133, 147, 160, 173, 187, 200, 213, 227, 240, 253, 267, 280, 293, 307, 320, 333, 347, 360, 373, 387, 400,
 };
@@ -101,7 +98,6 @@ inline constexpr double kDunuKnobDb[31] = {
     1.9611553445290126, -1.9321994080695821, -6.647920634452197,
 };
 
-// DUNU 曲線の抜き取り (C 側の折れ線再構成の見張り)。float32 の厳密値
 struct CurveSpot { int idx; float v; };
 inline constexpr CurveSpot kDunuCurveSpots[] = {
     {0, 6.152602195739746f},
@@ -116,7 +112,7 @@ struct TapVal { int idx; double v; };
 struct RespVal { double hz; double db; };
 struct MinphaseCase {
     const char* name;
-    int curve;   // 0 = flat+12 / 1 = alt±12 / 2 = DUNU fit
+    int curve;
     double fs; int taps; int m;
     int ntaps_g; const TapVal* taps_g;
     int nresp; const RespVal* resp;
@@ -267,6 +263,6 @@ inline constexpr MinphaseCase kMinphaseCases[] = {
 };
 inline constexpr int kMinphaseCaseCount = 5;
 
-}  // namespace cagold
+}
 
-#endif  // CA_EQ_FIR_GOLDEN_H_
+#endif

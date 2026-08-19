@@ -1,8 +1,3 @@
-// 検分 (eqfir-gate) が足した見張り。ca_eq_fir_test.cpp の網に開いていた穴を塞ぐ。
-//
-// ここに置いた 3 件は、いずれも「既存の節が通っているのに実際は壊れている」ものを
-// 捕まえる。穴が開いた理由も一緒に書いてある — 同じ形をまた作らないため。
-
 #include <cmath>
 #include <cstdint>
 #include <cstring>
@@ -17,8 +12,6 @@ using catest::Report;
 
 namespace {
 
-// 31 摘み → 401 点の折れ線 (ca_eq_fir_test.cpp の curveFromKnobs と同じ規則。
-// あちらは無名 namespace なので参照できない)。
 std::vector<float> knobCurve(const double* knob_db) {
     std::vector<float> c(caeq::kCurvePoints);
     for (int i = 0; i < caeq::kCurvePoints; i++) {
@@ -32,9 +25,6 @@ std::vector<float> knobCurve(const double* knob_db) {
     return c;
 }
 
-// DUNU 曲線を 31 バンド Q=4.32 の peaking で近似した biquad (製品の対応関係)。
-// **ユニティではない** ことがこの節の要点 — 24 節の DISABLE 試験はここをユニティに
-// していたので、biquad 側の受け渡しの不連続が原理的に見えなかった。
 caeq::Params dunuBiquad() {
     caeq::Params p;
     p.band_count = 31;
@@ -57,7 +47,7 @@ void runToFir(caeq::EqPipeline& pl, int p, int ch, int max_blocks = 200) {
     }
 }
 
-}  // namespace
+}
 
 void runFirGateSections(Report& r);
 
@@ -66,12 +56,6 @@ void runFirGateSections(Report& r) {
 
     const std::vector<float> dunu = knobCurve(cagold::kDunuKnobDb);
 
-    // --- 28.1 DISABLE の受け渡し -------------------------------------------
-    // kFir のあいだ eq_.process は 1 度も回らないので Eq の内部 wet は 1.0 のまま
-    // 止まっている。FIR 側の wet が 0 に着いて素通しになった次のブロックで biquad へ
-    // 渡ると、そこから Eq が自前の 10 ms フェードを 1→0 で始める = 素通しに着いた音へ
-    // EQ が丸ごと復活する。**24 節の同種の試験は pipeline の biquad をユニティ
-    // (band_count=0) にしていたため、この復活が出力に現れなかった。**
     {
         auto tailAfterDisable = [&](bool fir, int nbands) {
             caeq::EqPipeline pl;
@@ -97,7 +81,7 @@ void runFirGateSections(Report& r) {
                             sizeof(float) * 960);
                 std::vector<float> dry(blk.begin(), blk.end());
                 pl.process(blk.data(), blk.data(), 960);
-                if (b == 0) continue;  // 0 ブロック目はフェードそのもの
+                if (b == 0) continue;
                 for (int i = 0; i < 960; i++) {
                     worst_after = std::fmax(
                         worst_after, std::fabs(static_cast<double>(blk[static_cast<size_t>(i)]) -
@@ -122,11 +106,6 @@ void runFirGateSections(Report& r) {
                 "DISABLE が着いた後に biquad が EQ を鳴らし直さない (%.5f)", with_fir);
     }
 
-    // --- 28.2 fallbacks_ の意味 --------------------------------------------
-    // 「FIR→biquad の落下回数」= 鳴っている音が FIR から biquad へ乗り換えた回数。
-    // 設計器が失敗しただけ (音は FIR のまま) や、準備中で音に出ていない段階は
-    // 落下ではない。ここが混ざると、現地の診断で「機種依存の落下」と
-    // 「ユーザがモードを切り替えただけ」が見分けられない。
     {
         caeq::EqPipeline pl;
         pl.configure(48000.0, 2, caeq::Structure::kTdf2);
@@ -138,7 +117,6 @@ void runFirGateSections(Report& r) {
         pl.setCurve(dunu.data(), 1);
 
         std::vector<float> in(960 * 2, 0.01f), out(960 * 2, 0.0f);
-        // (a) 準備中に捨てる — 音は biquad のままなので落下ではない
         for (int i = 0; i < 3; i++) pl.process(in.data(), out.data(), 960, false);
         pl.setFirEnabled(false);
         pl.process(in.data(), out.data(), 960, false);
@@ -146,11 +124,6 @@ void runFirGateSections(Report& r) {
                 "準備中の取り止めはどちらにも数えない (fallbacks=%u modeOffs=%u)",
                 pl.fallbacks(), pl.modeOffs());
 
-        // (b) **eqfir の設計判断 3 でこの節の契約が変わった** (差し戻し時の指示)。
-        // 元はモード OFF も「落下」に数える形だったが、`fallbacks_` は
-        // 「端末に落とされた」の診断値で、ユーザ操作が混ざると現地診断で役目を果たさない。
-        // → モード OFF は modeOffs_ に分け、fallbacks_ は動かさない。
-        // 検分の意図 (原因の別がカウンタで見分けられること) はそのまま強めてある。
         pl.setFirEnabled(true);
         runToFir(pl, 960, 2);
         const uint32_t fb_before = pl.fallbacks();
@@ -162,7 +135,6 @@ void runFirGateSections(Report& r) {
                 "(modeOffs %u->%u / fallbacks %u->%u)",
                 mo_before, pl.modeOffs(), fb_before, pl.fallbacks());
 
-        // (c) 本物の落下 (端末側の都合 = P 変化) は fallbacks_ を進める。
         pl.setFirEnabled(true);
         runToFir(pl, 960, 2);
         const uint32_t fb2 = pl.fallbacks();
@@ -174,11 +146,6 @@ void runFirGateSections(Report& r) {
                 fb2, pl.fallbacks(), mo2, pl.modeOffs());
     }
 
-    // --- 28.3 ブロック長の上限ちょうど ---------------------------------------
-    // kMaxConvBlock (4096) は arena の区画 (fir_y / bq_y は ch·kMaxConvBlock floats) を
-    // 決めている値でもある。落下直後 (bq_gate_ < 1) に上限ちょうどのブロックが来ても
-    // 区画に収まることを釘で留める。**上限を超えるブロックについては別途報告した通り
-    // 現状の実装では区画外へ出る** — 直したうえでここに同じ形の釘を足すこと。
     {
         caeq::EqPipeline pl;
         pl.configure(48000.0, 2, caeq::Structure::kTdf2);
