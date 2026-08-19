@@ -1,4 +1,3 @@
-// Codec Anchor の音響処理エフェクト。legacy (HIDL) の C ABI で vendor の audio HAL に読まれる。
 #include <atomic>
 #include <cerrno>
 #include <cstddef>
@@ -12,12 +11,7 @@
 #include <unistd.h>
 #include <android/log.h>
 #include "aosp/audio_effect.h"
-// 枠の宛先の述語 (sessionCanBeAddressed) を書き手と共有するため。
-// **`ca_eq.cpp` はホストのハーネスに入らない**ので、ここの include 漏れは
-// Android のビルドでしか出ない。
 #include "ca_eq_pick.h"
-// 生存確認の実装 (/proc)。**`ca_eq_pick.h` に POSIX を持ち込まないための分割**なので、
-// こちらを include するのは Android 側のソースだけ。
 #include "ca_eq_proc.h"
 #include "ca_eq_shm.h"
 #include "dsp/ca_eq_dsp.h"
@@ -27,63 +21,37 @@
 #include "dsp/ca_eq_stats.h"
 
 #define CA_LOG_TAG "CodecAnchorEQ"
-// ログは制御スレッド (create / SET_CONFIG / ENABLE / release) からだけ呼ぶ。
-// process() からは絶対に呼ばない — オーディオスレッドで確保とロックが起きる。
 #define CA_LOGI(...) __android_log_print(ANDROID_LOG_INFO,  CA_LOG_TAG, __VA_ARGS__)
 #define CA_LOGE(...) __android_log_print(ANDROID_LOG_ERROR, CA_LOG_TAG, __VA_ARGS__)
 
 namespace {
 
-// eq-plan-1.md の識別子と 1 文字も違えないこと。
-// **ABI に依存する構造体は位置で初期化しない。**フィールド名で書けば、ヘッダの並びが
-// 変わっても値が別のフィールドに落ちない (並びが食い違えばコンパイルエラーになる)。
 const effect_descriptor_t kCaEqDescriptor = {
     .type        = { 0x7a1c9f61, 0x4a2e, 0x4f6b, 0x9d21, { 0x0a, 0x5c, 0x1b, 0x3e, 0x77, 0xd1 } },
     .uuid        = { 0x7a1c9f60, 0x4a2e, 0x4f6b, 0x9d21, { 0x0a, 0x5c, 0x1b, 0x3e, 0x77, 0xd1 } },
     .apiVersion  = EFFECT_CONTROL_API_VERSION,
-    // POST_PROC は AUDIO_SESSION_DEVICE に必須。INSERT_LAST は Dolby DAP / MiSound の後段に入るため。
-    // DEVICE_IND はデバイスの変化を教えてもらうため。
     .flags       = EFFECT_FLAG_TYPE_POST_PROC | EFFECT_FLAG_INSERT_LAST | EFFECT_FLAG_DEVICE_IND,
     .cpuLoad     = 10,
-    // KB 単位。**⚠️ これは実際の使用量ではない。実測の最悪 (1233 KB + Eq 約 40 KB) の
-    // 20 分の 1 に意図的に切り下げてある** — 実機で 1536 を申告すると
-    // エフェクトのインスタンスが 1 つも生成されなくなる (dsp/ca_eq_pipeline.h に実測の経緯)。
-    // **「申告値を超えない」という見張りは存在しないし、できない。**上限の見張りは
-    // ハーネス (ca_eq_shm_test.cpp「申告するメモリ量」の節) が独立した literal で持っている。
-    // **数はここに書かない** — 出どころは dsp/ca_eq_pipeline.h の 1 箇所。
     .memoryUsage = caeq::kDeclaredMemoryKb,
     .name        = "Codec Anchor EQ",
     .implementor = "Codec Anchor",
 };
 
 struct CaCtx {
-    // 先頭でなければならない (effect_handle_t がこのアドレスを指す)。
-    // 仮想関数を持たせない — vtable ポインタが先頭に入って ABI が壊れる。
-    // caeq::Eq も仮想関数を持たないが、念のため itfe より後ろに置く。
     const struct effect_interface_s* itfe;
     effect_config_t cfg;
     bool     enabled;
-    bool     passthrough_only;   // format が float でないときに立つ。サンプルに触らない
-    int32_t  gain_mb;            // millibel。0 = 素通し
+    bool     passthrough_only;
+    int32_t  gain_mb;
     uint32_t channels;
-    ca_slot_t* slot;             // 共有メモリのスロット。nullptr なら記録しない
-    // 読みに行くパラメータ枠。**割り当てられていないあいだは何も適用せず素通しする** —
-    // 「たぶん自分宛て」で読むと、2 台目のイヤホンに 1 台目の設定が掛かる。
+    ca_slot_t* slot;
     uint32_t   param_slot;
-    // create_effect に渡された値。**枠を取り直すときに要る** — 生成時に枠が尽きていた
-    // インスタンスは、あとで空いたときにこの 2 つが無いと自分を名乗れない。
     int32_t  session_id;
     int32_t  io_id;
-    // 枠の読み取りが持ち越す状態と写し取り先。**同じコードをホストのハーネスが回す**
-    // (dsp/ca_eq_poll.h)。2 KB 超の写し取り先を含むので、audio スレッドのスタックに
-    // 置かないためここに持つ。
     caeq::PollState poll;
-    // 演算本体。ホストのハーネスで検証してあるものと同じコード。
-    // biquad (標準) と最小位相 FIR (高精度) を束ねた面で、外から見た使い方は Eq と同じ。
     caeq::EqPipeline dsp;
 };
 
-// 1 ブロックぶんの計測。process() のスタックに置くだけで、確保はしない。
 struct CaBlock {
     const void* in_addr;
     const void* out_addr;
@@ -96,15 +64,10 @@ struct CaBlock {
     uint32_t out_peak_i;
 };
 
-// INT32_MIN の符号反転が int32 に収まらないので uint32 で受ける。
 inline uint32_t ca_abs_i32(int32_t v) {
     return v < 0 ? static_cast<uint32_t>(-static_cast<int64_t>(v)) : static_cast<uint32_t>(v);
 }
 
-// 同じバッファを float と int32 の 2 通りに解釈して測る。**ポインタを付け替えないこと** —
-// float* と int32_t* は別の型なので、strict aliasing のもとでは最適化が読みと書きを
-// 入れ替えてよい。計測が唯一の観測点である以上、ここが嘘をつくのは重い。
-// ビット列を memcpy で写せば、同じ値を見ていることが規格で保証される。
 inline uint32_t ca_abs_bits(float v) {
     int32_t i;
     std::memcpy(&i, &v, sizeof(i));
@@ -112,47 +75,25 @@ inline uint32_t ca_abs_bits(float v) {
 }
 
 uint32_t ca_channel_count(uint32_t mask) {
-    // audio_channel_mask_t の下位ビットが 1 チャンネル 1 ビット。
     const uint32_t n = static_cast<uint32_t>(__builtin_popcount(mask & 0x3FFFFFFFu));
     return n ? n : 2;
 }
 
-// 実測でブロック長は 512 / 960 / 1024 / 2048、チャンネル数は 2 と 12 が来る。
-// 決め打ちできないので SET_CONFIG の値をそのまま演算層へ渡す。
-// 構造の選択の根拠は dsp/ca_eq_dsp.h の Structure にある (ハーネスの実測)。
 constexpr caeq::Structure kStructure = caeq::kDefaultStructure;
 
-// ---------------------------------------------------------------------------
-// 共有メモリの統計。フレームワークには実処理フレーム数を外へ出す経路が無いので、
-// 「本当に音声経路に入ったか」を見る唯一の観測点になる。
-//
-// mmap するのは制御スレッド (create_effect) だけ。process() は既に開いてある
-// ポインタへ書くだけで、確保もロックもログもしない。
-// ---------------------------------------------------------------------------
-
-// in_use は .so 側の CAS とリーダの素読みで共有する。std::atomic を被せて使うので、
-// 同じ大きさで、かつロックを持たないことを確かめておく (ロック付きだと別プロセスから読めない)。
 static_assert(sizeof(std::atomic<uint32_t>) == sizeof(uint32_t), "atomic が同じ大きさでない");
 static_assert(std::atomic<uint32_t>::is_always_lock_free, "atomic がロックを使う");
 
 ca_shm_t* g_shm = nullptr;
 
-// **「開こうとした」と「開き終わった」は別の状態。**1 つの旗で兼ねると、2 スレッドが
-// 同時に create_effect に入ったときに負けた側が g_shm == nullptr のまま先へ進み、
-// **そのインスタンスは枠を取れず黙って素通しになる** (原因が残らない形の不具合)。
 enum { kShmIdle = 0, kShmOpening = 1, kShmDone = 2 };
 std::atomic<int> g_shm_state{kShmIdle};
 
-// 開き終わるのを待つ上限 (200 µs × 500 = 100 ms)。**無限には待たない** —
-// 開いている側が途中で死んだときに audio HAL の制御スレッドを道連れにしないため。
-// 期限切れの結末は「このインスタンスだけ統計を持たない」で、これは待たなかったときと同じ。
 constexpr int    kShmWaitSteps = 500;
 constexpr long   kShmWaitNs    = 200000;
 
 void ca_stats_open_locked();
 
-// **create_effect / SET_CONFIG からしか呼ばない。**開くのも待つのも制御スレッドの仕事で、
-// process() はここを通らない。
 void ca_stats_open() {
     if (g_shm_state.load(std::memory_order_acquire) == kShmDone) return;
     int expected = kShmIdle;
@@ -161,7 +102,6 @@ void ca_stats_open() {
         g_shm_state.store(kShmDone, std::memory_order_release);
         return;
     }
-    // 負けた側。**ここで戻ると g_shm が nullptr のままになるので待つ。**
     for (int i = 0; i < kShmWaitSteps; i++) {
         if (g_shm_state.load(std::memory_order_acquire) == kShmDone) return;
         struct timespec ts = {0, kShmWaitNs};
@@ -173,13 +113,9 @@ void ca_stats_open() {
 void ca_stats_open_locked() {
     const int fd = open(CA_SHM_PATH, O_RDWR | O_CLOEXEC);
     if (fd < 0) {
-        // 開けなくても絶対に落ちない。この 1 行が唯一の手がかりになる。
         CA_LOGE("stats open failed: %s (errno=%d)", CA_SHM_PATH, errno);
         return;
     }
-    // **大きさを確かめてから map する。**短いファイルを map して後ろを触ると SIGBUS で
-    // vendor の audio HAL ごと落ちる (= 端末が無音になる)。版 1 の 1152 バイトのまま
-    // 残っている環境が実際にありうるので、ここは省けない。
     struct stat st;
     if (fstat(fd, &st) != 0 || static_cast<uint64_t>(st.st_size) < sizeof(ca_shm_t)) {
         CA_LOGE("stats file too small: %lld < %zu — module/post-fs-data.sh が古い",
@@ -192,13 +128,9 @@ void ca_stats_open_locked() {
     close(fd);
     if (p == MAP_FAILED) { CA_LOGE("stats mmap failed errno=%d", errno); return; }
     g_shm = static_cast<ca_shm_t*>(p);
-    // **magic は最後に立てる。**読み手は magic が正しいことをもって version を信じるので、
-    // 先に magic を書くと「magic は本物・version はまだ 0」を掴む隙ができ、
-    // 起きていない版ずれを報告されることになる (caeq::shmState を参照)。
     g_shm->version = CA_SHM_VERSION;
     g_shm->slot_count = CA_SHM_SLOTS;
     g_shm->slot_size = static_cast<uint32_t>(sizeof(ca_slot_t));
-    // 版が同じで並びだけ違うビルド (開発中に必ず起きる) を読み手が断れるようにする。
     g_shm->param_slot_size = static_cast<uint32_t>(sizeof(ca_eq_slot_t));
     g_shm->curve_points = static_cast<uint32_t>(caeq::kCurvePoints);
     std::atomic_thread_fence(std::memory_order_release);
@@ -206,18 +138,10 @@ void ca_stats_open_locked() {
     CA_LOGI("stats mapped at %p pid=%d", p, static_cast<int>(getpid()));
 }
 
-// seqlock。書く前に奇数、書き終えたら偶数にする。読み手は前後で同じ偶数を見たら採用する。
-// **規約は dsp/ca_eq_stats.h** — 読み手 (caeqstat) と同じ定義を共有していて、
-// ホストのハーネスが書き手のスレッドを立てて千切れた読みが起きないことを確かめている。
 inline void ca_seq_begin(ca_slot_t* s) { caeq::statsBeginWrite(s); }
 
 inline void ca_seq_end(ca_slot_t* s) { caeq::statsEndWrite(s); }
 
-// 枠を 1 つ取って中身を埋める。取れたら true。
-//
-// `reclaim` が false のときは死んだ枠の回収を行わない = **`/proc` を 1 度も見に行かない。**
-// 呼び手のスレッドが分からない経路 (EFFECT_CMD_ENABLE) 用。撃つのは `getpid()` 1 回と
-// `in_use` の CAS だけで、確保もログもファイルも触らない。
 bool ca_stats_take_slot(CaCtx* c, bool reclaim) {
     if (g_shm == nullptr) return false;
     const uint64_t self = static_cast<uint64_t>(getpid());
@@ -225,20 +149,10 @@ bool ca_stats_take_slot(CaCtx* c, bool reclaim) {
                                          self);
     if (i == caeq::kNoSlot) return false;
     ca_slot_t* s = &g_shm->slots[i];
-    // ここに来た時点で中身はゼロ (releaseSlot の不変条件)。念のため書き直すが、
-    // ゼロ化を手放す側に置いてあることが、リーダの偽陽性を防いでいる本体。
     s->seq = 0; s->frames = 0; s->sample_rate = 0; s->channels = 0;
     s->block_frames = 0; s->state = 0; s->gain_mb = 0;
     s->io_id = c->io_id;
-    // 読みに行くパラメータ枠。初回は「取った枠と同じ添字」が既定で、SET_PARAM (id=2) で
-    // 既に宛てられていればそれを保つ。**決定は caeq::paramSlotAfterAttach** — 保たずに
-    // 取った添字で上書きすると、再取得のとき読み手だけが空の枠へ移って素通しに戻る
-    // (理由の全文はあちらのコメント)。
     c->param_slot = caeq::paramSlotAfterAttach(c->param_slot, i);
-    // **書き手が読むフィールドは pid より先に書くこと。**書き手 (caeqset) は pid が
-    // 入っている枠だけを見るので、この順序なら「pid は入ったが session_id / param_slot は
-    // まだ」を掴む隙が無い。param_slot は 0 も有効な添字で、ゼロのままでも「未割り当て」
-    // には見えないから、順序で守るしかない。
     s->session_id = c->session_id;
     s->param_slot = c->param_slot;
     s->pid = self;
@@ -251,23 +165,15 @@ bool ca_stats_take_slot(CaCtx* c, bool reclaim) {
 void ca_stats_attach(CaCtx* c) {
     ca_stats_open();
     c->slot = nullptr;
-    if (!ca_stats_take_slot(c, /*reclaim=*/true)) {
+    if (!ca_stats_take_slot(c, true)) {
         CA_LOGE("stats: no free slot (session=%d io=%d)", c->session_id, c->io_id);
         return;
     }
-    // 統計の添字と宛先は別々に出す。再取得で宛先を保ったとき、この 2 つは食い違う。
     CA_LOGI("stats slot %u taken session=%d io=%d param_slot=%u ctx=%p",
             static_cast<uint32_t>(c->slot - g_shm->slots), c->session_id, c->io_id,
             c->param_slot, static_cast<void*>(c));
 }
 
-// 不変条件「in_use == 0 のスロットは中身も必ずゼロ」は caeq::releaseSlot が守る
-// (MAGIC → RECLAIM → 本体ゼロ → 0 の順。理由はあちらのコメント)。
-//
-// **memset の前に持ち主を確かめる。**回収 (caeq::reclaimDeadSlots) が万一この枠を
-// 誤って空きに戻していたら、いま入っているのは別の生きたインスタンスなので、
-// 無条件に消すと**その枠が空きに戻って 3 人目が取る**という連鎖になる。
-// 誤回収そのものは生存確認の側で防ぐが、**被害の伝播はここで止める。**
 void ca_stats_detach(CaCtx* c) {
     ca_slot_t* s = c->slot;
     if (s == nullptr) return;
@@ -308,22 +214,12 @@ void ca_stats_set_gain(CaCtx* c, int32_t gain_mb) {
     ca_seq_end(s);
 }
 
-// ---------------------------------------------------------------------------
-// パラメータの読み出し。統計とは向きが逆で、書き手が外・読み手がここ。
-// ---------------------------------------------------------------------------
-
-// seqlock の読み手と並びの変換は dsp/ca_eq_params.h、判断そのものは dsp/ca_eq_poll.h。
-// **書き手と同じ定義を共有していて、ホストのハーネスが書き手のスレッドを立てて
-// 千切れた読みが起きないことを確かめている。**ここは枠の添字を解決するだけ。
 inline void ca_params_poll(CaCtx* c) {
     if (g_shm == nullptr) return;
-    // **範囲外の添字で params[] を読まない。**CA_PARAM_SLOT_NONE (未割り当て) も
-    // ここで落ちる。SET_PARAM で渡された値も同じ門を通す。
     if (c->param_slot >= static_cast<uint32_t>(CA_SHM_SLOTS)) return;
     caeq::pollSlot(&g_shm->params[c->param_slot], &c->poll, &c->dsp, c->enabled);
 }
 
-// process() から呼ばれるので vDSO 経由。スライスの実測にだけ使う (決定性には影響しない)。
 uint64_t ca_now_ns() {
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
@@ -331,8 +227,6 @@ uint64_t ca_now_ns() {
            static_cast<uint64_t>(ts.tv_nsec);
 }
 
-// process() から呼ばれる。確保・ロック・ログを一切しない。
-// clock_gettime(CLOCK_MONOTONIC) は vDSO 経由でシステムコールにならない。
 inline void ca_stats_add(CaCtx* c, size_t frames, const CaBlock& b) {
     ca_slot_t* s = c->slot;
     if (s == nullptr) return;
@@ -352,23 +246,17 @@ inline void ca_stats_add(CaCtx* c, size_t frames, const CaBlock& b) {
     s->param_slot = c->param_slot;
     s->param_gen = c->poll.param_gen;
     s->param_rejected = c->poll.rejected;
-    // 「入っている / 有効 / 設定済み / でも音が通っていない」に加えて、
-    // 「高精度を頼んだのに biquad のまま」の理由まで 1 枚で読めるようにする。
     caeq::firStatsOf(c->poll, c->dsp, s);
     s->last_ns = ca_now_ns();
     ca_seq_end(s);
 }
 
-}  // namespace
+}
 
 extern "C" int32_t ca_process(effect_handle_t self, audio_buffer_t* in, audio_buffer_t* out) {
     CaCtx* c = reinterpret_cast<CaCtx*>(self);
-    // 落ちたら vendor HAL ごと死ぬ。毎回すべて検査する。
     if (c == nullptr || in == nullptr || out == nullptr) return -EINVAL;
     if (in->raw == nullptr || out->raw == nullptr) return -EINVAL;
-    // **無効になっても即座には抜けない。**DISABLE のあともフレームワークは 10 秒ほど
-    // process() を呼び続けるので、そのあいだにフェードを終わらせる。ここで -ENODATA を
-    // 返すと呼ばれなくなり、フェードが途中で切れて -26.7 dBFS のクリックが出る (実測)。
     if (!c->enabled && c->dsp.idle()) return -ENODATA;
 
     const size_t frames = in->frameCount < out->frameCount ? in->frameCount : out->frameCount;
@@ -383,15 +271,7 @@ extern "C" int32_t ca_process(effect_handle_t self, audio_buffer_t* in, audio_bu
     blk.samples = static_cast<uint32_t>(samples);
 
     if (c->passthrough_only) {
-        // 何もしない。format が float でない = 1 フレームのバイト数が分からないので、コピーの
-        // 長さを計算できない (samples * sizeof(float) は実サイズを超えて読み書きし、vendor HAL
-        // ごと落とす)。AUDIO_SESSION_DEVICE は in-place で out には既に入力が入っているから、
-        // 触らないことがそのまま素通しになる。仮に out-of-place で来ても、無音のほうが
-        // SIGSEGV よりまし。
     } else {
-        // 1 パス目は入力を読むだけ。in-place だと書きながら読むことになり、加工後の値を
-        // 「入力」として測ってしまう。float と int32 の両方で測り、どちらの解釈が
-        // 本物かを外から判定できるようにする。
         for (size_t i = 0; i < samples; i++) {
             const float x = in->f32[i];
             const float ax = x < 0.0f ? -x : x;
@@ -400,16 +280,12 @@ extern "C" int32_t ca_process(effect_handle_t self, audio_buffer_t* in, audio_bu
             if (ai > blk.in_peak_i) blk.in_peak_i = ai;
         }
 
-        // 設定の取り込みはここ 1 回だけ。ブロックの途中では読み直さない。
         ca_params_poll(c);
 
-        // 2 パス目は演算層に任せる。ここから先はホストのハーネスで検証済みのコード
-        // (app/src/main/cpp/dsp/)。確保もロックもログもしない。
         const bool accumulate =
             c->cfg.outputCfg.accessMode == EFFECT_BUFFER_ACCESS_ACCUMULATE;
         c->dsp.process(in->f32, out->f32, static_cast<int>(frames), accumulate);
 
-        // 3 パス目で出力を測る。
         for (size_t i = 0; i < samples; i++) {
             const float y = out->f32[i];
             const float ay = y < 0.0f ? -y : y;
@@ -441,41 +317,18 @@ extern "C" int32_t ca_command(effect_handle_t self, uint32_t cmd, uint32_t cmdSi
         if (!intReply) return -EINVAL;
         std::memcpy(&c->cfg, pCmd, sizeof(effect_config_t));
         c->channels = ca_channel_count(c->cfg.outputCfg.channels);
-        // 想定は float 固定。違ったらサンプルに触らない側へ倒す (エラーは返さない — 返すと
-        // AudioFlinger がこのインスタンスを諦めて、何が起きたか分からなくなる)。
-        // 演算層が持てるチャンネル数を超えたときも同じ扱いにする。演算層は自分の上限まで
-        // しか回さないので、そのまま通すと後ろのチャンネルだけ素通しになって並びも狂う。
         c->passthrough_only = (c->cfg.outputCfg.format != AUDIO_FORMAT_PCM_FLOAT_U8) ||
                               (c->channels > static_cast<uint32_t>(caeq::kMaxChannels));
-        // buffer.frameCount は常に 0 で来る (バッファは process() の引数で渡される)。
-        // ここを DSP の作業領域の大きさに使うと 0 で組んでしまうので、載せない。
         CA_LOGI("SET_CONFIG rate=%u ch=%u fmt=%u access=%u passthrough_only=%d",
                 c->cfg.outputCfg.samplingRate, c->channels,
                 static_cast<unsigned>(c->cfg.outputCfg.format),
                 static_cast<unsigned>(c->cfg.outputCfg.accessMode), c->passthrough_only);
-        // **FIR の作業領域 (arena) を確保するのはここ。**ch <= 2 のときだけで、
-        // 12ch の spatializer インスタンスには作らない (EqPipeline::configure の中の規則)。
         c->dsp.configure(static_cast<double>(c->cfg.outputCfg.samplingRate),
                          static_cast<int>(c->channels), kStructure);
-        // 組み直した arena のページは 1 度も触られていない。**warmUp を省くと、
-        // 最初の process() で数百回のページフォルトをオーディオスレッドが食う。**
         c->dsp.warmUp();
-        // **枠を読み直させる。**configure は fs が変わるとパラメータを丸ごと捨てる
-        // (新しい Nyquist で fc が範囲外になりうるため) ので、覚えたままの世代で
-        // 「適用済み」と思っていると、EQ が黙って平坦に戻ったまま二度と戻らない。
         c->poll.param_gen = 0;
-        // **生成のときに枠を取れなかったインスタンスは、ここで取り直す。**
-        // 枠が無いと ca_params_poll が何も読まないので、そのインスタンスは
-        // 「生きているのに永久に素通し」になる。
-        //
-        // 取り直しをここに置く理由: この case は既に 791 KB の作業領域を確保して
-        // warmUp でページを触っている = **制御スレッド前提の重い経路。**
-        // open / mmap を足しても性格が変わらない。
-        // (ENABLE 側は同じことをしない。理由はあちらのコメント。)
         if (c->slot == nullptr) {
             ca_stats_attach(c);
-            // 取れた枠は真っさらなので、既に決まっている状態を書き戻す
-            // (この直後の ca_stats_configure が rate / ch / CONFIGURED を埋める)。
             ca_stats_set_enabled(c, c->enabled);
             ca_stats_set_gain(c, c->gain_mb);
         }
@@ -491,8 +344,6 @@ extern "C" int32_t ca_command(effect_handle_t self, uint32_t cmd, uint32_t cmdSi
         return 0;
 
     case EFFECT_CMD_RESET:
-        // 状態をゼロにしてよいのはここと ENABLE のときだけ。パラメータの変更のたびに
-        // ゼロにするとクリックが 27 dB 悪化する (実測 -64.6 → -37.7 dBFS)。
         c->dsp.reset();
         return 0;
 
@@ -501,26 +352,12 @@ extern "C" int32_t ca_command(effect_handle_t self, uint32_t cmd, uint32_t cmdSi
         if (!intReply) return -EINVAL;
         c->enabled = (cmd == EFFECT_CMD_ENABLE);
         if (c->enabled) c->dsp.reset();
-        // **枠が無いまま有効化されたら、空きだけ探して取り直す。**
-        // 枠が無いインスタンスは ca_params_poll が何も読まないので、そのまま鳴らすと
-        // 「生きているのに永久に素通し」になる。
-        //
-        // ⚠️ **ここでは ca_stats_open も /proc の走査もしない。**
-        // このコマンドが制御スレッドで届くとは限らない — AOSP の AudioFlinger は
-        // EffectModule::updateState() (= EffectChain::process_l() の中 = 再生スレッド)
-        // からも EFFECT_CMD_ENABLE を出す。**未確認だが、そうでない保証も無い**ので、
-        // open / mmap / 待ち合わせ / ファイルを持ち込まない側に倒す。
-        // reclaim を渡さないので、ここで増えるのは getpid() 1 回と in_use の CAS
-        // (最大 8 回) だけ。すぐ下の CA_LOGI のほうがよほど重い。
-        // 死んだ枠の回収は、生成 (create_effect) と SET_CONFIG が受け持つ。
         if (c->enabled && c->slot == nullptr) {
-            if (ca_stats_take_slot(c, /*reclaim=*/false)) {
+            if (ca_stats_take_slot(c, false)) {
                 ca_stats_configure(c);
                 ca_stats_set_gain(c, c->gain_mb);
             }
         }
-        // 有効になるのは framework とユーザ設定の両方が有効なときだけ。
-        // **どちらの側の OFF でも、素通しになるまでフェードを掛けてから止まる。**
         c->dsp.setActive(c->enabled && c->poll.user_enabled);
         CA_LOGI("%s ctx=%p", c->enabled ? "ENABLE" : "DISABLE", static_cast<void*>(c));
         ca_stats_set_enabled(c, c->enabled);
@@ -535,7 +372,6 @@ extern "C" int32_t ca_command(effect_handle_t self, uint32_t cmd, uint32_t cmdSi
             *static_cast<int*>(pReply) = -EINVAL;
             return 0;
         }
-        // value は param の直後ではなく、sizeof(int) 境界に切り上げた位置。
         const size_t voff = ((pp->psize - 1) / sizeof(int32_t) + 1) * sizeof(int32_t);
         if (cmdSize < sizeof(effect_param_t) + voff + pp->vsize) return -EINVAL;
         int32_t id = 0;
@@ -543,47 +379,31 @@ extern "C" int32_t ca_command(effect_handle_t self, uint32_t cmd, uint32_t cmdSi
         std::memcpy(&id, pp->data, sizeof(id));
         std::memcpy(&v, pp->data + voff, sizeof(v));
         if (id == CA_PARAM_ID_SLOT) {
-            // 経路の確立。**「お前が読むのは枠 N だ」を 1 回だけ受ける。**
-            // 以後の更新は共有メモリの seqlock で、ここは通らない。
             if (v < 0 || v >= CA_SHM_SLOTS) {
                 CA_LOGE("SET_PARAM slot=%d は範囲外", v);
                 *static_cast<int*>(pReply) = -EINVAL;
                 return 0;
             }
             c->param_slot = static_cast<uint32_t>(v);
-            c->poll.param_gen = 0;   // 新しい枠なので、次のブロックで読み直す
-            // **明示的に枠を宛てられた = このインスタンスは FIR の宿主になれる。**
-            // ハンドルを持つ保持者からの経路 (hold-process.md の退路段) では、
-            // session が DEVICE でないインスタンスにも枠が宛てられる。
-            // ここで引き上げないと、その構成でだけ高精度が黙って効かない。
-            // (同じ値なら no-op なので、毎回撃っても鳴っている FIR は畳まれない。)
+            c->poll.param_gen = 0;
             c->dsp.setFirCapable(true);
             CA_LOGI("SET_PARAM slot=%d ctx=%p", v, static_cast<void*>(c));
             *static_cast<int*>(pReply) = 0;
             return 0;
         }
         if (id != CA_PARAM_ID_GAIN) { *static_cast<int*>(pReply) = -EINVAL; return 0; }
-        // 実証用のゲイン。共有メモリの経路が通ったあとも、`.so` だけを単体で動かして
-        // 音が変わることを確かめる手段として残す。
-        // 安全装置: 正のゲインは構造的に受け付けない。ここを緩めない。
-        // 実機で音を鳴らす実験の上限を、スクリプトではなくドライバ側で保証する。
         if (v > 0) v = 0;
-        // 下限は演算層のプリアンプの下限 (-40 dB) と揃える。ここだけ深くしても弾かれる。
         if (v < -4000) v = -4000;
         c->gain_mb = v;
         caeq::Params p;
         p.band_count = 0;
         p.preamp_db = static_cast<double>(v) / 100.0;
         if (!c->dsp.setParams(p)) {
-            // 検査に落ちたときは前の設定のまま鳴らし続ける。黙って捨てると
-            // 原因不明の「効かない」になるので、診断カウンタを見せる。
             CA_LOGE("SET_PARAM rejected gain=%d mB (rejected=%u)", v,
                     c->dsp.biquad().rejectedCount());
             *static_cast<int*>(pReply) = -EINVAL;
             return 0;
         }
-        // 明示的に指示された以上「宛てられた」とみなす。共有メモリを使わずに
-        // この経路だけで実証するときに、ここが無いと素通しのままになる。
         c->poll.user_enabled = true;
         c->dsp.setActive(c->enabled);
         CA_LOGI("SET_PARAM gain=%d mB (preamp=%.2f dB)", c->gain_mb, p.preamp_db);
@@ -595,8 +415,6 @@ extern "C" int32_t ca_command(effect_handle_t self, uint32_t cmd, uint32_t cmdSi
     case EFFECT_CMD_SET_DEVICE:
     case EFFECT_CMD_SET_VOLUME:
     case EFFECT_CMD_SET_AUDIO_MODE:
-        // 受け取るが何もしない。エラーを返すと AudioFlinger が警告を出すだけで実害は無いが、
-        // ログが埋まって実証の観測が濁るので 0 を返す。
         return 0;
 
     default:
@@ -611,21 +429,19 @@ extern "C" int32_t ca_get_descriptor(effect_handle_t self, effect_descriptor_t* 
 }
 
 namespace {
-// 関数ポインタ表。位置を 1 つずらすと別の関数が呼ばれるので、必ずフィールド名で書く。
 const struct effect_interface_s kCaEqInterface = {
     .process         = ca_process,
     .command         = ca_command,
     .get_descriptor  = ca_get_descriptor,
     .process_reverse = nullptr,
 };
-}  // namespace
+}
 
 extern "C" int32_t ca_lib_create(const effect_uuid_t* uuid, int32_t sessionId, int32_t ioId,
                                  effect_handle_t* pHandle) {
     if (pHandle == nullptr || uuid == nullptr) return -EINVAL;
     if (std::memcmp(uuid, &kCaEqDescriptor.uuid, sizeof(effect_uuid_t)) != 0) return -EINVAL;
 
-    // -fno-exceptions なので nothrow 版を使う。失敗は nullptr で返る。
     CaCtx* c = new (std::nothrow) CaCtx{};
     if (c == nullptr) return -ENOMEM;
     c->itfe = &kCaEqInterface;
@@ -634,25 +450,11 @@ extern "C" int32_t ca_lib_create(const effect_uuid_t* uuid, int32_t sessionId, i
     c->gain_mb = 0;
     c->channels = 2;
     c->slot = nullptr;
-    // 枠を宛てられるまでパラメータを一切適用しない。ca_stats_attach が枠を取れたら
-    // その添字が入る。
     c->param_slot = CA_PARAM_SLOT_NONE;
-    // スライスの実測。**進め方は費用モデルが決めるので、時計は測るだけ** —
-    // 渡さなくても音は同じで、診断の µs が出なくなるだけ。
     c->dsp.setClock(ca_now_ns);
-    // **FIR の作業領域を持ってよいインスタンスか。**FIR が乗るのは書き手が設定を
-    // 宛てられる枠だけなので、そうでないインスタンス (退路経路の <postprocess> /
-    // session 0) は 791 KB を一度も使わずに抱え続けることになる。
-    // **判定は書き手の枠選びと同じ述語** (caeq::sessionCanBeAddressed)。
-    // ⚠️ **configure より先に呼ぶ** — 後だと暫定の arena が一度作られてしまう。
-    // (setter 自体は順序非依存なので、これは無駄を省くためだけの順序。)
     c->dsp.setFirCapable(caeq::sessionCanBeAddressed(sessionId));
-    // SET_CONFIG が来るまでの暫定。
     c->dsp.configure(48000.0, 2, kStructure);
-    // 初回のページフォルトと係数の初期化を process() の外へ出す。
     c->dsp.warmUp();
-    // sessionId をそのまま統計へ渡す。**これが「この枠はイヤホン側か」を外から判定できる
-    // 唯一の手掛かり** — deviceId は SW の device effect では常に 0 で、MAC も運ばれない。
     c->session_id = sessionId;
     c->io_id = ioId;
     ca_stats_attach(c);
@@ -661,9 +463,6 @@ extern "C" int32_t ca_lib_create(const effect_uuid_t* uuid, int32_t sessionId, i
     return 0;
 }
 
-// AUDIO_SESSION_DEVICE のときに呼ばれる 3.1 の入口。
-// deviceId は捨てる — SW の device effect には AUDIO_PORT_HANDLE_NONE (0) が literal で渡され、
-// どのイヤホンかは分からない。デバイスごとの設定は共有メモリで運ぶ前提のまま。
 extern "C" int32_t ca_lib_create_3_1(const effect_uuid_t* uuid, int32_t sessionId, int32_t ioId,
                                      int32_t deviceId, effect_handle_t* pHandle) {
     CA_LOGI("create_3_1 session=%d io=%d device=%d", sessionId, ioId, deviceId);
@@ -686,13 +485,7 @@ extern "C" int32_t ca_lib_get_descriptor(const effect_uuid_t* uuid, effect_descr
     return 0;
 }
 
-// このシンボル名は固定。ローダはこの名前 (AELI) だけを dlsym する。
-// extern "C" と visibility("default") の両方が要る。
 extern "C" __attribute__((visibility("default")))
-// version と create_effect_3_1 は必ずセットで動かす。
-// 3.1 を名乗ると doEffectCreate が NULL チェックなしで create_effect_3_1 を呼ぶので、
-// 片方だけ変えると HAL が落ちて音が全く出なくなる。
-// ここもフィールド名で書く — 位置を 1 つ間違えるだけで同じ事故になる。
 audio_effect_library_t AUDIO_EFFECT_LIBRARY_INFO_SYM = {
     .tag               = AUDIO_EFFECT_LIBRARY_TAG,
     .version           = EFFECT_LIBRARY_API_VERSION_3_1,
