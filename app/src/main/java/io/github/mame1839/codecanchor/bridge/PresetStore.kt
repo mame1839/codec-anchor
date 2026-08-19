@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.core.content.edit
 import io.github.mame1839.codecanchor.core.EqPresetBook
 
-// フックはプリセットを読まないので MODE_WORLD_READABLE は不要。
 class PresetStore(context: Context) {
     private val prefs = context.getSharedPreferences(NAME, Context.MODE_PRIVATE)
 
