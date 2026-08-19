@@ -55,7 +55,6 @@ private fun CodecAnchorApp(vm: MainViewModel = viewModel()) {
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // 報告の送信元が Bluetooth プロセス (別 uid) なので EXPORTED で登録する。
     DisposableEffect(context) {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(from: Context?, intent: Intent?) {
@@ -89,7 +88,6 @@ private fun CodecAnchorApp(vm: MainViewModel = viewModel()) {
         }
     }
 
-    // ViewModel は画面より長生きするので、書き出し / 復元の結果はここで受け取って消費済みにする。
     val pendingMessage = vm.pendingMessage
     val pendingText = pendingMessage?.let { stringResource(it) }
     LaunchedEffect(pendingText) {
@@ -101,7 +99,6 @@ private fun CodecAnchorApp(vm: MainViewModel = viewModel()) {
 
     val activity = LocalActivity.current
     val deniedMessage = stringResource(R.string.permission_denied)
-    // 恒久拒否のあとは要求ダイアログが出ずに即 false が返るので、設定アプリへ案内する。
     val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         vm.refreshDevices()
         val blocked = !granted &&
@@ -127,17 +124,6 @@ private fun CodecAnchorApp(vm: MainViewModel = viewModel()) {
     )
 }
 
-/**
- * 画面の位置と「戻る」。⚠️ `BackHandler` を置いてよいのはこの関数の中だけ — 画面の中に
- * 持つと入れ子になり、どちらが先に呼ばれるかが composition の深さで決まる (画面を足すたびに
- * 黙って変わる)。タブも同じ理由でここに持つ (HomeScreen 側に持つと詳細画面を開いている間も
- * 生き残って 2 つになる)。`when` の枝は同時に 1 つなので、平らに持てば有効な BackHandler は常に 1 つ。
- *
- * 戻る筋道: `EQ 探索 → 音響処理 → 機器の詳細 → 設定/状態タブ → 機器タブ → アプリを抜ける`。
- * ⚠️ 最後の段の `enabled = false` を消さないこと (無条件にすると機器タブで戻るが効かなくなる)。
- *
- * internal なのは `AppNavigationTest` がこの筋道を直接組んで見張るため。
- */
 @Composable
 internal fun AppNavigation(
     vm: MainViewModel,
@@ -153,7 +139,6 @@ internal fun AppNavigation(
     val mac = selectedMac
     when {
         mac == null -> {
-            // 先頭のタブに居るときは無効にして系へ渡す。押すとアプリが終わる。
             BackHandler(enabled = tab != HomeTab.DEVICES) { tab = HomeTab.DEVICES }
             HomeScreen(
                 vm = vm,
@@ -169,8 +154,6 @@ internal fun AppNavigation(
             )
         }
 
-        // eqOpen より先に見る。EQ 探索は音響処理の画面からしか開かないので、
-        // この枝が立っているあいだ eqOpen も必ず立っている (戻ると音響処理へ返る)。
         eqFinderOpen -> {
             BackHandler { eqFinderOpen = false }
             EqFinderScreen(
