@@ -11,7 +11,7 @@
 
 namespace caeq {
 
-inline bool procPidAlive(uint64_t pid, void* /*user*/) {
+inline bool procPidAlive(uint64_t pid, void*) {
     if (pid == 0) return false;
     char path[64];
     std::snprintf(path, sizeof(path), "/proc/%llu", static_cast<unsigned long long>(pid));
