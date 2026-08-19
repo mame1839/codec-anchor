@@ -11,12 +11,13 @@ import kotlin.math.abs
 import kotlin.random.Random
 
 /**
- * 自動プリアンプ ([EqSolver.autoPreampDb10]) が実際に取りうる値の測定。
+ * 自動プリアンプ ([EqSolver.autoPreampDb10]) が取りうる値の測定。
  *
- * 目的は 1 つ — **保存されうる設定から出た自動プリアンプが
- * [EqSettings.PREAMP_RANGE] の下端 (-400 = -40.0 dB) を下回るか**。
- * 下回る構成が実在するなら、自動プリアンプを手動値へ焼き直す移行でクランプが働き、
- * 移行の前後で音が変わる。
+ * [EqSolver.autoPreampDb10] が今も残っているのは**旧版からの移行のため**だけ
+ * (`EqSettings.preampFrom`。`pa` が真だった保存値の「実際に鳴っていたプリアンプ」を
+ * 同じ関数で再現する)。移行の値は [EqSettings.PREAMP_RANGE] にクランプされるので、
+ * **この関数が -400 を下回る構成では、移行の前後で音が変わる。**
+ * ここはその「クランプが働く面」がどこから始まるかの測定。
  *
  * ここは**見張りではなく測定の記録**。数値は測った当日の実測で、
  * 動いたら「変わった」と分かるように literal で釘を打ってある。
@@ -219,8 +220,8 @@ class EqAutoPreampReachTest {
             }
 
         println("=== 4b. JSON に書けば入る形 (EqBand.GAIN_RANGE = ±40.0 / Q_RANGE = 0.10〜40.00) ===")
-        // EqSettings.fromJson の "pa" の既定は true。プリセットの JSON に "pa" を書かなければ
-        // preampAuto=true のまま入る (applyPreset は settings をそのまま着地させる)。
+        // 旧版のプリセット JSON が "pa": true を持っていれば、読み込みで preampFrom が
+        // この値を通す (applyPreset は settings をそのまま着地させる)。
         val jsonWorst = List(EqSettings.MAX_BANDS) { EqBand(freqHz = 1_000, q100 = 141, gainDb10 = 400) }
         report("1 kHz Q=1.41  +40.0 dB x 31 (手書きプリセット)", jsonWorst)
 
@@ -232,13 +233,13 @@ class EqAutoPreampReachTest {
         )
     }
 
-    // ── 5. 好みの EQ の焼き込み (preampAuto=true へ戻す唯一の自動経路) ──
-    // EqFinderMaterialize.bake は焼き込み後に preampAuto=true を立てる。
+    // ── 5. 好みの EQ の焼き込み ──────────────────────────────────────
     // グラフィックの側は「土台の応答 + オーバーレイの応答」を目標に解き直すので、
-    // **目標が摘みの可動域 ±12 dB を越えうる。**
+    // **目標が摘みの可動域 ±12 dB を越えうる。**バンドがどこまで育つかは
+    // プリアンプの決め方と独立なので、この測定は移行の後もそのまま有効。
     @Test
     fun finderBakeReach() {
-        println("=== 5. 好みの EQ の焼き込み (bake は preampAuto=true を立てる) ===")
+        println("=== 5. 好みの EQ の焼き込み ===")
         val axes = listOf(
             io.github.mame1839.codecanchor.core.EqFinderAxes.BASS,
             io.github.mame1839.codecanchor.core.EqFinderAxes.TREBLE,
@@ -251,10 +252,9 @@ class EqAutoPreampReachTest {
                 enabled = true,
                 bandCount = n,
                 bands = solveKnobs(n, IntArray(n) { 120 }),
-                preampAuto = true,
             )
             val baked = io.github.mame1839.codecanchor.core.EqFinderMaterialize
-                .bake(base, axes, overlay)
+                .bake(base, axes, overlay, 0)
             requireNotNull(baked)
             val knobs = EqSolver.graphicTargetsDb10(baked.bands)
             report("graphic n=%2d  土台 摘み全 +12 + 3 軸 +12".format(n), baked.bands)
@@ -265,26 +265,24 @@ class EqAutoPreampReachTest {
             enabled = true,
             mode = io.github.mame1839.codecanchor.core.EqMode.PARAMETRIC,
             bands = List(10) { EqBand(1_000, 141, 120) },
-            preampAuto = true,
         )
         val paramBaked = io.github.mame1839.codecanchor.core.EqFinderMaterialize
-            .bake(paramBase, axes, overlay)
+            .bake(paramBase, axes, overlay, 0)
         requireNotNull(paramBaked)
         report("parametric  土台 1 kHz +12 x10 + 3 軸 +12", paramBaked.bands)
 
-        // 焼き込みは何度でも重ねられる (毎回 preampAuto=true に戻る)。
-        // グラフィックは応答を目標に読み直すので、摘みが可動域 ±12 を越えて育つ。
+        // 焼き込みは何度でも重ねられる。グラフィックは応答を目標に読み直すので、
+        // 摘みが可動域 ±12 を越えて育つ。
         println("--- 5b. 焼き込みを繰り返す (3 軸とも上端 +12。素の音から開始) ---")
         listOf(5, 10, 15, 31).forEach { n ->
             var s = EqSettings(
                 enabled = true,
                 bandCount = n,
                 bands = solveKnobs(n, IntArray(n) { 0 }),
-                preampAuto = true,
             )
             for (round in 1..6) {
                 s = io.github.mame1839.codecanchor.core.EqFinderMaterialize
-                    .bake(s, axes, overlay) ?: break
+                    .bake(s, axes, overlay, 0) ?: break
                 val knobs = EqSolver.graphicTargetsDb10(s.bands)
                 val preamp = report(
                     "graphic n=%2d  焼き込み %d 回目 (摘みの最大 %.1f dB)"
@@ -310,11 +308,10 @@ class EqAutoPreampReachTest {
                 enabled = true,
                 bandCount = 10,
                 bands = solveKnobs(10, IntArray(10) { 0 }),
-                preampAuto = true,
             )
             var clampedAt = -1
             for (round in 1..12) {
-                s = io.github.mame1839.codecanchor.core.EqFinderMaterialize.bake(s, axes, ov) ?: break
+                s = io.github.mame1839.codecanchor.core.EqFinderMaterialize.bake(s, axes, ov, 0) ?: break
                 val preamp = EqSolver.autoPreampDb10(s.bands)
                 if (preamp < EqSettings.PREAMP_RANGE.first) {
                     clampedAt = round
@@ -329,11 +326,10 @@ class EqAutoPreampReachTest {
             enabled = true,
             mode = io.github.mame1839.codecanchor.core.EqMode.PARAMETRIC,
             bands = listOf(EqBand(100, 141, 0), EqBand(1_000, 141, 0), EqBand(10_000, 141, 0)),
-            preampAuto = true,
         )
         for (round in 1..9) {
             p = io.github.mame1839.codecanchor.core.EqFinderMaterialize
-                .bake(p, axes, overlay) ?: break
+                .bake(p, axes, overlay, 0) ?: break
             val preamp = report("parametric 焼き込み %d 回目 (%2d 本)".format(round, p.bands.size), p.bands)
             if (preamp < EqSettings.PREAMP_RANGE.first) {
                 println("      ↑ ここでクランプに入った (焼き込み $round 回目)")

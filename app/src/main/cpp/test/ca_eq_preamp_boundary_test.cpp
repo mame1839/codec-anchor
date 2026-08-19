@@ -1,13 +1,16 @@
 // caeq::validate のプリアンプ境界。ホスト専用 (APK には入らない)。
 //
-// なぜ見張るか: アプリの適用経路 (core/EqParams.kt の arguments()) は自動プリアンプ
-// (EqSolver.autoPreampDb10) を**クランプせずに**送り、caeqset は書き込みの前に
-// この validate を呼んで範囲外を REJECTED で断る (caeqset.cpp)。
-// つまり「保存の下限 (EqSettings.PREAMP_RANGE = -40.0 dB) を下回る自動プリアンプの設定が
-// いまどう鳴るか」は、この境界の開閉ひとつで決まる。
+// なぜ見張るか: これは `.so` 側の門で、アプリ側の門 (Kotlin の
+// EqSettings.PREAMP_RANGE = -40.0〜+12.0 dB) と**同じ数でなければならない。**
+// アプリは preampDb10 をそのまま送り (core/EqParams.kt の arguments())、
+// caeqset は書き込みの前にこの validate を呼んで範囲外を REJECTED で断る (caeqset.cpp)。
+// アプリ側で範囲外を作らないのは producer 側の coerceIn で、そちらの列挙は
+// EqAutoPreampReachTest.everyPreampProducerClampsToTheSavedRange にある。
+// **ここが緩むと、アプリが送れる値を .so が黙って却下する組み合わせができる。**
 //
 // 境界の値は釘として literal で書く (kMinPreampDb / kMaxPreampDb の記号では書かない) —
 // dsp/ca_eq_dsp.h の定数を動かしたら、ここが落ちて知らせるのが仕事。
+// Kotlin 側の同じ数は EqAutoPreampReachTest.theSavedRangeEndsExactlyWhereTheNativeGateOpens。
 
 #include <cmath>
 #include <vector>
@@ -38,7 +41,7 @@ Params paramsWithPreamp(double preamp_db) {
 }  // namespace
 
 void runPreampBoundarySection(Report& r) {
-    r.section("32. validate のプリアンプ境界 (アプリは自動プリアンプをクランプせずに送る)");
+    r.section("32. validate のプリアンプ境界 (アプリ側の PREAMP_RANGE と同じ数であること)");
 
     struct Probe {
         double preamp;
@@ -46,7 +49,7 @@ void runPreampBoundarySection(Report& r) {
         const char* note;
     };
     const Probe probes[] = {
-        {-47.9, false, "パラメトリック +12 dB を 4 本重ねた実測値 (autoPreampDb10 = -479)"},
+        {-47.9, false, "移行がクランプしなければこの値になる形 (1 kHz +12 x4 の autoPreampDb10 = -479)"},
         {-40.1, false, "アプリの刻み 0.1 dB で最初に範囲外になる値"},
         {std::nextafter(-40.0, -1e9), false, "double で表せる -40.0 の直下"},
         {-40.0, true, "下側の境界ちょうど (境界は閉区間)"},

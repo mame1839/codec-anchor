@@ -1,10 +1,6 @@
 package io.github.mame1839.codecanchor
 
-import io.github.mame1839.codecanchor.core.EqBand
 import io.github.mame1839.codecanchor.core.EqLoudness
-import io.github.mame1839.codecanchor.core.EqMode
-import io.github.mame1839.codecanchor.core.EqParams
-import io.github.mame1839.codecanchor.core.EqSettings
 import io.github.mame1839.codecanchor.core.Spectrum
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -136,24 +132,5 @@ class EqSpectrumPsdContractTest {
         for (i in w0.indices) {
             assertEquals("i=$i", w0[i], w7[i], w0[i] * 1e-12)
         }
-    }
-
-    // ── おまけ: 自動プリアンプの適用経路はクランプしない (移行の判断材料) ──────────
-    // EqParams.arguments は autoPreampDb10 の値をそのまま 10 進にして送る。
-    // 受け側の下限は .so の caeq::validate (dsp/ca_eq_dsp.h:49 の kMinPreampDb = -40.0) で、
-    // それを下回る値は caeqset が REJECTED (=15) で断る — こちらは読んだだけで、
-    // このテストが撃っているのは Kotlin 側が -40.0 未満を作って送ることまで。
-    @Test
-    fun theApplyPathSendsSubMinusFortyPreampsUnclamped() {
-        val eq = EqSettings(
-            enabled = true,
-            mode = EqMode.PARAMETRIC,
-            bands = List(4) { EqBand(freqHz = 1_000, q100 = 141, gainDb10 = 120) },
-            preampAuto = true,
-        )
-        val args = EqParams.arguments(eq)
-        val preamp = args[args.indexOf("--preamp") + 1]
-        println("4 本重ねの自動プリアンプを apply 経路はそのまま送る: --preamp $preamp")
-        assertEquals("-47.9", preamp)
     }
 }
