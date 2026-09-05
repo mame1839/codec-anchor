@@ -193,7 +193,6 @@
         <item quantity="many">%1$d полос</item>
         <item quantity="other">%1$d полосы</item>
     </plurals>
-    <string name="eq_summary_unavailable">Сейчас недоступна. Откройте, чтобы узнать причину.</string>
     <string name="eq_enabled">Эквалайзер</string>
     <string name="eq_latency_zero">Добавленная задержка: 0 мс</string>
     <string name="eq_mode">Способ настройки</string>

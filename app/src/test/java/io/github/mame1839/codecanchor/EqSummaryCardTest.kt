@@ -6,7 +6,6 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performSemanticsAction
 import io.github.mame1839.codecanchor.core.DeviceSlots
-import io.github.mame1839.codecanchor.core.EqAvailability
 import io.github.mame1839.codecanchor.core.EqBand
 import io.github.mame1839.codecanchor.core.EqMode
 import io.github.mame1839.codecanchor.core.EqSettings
@@ -49,21 +48,6 @@ class EqSummaryCardTest {
     }
 
     @Test
-    fun theRowSaysWhenItCannotBeUsed() {
-        show(on, EqAvailability.OFFLOAD_ENABLED)
-
-        compose.onNodeWithText(string(R.string.eq_summary_unavailable), substring = true).assertExists()
-        compose.onNodeWithText(string(R.string.eq_unavailable_offload), substring = true).assertDoesNotExist()
-    }
-
-    @Test
-    fun theRowDoesNotSayThatWhileItWorks() {
-        show(on)
-
-        compose.onNodeWithText(string(R.string.eq_summary_unavailable), substring = true).assertDoesNotExist()
-    }
-
-    @Test
     fun theRowNamesTheSlotYouAreListeningTo() {
         show(on, slots = DeviceSlots(active = "2", slots = listOf(slot("1", "昼用"), slot("2", "夜用"))))
 
@@ -101,7 +85,6 @@ class EqSummaryCardTest {
                 EqSummaryCard(
                     eq = on,
                     slots = DeviceSlots(),
-                    availability = EqAvailability.OK,
                     onOpen = { opened = true },
                 )
             }
@@ -116,14 +99,10 @@ class EqSummaryCardTest {
 
     private fun slot(id: String, name: String = "") = EqSlot(id = id, name = name, eq = on)
 
-    private fun show(
-        eq: EqSettings,
-        availability: EqAvailability = EqAvailability.OK,
-        slots: DeviceSlots = DeviceSlots(),
-    ) {
+    private fun show(eq: EqSettings, slots: DeviceSlots = DeviceSlots()) {
         compose.setContent {
             MaterialTheme {
-                EqSummaryCard(eq = eq, slots = slots, availability = availability, onOpen = {})
+                EqSummaryCard(eq = eq, slots = slots, onOpen = {})
             }
         }
     }

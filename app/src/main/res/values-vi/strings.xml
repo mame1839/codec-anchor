@@ -187,7 +187,6 @@
     <plurals name="eq_summary_bands">
         <item quantity="other">%1$d dải</item>
     </plurals>
-    <string name="eq_summary_unavailable">Hiện chưa dùng được. Mở ra để xem lý do.</string>
     <string name="eq_enabled">Bộ chỉnh âm</string>
     <string name="eq_latency_zero">Độ trễ thêm vào: 0 ms</string>
     <string name="eq_mode">Cách chỉnh</string>

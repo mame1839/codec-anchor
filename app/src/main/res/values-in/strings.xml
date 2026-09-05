@@ -187,7 +187,6 @@
     <plurals name="eq_summary_bands">
         <item quantity="other">%1$d pita</item>
     </plurals>
-    <string name="eq_summary_unavailable">Belum bisa dipakai sekarang. Buka untuk melihat alasannya.</string>
     <string name="eq_enabled">Ekualiser</string>
     <string name="eq_latency_zero">Tundaan tambahan: 0 ms</string>
     <string name="eq_mode">Cara menyunting</string>

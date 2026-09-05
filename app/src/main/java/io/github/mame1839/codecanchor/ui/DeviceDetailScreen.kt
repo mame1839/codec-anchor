@@ -48,7 +48,6 @@ import io.github.mame1839.codecanchor.core.CodecKeys
 import io.github.mame1839.codecanchor.core.DeviceProfile
 import io.github.mame1839.codecanchor.core.DeviceSlots
 import io.github.mame1839.codecanchor.core.DeviceStatus
-import io.github.mame1839.codecanchor.core.EqAvailability
 import io.github.mame1839.codecanchor.core.EqMode
 import io.github.mame1839.codecanchor.core.EqSettings
 
@@ -134,7 +133,6 @@ fun DeviceDetailScreen(
             EqSummaryCard(
                 eq = profile.eq,
                 slots = vm.slotsOf(mac),
-                availability = vm.eqAvailability(mac),
                 onOpen = onOpenEq,
             )
 
@@ -328,7 +326,6 @@ private fun DeviceHeader(name: String, mac: String, status: DeviceStatus?, offlo
 internal fun EqSummaryCard(
     eq: EqSettings,
     slots: DeviceSlots,
-    availability: EqAvailability,
     onOpen: () -> Unit,
 ) {
     val summary = if (!eq.enabled) {
@@ -347,11 +344,6 @@ internal fun EqSummaryCard(
         NavigationRow(
             title = stringResource(R.string.section_eq),
             value = summary,
-            description = if (availability == EqAvailability.OK) {
-                null
-            } else {
-                stringResource(R.string.eq_summary_unavailable)
-            },
             onClick = onOpen,
         )
     }

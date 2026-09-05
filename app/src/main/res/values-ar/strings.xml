@@ -197,7 +197,6 @@
         <item quantity="many">%1$d نطاقًا</item>
         <item quantity="other">%1$d نطاق</item>
     </plurals>
-    <string name="eq_summary_unavailable">غير متاحة الآن. افتحها لمعرفة السبب.</string>
     <string name="eq_enabled">المُعادل</string>
     <string name="eq_latency_zero">التأخير المُضاف: 0 مللي ثانية</string>
     <string name="eq_mode">طريقة التحرير</string>
