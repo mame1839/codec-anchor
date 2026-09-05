@@ -4,7 +4,6 @@
     <string name="xposed_description">Pins the Bluetooth codec and audio quality for each pair of earphones</string>
     <string name="permission_bridge_label">Send Codec Anchor settings</string>
 
-    <!-- Read by name from the Bluetooth process. Keep these keys in every locale. -->
     <string name="hook_codec_changed">%1$s: switched to %2$s</string>
     <string name="hook_codec_failed">%1$s: could not switch to %2$s</string>
     <string name="hook_codec_failed_with_current">%1$s: could not switch to %2$s (now %3$s)</string>
@@ -76,27 +75,11 @@
     <string name="module_inactive_hint">You can still edit and save settings. They take effect once the module starts running.</string>
     <string name="msg_config_pushed">Sent the settings again</string>
 
-    <!-- Audio processing (EQ). "The audio processing module" is the separate root module that
-         installs the effect. A bare "the module" is the one inside the Bluetooth process, which is
-         what every other module_* string above means. -->
     <string name="eq_unavailable_not_registered">Audio processing is unavailable: the audio processing module is not installed, or this phone has not loaded it. Install it, then restart the phone.</string>
     <string name="eq_unavailable_offload">Audio processing is unavailable while Bluetooth A2DP hardware offload is enabled.</string>
     <string name="eq_unavailable_hook_old">Audio processing is unavailable: the module running in the Bluetooth process is an older version that does not know about it. Turn Bluetooth off, then on again.</string>
     <string name="eq_unavailable_device">These earphones are not registered for audio processing, so nothing set here reaches the sound.</string>
 
-    <!-- Registering earphones. This writes their address into the audio settings of the phone and
-         restarts the audio service, so it is the one heavy action on the detail screen.
-
-         The wording below is the reference the 17 translations were made from. Two terms had no
-         existing translation anywhere in this file and were coined per language for these strings:
-
-           "root manager"   the app that grants root (Magisk / KernelSU / APatch)
-           "audio service"  audioserver
-
-         Reword either one here and the 17 locales drift without anything failing. There is no
-         check for this and there cannot be one, so: if you change these, go through the 17
-         values-*/strings.xml as well. ("audio processing module" is not in this set - it was
-         already fixed by the eq_unavailable_* strings above.) -->
     <string name="eq_device_register">Use audio processing with these earphones</string>
     <string name="eq_device_register_desc">The sound stops for a moment while it is applied.</string>
     <string name="eq_device_confirm_on_title">Turn on audio processing for these earphones?</string>
@@ -116,15 +99,8 @@
     <string name="eq_device_failed_audioserver">The audio service did not come back. Restart the phone.</string>
     <string name="eq_device_failed_unknown">It failed in a way this version of the app does not know about (code %1$d).</string>
 
-    <!-- Whether what is set here is reaching the sound right now. This is a different question from
-         the eq_unavailable_* set above: those say the feature cannot be used at all, these say it
-         can, but not at this moment. Keep "audio processing module" and "root manager" spelled the
-         same as above (see the note there). -->
     <string name="eq_delivery_other">Different earphones are connected right now, so what you change here does not reach the sound yet. Connect these earphones and it is applied.</string>
     <string name="eq_delivery_ambiguous">More than one set of earphone effects is running, and the app cannot tell which one belongs to these earphones, so nothing was sent. Disconnect the other earphones, then change something here again.</string>
-    <!-- The "off and back on" is the eq_device_register toggle on the same screen: it rebuilds
-         the audio service, which is what actually clears this state. Reconnecting or playing
-         again does not; that is why this one does not reuse the wording of the rows above. -->
     <string name="eq_delivery_slots_full">These settings did not reach the sound. Turn audio processing for these earphones off and back on; if that does not fix it, restart the phone.</string>
     <string name="eq_delivery_failed_root">These settings did not reach the sound: root access was refused, or this phone has no root manager. Allow Codec Anchor in your root manager.</string>
     <string name="eq_delivery_failed_shm">These settings did not reach the sound: the audio processing module is not running. Restart the phone.</string>
@@ -222,7 +198,6 @@
     <string name="eq_curve_desc">Curve of what these settings do to the sound</string>
     <string name="eq_mode">How to edit</string>
     <string name="eq_mode_graphic">Graphic</string>
-    <!-- Subtitles shown under the two options inside the picker dialog, not on the row itself. -->
     <string name="eq_mode_graphic_desc">Every band stays on a fixed frequency</string>
     <string name="eq_mode_parametric">Parametric</string>
     <string name="eq_mode_parametric_desc">Put each band where you want it</string>
