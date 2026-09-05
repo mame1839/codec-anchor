@@ -187,7 +187,6 @@
     <plurals name="eq_summary_bands">
         <item quantity="other">%1$d 個頻段</item>
     </plurals>
-    <string name="eq_summary_unavailable">目前無法使用。開啟後可查看原因。</string>
     <string name="eq_enabled">等化器</string>
     <string name="eq_latency_zero">額外延遲：0 ms</string>
     <string name="eq_mode">調整方式</string>

@@ -211,17 +211,12 @@
     <string name="msg_autoeq_no_bands">That AutoEQ file has no filters</string>
 
     <string name="section_eq">Audio processing</string>
-    <!-- Summary shown on the detail screen row that opens the audio processing screen. It has to
-         say enough that the row does not need to be opened to know where the settings stand.
-         eq_summary_unavailable is the short line for "cannot be used"; the reason itself stays on
-         the screen behind the row (eq_unavailable_*), which has the space for it. -->
     <string name="eq_summary_on">On</string>
     <string name="eq_summary_off">Off</string>
     <plurals name="eq_summary_bands">
         <item quantity="one">%1$d band</item>
         <item quantity="other">%1$d bands</item>
     </plurals>
-    <string name="eq_summary_unavailable">Not usable right now. Open to see why.</string>
     <string name="eq_enabled">Equaliser</string>
     <string name="eq_latency_zero">Added delay: 0 ms</string>
     <string name="eq_curve_desc">Curve of what these settings do to the sound</string>

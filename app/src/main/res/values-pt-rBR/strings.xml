@@ -191,7 +191,6 @@
         <item quantity="many">%1$d bandas</item>
         <item quantity="other">%1$d bandas</item>
     </plurals>
-    <string name="eq_summary_unavailable">No momento não dá para usar. Abra para ver o motivo.</string>
     <string name="eq_enabled">Equalizador</string>
     <string name="eq_latency_zero">Atraso adicionado: 0 ms</string>
     <string name="eq_mode">Modo de edição</string>

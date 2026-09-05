@@ -189,7 +189,6 @@
         <item quantity="one">%1$d Band</item>
         <item quantity="other">%1$d Bänder</item>
     </plurals>
-    <string name="eq_summary_unavailable">Zurzeit nicht nutzbar. Öffnen Sie sie, um den Grund zu sehen.</string>
     <string name="eq_enabled">Equalizer</string>
     <string name="eq_latency_zero">Zusätzliche Verzögerung: 0 ms</string>
     <string name="eq_mode">Art der Bearbeitung</string>
